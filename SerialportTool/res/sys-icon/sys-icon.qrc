@@ -1,0 +1,24 @@
+<RCC>
+    <qresource prefix="/sys">
+        <file>tmp.png</file>
+        <file>save_cfg.svg</file>
+        <file>start_up.svg</file>
+        <file>turn_off.svg</file>
+        <file>edit_name.svg</file>
+        <file>refresh-hover.svg</file>
+        <file>refresh-normal.svg</file>
+        <file>send.svg</file>
+        <file>send-slash.svg</file>
+        <file>trash.svg</file>
+        <file>bluetooth-contact.svg</file>
+        <file>communicating-junctions.svg</file>
+        <file>communicating-junctions_pressed.svg</file>
+        <file>modbus.svg</file>
+        <file>network.svg</file>
+        <file>Instruction-configuration.svg</file>
+        <file>real-time-simulation.svg</file>
+        <file>Instruction-configuration_pressed.svg</file>
+        <file>real-time-simulation_pressed.svg</file>
+        <file>plus-circle.svg</file>
+    </qresource>
+</RCC>

@@ -1,0 +1,13 @@
+macro(add_checked_subdirectory name)
+    if (NOT DEFINED desktop_app_skip_libs
+        OR NOT ${name} IN_LIST desktop_app_skip_libs)
+        add_subdirectory(${name})
+    endif()
+endmacro()
+
+add_checked_subdirectory(qt)
+add_checked_subdirectory(qwindowkit)
+add_checked_subdirectory(Qt-Advanced-Stylesheets)
+add_checked_subdirectory(qt-material)
+add_checked_subdirectory(qscintilla)
+add_checked_subdirectory(QsLog)

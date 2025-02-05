@@ -36,6 +36,7 @@ protected:
   QVBoxLayout *drawer_layout_;
 };
 
+
 } // namespace Ui
 
 #endif  // UI_POP_WIDGET_H

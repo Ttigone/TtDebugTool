@@ -31,7 +31,7 @@ void TtPopUpDrawerPrivate::init() {
 
   // widget 是最底层的窗口, 上面覆盖了一个 window_, 用于显示外部设备的 widget
   widget_->setLayout(layout);
-  // 这里的 16 是左右边距 8 ??? 
+  // 这里的 16 是左右边距 8 ???
   //widget_->setFixedWidth(width_ + 16);
 
   // 设置父对象, user->drawer->drawer_widget
@@ -57,6 +57,12 @@ TtPopUpDrawer::~TtPopUpDrawer() {}
 
 void TtPopUpDrawer::setDrawerWidth(int width) {
   Q_D(TtPopUpDrawer);
+
+  // 避免宽度为 0 时显示 Drawer
+  if (width <= 0) {
+    d->width_ = 0;
+    return;
+  }
 
   d->width_ = width;
   // 更新状态机
@@ -347,6 +353,13 @@ TtPopUpDrawerStateMachine::TtPopUpDrawerStateMachine(
   transition->setTargetState(closed_state_);
   closing_state_->addTransition(transition);
 
+  // 在 TtPopUpDrawerStateMachine 构造函数中：
+  QObject::connect(opening_state_, &QState::entered, [this]() {
+    if (closing_state_->active()) {
+      //machine()->cancelDelayedEvent();
+    }
+  });
+
   updatePropertyAssignments();
 }
 TtPopUpDrawerStateMachine::~TtPopUpDrawerStateMachine() {}
@@ -364,7 +377,8 @@ bool TtPopUpDrawerStateMachine::isInClosedState() const {
 }
 void TtPopUpDrawerStateMachine::updatePropertyAssignments() {
   // 关闭时候的位移
-  const qreal closedOffset = -(drawer_->width() + 32);
+  //const qreal closedOffset = -(drawer_->width() + 32);
+  const qreal closedOffset = -(drawer_->width());
   // 672
   qDebug() << "drawer->width" << drawer_->width();
 

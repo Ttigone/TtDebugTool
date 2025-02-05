@@ -31,6 +31,7 @@
 #include <ui/layout/vertical_layout.h>
 #include <ui/widgets/buttons.h>
 
+#include "ui/control/TtPopUpDrawer.h"
 #include "window/function_selection_window.h"
 
 #include "ui/widgets/labels.h"
@@ -242,15 +243,33 @@ MainWindow::MainWindow(QWidget* parent)
   // tabWidget_->setStyleSheet(tabStyle);
 
   QSplitter* mainSpliter = new QSplitter(this);
-  mainSpliter->addWidget(popUpBodyWidget);
+  //mainSpliter->addWidget(popUpBodyWidget);
+  Ui::TtPopUpDrawer* drawer = new Ui::TtPopUpDrawer(mainSpliter);
   //mainSpliter->addWidget(communication_connection_widget);
   mainSpliter->addWidget(tabWidget_);
+  mainSpliter->setStretchFactor(0, 0);  // Drawer 不占用拉伸
+  mainSpliter->setStretchFactor(1, 1);  // Content Widget 占用所有拉伸
+                                        // 创建 Drawer Controller
+
+  // 直接做一个 spliter 的弹出
+  Ui:: DrawerController* controller =
+      new Ui::DrawerController(mainSpliter, drawer, tabWidget_, this);
+  // 连接 splitter 的移动信号，防止拖动导致 Drawer 显示
+  connect(mainSpliter, &QSplitter::splitterMoved, controller,
+          &Ui::DrawerController::handleSplitterMoved);
 
   // 左边栏
   layout_->addWidget(left_bar_, 0, Qt::AlignLeft);
 
   //layout_->addWidget(tabWidget_);
   layout_->addWidget(mainSpliter);
+
+  connect(communication_connection, &Ui::TtSvgButton::clicked, [this, controller]() {
+    //communication_connection_widget->triggerSwitch();
+    
+    controller->toggleDrawer();
+    //Ui::SnackBarController::instance()->showMessage("这是一个测试消息", 2000);
+  });
 
   connectSignals();
 }
@@ -618,11 +637,12 @@ void MainWindow::setLeftBar() {
 }
 
 void MainWindow::connectSignals() {
-  connect(communication_connection, &Ui::TtSvgButton::clicked, [this]() {
-    communication_connection_widget->triggerSwitch();
+  //connect(communication_connection, &Ui::TtSvgButton::clicked, [this]() {
+  //  //communication_connection_widget->triggerSwitch();
+  //  
 
-    Ui::SnackBarController::instance()->showMessage("这是一个测试消息", 2000);
-  });
+  //  Ui::SnackBarController::instance()->showMessage("这是一个测试消息", 2000);
+  //});
   // 处理点击 close Pop 时, 按钮恢复, 是否需要切换到新的 tab
   connect(communication_connection_widget, &Ui::PopWidget::isClosed, [this]() {
     communication_connection->setState(true);

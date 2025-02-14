@@ -33,6 +33,8 @@ PRIVATE
   ui/text/text_entity.h ui/text/text_entity.cpp
 
   ui/effects/animation_value.h ui/effects/animation_value.cpp
+  ui/effects/animated_drawer.h ui/effects/animated_drawer.cpp
+
   ui/click_handler.h ui/click_handler.cpp
   ui/mb_widget.h ui/mb_widget.cpp
   ui/abstract_button.h ui/abstract_button.cpp

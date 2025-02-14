@@ -61,6 +61,7 @@ private:
     void loadStyleSheet(Theme theme);
     void setLeftBar();
     void connectSignals();
+    void registerTabWidget();
 
     // void createDockWindows();
 

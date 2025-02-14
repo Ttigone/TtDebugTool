@@ -1,6 +1,10 @@
 #ifndef UI_PCH_H
 #define UI_PCH_H
 
+#include <QObject>
+#include <QPropertyAnimation>
+#include <QTimer>
+
 #include <QString>
 #include <QPoint>
 #include <QRect>
@@ -20,6 +24,7 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QSvgWidget>
+#include <QSplitter>
 
 
 #include <QHBoxLayout>

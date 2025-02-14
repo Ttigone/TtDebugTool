@@ -43,6 +43,8 @@
 
 #include "ui/window/window_switcher.h"
 
+#include <ui/effects/animated_drawer.h>
+
 namespace Window {
 
 static inline void emulateLeaveEvent(QWidget* widget) {
@@ -85,12 +87,11 @@ static inline void emulateLeaveEvent(QWidget* widget) {
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent), central_widget_(new QWidget(this)) {
-  //window_agent_(new QWK::WidgetWindowAgent(this)) {
   window_agent_ = new QWK::WidgetWindowAgent(this);
-  installWindowAgent();
+  //installWindowAgent();
   setMinimumWidth(1024);
   setMinimumHeight(720);
-  window_agent_->centralize();
+  //window_agent_->centralize();
 
   // this->showMaximized();
 
@@ -116,147 +117,83 @@ MainWindow::MainWindow(QWidget* parent)
   tabWidget_ = new Ui::TabManager(function_select_, this);
 
   // 弹出窗口底层
-  QWidget* popUpBodyWidget = new QWidget();
-  popUpBodyWidget->setStyleSheet("background-color : Coral");
+  //QWidget* popUpBodyWidget = new QWidget();
+  //popUpBodyWidget->setStyleSheet("background-color : Coral");
 
   // 弹出的 widget
   // 要赋值父对象, 这个父对象也就是 canves
   // 弹出的 widget 的左侧应该在 left_bar_ 的右侧对齐
-  communication_connection_widget = new Ui::PopWidget(popUpBodyWidget);
+  //communication_connection_widget = new Ui::PopWidget(popUpBodyWidget);
   //communication_connection_widget = new Ui::PopWidget();
   //communication_connection_widget = new Ui::PopWidget(tabWidget_);
   //communication_connection_widget = new Ui::PopWidget(this);
 
-  auto test = new Window::PopUpWindow();
-  test->setTitle(tr("连接列表"));
-  QWidget* insidetest = new QWidget;
-  auto il = new Ui::VerticalLayout(insidetest);
-  //insidetest->setLayout(il);
+  //auto test = new Window::PopUpWindow();
+  //test->setTitle(tr("连接列表"));
+  //QWidget* insidetest = new QWidget;
+  //auto il = new Ui::VerticalLayout(insidetest);
+  ////insidetest->setLayout(il);
 
-  Ui::TtNormalLabel* imla = new Ui::TtNormalLabel();
-  imla->setPixmap(QPixmap::fromImage(QImage(":/sys/tmp.png").scaled(100, 100)));
-  il->addStretch();
-  il->addWidget(imla, 0, Qt::AlignCenter);
+  //Ui::TtNormalLabel* imla = new Ui::TtNormalLabel();
+  //imla->setPixmap(QPixmap::fromImage(QImage(":/sys/tmp.png").scaled(100, 100)));
+  //il->addStretch();
+  //il->addWidget(imla, 0, Qt::AlignCenter);
 
-  Ui::TtNormalLabel* la_ = new Ui::TtNormalLabel(tr("暂时没有可用的连接"));
-  il->addWidget(la_, 0, Qt::AlignCenter);
-  // 点击后在 tab 弹出一个 新 tab, 用于设置
-  auto ib = new QPushButton(tr("新建连接"));
-  ib->setFixedSize(100, 28);
-  il->addSpacerItem(new QSpacerItem(0, 20));
-  il->addWidget(ib, 0, Qt::AlignCenter);
-  il->addStretch();
+  //Ui::TtNormalLabel* la_ = new Ui::TtNormalLabel(tr("暂时没有可用的连接"));
+  //il->addWidget(la_, 0, Qt::AlignCenter);
+  //// 点击后在 tab 弹出一个 新 tab, 用于设置
+  //auto ib = new QPushButton(tr("新建连接"));
+  //ib->setFixedSize(100, 28);
+  //il->addSpacerItem(new QSpacerItem(0, 20));
+  //il->addWidget(ib, 0, Qt::AlignCenter);
+  //il->addStretch();
 
-  // 新增的弹出框
-  connect(ib, &QPushButton::clicked, [this]() {
-    qDebug() << "add new tab";
-    FunctionSelectionWindow* test2 = new FunctionSelectionWindow();
-    tabWidget_->addNewTab(test2, tr("新建连接"));
-    // 连接信号槽
-    QObject::connect(
-        test2, &FunctionSelectionWindow::switchRequested,
-        [this](int widget_id) { tabWidget_->handleButtonClicked(widget_id); });
-    // 切换到当前新增 tab
-    tabWidget_->setCurrentWidget(test2);
-    communication_connection_widget->closeDrawer();
-  });
+  //// 新增的弹出框
+  //connect(ib, &QPushButton::clicked, [this]() {
+  //  qDebug() << "add new tab";
+  //  FunctionSelectionWindow* test2 = new FunctionSelectionWindow();
+  //  tabWidget_->addNewTab(test2, tr("新建连接"));
+  //  // 连接信号槽
+  //  QObject::connect(
+  //      test2, &FunctionSelectionWindow::switchRequested,
+  //      [this](int widget_id) { tabWidget_->handleButtonClicked(widget_id); });
+  //  // 切换到当前新增 tab
+  //  tabWidget_->setCurrentWidget(test2);
+  //  communication_connection_widget->closeDrawer();
+  //});
 
-  test->setWidget(insidetest);
+  //test->setWidget(insidetest);
 
   // 设置弹出的窗口
-  communication_connection_widget->setWidget(test);
+  //communication_connection_widget->setWidget(test);
 
-  // 注册 串口窗口
-  tabWidget_->registerWidget(
-      0,
-      []() {
-        // base::DetectRunningTime runtime;
-        Window::SerialWindow* d = new Window::SerialWindow();
-        // d->setStyleSheet("background-color: Coral");
-        // qDebug() << runtime.elapseMilliseconds();
-        auto widget = new QWidget();
-        // QVBoxLayout* layout = new QVBoxLayout();
-        Ui::VerticalLayout* layout = new Ui::VerticalLayout();
-        widget->setLayout(layout);
-        layout->addWidget(d);
-        return widget;
-      },
-      tr("未命名的串口连接"));
-  // 注册 TCP客户端窗口
-  tabWidget_->registerWidget(
-      1,
-      []() {
-        Window::TcpWindow* d = new Window::TcpWindow();
-        auto widget = new QWidget();
-        Ui::VerticalLayout* layout = new Ui::VerticalLayout(widget);
-        layout->addWidget(d);
-        return widget;
-      },
-      tr("未命 TCP 连接"));
-
-  //// 注册 UDP客户端窗口
-  //tabWidget_->registerWidget(
-  //    2,
-  //    []() {
-  //      Window::UdpWindow* d = new Window::UdpWindow();
-  //      auto widget = new QWidget();
-  //      Ui::VerticalLayout* layout = new Ui::VerticalLayout(widget);
-  //      layout->addWidget(d);
-  //      return widget;
-  //    },
-  //    []() { return QString(tr("未命名 UDP 连接")); });
-
-  // // 注册 Modbus客户端窗口
-  // tabWidget_->registerWidget(4, []() {
-  //   Window::SerialWindow *d = new Window::SerialWindow();
-  //   auto widget = new QWidget();
-  //   QVBoxLayout* layout = new QVBoxLayout(widget);
-  //   layout->addWidget(d);
-  //   return widget;
-  // }, []() {
-  //   return QString(tr("未命名串口连接"));
-  // });
-
-  // // 注册 MQTT客户端窗口
-  // tabWidget_->registerWidget(5, []() {
-  //   Window::SerialWindow *d = new Window::SerialWindow();
-  //   auto widget = new QWidget();
-  //   QVBoxLayout* layout = new QVBoxLayout(widget);
-  //   layout->addWidget(d);
-  //   return widget;
-  // }, []() {
-  //   return QString(tr("未命名串口连接"));
-  // });
-
-  // tabWidget_->registerWidget(0, []() {
-  //   auto widget = new QWidget();
-  //   QVBoxLayout* layout = new QVBoxLayout(widget);
-  //   layout->addWidget(new QLabel("This is Widget2"));
-  //   return widget;
-  // }, []() {
-  //   return QString("Second Tab");
-
-  // });
+  registerTabWidget();
 
   // 使用样式表设置选项卡字体颜色
   // QString tabStyle = "QTabBar::tab { color: red; } "; // 设置选项卡字体颜色为红色
   // tabWidget_->setStyleSheet(tabStyle);
 
   QSplitter* mainSpliter = new QSplitter(this);
-  //mainSpliter->addWidget(popUpBodyWidget);
-  Ui::TtPopUpDrawer* drawer = new Ui::TtPopUpDrawer(mainSpliter);
+  //popUpBodyWidget->setParent(mainSpliter);
+  QWidget* testW = new QWidget(mainSpliter);
+  testW->setStyleSheet("background-color: lightblue;");  // Drawer 的背景色
+  mainSpliter->addWidget(testW);
+  //Ui::TtPopUpDrawer* drawer = new Ui::TtPopUpDrawer(mainSpliter);
   //mainSpliter->addWidget(communication_connection_widget);
   mainSpliter->addWidget(tabWidget_);
-  mainSpliter->setStretchFactor(0, 0);  // Drawer 不占用拉伸
-  mainSpliter->setStretchFactor(1, 1);  // Content Widget 占用所有拉伸
-                                        // 创建 Drawer Controller
+  //mainSpliter->setStretchFactor(0, 0);  // Drawer 不占用拉伸
+  //mainSpliter->setStretchFactor(1, 1);  // Content Widget 占用所有拉伸
+                                        // 创建 AnimatedDrawer 控制器
+  Ui::TtAnimatedDrawer* controller =
+      new Ui::TtAnimatedDrawer(mainSpliter, testW, tabWidget_, this);
+  // 创建 Drawer Controller
 
-  // 直接做一个 spliter 的弹出
-  Ui:: DrawerController* controller =
-      new Ui::DrawerController(mainSpliter, drawer, tabWidget_, this);
+  //// 直接做一个 spliter 的弹出
+  //Ui:: DrawerController* controller =
+  //    new Ui::DrawerController(mainSpliter, drawer, tabWidget_, this);
   // 连接 splitter 的移动信号，防止拖动导致 Drawer 显示
-  connect(mainSpliter, &QSplitter::splitterMoved, controller,
-          &Ui::DrawerController::handleSplitterMoved);
+  //connect(mainSpliter, &QSplitter::splitterMoved, controller,
+  //        &Ui::DrawerController::handleSplitterMoved);
 
   // 左边栏
   layout_->addWidget(left_bar_, 0, Qt::AlignLeft);
@@ -264,12 +201,13 @@ MainWindow::MainWindow(QWidget* parent)
   //layout_->addWidget(tabWidget_);
   layout_->addWidget(mainSpliter);
 
-  connect(communication_connection, &Ui::TtSvgButton::clicked, [this, controller]() {
-    //communication_connection_widget->triggerSwitch();
-    
-    controller->toggleDrawer();
-    //Ui::SnackBarController::instance()->showMessage("这是一个测试消息", 2000);
-  });
+  connect(communication_connection, &Ui::TtSvgButton::clicked,
+          [this, controller]() {
+            //communication_connection_widget->triggerSwitch();
+
+            controller->toggleDrawer();
+            //Ui::SnackBarController::instance()->showMessage("这是一个测试消息", 2000);
+          });
 
   connectSignals();
 }
@@ -639,21 +577,95 @@ void MainWindow::setLeftBar() {
 void MainWindow::connectSignals() {
   //connect(communication_connection, &Ui::TtSvgButton::clicked, [this]() {
   //  //communication_connection_widget->triggerSwitch();
-  //  
+  //
 
   //  Ui::SnackBarController::instance()->showMessage("这是一个测试消息", 2000);
   //});
   // 处理点击 close Pop 时, 按钮恢复, 是否需要切换到新的 tab
-  connect(communication_connection_widget, &Ui::PopWidget::isClosed, [this]() {
-    communication_connection->setState(true);
-    qDebug() << "also close";
-  });
+  //connect(communication_connection_widget, &Ui::PopWidget::isClosed, [this]() {
+  //  communication_connection->setState(true);
+  //  qDebug() << "also close";
+  //});
 
   // 点击按钮信号连接
   QObject::connect(
       function_select_, &FunctionSelectionWindow::switchRequested,
       // [this](int widget_id) { tabWidget_->switchToWidget(widget_id); });
       [this](int widget_id) { tabWidget_->handleButtonClicked(widget_id); });
+}
+
+void MainWindow::registerTabWidget() {
+  // 注册 串口窗口
+  tabWidget_->registerWidget(
+      0,
+      []() {
+        // base::DetectRunningTime runtime;
+        Window::SerialWindow* d = new Window::SerialWindow();
+        // d->setStyleSheet("background-color: Coral");
+        // qDebug() << runtime.elapseMilliseconds();
+        auto widget = new QWidget();
+        // QVBoxLayout* layout = new QVBoxLayout();
+        Ui::VerticalLayout* layout = new Ui::VerticalLayout();
+        widget->setLayout(layout);
+        layout->addWidget(d);
+        return widget;
+      },
+      tr("未命名的串口连接"));
+  // 注册 TCP客户端窗口
+  tabWidget_->registerWidget(
+      1,
+      []() {
+        Window::TcpWindow* d = new Window::TcpWindow();
+        auto widget = new QWidget();
+        Ui::VerticalLayout* layout = new Ui::VerticalLayout(widget);
+        layout->addWidget(d);
+        return widget;
+      },
+      tr("未命 TCP 连接"));
+
+  //// 注册 UDP客户端窗口
+  //tabWidget_->registerWidget(
+  //    2,
+  //    []() {
+  //      Window::UdpWindow* d = new Window::UdpWindow();
+  //      auto widget = new QWidget();
+  //      Ui::VerticalLayout* layout = new Ui::VerticalLayout(widget);
+  //      layout->addWidget(d);
+  //      return widget;
+  //    },
+  //    []() { return QString(tr("未命名 UDP 连接")); });
+
+  // // 注册 Modbus客户端窗口
+  // tabWidget_->registerWidget(4, []() {
+  //   Window::SerialWindow *d = new Window::SerialWindow();
+  //   auto widget = new QWidget();
+  //   QVBoxLayout* layout = new QVBoxLayout(widget);
+  //   layout->addWidget(d);
+  //   return widget;
+  // }, []() {
+  //   return QString(tr("未命名串口连接"));
+  // });
+
+  // // 注册 MQTT客户端窗口
+  // tabWidget_->registerWidget(5, []() {
+  //   Window::SerialWindow *d = new Window::SerialWindow();
+  //   auto widget = new QWidget();
+  //   QVBoxLayout* layout = new QVBoxLayout(widget);
+  //   layout->addWidget(d);
+  //   return widget;
+  // }, []() {
+  //   return QString(tr("未命名串口连接"));
+  // });
+
+  // tabWidget_->registerWidget(0, []() {
+  //   auto widget = new QWidget();
+  //   QVBoxLayout* layout = new QVBoxLayout(widget);
+  //   layout->addWidget(new QLabel("This is Widget2"));
+  //   return widget;
+  // }, []() {
+  //   return QString("Second Tab");
+
+  // });
 }
 
 // void MainWindow::createDockWindows()

@@ -53,12 +53,12 @@ class SerialSetting : public QWidget {
   void refreshSerialCOMx();
   QString matchingSerialCOMx(const QString& name);
 
-  Ui::TtLabelBtnComboBox* select_serial_port;
-  Ui::TtLabelComboBox* select_baud_rate;
-  Ui::TtLabelComboBox *select_data_bit;
-  Ui::TtLabelComboBox *select_parity_bit;
-  Ui::TtLabelComboBox *select_stop_bit;
-  Ui::TtLabelComboBox *select_fluid_control;
+  Ui::TtLabelBtnComboBox* select_serial_port_;
+  Ui::TtLabelComboBox* select_baud_rate_;
+  Ui::TtLabelComboBox *select_data_bit_;
+  Ui::TtLabelComboBox *select_parity_bit_;
+  Ui::TtLabelComboBox *select_stop_bit_;
+  Ui::TtLabelComboBox *select_fluid_control_;
 
   bool has_old_settings;
 

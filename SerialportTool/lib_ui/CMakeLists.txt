@@ -48,6 +48,7 @@ PRIVATE
   ui/widgets/collapsible_panel.h ui/widgets/collapsible_panel.cpp
   ui/widgets/overlay_widget.h ui/widgets/overlay_widget.cpp
   ui/widgets/snack_bar.h ui/widgets/snack_bar.cpp
+  ui/widgets/widget_group.h ui/widgets/widget_group.cpp
 
   ui/layout/vertical_layout.h ui/layout/vertial_layout.cpp
   ui/layout/horizontal_layout.h ui/layout/horizontal_layout.cpp

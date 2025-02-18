@@ -179,23 +179,41 @@ void SerialWindow::init() {
   // 编辑命名按钮
   modify_title_btn_ = new Ui::TtImageButton(":/sys/edit_name.svg", this);
 
-  Ui::HorizontalLayout* tmpl = new Ui::HorizontalLayout;
 
+  Ui::HorizontalLayout* tmpAll = new Ui::HorizontalLayout;
+
+  Ui::HorizontalLayout* tmpl = new Ui::HorizontalLayout;
   tmpl->addWidget(title_, 0, Qt::AlignLeft);
   tmpl->addSpacerItem(new QSpacerItem(10, 10));
   tmpl->addWidget(modify_title_btn_);
   tmpl->addStretch();
 
-  save_btn_ = new Ui::TtImageButton(":/sys/save_cfg.svg", this);
+  connect(modify_title_btn_, &Ui::TtImageButton::clicked, [this]() {
+    // 修改标题
+  });
 
+
+
+
+  Ui::HorizontalLayout* tmpl2 = new Ui::HorizontalLayout;
+  // 保存按钮
+  save_btn_ = new Ui::TtImageButton(":/sys/save_cfg.svg", this);
+  // 删除按钮, 是需要保存在 leftbar 才会添加的
+
+	// 开关按钮
   on_off_btn_ =
       new Ui::TtSvgButton(":/sys/start_up.svg", ":/sys/turn_off.svg", this);
 
-  tmpl->addWidget(save_btn_);
-  tmpl->addWidget(on_off_btn_, 0, Qt::AlignRight);
-  tmpl->addSpacerItem(new QSpacerItem(10, 10));
+  tmpl2->addWidget(save_btn_);
+  tmpl2->addWidget(on_off_btn_, 0, Qt::AlignRight);
+  tmpl2->addSpacerItem(new QSpacerItem(10, 10));
 
-  main_layout_->addLayout(tmpl);
+
+  tmpAll->addLayout(tmpl);
+  tmpAll->addLayout(tmpl2);
+
+  //main_layout_->addLayout(tmpl);
+  main_layout_->addLayout(tmpAll);
 
   // 左右分隔器
   QSplitter* mainSplitter = new QSplitter;
@@ -408,17 +426,6 @@ void SerialWindow::init() {
   contentLayout1->setContentsMargins(QMargins());
   contentLayout1->addWidget(serial_setting_);
   contentWidget1->adjustSize();  // 确保大小正确
-  //QToolBox *test = new QToolBox;
-  //auto sds = new QComboBox;
-  //auto sds = new Ui::TtComboBox;
-  //sds->addItem("1");
-  //sds->addItem("1");
-  //sds->addItem("1");
-  //sds->addItem("1");
-  //sds->addItem("1");
-  //test->addItem(sds, ");
-  //test->addItem(new QComboBox(), "test");
-  //test->addItem(new QComboBox(), "test");
   Ui::Drawer* drawer1 = new Ui::Drawer(tr("连接设置"), contentWidget1);
   //Ui::Drawer* drawer1 = new Ui::Drawer(tr("连接设置"), sds);
 

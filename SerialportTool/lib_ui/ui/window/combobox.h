@@ -80,6 +80,9 @@ class TtLabelBtnComboBox : public QWidget {
   ///
   int count();
 
+ signals:
+  void clicked();
+
  private slots:
   void displayCurrentCOMx();
 

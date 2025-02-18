@@ -7,21 +7,16 @@
 
 namespace Ui {
 
-TtComboBox::TtComboBox(QWidget *parent)
-    :   QComboBox(parent)
-{
-    setEditable(true);
+TtComboBox::TtComboBox(QWidget* parent) : QComboBox(parent) {
+  setEditable(true);
   //setSizeAdjustPolicy(QComboBox::AdjustToContents); // 自动调整宽度
 }
 
-TtComboBox::~TtComboBox()
-{
+TtComboBox::~TtComboBox() {}
 
-}
-
-TtLabelComboBox::TtLabelComboBox(Qt::AlignmentFlag flag, const QString &text, QWidget *parent)
-    : QWidget(parent)
-{
+TtLabelComboBox::TtLabelComboBox(Qt::AlignmentFlag flag, const QString& text,
+                                 QWidget* parent)
+    : QWidget(parent) {
   combo_box_ = new TtComboBox(this);
   //combo_box_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   combo_box_->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
@@ -78,29 +73,20 @@ TtLabelComboBox::TtLabelComboBox(Qt::AlignmentFlag flag, const QString &text, QW
           &TtLabelComboBox::currentIndexChanged);
 }
 
-TtLabelComboBox::TtLabelComboBox(const QString &text, QWidget *parent)
-    : Ui::TtLabelComboBox(Qt::AlignLeft, text, parent)
-{
+TtLabelComboBox::TtLabelComboBox(const QString& text, QWidget* parent)
+    : Ui::TtLabelComboBox(Qt::AlignLeft, text, parent) {}
 
-}
+TtLabelComboBox::~TtLabelComboBox() {}
 
-TtLabelComboBox::~TtLabelComboBox()
-{
-
-}
-
-QComboBox *TtLabelComboBox::body()
-{
+QComboBox* TtLabelComboBox::body() {
   return combo_box_;
 }
 
-void TtLabelComboBox::addItem(const QString &atext, const QVariant &auserData)
-{
+void TtLabelComboBox::addItem(const QString& atext, const QVariant& auserData) {
   combo_box_->addItem(atext, auserData);
 }
 
-void TtLabelComboBox::setCurrentItem(qint8 index)
-{
+void TtLabelComboBox::setCurrentItem(qint8 index) {
   combo_box_->setCurrentIndex(index);
 }
 
@@ -127,16 +113,24 @@ void TtLabelComboBox::shortCurrentItemText() {
 }
 
 TtLabelBtnComboBox::TtLabelBtnComboBox(Qt::AlignmentFlag flag,
-                                       const QString& text, const QString& image_path,
+                                       const QString& text,
+                                       const QString& image_path,
                                        QWidget* parent)
     : QWidget(parent) {
   QHBoxLayout* layout = new QHBoxLayout(this);
   part_ = new TtLabelComboBox(flag, text, this);
-  auto refresh_btn = new Ui::CommonButton(":/sys/refresh-normal.svg",
-                                          ":/sys/refresh-hover.svg", this);
+  //auto refresh_btn = new Ui::CommonButton(":/sys/refresh-normal.svg",
+  //                                        ":/sys/refresh-hover.svg", this);
+  auto refresh_btn = new Ui::TtSvgButton(":/sys/refresh-normal.svg",
+                                         ":/sys/refresh-hover.svg", this);
+  refresh_btn->setEnableToggle(true);
 
   layout->addWidget(part_);
   layout->addWidget(refresh_btn);
+  connect(refresh_btn, &Ui::TtSvgButton::clicked, [this]() {
+    qDebug() << "clicked";
+    emit clicked();
+  });
 }
 
 TtLabelBtnComboBox::TtLabelBtnComboBox(const QString& text, QWidget* parent)
@@ -145,8 +139,9 @@ TtLabelBtnComboBox::TtLabelBtnComboBox(const QString& text, QWidget* parent)
   QHBoxLayout* layout = new QHBoxLayout(this);
   layout->setContentsMargins(QMargins());
   layout->setSpacing(0);
-  auto refresh_btn = new Ui::CommonButton(":/sys/refresh-normal.svg",
+  auto refresh_btn = new Ui::TtSvgButton(":/sys/refresh-normal.svg",
                                           ":/sys/refresh-hover.svg", this);
+  refresh_btn->setEnableToggle(true);
   refresh_btn->setObjectName("test");
 
   layout->addWidget(part_);
@@ -154,6 +149,11 @@ TtLabelBtnComboBox::TtLabelBtnComboBox(const QString& text, QWidget* parent)
 
   connect(part_, &TtLabelComboBox::currentIndexChanged, this,
           &TtLabelBtnComboBox::displayCurrentCOMx);
+
+  connect(refresh_btn, &Ui::TtSvgButton::clicked, [this]() {
+    //qDebug() << "clicked";
+    emit clicked();
+  });
 }
 
 TtLabelBtnComboBox::~TtLabelBtnComboBox() {}
@@ -188,5 +188,4 @@ void TtLabelBtnComboBox::displayCurrentCOMx() {
   part_->shortCurrentItemText();
 }
 
-} // namespace Ui
-
+}  // namespace Ui

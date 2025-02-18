@@ -298,12 +298,16 @@ QPushButton:checked:disabled {
 
 /* 正常的 tab 背景色 */
 QTabBar::tab {
-  background-color: Coral;
+  background-color: {{secondaryColor}};
+  border-bottom: none;
+  padding: 8px 20px;  /* 右侧留出关闭按钮空间 */
+  margin-right: 2px;
 }
 
 /* 设置被选中项的背景色 */
 QTabBar::tab:selected {
-  background-color: Red;
+  /*background-color: Red;*/
+  background: {{secondaryLightColor}};
 }
 
 /*  */

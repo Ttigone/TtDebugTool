@@ -19,8 +19,8 @@ void TtPopUpDrawerPrivate::init() {
   widget_ = new TtPopUpDrawerWidget;
   state_machine_ = new TtPopUpDrawerStateMachine(widget_, q);
   window_ = new QWidget;  // 展示设置的窗口
-  //width_ = 250;
-  width_ = 10;  // 弹出的宽度
+  width_ = 250;
+  //width_ = 10;  // 弹出的宽度
   click_to_close_ = false;
   auto_raise_ = true;
   closed_ = true;

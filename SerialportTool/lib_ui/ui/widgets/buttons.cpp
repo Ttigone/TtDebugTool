@@ -485,7 +485,9 @@ TtSvgButton::TtSvgButton(const QString& svgPath1, const QString& svgPath2,
       current_svg_(true),
       is_pressed_(false),
       svg_renderer_(new QSvgRenderer(this)),
-      svg_size_(22, 22) {
+      svg_size_(22, 22),
+      is_enable_toggle_(false),
+      is_checked_(false) {
   setFixedSize(22, 22);
   loadSvg();
   connect(this, &TtSvgButton::clicked, this, &TtSvgButton::toggleSvg);
@@ -508,10 +510,9 @@ QString TtSvgButton::svgSecondPath() const {
 }
 
 void TtSvgButton::setSecondSvgPath(const QString& svgPath2) {
-  if (svg_path1_ != svgPath2) {
-    svg_path1_ = svgPath2;
+  if (svg_path2_ != svgPath2) {
+    svg_path2_ = svgPath2;
     loadSvg();
-    //emit svgpath1Changed();
   }
 }
 
@@ -545,6 +546,22 @@ void TtSvgButton::setSvgSize(const QSize& size) {
   }
 }
 
+bool TtSvgButton::isChecked() const {
+  return is_checked_;
+}
+
+void TtSvgButton::setChecked(bool checked) {
+  is_checked_ = checked;
+  setState(!is_checked_);
+}
+
+void TtSvgButton::setEnableToggle(bool toggle) {
+  is_enable_toggle_ = toggle;
+  if (is_enable_toggle_) {
+    disconnect(this, &TtSvgButton::clicked, nullptr, nullptr);
+  }
+}
+
 void TtSvgButton::paintEvent(QPaintEvent* event) {
   Q_UNUSED(event);
   QPainter painter(this);
@@ -558,15 +575,31 @@ void TtSvgButton::paintEvent(QPaintEvent* event) {
 void TtSvgButton::mousePressEvent(QMouseEvent* event) {
   if (event->button() == Qt::LeftButton) {
     is_pressed_ = true;
-     qDebug() << "pressed";
+    if (is_enable_toggle_) {
+      loadSvg();
+    }
   }
   QWidget::mousePressEvent(event);
 }
 
+void TtSvgButton::enterEvent(QEnterEvent* event) {
+  QWidget::enterEvent(event);
+  //exec
+}
+
+void TtSvgButton::leaveEvent(QEvent* event) {
+  QWidget::leaveEvent(event);
+}
+
 void TtSvgButton::mouseReleaseEvent(QMouseEvent* event) {
   if (event->button() == Qt::LeftButton && is_pressed_) {
-    qDebug() << "emit click";
+    //is_checked_ = true;
     is_pressed_ = false;
+    if (is_enable_toggle_) {
+      current_svg_ = true;
+      loadSvg();
+    }
+
     emit clicked();
   }
   QWidget::mouseReleaseEvent(event);
@@ -578,7 +611,12 @@ void TtSvgButton::toggleSvg() {
 }
 
 void TtSvgButton::loadSvg() {
-  QString svgPath = current_svg_ ? svg_path1_ : svg_path2_;
+  QString svgPath;
+  if (is_pressed_) {
+    svgPath = svg_path2_;  // 按下时显示第二张
+  } else {
+    svgPath = current_svg_ ? svg_path1_ : svg_path2_;  // 根据current_svg_显示
+  }
   if (svg_renderer_->load(svgPath)) {
     update();
   }

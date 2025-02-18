@@ -19,93 +19,37 @@ class TtAnimatedDrawer : public QObject {
 
  public:
   TtAnimatedDrawer(QSplitter* splitter, QWidget* drawer, QWidget* contentWidget,
-                   QObject* parent = nullptr)
-      : QObject(parent),
-        splitter_(splitter),
-        drawer_(drawer),
-        contentWidget_(contentWidget),
-        //animation_(new QPropertyAnimation(this, "drawerWidth", this)),
-        animation_(new QPropertyAnimation(this, "animationWidth", this)),
-        //drawerWidth_(250),  // 默认初始宽度
-        default_width_(250),  // 默认初始宽度
-        current_animation_width_(0),
-        isDrawerVisible_(false) {
-    // 初始化动画
-    animation_->setDuration(300);                        // 动画持续时间
-    animation_->setEasingCurve(QEasingCurve::OutCubic);  // 缓动曲线
-
-    // 确保动画结束时更新布局
-    connect(animation_, &QPropertyAnimation::finished, this,
-            &TtAnimatedDrawer::onAnimationFinished);
-  }
-
+                   QObject* parent = nullptr);
+  ~TtAnimatedDrawer() = default;
   int animationWidth() const { return current_animation_width_; }
 
   void setAnimationWidth(int width) {
     current_animation_width_ = width;
     updateSplitterLayout(width);
-    //qDebug() << "Drawer width: " << width;
   }
 
   void toggleDrawer() {
-    if (isDrawerVisible_) {
-      closeDrawer();
+    if (animation_->state() == QPropertyAnimation::Running) {
+      // 如果动画正在运行，反转方向
+      if (targetDrawerVisible_) {
+        closeDrawer();
+      } else {
+        openDrawer();
+      }
     } else {
-      openDrawer();
+      // 否则根据当前状态切换
+      if (isDrawerVisible_) {
+        closeDrawer();
+      } else {
+        openDrawer();
+      }
     }
   }
 
-  void openDrawer() {
-    if (isDrawerVisible_)
-      return;
+  void openDrawer();
+  void closeDrawer();
 
-    // 确保drawer在splitter中
-    if (splitter_->indexOf(drawer_) < 0) {
-      qDebug() << "insert";
-      splitter_->insertWidget(0, drawer_);
-      drawer_->show();
-      contentWidget_->show();
-    }
-
-    //// 先设置splitter可见区域
-    //QList<int> initSizes;
-    //initSizes << 0 << contentWidget_->width();
-    //splitter_->setSizes(initSizes);
-    updateSplitterLayout(0);
-
-    animation_->stop();
-    animation_->setStartValue(0);
-    animation_->setEndValue(default_width_);  // 使用固定默认宽度
-    animation_->start();
-
-    isDrawerVisible_ = true;
-
-  }
-
-  void closeDrawer() {
-    if (!isDrawerVisible_)
-      return;
-
-    // 直接记录当前宽度，避免在动画过程中获取错误值
-    const int currentWidth = splitter_->sizes().value(0, default_width_);
-    //drawerWidth_ = currentWidth;
-    animation_->stop();
-    animation_->setStartValue(currentWidth);
-    animation_->setEndValue(0);
-    animation_->start();
-
-    connect(
-        animation_, &QPropertyAnimation::finished, this,
-        [this]() {
-          if (splitter_->indexOf(drawer_) >= 0) {
-            drawer_->hide();
-            splitter_->refresh();  // 强制刷新布局
-          }
-        },
-        Qt::SingleShotConnection);
-
-    isDrawerVisible_ = false;
-  }
+  bool isDrawerVisible() const { return isDrawerVisible_; }
 
  private slots:
   void updateSplitterLayout(int drawerWidth) {
@@ -113,17 +57,18 @@ class TtAnimatedDrawer : public QObject {
       return;
 
     const int total = splitter_->width();
-    QList<int> sizes;
-    sizes << drawerWidth << (total - drawerWidth);
+    QList<int> sizes{drawerWidth, total - drawerWidth};
     splitter_->setSizes(sizes);
   }
 
   void onAnimationFinished() {
+    isDrawerVisible_ = targetDrawerVisible_;
     if (!isDrawerVisible_) {
-      qDebug() << "Drawer is now hidden.";
-    } else {
-      qDebug() << "Drawer is now visible.";
+      drawer_->setVisible(false);
     }
+    splitter_->update();
+    splitter_->widget(0)->updateGeometry();
+    splitter_->widget(1)->updateGeometry();
   }
 
  private:
@@ -134,6 +79,7 @@ class TtAnimatedDrawer : public QObject {
   int default_width_;            // 当前 Drawer 的宽度
   int current_animation_width_;  // 当前 Drawer 的宽度
   bool isDrawerVisible_;         // Drawer 的可见状态
+  bool targetDrawerVisible_;     // 新增目标状态变量
 };
 
 }  // namespace Ui

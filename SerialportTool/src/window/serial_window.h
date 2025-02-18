@@ -36,7 +36,6 @@ class SerialPort;
 #include <QToolBox>
 #include <QWidget>
 
-
 #include <Qsci/qsciscintilla.h>
 
 namespace Window {
@@ -103,9 +102,9 @@ class SerialWindow : public QWidget {
   // 纯文本 / 16进制切换 / 删除历史消失
 
   // 消息展示框
-  Ui::TtChatView *message_view_;
-  // 数据 
-  Ui::TtChatMessageModel *message_model_;
+  Ui::TtChatView* message_view_;
+  // 数据
+  Ui::TtChatMessageModel* message_model_;
 
   std::shared_ptr<Core::SerialPort> serial_port_;
 
@@ -113,6 +112,14 @@ class SerialWindow : public QWidget {
 
   // 使用开源编辑组件 QScintilla
   QsciScintilla* editor;
+
+
+
+
+  QWidget* original_widget_ = nullptr;
+  QWidget* edit_widget_ = nullptr;
+  QLineEdit* title_edit_ = nullptr;
+  QStackedWidget* stack_ = nullptr;
 };
 
 }  // namespace Window

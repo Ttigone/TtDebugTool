@@ -26,7 +26,7 @@ enum PositionPolicy {
   Bottom = 0x03,
 
 };
-Q_ENUM_NS(PositionPolicy)
+//Q_ENUM_NS(PositionPolicy)
 
 enum MessageType {
   Success = 0x01,
@@ -35,7 +35,7 @@ enum MessageType {
   Error = 0x04,
 
 };
-Q_ENUM_NS(MessageType)
+//Q_ENUM_NS(MessageType)
 
 }  // namespace TtMessageBarType
 

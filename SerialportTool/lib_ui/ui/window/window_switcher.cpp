@@ -1,5 +1,6 @@
 #include "window_switcher.h"
 #include <QStackedLayout>
+#include "ui/layout/vertical_layout.h"
 
 namespace Ui {
 
@@ -8,7 +9,8 @@ TabManager::TabManager(QWidget* parent) : QTabWidget(parent) {
   addNewTab();
 }
 
-TabManager::TabManager(QWidget* defaultWidget, QWidget* parent) : QTabWidget(parent) {
+TabManager::TabManager(QWidget* defaultWidget, QWidget* parent)
+    : QTabWidget(parent) {
   setTabBar(new ExtTabBar());
   addNewTab(defaultWidget);
 }
@@ -24,6 +26,7 @@ TabManager::~TabManager() {
 
 void TabManager::addNewTab(const QString& title) {
   // 创建默认的 widget1
+  // 总数量
   int tabIndex = count();
   QWidget* defaultWidget = createDefaultWidget(tabIndex);
   // addTab(defaultWidget, "Tab " + QString::number(tabIndex + 1));
@@ -39,8 +42,9 @@ void TabManager::addNewTab(QWidget* defaultWidget) {
 
 void TabManager::addNewTab(QWidget* defaultWidget, const QString& title) {
   // 创建默认的 widget1
-  int tabIndex = count();
+  //int tabIndex = count();
   // QWidget* defaultWidget = createDefaultWidget(tabIndex);
+  // 添加的 tab 是一直在最后面的
   addTab(defaultWidget, title);
 }
 
@@ -52,6 +56,7 @@ void TabManager::registerWidget(int widgetId, const WidgetFactory& factory,
 }
 
 void TabManager::switchToWidget(int tabIndex, int widgetId) {
+  // 根据 id 切换目标 widget
   // base::DetectRunningTime runtime;
 
   // 切换
@@ -66,7 +71,9 @@ void TabManager::switchToWidget(int tabIndex, int widgetId) {
 
   // 销毁当前 Widget
   // 实现原地操作
+  // 根据 index 去索引 widget, 目标切换窗口!!! 点击的时候对应的 index
   QWidget* currentWidget = widget(tabIndex);
+  //qDebug() << "cur: tabIndex - " << tabIndex;
   if (currentWidget) {
     currentWidget->deleteLater();
   }
@@ -82,27 +89,55 @@ void TabManager::switchToWidget(int tabIndex, int widgetId) {
   // 向 tabIndex 所有的 tab 界面设置界面 newWidget, title 为对应索引值
   insertTab(tabIndex, newWidget, widgetTitles[widgetId]);
   // 显示当前正在操作的 tab
+  // 重复创建 串口时, 发现会跳到之前已经创建好的
   setCurrentIndex(tabIndex);
 }
 
+void TabManager::setupTabBar() {
+  ExtTabBar* tabBar = new ExtTabBar(this);
+  setTabBar(tabBar);
+
+  // 连接信号
+  connect(tabBar, &ExtTabBar::tabCloseRequested, this,
+          &TabManager::handleTabCloseRequested);
+  connect(tabBar, &ExtTabBar::newTabRequested, this, &TabManager::handleAddNewTab);
+}
+
 // void TabManager::handleButtonClicked(int tabIndex) {
-void TabManager::handleButtonClicked(int widgetId) {
+void TabManager::handleButtonClicked(int tabIndex, int widgetId) {
   // 假设点击按钮后切换到 widget2
-  switchToWidget(count() - 1, widgetId);  // widgetId = 2 是 widget2
+  //qDebug() << 
+  // TODO 信号只传递了要切换的 widgetid, 但是没有 tabindex !!!
+  switchToWidget(tabIndex, widgetId);  // widgetId = 2 是 widget2
+}
+
+void TabManager::handleAddNewTab() {
+  addNewTab("新建立");
+}
+
+void TabManager::handleTabCloseRequested(int index) {
+  if (count() <= 1)
+    return;  // 至少保留一个标签
+
+  // 删除对应的 Widget
+  QWidget* widget = this->widget(index);
+  widget->deleteLater();
+  removeTab(index);
 }
 
 QWidget* TabManager::createDefaultWidget(int tabIndex) {
   // 新建 widget
   QWidget* widget = new QWidget(this);
-  // 布局
-  QVBoxLayout* layout = new QVBoxLayout(widget);
+  //// 布局
+  ////QVBoxLayout* layout = new QVBoxLayout(widget);
+  //Ui::VerticalLayout* layout = new VerticalLayout(widget);
 
-  QPushButton* button = new QPushButton("Switch to Widget2", widget);
-  connect(button, &QPushButton::clicked, this,
-          [this, tabIndex]() { handleButtonClicked(tabIndex); });
+  //QPushButton* button = new QPushButton("Switch to Widget2", widget);
+  ////connect(button, &QPushButton::clicked, this,
+  ////        [this, tabIndex]() { handleButtonClicked(tabIndex); });
 
-  layout->addWidget(button);
-  widget->setLayout(layout);
+  //layout->addWidget(button);
+  //widget->setLayout(layout);
   return widget;
 }
 

@@ -149,7 +149,8 @@ class TtImageButton : public QWidget {
 
     // 设置背景颜色，当按钮按下时为深色，否则为透明
     QColor backgroundColor =
-        is_pressed_ ? QColor("#e9e9ea") : QColor(0, 0, 0, 0);  // 透明背景
+        //is_pressed_ ? QColor("#e9e9ea") : QColor(0, 0, 0, 0);  // 透明背景
+        is_pressed_ ? QColor("#424242") : QColor(0, 0, 0, 0);  // 透明背景
 
     painter.fillRect(rect(), backgroundColor);
 
@@ -272,6 +273,7 @@ class TtSvgButton : public QWidget {
   Q_PROPERTY(bool currentSvg READ currentSvg WRITE setCurrentSvg NOTIFY
                  currentSvgChanged)
   Q_PROPERTY(QSize svgSize READ svgSize WRITE setSvgSize)  // 新增属性
+  Q_PROPERTY(bool checked READ isChecked WRITE setChecked)  // 新增属性
  public:
   explicit TtSvgButton(QWidget* parent = nullptr);
   TtSvgButton(const QString& svgPath1, const QString& svgPath2,
@@ -291,6 +293,11 @@ class TtSvgButton : public QWidget {
   QSize svgSize() const;
   void setSvgSize(const QSize& size);
 
+  bool isChecked() const;
+  void setChecked(bool checked);
+
+  void setEnableToggle(bool toggle);
+
  signals:
   void clicked();
   void currentSvgChanged();
@@ -298,6 +305,8 @@ class TtSvgButton : public QWidget {
  protected:
   void paintEvent(QPaintEvent* event) override;
   void mousePressEvent(QMouseEvent* event) override;
+  void enterEvent(QEnterEvent* event) override;
+  void leaveEvent(QEvent* event) override;
   void mouseReleaseEvent(QMouseEvent* event) override;
 
  private slots:
@@ -312,6 +321,8 @@ class TtSvgButton : public QWidget {
   bool is_pressed_;
   QSvgRenderer* svg_renderer_;
   QSize svg_size_;
+  bool is_enable_toggle_;
+  bool is_checked_;
 };
 
 class TtToggleButton : public QWidget {

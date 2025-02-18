@@ -44,6 +44,7 @@
 #include "ui/window/window_switcher.h"
 
 #include <ui/effects/animated_drawer.h>
+#include <ui/widgets/widget_group.h>
 
 namespace Window {
 
@@ -112,102 +113,171 @@ MainWindow::MainWindow(QWidget* parent)
 
   function_select_ = new FunctionSelectionWindow();
 
-  // 第二个参数是 parent
   // 初始界面是 test111
   tabWidget_ = new Ui::TabManager(function_select_, this);
 
-  // 弹出窗口底层
-  //QWidget* popUpBodyWidget = new QWidget();
-  //popUpBodyWidget->setStyleSheet("background-color : Coral");
+  // 容纳一定了 widget, 以供外部切换, 直接存放 widget, 而非设定
+  auto test = new Window::PopUpWindow();
 
-  // 弹出的 widget
-  // 要赋值父对象, 这个父对象也就是 canves
-  // 弹出的 widget 的左侧应该在 left_bar_ 的右侧对齐
-  //communication_connection_widget = new Ui::PopWidget(popUpBodyWidget);
-  //communication_connection_widget = new Ui::PopWidget();
-  //communication_connection_widget = new Ui::PopWidget(tabWidget_);
-  //communication_connection_widget = new Ui::PopWidget(this);
-
-  //auto test = new Window::PopUpWindow();
-  //test->setTitle(tr("连接列表"));
-  //QWidget* insidetest = new QWidget;
-  //auto il = new Ui::VerticalLayout(insidetest);
-  ////insidetest->setLayout(il);
-
-  //Ui::TtNormalLabel* imla = new Ui::TtNormalLabel();
-  //imla->setPixmap(QPixmap::fromImage(QImage(":/sys/tmp.png").scaled(100, 100)));
-  //il->addStretch();
-  //il->addWidget(imla, 0, Qt::AlignCenter);
-
-  //Ui::TtNormalLabel* la_ = new Ui::TtNormalLabel(tr("暂时没有可用的连接"));
-  //il->addWidget(la_, 0, Qt::AlignCenter);
-  //// 点击后在 tab 弹出一个 新 tab, 用于设置
-  //auto ib = new QPushButton(tr("新建连接"));
-  //ib->setFixedSize(100, 28);
-  //il->addSpacerItem(new QSpacerItem(0, 20));
-  //il->addWidget(ib, 0, Qt::AlignCenter);
-  //il->addStretch();
-
-  //// 新增的弹出框
-  //connect(ib, &QPushButton::clicked, [this]() {
-  //  qDebug() << "add new tab";
-  //  FunctionSelectionWindow* test2 = new FunctionSelectionWindow();
-  //  tabWidget_->addNewTab(test2, tr("新建连接"));
-  //  // 连接信号槽
-  //  QObject::connect(
-  //      test2, &FunctionSelectionWindow::switchRequested,
-  //      [this](int widget_id) { tabWidget_->handleButtonClicked(widget_id); });
-  //  // 切换到当前新增 tab
-  //  tabWidget_->setCurrentWidget(test2);
-  //  communication_connection_widget->closeDrawer();
-  //});
-
-  //test->setWidget(insidetest);
-
-  // 设置弹出的窗口
-  //communication_connection_widget->setWidget(test);
-
-  registerTabWidget();
-
-  // 使用样式表设置选项卡字体颜色
-  // QString tabStyle = "QTabBar::tab { color: red; } "; // 设置选项卡字体颜色为红色
-  // tabWidget_->setStyleSheet(tabStyle);
-
-  QSplitter* mainSpliter = new QSplitter(this);
+  QSplitter* mainSplitter = new QSplitter(this);
+  mainSplitter->setCollapsible(1, false);
   //popUpBodyWidget->setParent(mainSpliter);
-  QWidget* testW = new QWidget(mainSpliter);
-  testW->setStyleSheet("background-color: lightblue;");  // Drawer 的背景色
-  mainSpliter->addWidget(testW);
+  //QWidget* testW = new QWidget(mainSplitter);
+  //testW->setStyleSheet("background-color: lightblue;");  // Drawer 的背景色
+  //mainSplitter->addWidget(testW);
+  mainSplitter->addWidget(test);
   //Ui::TtPopUpDrawer* drawer = new Ui::TtPopUpDrawer(mainSpliter);
   //mainSpliter->addWidget(communication_connection_widget);
-  mainSpliter->addWidget(tabWidget_);
-  //mainSpliter->setStretchFactor(0, 0);  // Drawer 不占用拉伸
-  //mainSpliter->setStretchFactor(1, 1);  // Content Widget 占用所有拉伸
-                                        // 创建 AnimatedDrawer 控制器
+  mainSplitter->addWidget(tabWidget_);
+  // 创建 AnimatedDrawer 控制器
   Ui::TtAnimatedDrawer* controller =
-      new Ui::TtAnimatedDrawer(mainSpliter, testW, tabWidget_, this);
-  // 创建 Drawer Controller
+      //new Ui::TtAnimatedDrawer(mainSplitter, testW, tabWidget_, this);
+      new Ui::TtAnimatedDrawer(mainSplitter, test, tabWidget_, this);
 
-  //// 直接做一个 spliter 的弹出
-  //Ui:: DrawerController* controller =
-  //    new Ui::DrawerController(mainSpliter, drawer, tabWidget_, this);
-  // 连接 splitter 的移动信号，防止拖动导致 Drawer 显示
-  //connect(mainSpliter, &QSplitter::splitterMoved, controller,
-  //        &Ui::DrawerController::handleSplitterMoved);
+  {
+
+    QWidget* insidetest = new QWidget;
+    auto il = new Ui::VerticalLayout(insidetest);
+
+    Ui::TtNormalLabel* imla = new Ui::TtNormalLabel();
+    imla->setPixmap(
+        QPixmap::fromImage(QImage(":/sys/tmp.png").scaled(100, 100)));
+    il->addStretch();
+    il->addWidget(imla, 0, Qt::AlignCenter);
+
+    Ui::TtNormalLabel* la_ = new Ui::TtNormalLabel(tr("暂时没有可用的连接"));
+    il->addWidget(la_, 0, Qt::AlignCenter);
+    // 点击后在 tab 弹出一个 新 tab, 用于设置
+    auto ib = new QPushButton(tr("新建连接"));
+    ib->setFixedSize(100, 28);
+    il->addSpacerItem(new QSpacerItem(0, 20));
+    il->addWidget(ib, 0, Qt::AlignCenter);
+    il->addStretch();
+
+    test->addPairedWidget(0, insidetest);
+
+    // 新增的弹出框
+    connect(ib, &QPushButton::clicked, [this, controller]() {
+      qDebug() << "add new tab";
+      FunctionSelectionWindow* test2 = new FunctionSelectionWindow();
+      tabWidget_->addNewTab(test2, tr("新建连接"));
+      // 连接信号槽
+      QObject::connect(test2, &FunctionSelectionWindow::switchRequested,
+                       [this](int widget_id) {
+                         tabWidget_->handleButtonClicked(tabWidget_->currentIndex(), widget_id);
+                       });
+      // 切换到当前新增 tab
+      tabWidget_->setCurrentWidget(test2);
+      //controller->closeDrawer();
+    });
+  }
+
+  {
+    QWidget* insidetest = new QWidget;
+    auto il = new Ui::VerticalLayout(insidetest);
+
+    Ui::TtNormalLabel* imla = new Ui::TtNormalLabel();
+    imla->setPixmap(
+        QPixmap::fromImage(QImage(":/sys/tmp.png").scaled(100, 100)));
+    il->addStretch();
+    il->addWidget(imla, 0, Qt::AlignCenter);
+
+    Ui::TtNormalLabel* la_ = new Ui::TtNormalLabel(tr("指令列表为空"));
+    il->addWidget(la_, 0, Qt::AlignCenter);
+    // 点击后在 tab 弹出一个 新 tab, 用于设置
+    auto ib = new QPushButton(tr("新建指令"));
+    ib->setFixedSize(100, 28);
+    il->addSpacerItem(new QSpacerItem(0, 20));
+    il->addWidget(ib, 0, Qt::AlignCenter);
+    il->addStretch();
+
+    test->addPairedWidget(1, insidetest);
+
+    // 新增的弹出框
+    connect(ib, &QPushButton::clicked, [this, controller]() {
+      //qDebug() << "add new tab";
+      FunctionSelectionWindow* test2 = new FunctionSelectionWindow();
+
+      tabWidget_->addNewTab(test2, tr("新建连接"));
+      // 连接信号槽
+      QObject::connect(test2, &FunctionSelectionWindow::switchRequested,
+                       [this](int widget_id) {
+                         //auto cuI = ;
+                         tabWidget_->handleButtonClicked(
+                             tabWidget_->currentIndex(), widget_id);
+                       });
+      // 切换到当前新增 tab
+      tabWidget_->setCurrentWidget(test2);
+      //controller->closeDrawer();
+    });
+  }
+
+  {
+    QWidget* insidetest = new QWidget;
+    auto il = new Ui::VerticalLayout(insidetest);
+
+    Ui::TtNormalLabel* imla = new Ui::TtNormalLabel();
+    imla->setPixmap(
+        QPixmap::fromImage(QImage(":/sys/tmp.png").scaled(100, 100)));
+    il->addStretch();
+    il->addWidget(imla, 0, Qt::AlignCenter);
+
+    Ui::TtNormalLabel* la_ = new Ui::TtNormalLabel(tr("没有可用的模拟服务"));
+    il->addWidget(la_, 0, Qt::AlignCenter);
+    // 点击后在 tab 弹出一个 新 tab, 用于设置
+    //auto ib = new QPushButton(tr("新建指令"));
+    //ib->setFixedSize(100, 28);
+    //il->addSpacerItem(new QSpacerItem(0, 20));
+    //il->addWidget(ib, 0, Qt::AlignCenter);
+    //il->addStretch();
+
+    test->addPairedWidget(2, insidetest);
+
+    //// 新增的弹出框
+    //connect(ib, &QPushButton::clicked, [this, controller]() {
+    //  qDebug() << "add new tab";
+    //  FunctionSelectionWindow* test2 = new FunctionSelectionWindow();
+    //  tabWidget_->addNewTab(test2, tr("新建连接"));
+    //  // 连接信号槽
+    //  QObject::connect(test2, &FunctionSelectionWindow::switchRequested,
+    //                   [this](int widget_id) {
+    //                     tabWidget_->handleButtonClicked(widget_id);
+    //                   });
+    //  // 切换到当前新增 tab
+    //  tabWidget_->setCurrentWidget(test2);
+    //  //controller->closeDrawer();
+    //});
+  }
+
+  registerTabWidget();
 
   // 左边栏
   layout_->addWidget(left_bar_, 0, Qt::AlignLeft);
 
-  //layout_->addWidget(tabWidget_);
-  layout_->addWidget(mainSpliter);
+  layout_->addWidget(mainSplitter);
 
-  connect(communication_connection, &Ui::TtSvgButton::clicked,
-          [this, controller]() {
-            //communication_connection_widget->triggerSwitch();
-
-            controller->toggleDrawer();
-            //Ui::SnackBarController::instance()->showMessage("这是一个测试消息", 2000);
+  connect(left_bar_logic_, &Ui::TtWidgetGroup::widgetClicked,
+          [this, test, controller](int index) {
+            //qDebug() << index;
+            // 打开
+            if (controller->isDrawerVisible()) {
+              // 重复
+              if (!test->switchToWidget(index)) {
+                //qDebug() << "close";
+                controller->closeDrawer();
+              }
+            } else {
+              //qDebug() << "open";
+              test->switchToWidget(index);
+              controller->openDrawer();
+            }
           });
+
+  //connect(communication_connection, &Ui::TtSvgButton::clicked,
+  //        [this, test, mainSplitter, controller]() {
+  //          controller->toggleDrawer();
+  //          //Ui::SnackBarController::instance()->showMessage("这是一个测试消息", 2000);
+  //        });
 
   connectSignals();
 }
@@ -503,7 +573,7 @@ void MainWindow::loadStyleSheet(Theme theme) {
   // first set the directory that contains all your styles
   AdvancedStylesheet.setStylesDirPath(AppDir +
                                       "/../../SerialportTool/res/styles");
-  qDebug() << AdvancedStylesheet.currentStylePath();
+  //qDebug() << AdvancedStylesheet.currentStylePath();
 
   // now set the output folder where the processed styles are stored. The
   // style manager will create a sub directory for each style
@@ -534,6 +604,8 @@ void MainWindow::loadStyleSheet(Theme theme) {
 
 void MainWindow::setLeftBar() {
   left_bar_ = new QWidget();
+  left_bar_logic_ = new Ui::TtWidgetGroup(this);
+  left_bar_logic_->setExclusive(true);
   communication_connection = new Ui::TtSvgButton(
       ":/sys/communicating-junctions.svg",
       ":/sys/communicating-junctions_pressed.svg", left_bar_);
@@ -552,6 +624,10 @@ void MainWindow::setLeftBar() {
   communication_connection->setStyleSheet("padding: 5px 10px;");
   communication_instruction->setStyleSheet("padding: 5px 10px;");
 
+  left_bar_logic_->addWidget(communication_connection);
+  left_bar_logic_->addWidget(communication_instruction);
+  left_bar_logic_->addWidget(realistic_simulation);
+
   Ui::VerticalLayout* left_bar_layout = new Ui::VerticalLayout();
 
   // 添加按钮
@@ -560,6 +636,7 @@ void MainWindow::setLeftBar() {
   left_bar_layout->addWidget(realistic_simulation);
   left_bar_layout->addStretch();
 
+  //left_bar_->addWidget();
   left_bar_->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
   left_bar_->setLayout(left_bar_layout);
   left_bar_->setMinimumWidth(40);
@@ -591,7 +668,7 @@ void MainWindow::connectSignals() {
   QObject::connect(
       function_select_, &FunctionSelectionWindow::switchRequested,
       // [this](int widget_id) { tabWidget_->switchToWidget(widget_id); });
-      [this](int widget_id) { tabWidget_->handleButtonClicked(widget_id); });
+      [this](int widget_id) { tabWidget_->handleButtonClicked(tabWidget_->currentIndex(), widget_id); });
 }
 
 void MainWindow::registerTabWidget() {

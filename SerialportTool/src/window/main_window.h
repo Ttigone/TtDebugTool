@@ -11,25 +11,26 @@
 
 namespace QWK {
 class WidgetWindowAgent;
-} // namespace QWK
+}  // namespace QWK
 
 namespace Ui {
 class TextWidget;
 class CustomTabWidget;
 class PopWidget;
 class TtSvgButton;
-} // namespace Ui
+class TtWidgetGroup;
+}  // namespace Ui
 
 namespace Core {
 class SerialPort;
-} // namespace Core
+}  // namespace Core
 
 class QtMaterialSnackbar;
 
 namespace Widget {
 class SerialSetting;
 class SerialOperation;
-} // namespace Widght
+}  // namespace Widget
 
 namespace Window {
 
@@ -48,51 +49,51 @@ class MainWindow : public QMainWindow {
   Q_ENUM(Theme)
 
  public Q_SLOTS:
-    void showSnackbar();
+  void showSnackbar();
 
-Q_SIGNALS:
-    void themeChanged();
+ Q_SIGNALS:
+  void themeChanged();
 
-protected:
-    bool event(QEvent *event) override;
+ protected:
+  bool event(QEvent* event) override;
 
-private:
-    void installWindowAgent();
-    void loadStyleSheet(Theme theme);
-    void setLeftBar();
-    void connectSignals();
-    void registerTabWidget();
+ private:
+  void installWindowAgent();
+  void loadStyleSheet(Theme theme);
+  void setLeftBar();
+  void connectSignals();
+  void registerTabWidget();
 
-    // void createDockWindows();
+  // void createDockWindows();
 
-    Theme currentTheme{};
+  Theme currentTheme{};
 
-    QWidget* central_widget_;
+  QWidget* central_widget_;
 
-    QPointer<QWK::WidgetWindowAgent> window_agent_;
+  QPointer<QWK::WidgetWindowAgent> window_agent_;
 
+  Ui::HorizontalLayout* layout_;
 
-    Ui::HorizontalLayout* layout_;
+  // 侧边弹出的菜单栏, 设置串口参数, 其他事项, 按钮组
+  QWidget* left_bar_;
+  Ui::TtWidgetGroup *left_bar_logic_;
+  bool ishi{true};
 
-    // 侧边弹出的菜单栏, 设置串口参数, 其他事项, 按钮组
-    QWidget* left_bar_;
+  Ui::TtSvgButton* communication_connection;
+  Ui::TtSvgButton* communication_instruction;
+  Ui::TtSvgButton* realistic_simulation;
 
-    Ui::TtSvgButton* communication_connection;
-    Ui::TtSvgButton* communication_instruction;
-    Ui::TtSvgButton* realistic_simulation;
+  // tab 页面
+  Ui::TabManager* tabWidget_;
 
-    // tab 页面
-    Ui::TabManager* tabWidget_;
+  Window::FunctionSelectionWindow* function_select_;
 
-    Window::FunctionSelectionWindow* function_select_;
-
-    // 弹出的 widget
-    // 要赋值父对象, 这个父对象也就是 canves
-    // 弹出的 widget 的左侧应该在 left_bar_ 的右侧对齐
-    Ui::PopWidget* communication_connection_widget;
+  // 弹出的 widget
+  // 要赋值父对象, 这个父对象也就是 canves
+  // 弹出的 widget 的左侧应该在 left_bar_ 的右侧对齐
+  Ui::PopWidget* communication_connection_widget;
 };
 
-} // namespace Window
+}  // namespace Window
 
-#endif // MAIN_WINDOW_H
-
+#endif  // MAIN_WINDOW_H

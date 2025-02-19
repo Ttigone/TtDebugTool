@@ -320,9 +320,9 @@ QWidget* TtTableWidget::createSecondColumnWidget() {
   layout->setContentsMargins(QMargins());
 
   // 创建下拉框和数字输入框
-  Widgets::TtCustomizeFields* lineEdit =
+  TtLineEdit* lineEdit =
       // new Widgets::TtCustomizeFields(container);
-      new Widgets::TtCustomizeFields(tr("名称"), container);
+      new TtLineEdit(tr("名称"), container);
   // lineEdit->setMinimumWidth(260);  // 无法生效
   // lineEdit->setFixedWidth(260);  // 无法生效
   lineEdit->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
@@ -355,9 +355,9 @@ QWidget* TtTableWidget::createFourthColumnWidget() {
   // // 创建下拉框和数字输入框
   // QLineEdit* lineEdit = new QLineEdit(container);
   // 创建下拉框和数字输入框
-  Widgets::TtCustomizeFields* lineEdit =
+  TtLineEdit* lineEdit =
       // new Widgets::TtCustomizeFields(container);
-      new Widgets::TtCustomizeFields(tr("内容"), container);
+      new TtLineEdit(tr("内容"), container);
   layout->addWidget(lineEdit, 0, Qt::AlignLeft);
 
   return container;

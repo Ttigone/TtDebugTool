@@ -2,6 +2,9 @@
 
 #include "core/serial_port.h"
 
+#include <ui/layout/horizontal_layout.h>
+#include <ui/layout/vertical_layout.h>
+#include <ui/widgets/collapsible_panel.h>
 #include <ui/window/combobox.h>
 
 namespace Widget {
@@ -12,27 +15,15 @@ Core::SerialPortConfiguration DefaultSetting = {
     QSerialPort::NoParity, QSerialPort::OneStop,  QSerialPort::NoFlowControl};
 
 SerialSetting::SerialSetting(QWidget* parent)
-    : select_serial_port_(new Ui::TtLabelBtnComboBox(tr("串口:"), this)),
-      select_baud_rate_(new Ui::TtLabelComboBox(tr("波特率:"), this)),
-      select_data_bit_(new Ui::TtLabelComboBox(tr("数据位:"), this)),
-      select_parity_bit_(new Ui::TtLabelComboBox(tr("校验位:"), this)),
-      select_stop_bit_(new Ui::TtLabelComboBox(tr("停止位:"), this)),
-      select_fluid_control_(new Ui::TtLabelComboBox(tr("流控:"), this)),
-      QWidget(parent) {
-  QVBoxLayout* layout = new QVBoxLayout;
-  layout->setSpacing(0);
-  layout->setContentsMargins(QMargins());
-  this->setLayout(layout);
-
-  layout->addWidget(select_serial_port_);
-  layout->addWidget(select_baud_rate_);
-  layout->addWidget(select_data_bit_);
-  layout->addWidget(select_parity_bit_);
-  layout->addWidget(select_stop_bit_);
-  layout->addWidget(select_fluid_control_);
-
-  connect(select_serial_port_, &Ui::TtLabelBtnComboBox::clicked,
-          [this]() { setSerialPortsName(); });
+    : QWidget(parent)
+//select_serial_port_(new Ui::TtLabelBtnComboBox(tr("串口:"), this)),
+//select_baud_rate_(new Ui::TtLabelComboBox(tr("波特率:"), this)),
+//select_data_bit_(new Ui::TtLabelComboBox(tr("数据位:"), this)),
+//select_parity_bit_(new Ui::TtLabelComboBox(tr("校验位:"), this)),
+//select_stop_bit_(new Ui::TtLabelComboBox(tr("停止位:"), this)),
+//select_fluid_control_(new Ui::TtLabelComboBox(tr("流控:"), this)) {
+{
+  init();
 }
 
 SerialSetting::~SerialSetting() {}
@@ -67,6 +58,8 @@ Core::SerialPortConfiguration SerialSetting::getSerialPortConfiguration() {
               ->itemData(select_fluid_control_->body()->currentIndex())
               .toInt()));
 
+  //qDebug() << cfg.com << cfg.baud_rate << cfg.data_bits << cfg.parity
+  //         << cfg.stop_bits << cfg.flow_control;
   return cfg;
 }
 
@@ -74,13 +67,16 @@ Core::SerialPortConfiguration SerialSetting::defaultSerialPortConfiguration() {
   // 为每个 box 设置对应的 cfg 参数
   // 可删
   DefaultSetting.com = matchingSerialCOMx(select_serial_port_->currentText());
-  //qDebug() << select_serial_port->currentText();
-  // qDebug() << "DEFAULT: " << DefaultSetting.com;
   qDebug() << DefaultSetting.parity;
   // 串口名转换成对应的配置项
   if (DefaultSetting.com.isEmpty()) {
     // 显示错误
   }
+  // TODO baud 有问题
+  qDebug() << DefaultSetting.com << DefaultSetting.baud_rate
+           << DefaultSetting.data_bits << DefaultSetting.parity
+           << DefaultSetting.stop_bits << DefaultSetting.flow_control;
+
   return DefaultSetting;
 }
 
@@ -122,6 +118,29 @@ void SerialSetting::displayDefaultSetting() {
       break;
     }
   }
+}
+
+const QJsonObject& SerialSetting::getSerialSetting() {
+  // TODO: 在此处插入 return 语句
+  auto cfg = getSerialPortConfiguration();
+  QJsonObject linkSetting;
+  linkSetting.insert("PortName", QJsonValue(cfg.com));
+  linkSetting.insert("BaudRate", QJsonValue(cfg.baud_rate));
+  linkSetting.insert("DataBits", QJsonValue(cfg.data_bits));
+  linkSetting.insert("StopBits", QJsonValue(cfg.stop_bits));
+  linkSetting.insert("FlowControl", QJsonValue(cfg.flow_control));
+  serial_save_config_.insert("LinkSetting", QJsonValue(linkSetting));
+
+  QJsonObject framing;
+  framing.insert("Model", QJsonValue(framing_model_->body()->currentText()));
+  QJsonObject framingKids;
+  framingKids.insert("Timeout", QJsonValue(framing_timeout_->body()->currentText()));
+  framingKids.insert("FixedLength", QJsonValue(framing_fixed_length_->body()->currentText()));
+  framing.insert("Kids", QJsonValue(framingKids));
+  serial_save_config_.insert("Framing", QJsonValue(framing));
+
+  return serial_save_config_;
+
 }
 
 void SerialSetting::setSerialPortsName() {
@@ -175,6 +194,131 @@ void SerialSetting::setSerialPortsFluidControl() {
        ++it) {
     select_fluid_control_->addItem(it.key(), it.value());
   }
+}
+
+void SerialSetting::init() {
+  main_layout_ = new Ui::TtVerticalLayout(this);
+
+  QWidget* serialConfigWidget = new QWidget(this);
+  select_serial_port_ =
+      new Ui::TtLabelBtnComboBox(tr("串口:"), serialConfigWidget);
+  select_baud_rate_ =
+      new Ui::TtLabelComboBox(tr("波特率:"), serialConfigWidget);
+  select_data_bit_ = new Ui::TtLabelComboBox(tr("数据位:"), serialConfigWidget);
+  select_parity_bit_ =
+      new Ui::TtLabelComboBox(tr("校验位:"), serialConfigWidget);
+  select_stop_bit_ = new Ui::TtLabelComboBox(tr("停止位:"), serialConfigWidget);
+  select_fluid_control_ =
+      new Ui::TtLabelComboBox(tr("流控:"), serialConfigWidget);
+
+  Ui::TtVerticalLayout* layout = new Ui::TtVerticalLayout(serialConfigWidget);
+
+  layout->addWidget(select_serial_port_);
+  layout->addWidget(select_baud_rate_);
+  layout->addWidget(select_data_bit_);
+  layout->addWidget(select_parity_bit_);
+  layout->addWidget(select_stop_bit_);
+  layout->addWidget(select_fluid_control_);
+
+  connect(select_serial_port_, &Ui::TtLabelBtnComboBox::clicked,
+          [this]() { setSerialPortsName(); });
+
+  // 初始 app 时, 随机地设置串口配置
+  // 选择可以选择全部, 但是显示的时候, 只显示 COMx
+  setSerialPortsName();
+  setSerialPortsBaudRate();
+  setSerialPortsDataBit();
+  setSerialPortsParityBit();
+  setSerialPortsStopBit();
+  setSerialPortsFluidControl();
+  displayDefaultSetting();
+
+  QWidget* contentWidget1 = new QWidget;
+  QVBoxLayout* contentLayout1 = new QVBoxLayout(contentWidget1);
+  contentLayout1->setSpacing(0);
+  contentLayout1->setContentsMargins(QMargins());
+  //contentLayout1->addWidget(serial_setting_);
+  contentLayout1->addWidget(serialConfigWidget);
+  contentWidget1->adjustSize();  // 确保大小正确
+  Ui::Drawer* drawer1 = new Ui::Drawer(tr("连接设置"), contentWidget1);
+  //Ui::Drawer* drawer1 = new Ui::Drawer(tr("连接设置"), sds);
+
+  QWidget* framingWidget = new QWidget;
+  Ui::TtVerticalLayout* framingWidgetLayout =
+      new Ui::TtVerticalLayout(framingWidget);
+  framingWidget->adjustSize();  // 确保大小正确
+  framing_model_ = new Ui::TtLabelComboBox(tr("模式: "));
+  framing_model_->addItem(tr("无"));
+  framing_model_->addItem(tr("超时时间"));
+  framing_model_->addItem(tr("固定长度"));
+  framing_timeout_ = new Ui::TtLabelComboBox(tr("时间: "));
+  framing_fixed_length_ = new Ui::TtLabelComboBox(tr("长度: "));
+  framingWidgetLayout->addWidget(framing_model_);
+  framingWidgetLayout->addWidget(framing_timeout_);
+  framingWidgetLayout->addWidget(framing_fixed_length_);
+
+  Ui::Drawer* drawer2 = new Ui::Drawer(tr("分帧"), framingWidget);
+
+  connect(framing_model_, &Ui::TtLabelComboBox::currentIndexChanged,
+          [this, framingWidget, drawer2](int index) {
+            switch (index) {
+              case 0: {
+                framing_timeout_->setVisible(false);
+                framing_fixed_length_->setVisible(false);
+                break;
+              }
+              case 1: {
+                framing_timeout_->setVisible(true);
+                framing_fixed_length_->setVisible(false);
+                break;
+              }
+              case 2: {
+                framing_timeout_->setVisible(false);
+                framing_fixed_length_->setVisible(true);
+                break;
+              }
+            }
+            const auto event =
+                new QResizeEvent(drawer2->size(), drawer2->size());
+            QCoreApplication::postEvent(drawer2, event);
+          });
+  framing_model_->setCurrentItem(0);
+  framing_timeout_->setVisible(false);
+  framing_fixed_length_->setVisible(false);
+
+  Ui::TtLabelComboBox* c3 = new Ui::TtLabelComboBox(tr("换行符: "));
+  c3->addItem("\\r");
+  c3->addItem("\\n");
+  c3->addItem("\\r\\n");
+  Ui::Drawer* drawer3 = new Ui::Drawer(tr("换行"), c3);
+
+  Ui::TtLabelComboBox* c4 = new Ui::TtLabelComboBox(tr("类型: "));
+  c4->addItem(tr("无"));
+  c4->addItem(tr("文本"));
+  c4->addItem(tr("HEX"));
+  // 选择文本或者 HEX 多出了间隔和内容
+  Ui::Drawer* drawer4 = new Ui::Drawer(tr("心跳"), c4);
+
+  // 滚动区域
+  QScrollArea* scr = new QScrollArea(this);
+  QWidget* scrollContent = new QWidget(scr);
+  //scr->setWidget(scrollContent);
+  //scr->setWidgetResizable(true);
+
+  Ui::TtVerticalLayout* lascr = new Ui::TtVerticalLayout(scrollContent);
+
+  lascr->addWidget(drawer1, 0, Qt::AlignTop);
+  //lascr->addWidget(sds, 0, Qt::AlignTop);
+  lascr->addWidget(drawer2);
+  lascr->addWidget(drawer3);
+  lascr->addWidget(drawer4);
+  lascr->addStretch();
+  scrollContent->setLayout(lascr);
+
+  scr->setWidget(scrollContent);
+  scr->setWidgetResizable(true);
+
+  main_layout_->addWidget(scr);
 }
 
 void SerialSetting::refreshSerialCOMx() {}

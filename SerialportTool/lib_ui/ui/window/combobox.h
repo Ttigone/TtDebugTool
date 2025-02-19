@@ -12,24 +12,6 @@ class TtComboBox : public QComboBox {
   TtComboBox(QWidget* parent = nullptr);
   ~TtComboBox();
 
- protected:
-  //void showPopup() override {
-  //  QListView* listView = qobject_cast<QListView*>(view());
-  //  if (listView) {
-  //    QRect rect = this->rect();
-  //    QPoint pos =
-  //        this->mapToGlobal(QPoint(0, rect.height()));  // 设置下拉框位置
-  //    qDebug() << "pos: " << pos; // 左上角的坐标
-  //    qDebug() << "DPI Scale Factor: " << this->devicePixelRatioF();
-  //    QWidget* mainWin = this->window();
-  //    QPoint mainPos = mainWin->mapToGlobal(QPoint(0, 0));
-  //    qDebug() << "MainWin Global Pos:" << mainPos;
-  //    listView->setGeometry(pos.x(), pos.y(), rect.width(), 100);  // 限制高度
-  //    listView->move(pos);
-  //  }
-  //  qDebug() << "showpo";
-  //  QComboBox::showPopup();
-  //}
 };
 
 class TtLabelComboBox : public QWidget {

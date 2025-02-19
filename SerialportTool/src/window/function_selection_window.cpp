@@ -18,7 +18,7 @@ FunctionSelectionWindow::~FunctionSelectionWindow()
 
 void FunctionSelectionWindow::init()
 {
-  Ui::VerticalLayout *mainLayout = new Ui::VerticalLayout();
+  Ui::TtVerticalLayout *mainLayout = new Ui::TtVerticalLayout();
   setLayout(mainLayout);
 
   label_ = new Ui::TtNormalLabel(tr("新建连接"));

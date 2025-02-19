@@ -69,15 +69,15 @@ class MainWindow : public QMainWindow {
   Theme currentTheme{};
 
   QWidget* central_widget_;
-
   QPointer<QWK::WidgetWindowAgent> window_agent_;
-
-  Ui::HorizontalLayout* layout_;
+  Ui::TtHorizontalLayout* layout_;
 
   // 侧边弹出的菜单栏, 设置串口参数, 其他事项, 按钮组
   QWidget* left_bar_;
   Ui::TtWidgetGroup *left_bar_logic_;
-  bool ishi{true};
+  //bool ishi{true};
+
+  QVector<QVector<QWidget*>> stacked_;
 
   Ui::TtSvgButton* communication_connection;
   Ui::TtSvgButton* communication_instruction;

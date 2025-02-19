@@ -588,6 +588,22 @@ void TtChatMessageModel::updateBlockIndices() {
   //     base += block.messages.size();
   // }
 }
+void TtChatMessageModel::clearModelData() {
+  ////clear
+  //if (m_messageMap.empty()) {
+  //  return;
+  //}
+
+  //beginResetModel();
+  //for (auto& block : m_blocks) {
+  //  //delete block.messages.removeAll();
+  //  block.messages.removeAll();
+  //}
+  //m_blocks.clear();
+  //m_messageMap.clear();
+  //endResetModel();
+  removeMessages(0, rowCount() - 1);
+}
 
 void TtChatMessageModel::loadInitialMessages() {}
 

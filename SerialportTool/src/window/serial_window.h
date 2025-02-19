@@ -1,13 +1,32 @@
 #ifndef SERIAL_WINDOW_H
 #define SERIAL_WINDOW_H
 
+#include <QApplication>
+#include <QButtonGroup>
+#include <QHBoxLayout>
+#include <QHeaderView>
+#include <QLineEdit>
+#include <QParallelAnimationGroup>
+#include <QPlainTextEdit>
+#include <QPropertyAnimation>
+#include <QPushButton>
+#include <QStackedWidget>
+#include <QStyledItemDelegate>
+#include <QTableView>
+#include <QTextBlock>
+#include <QToolBox>
+#include <QWidget>
+
+#include <Qsci/qsciscintilla.h>
+
+
 namespace Ui {
 class TtNormalLabel;
 class CommonButton;
 class TtImageButton;
 class TtSvgButton;
 class MessageDialog;
-class VerticalLayout;
+class TtVerticalLayout;
 
 class TtChatView;
 class TtChatMessageModel;
@@ -21,57 +40,10 @@ namespace Core {
 class SerialPort;
 };
 
-#include <QApplication>
-#include <QButtonGroup>
-#include <QHBoxLayout>
-#include <QHeaderView>
-#include <QLineEdit>
-#include <QParallelAnimationGroup>
-#include <QPlainTextEdit>
-#include <QPropertyAnimation>
-#include <QPushButton>
-#include <QStyledItemDelegate>
-#include <QTableView>
-#include <QTextBlock>
-#include <QToolBox>
-#include <QWidget>
-
-#include <Qsci/qsciscintilla.h>
-
 namespace Window {
 
-class CustomButtonGroup : public QWidget {
-  Q_OBJECT
-
- public:
-  explicit CustomButtonGroup(QWidget* parent = nullptr);
-
- signals:
-  void firstButtonClicked();
-  void secondButtonClicked();
-
- private slots:
-  void buttonClicked(QAbstractButton* button);
-  void animateButton(QPushButton* button, qreal scale);
-
- private:
-  void setupUI();
-  void initConnections();
-
-  QPushButton* button1;
-  QPushButton* button2;
-  QButtonGroup* buttonGroup;
-
-  // Animation instances
-  QSequentialAnimationGroup* animation1;
-  QSequentialAnimationGroup* animation2;
-
-  // Initial sizes
-  QSize button1InitialSize;
-  QSize button2InitialSize;
-
-  // Stylesheet
-  static const QString styleSheet;
+struct SerialSaveConfig {
+  QJsonObject obj;
 };
 
 class SerialWindow : public QWidget {
@@ -81,18 +53,17 @@ class SerialWindow : public QWidget {
 
  signals:
 
+
+ private slots:
+  void switchToEditMode();
+  void switchToDisplayMode();
+
  private:
-  ///
-  /// @brief init
-  /// 初始化
   void init();
-
-  ///
-  /// @brief setSerialSetting 设置串口参数
-  ///
   void setSerialSetting();
+  void connectSignals();
 
-  Ui::VerticalLayout* main_layout_;
+  Ui::TtVerticalLayout* main_layout_;
 
   Ui::TtNormalLabel* title_;             // 名称
   Ui::TtImageButton* modify_title_btn_;  // 修改连接名称
@@ -110,16 +81,22 @@ class SerialWindow : public QWidget {
 
   Widget::SerialSetting* serial_setting_;
 
+  //Ui::TtLabelComboBox* framingModel;
+
+  Ui::TtNormalLabel *send_byte;
+  Ui::TtNormalLabel *recv_byte;
+  quint64 send_byte_count = 0;
+  quint64 recv_byte_count = 0;
+
   // 使用开源编辑组件 QScintilla
   QsciScintilla* editor;
-
-
-
 
   QWidget* original_widget_ = nullptr;
   QWidget* edit_widget_ = nullptr;
   QLineEdit* title_edit_ = nullptr;
   QStackedWidget* stack_ = nullptr;
+
+  SerialSaveConfig cfg_;
 };
 
 }  // namespace Window

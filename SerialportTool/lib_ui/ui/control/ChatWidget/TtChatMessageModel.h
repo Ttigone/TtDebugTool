@@ -96,7 +96,7 @@ class TtChatMessageModel : public QAbstractListModel {
 };
 #else
 
-  class TtChatMessageModel : public QAbstractListModel {
+class TtChatMessageModel : public QAbstractListModel {
   Q_OBJECT
 
  public:
@@ -154,6 +154,9 @@ class TtChatMessageModel : public QAbstractListModel {
   void triggerLayoutUpdate(const QModelIndex& index);
   void triggerLayoutUpdateForAll();
 
+
+  void clearModelData();
+
  public slots:
   void loadInitialMessages();
   void fetchOlderMessages();
@@ -189,7 +192,6 @@ class TtChatMessageModel : public QAbstractListModel {
 };
 #endif
 
+}  // namespace Ui
 
-}  // namespace Ui  
-
-#endif // UI_CONTROL_TTCHATMESSAGEMODEL_H
+#endif  // UI_CONTROL_TTCHATMESSAGEMODEL_H

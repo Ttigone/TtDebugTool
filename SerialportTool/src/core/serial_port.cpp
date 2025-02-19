@@ -26,10 +26,17 @@ void SerialPort::sendData(const QString& send_string) {
   // 向串口发送数据
   // 可以通过一个 QPlainText 显示当前发送数据
   // send_string."\r\n";
-  QString out = send_string;
-  out.append("\r\n");
-  qDebug() << "write: " << send_string;
-  QByteArray bts = send_string.toLocal8Bit();   //转换为8位字符数据数组
+  //QString out = send_string;
+  //out.append("\r\n"); // 要在 QByteArray 后面加换行符
+  //qDebug() << "write test: " << send_string.toLocal8Bit();
+  //qDebug() << "write test: " << send_string.toUtf8();
+  //qDebug() << "write test: " << send_string.toLatin1();
+  //qDebug() << "write test: " << send_string;
+
+  //QByteArray bts = send_string.toLocal8Bit();   //转换为8位字符数据数组
+  QByteArray bts = send_string.toUtf8();   // 支持中文
+  bts.append("\r\n"); // 要在 QByteArray 后面加换行符
+  //qDebug() << "write test: " << bts;
   serial_port_->write(bts);
 }
 
@@ -41,7 +48,8 @@ void SerialPort::readData()
   if (bytesAvailable > 0) {
     // 读取全部字节
     QByteArray data = serial_port_->readAll();
-    QString str(data);
+    //QString str(data);  // 采用的是默认编码 
+    QString str = QString::fromUtf8(data);  // 采用的是默认编码 
     qDebug() << "recv: " << str;
     emit recvData(data);
     // if ()

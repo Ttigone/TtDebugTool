@@ -5,8 +5,8 @@
 #include <QPointer>
 #include <QTimer>
 
-#include "ui/control/ChatWidget/TtChatMessageModel.h"
 #include "ui/control/ChatWidget/TtChatMessageDelegate.h"
+#include "ui/control/ChatWidget/TtChatMessageModel.h"
 
 //class TtChatMessageModel;
 //class TtChatMessageDelegate;
@@ -103,7 +103,7 @@ private:
 
 #else
 
-  class TtChatView : public QListView {
+class TtChatView : public QListView {
   Q_OBJECT
 
   Q_PROPERTY(bool loadingOlderMessages READ isLoadingOlderMessages NOTIFY
@@ -189,7 +189,7 @@ private:
   QMenu* m_contextMenu;
   QAction* m_copyAction;
 
-  QAtomicInt m_resizeFlag{0};    // 原子操作标志位
+  QAtomicInt m_resizeFlag{0};  // 原子操作标志位
   //QFuture<void> m_layoutFuture;  // 用于异步布局计算
   QMap<QModelIndex, int> tmp_index_list_;
   QMap<QModelIndex, int> tmp_index_wheel_list_;
@@ -202,5 +202,5 @@ private:
 
 #endif
 
-} // namespace Ui
-#endif // UI_CONTROL_CHATWIDGET_TTCHATVIEW_H
+}  // namespace Ui
+#endif  // UI_CONTROL_CHATWIDGET_TTCHATVIEW_H

@@ -1,35 +1,32 @@
 ﻿#include "ui/widgets/fields/customize_fields.h"
 
-
 namespace Ui {
-namespace Widgets {
 
-TtCustomizeFields::TtCustomizeFields(QWidget* parent)
-    : QLineEdit(parent), max_len_(15) {
+TtLineEdit::TtLineEdit(QWidget* parent) : QLineEdit(parent), max_len_(15) {
   init();
 }
 
-TtCustomizeFields::TtCustomizeFields(const QString& text, QWidget* parent)
-    : TtCustomizeFields(parent) {
+TtLineEdit::TtLineEdit(const QString& text, QWidget* parent)
+    : TtLineEdit(parent) {
   setDefaultText(text);
 }
 
-TtCustomizeFields::~TtCustomizeFields() {}
+TtLineEdit::~TtLineEdit() {}
 
-void TtCustomizeFields::setMaxWidth(int width) {
+void TtLineEdit::setMaxWidth(int width) {
   max_len_ = width;
 }
 
-void TtCustomizeFields::setDefaultText(const QString& text) {
+void TtLineEdit::setDefaultText(const QString& text) {
   setPlaceholderText(text);
 }
 
-void TtCustomizeFields::focusOutEvent(QFocusEvent* event) {
+void TtLineEdit::focusOutEvent(QFocusEvent* event) {
   QLineEdit::focusOutEvent(event);
   emit sig_foucus_out();
 }
 
-void TtCustomizeFields::init() {
+void TtLineEdit::init() {
   this->setStyleSheet(
       // "background-color: #2e333d;"
       "background-color: transparent;"
@@ -53,28 +50,27 @@ void TtCustomizeFields::init() {
   // this->setPlaceholderText("Search");
 
   // connect(this, &QLineEdit::textChanged, this,
-  //         &TtCustomizeFields::textChangedCallBack);
+  //         &TtLineEdit::textChangedCallBack);
   // connect(end_action_, &QAction::triggered, this, [this]() {
   //   this->clear();
   //   this->clearFocus();
   // });
 }
 
-void TtCustomizeFields::textChangedCallBack(const QString& text) {
+void TtLineEdit::textChangedCallBack(const QString& text) {
   limitTextLength(text);
   if (!text.isEmpty()) {
     //end_action_->setIcon(QIcon(":/icon/ui/icons/mediaview/circle_close-normal.png"));
     // end_action_->setEnabled(true);
     // end_action_->setVisible(true);
-  } else
-  {
-		//end_action_->setIcon(QIcon());
-        // end_action_->setVisible(false);
-        // end_action_->setEnabled(false);
+  } else {
+    //end_action_->setIcon(QIcon());
+    // end_action_->setVisible(false);
+    // end_action_->setEnabled(false);
   }
 }
 
-void TtCustomizeFields::limitTextLength(QString text) {
+void TtLineEdit::limitTextLength(QString text) {
   if (max_len_ < 0) {
     return;
   }
@@ -87,5 +83,47 @@ void TtCustomizeFields::limitTextLength(QString text) {
   }
 }
 
-}  // namespace Widgets
+TtLabelLineEdit::TtLabelLineEdit(Qt::AlignmentFlag flag, const QString& text,
+                                 QWidget* parent)
+    : QWidget(parent) {
+  line_edit_ = new TtLineEdit(this);
+  line_edit_->setMinimumWidth(80);
+
+  label_ = new QLabel(text, this);
+  // 设置 tip
+  label_->setToolTip(text);
+  label_->setFixedWidth(60);
+
+  QHBoxLayout* layout = new QHBoxLayout(this);
+  layout->setContentsMargins(QMargins());
+  layout->setSpacing(5);
+
+  switch (flag) {
+    case Qt::AlignLeft:
+      layout->addWidget(label_);
+      layout->addWidget(line_edit_, 1);  // 添加拉伸因子
+      break;
+    case Qt::AlignRight:
+      layout->addStretch();
+      layout->addWidget(label_);
+      layout->addWidget(line_edit_, 1);
+      break;
+    case Qt::AlignHCenter:
+      layout->addStretch();
+      layout->addWidget(label_);
+      layout->addWidget(line_edit_, 1);
+      layout->addStretch();
+      break;
+    default:
+      layout->addWidget(label_);
+      layout->addWidget(line_edit_, 1);
+      break;
+  }
+}
+
+TtLabelLineEdit::TtLabelLineEdit(const QString& text, QWidget* parent)
+    : TtLabelLineEdit(Qt::AlignLeft, text, parent) {}
+
+TtLabelLineEdit::~TtLabelLineEdit() {}
+
 }  // namespace Ui

@@ -14,6 +14,7 @@ target_link_libraries(external_qt
     Qt${QT_VERSION_MAJOR}::SvgWidgets
     Qt${QT_VERSION_MAJOR}::StateMachine
     Qt${QT_VERSION_MAJOR}::Concurrent
+    Qt${QT_VERSION_MAJOR}::Core5Compat
 )
 
 target_include_directories(external_qt SYSTEM

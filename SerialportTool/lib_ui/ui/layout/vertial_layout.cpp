@@ -4,20 +4,20 @@
 
 namespace Ui {
 
-VerticalLayout::VerticalLayout() {
+TtVerticalLayout::TtVerticalLayout() {
   init();
 }
 
-VerticalLayout::VerticalLayout(QWidget* widget) : VerticalLayout() {
+TtVerticalLayout::TtVerticalLayout(QWidget* widget) : TtVerticalLayout() {
   widget->setLayout(this);
 }
 
-VerticalLayout::~VerticalLayout()
+TtVerticalLayout::~TtVerticalLayout()
 {
 
 }
 
-void VerticalLayout::init()
+void TtVerticalLayout::init()
 {
   setContentsMargins(QMargins());
   setSpacing(0);

@@ -3,17 +3,18 @@
 
 namespace Ui {
 
-class VerticalLayout : public QVBoxLayout {
+class TtVerticalLayout : public QVBoxLayout {
  public:
-  VerticalLayout();
-  VerticalLayout(QWidget* widget);
-  ~VerticalLayout();
+  TtVerticalLayout();
+  TtVerticalLayout(QWidget* widget);
+  ~TtVerticalLayout();
 
  private:
   void init();
 
+  Q_DISABLE_COPY(TtVerticalLayout)
 };
 
-} // namespace Ui
+}  // namespace Ui
 
-#endif // UI_LAYOUT_VERTICAL_LAYOUT_H
+#endif  // UI_LAYOUT_VERTICAL_LAYOUT_H

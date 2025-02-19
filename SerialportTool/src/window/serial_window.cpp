@@ -1,5 +1,7 @@
 #include "serial_window.h"
 
+#include <QTableView>
+
 #include <ui/control/ChatWidget/TtChatMessage.h>
 #include <ui/control/ChatWidget/TtChatMessageModel.h>
 #include <ui/control/ChatWidget/TtChatView.h>
@@ -21,186 +23,110 @@
 #include <qtmaterialsnackbar.h>
 #include <qtmaterialtabs.h>
 
-#include <QTableView>
-
 namespace Window {
-
-// Initialize the static stylesheet
-const QString CustomButtonGroup::styleSheet = R"(
-QPushButton {
-    min-width: 36;
-    min-height: 22;
-    max-height: 22;
-    border: none;
-    border-radius: 0px;
-    background-color: #0078d4;
-    color: white;
-    font-size: 12;
-    padding: 10px;
-}
-
-QPushButton:checked {
-    background-color: #005a9e;
-}
-
-QPushButton:hover {
-    background-color: #005a9e;
-}
-
-QPushButton:pressed {
-    background-color: #004578;
-}
-)";
-
-CustomButtonGroup::CustomButtonGroup(QWidget* parent)
-    : QWidget(parent),
-      button1(new QPushButton("TEXT", this)),
-      button2(new QPushButton("HEX", this)),
-      buttonGroup(new QButtonGroup(this)),
-      animation1(nullptr),
-      animation2(nullptr) {
-  setupUI();
-  initConnections();
-  setStyleSheet(styleSheet);
-
-  // 延迟记录初始尺寸，确保布局已完成
-  QTimer::singleShot(0, this, [this]() {
-    button1InitialSize = button1->size();
-    button2InitialSize = button2->size();
-  });
-}
-
-void CustomButtonGroup::setupUI() {
-  QHBoxLayout* layout = new QHBoxLayout(this);
-  layout->setSpacing(0);
-  layout->setContentsMargins(QMargins());
-
-  // Configure buttons
-  button1->setCheckable(true);
-  button1->setChecked(true);
-  button2->setCheckable(true);
-
-  // Add buttons to the button group
-  buttonGroup->addButton(button1, 1);
-  buttonGroup->addButton(button2, 2);
-
-  // Add buttons to the layout
-  layout->addWidget(button1);
-  layout->addWidget(button2);
-
-  setLayout(layout);
-}
-
-void CustomButtonGroup::initConnections() {
-  // Connect button group buttonClicked signal to the slot
-  connect(buttonGroup,
-          QOverload<QAbstractButton*>::of(&QButtonGroup::buttonClicked), this,
-          &CustomButtonGroup::buttonClicked);
-}
-
-void CustomButtonGroup::buttonClicked(QAbstractButton* button) {
-  if (button == button1) {
-    emit firstButtonClicked();
-  } else if (button == button2) {
-    emit secondButtonClicked();
-  }
-}
-
-void CustomButtonGroup::animateButton(QPushButton* button, qreal scale) {
-  QSequentialAnimationGroup** animationPtr = nullptr;
-  QSize initialSize;
-
-  // Determine which animation group and initial size to use
-  if (button == button1) {
-    animationPtr = &animation1;
-    initialSize = button1InitialSize;
-  } else if (button == button2) {
-    animationPtr = &animation2;
-    initialSize = button2InitialSize;
-  } else {
-    return;
-  }
-
-  // If an animation is already running, stop and delete it
-  if (*animationPtr &&
-      (*animationPtr)->state() == QAbstractAnimation::Running) {
-    (*animationPtr)->stop();
-    delete *animationPtr;
-    *animationPtr = nullptr;
-  }
-
-  // // 禁用按钮, 放置多次点击
-  // button->setEnabled(false);
-
-  // Create a new sequential animation group
-  QSequentialAnimationGroup* group = new QSequentialAnimationGroup(this);
-
-  // Scale down animation
-  QPropertyAnimation* scaleDown = new QPropertyAnimation(button, "size");
-  scaleDown->setDuration(100);
-  scaleDown->setStartValue(button->size());
-  scaleDown->setEndValue(initialSize * scale);
-  scaleDown->setEasingCurve(QEasingCurve::OutQuad);
-
-  // Scale up animation
-  QPropertyAnimation* scaleUp = new QPropertyAnimation(button, "size");
-  scaleUp->setDuration(100);
-  scaleUp->setStartValue(initialSize * scale);
-  scaleUp->setEndValue(initialSize);
-  scaleUp->setEasingCurve(QEasingCurve::InQuad);
-
-  // Add animations to the group
-  group->addAnimation(scaleDown);
-  group->addAnimation(scaleUp);
-
-  // When the animation finishes, reset the animation pointer
-  connect(group, &QSequentialAnimationGroup::finished,
-          [animationPtr]() { *animationPtr = nullptr; });
-
-  // Store the animation instance
-  *animationPtr = group;
-
-  // Start the animation
-  group->start(QAbstractAnimation::DeleteWhenStopped);
-}
 
 SerialWindow::SerialWindow(QWidget* parent)
     : QWidget(parent),
       serial_port_(new Core::SerialPort()),
       serial_setting_(new Widget::SerialSetting()) {
   init();
+  connectSignals();
+}
+
+void SerialWindow::switchToEditMode() {
+  QGraphicsOpacityEffect* effect = new QGraphicsOpacityEffect(title_edit_);
+  title_edit_->setGraphicsEffect(effect);
+  QPropertyAnimation* anim = new QPropertyAnimation(effect, "opacity");
+  anim->setDuration(300);
+  anim->setStartValue(0);
+  anim->setEndValue(1);
+  anim->start(QAbstractAnimation::DeleteWhenStopped);
+
+  // 预先获取之前的标题
+  title_edit_->setText(title_->text());
+  // 显示 edit 模式
+  stack_->setCurrentWidget(edit_widget_);
+  // 获取焦点
+  title_edit_->setFocus();  // 自动聚焦输入框
+}
+
+void SerialWindow::switchToDisplayMode() {
+  //QGraphicsOpacityEffect* effect = new QGraphicsOpacityEffect(original_widget_);
+  //original_widget_->setGraphicsEffect(effect);
+  //QPropertyAnimation* anim = new QPropertyAnimation(effect, "opacity");
+  //anim->setDuration(300);
+  //anim->setStartValue(0);
+  //anim->setEndValue(1);
+  //anim->start(QAbstractAnimation::DeleteWhenStopped);
+  // 切换显示模式
+  title_->setText(title_edit_->text());
+  stack_->setCurrentWidget(original_widget_);
 }
 
 void SerialWindow::init() {
-  main_layout_ = new Ui::VerticalLayout;
+  main_layout_ = new Ui::TtVerticalLayout();
   setLayout(main_layout_);
 
   title_ = new Ui::TtNormalLabel(tr("未命名串口连接"));
   // 编辑命名按钮
   modify_title_btn_ = new Ui::TtImageButton(":/sys/edit_name.svg", this);
 
-
-  Ui::HorizontalLayout* tmpAll = new Ui::HorizontalLayout;
-
-  Ui::HorizontalLayout* tmpl = new Ui::HorizontalLayout;
+  // 创建原始界面
+  original_widget_ = new QWidget(this);
+  original_widget_->setStyleSheet("background-color : Coral");
+  Ui::TtHorizontalLayout* tmpl = new Ui::TtHorizontalLayout(original_widget_);
+  tmpl->addSpacerItem(new QSpacerItem(10, 10));
   tmpl->addWidget(title_, 0, Qt::AlignLeft);
   tmpl->addSpacerItem(new QSpacerItem(10, 10));
   tmpl->addWidget(modify_title_btn_);
   tmpl->addStretch();
 
-  connect(modify_title_btn_, &Ui::TtImageButton::clicked, [this]() {
-    // 修改标题
-  });
+  // 创建编辑界面
+  edit_widget_ = new QWidget(this);
+  title_edit_ = new QLineEdit(this);
+  //save_title_btn_ = new QPushButton(tr("保存"), this);
 
+  Ui::TtHorizontalLayout* edit_layout =
+      new Ui::TtHorizontalLayout(edit_widget_);
+  edit_layout->addWidget(title_edit_);
+  edit_widget_->setStyleSheet("background-color : green");
+  //edit_layout->addWidget(save_title_btn_);
+  edit_layout->addStretch();
 
+  // 使用堆叠布局
+  stack_ = new QStackedWidget(this);
+  stack_->setFixedHeight(40);
+  stack_->addWidget(original_widget_);
+  stack_->addWidget(edit_widget_);
 
+  // 优化后的信号连接（仅需2个连接点）
+  connect(modify_title_btn_, &Ui::TtImageButton::clicked, this,
+          &SerialWindow::switchToEditMode);
 
-  Ui::HorizontalLayout* tmpl2 = new Ui::HorizontalLayout;
+  Ui::TtHorizontalLayout* tmpP1 = new Ui::TtHorizontalLayout;
+  tmpP1->addWidget(stack_);
+
+  Ui::TtHorizontalLayout* tmpAll = new Ui::TtHorizontalLayout;
+
+  // 保存 lambda 表达式
+  auto handleSave = [this]() {
+    //qDebug() << "失去";
+    if (!title_edit_->text().isEmpty()) {
+      switchToDisplayMode();
+    } else {
+      title_edit_->setPlaceholderText(tr("名称不能为空！"));
+    }
+  };
+
+  connect(title_edit_, &QLineEdit::editingFinished, this, handleSave);
+
+  Ui::TtHorizontalLayout* tmpl2 = new Ui::TtHorizontalLayout;
   // 保存按钮
   save_btn_ = new Ui::TtImageButton(":/sys/save_cfg.svg", this);
+
   // 删除按钮, 是需要保存在 leftbar 才会添加的
 
-	// 开关按钮
+  // 开关按钮
   on_off_btn_ =
       new Ui::TtSvgButton(":/sys/start_up.svg", ":/sys/turn_off.svg", this);
 
@@ -208,8 +134,8 @@ void SerialWindow::init() {
   tmpl2->addWidget(on_off_btn_, 0, Qt::AlignRight);
   tmpl2->addSpacerItem(new QSpacerItem(10, 10));
 
-
-  tmpAll->addLayout(tmpl);
+  //tmpAll->addLayout(tmpl);
+  tmpAll->addLayout(tmpP1);
   tmpAll->addLayout(tmpl2);
 
   //main_layout_->addLayout(tmpl);
@@ -221,18 +147,25 @@ void SerialWindow::init() {
 
   // 上方功能按钮
   QWidget* chose_function = new QWidget;
-  Ui::HorizontalLayout* chose_function_layout = new Ui::HorizontalLayout;
+  Ui::TtHorizontalLayout* chose_function_layout = new Ui::TtHorizontalLayout;
   chose_function_layout->setSpacing(5);
   chose_function->setLayout(chose_function_layout);
 
   chose_function_layout->addStretch();
-  Ui::TtSvgButton* clear_history =
-      new Ui::TtSvgButton(":/sys/trash.svg", ":/sys/trash.svg", chose_function);
+  Ui::TtImageButton* clear_history =
+      new Ui::TtImageButton(":/sys/trash.svg", chose_function);
   // clear_history->setFixedSize(36, 28);
 
-  auto bgr = new CustomButtonGroup(chose_function);
-  // 选择 text/hex
-  chose_function_layout->addWidget(bgr);
+  //auto bgr = new CustomButtonGroup(chose_function);
+  //// 选择 text/hex
+  //chose_function_layout->addWidget(bgr);
+  QButtonGroup* bgr = new QButtonGroup(this);
+  QPushButton* button1 = new QPushButton("TEXT");
+  QPushButton* button2 = new QPushButton("HEX");
+  bgr->addButton(button1);
+  bgr->addButton(button2);
+  chose_function_layout->addWidget(button1);
+  chose_function_layout->addWidget(button2);
 
   // 清除历史按钮
   chose_function_layout->addWidget(clear_history);
@@ -247,7 +180,7 @@ void SerialWindow::init() {
 
   // 上方选择功能以及信息框
   QWidget* cont = new QWidget;
-  Ui::VerticalLayout* cont_layout = new Ui::VerticalLayout;
+  Ui::TtVerticalLayout* cont_layout = new Ui::TtVerticalLayout;
   cont->setLayout(cont_layout);
 
   message_view_ = new Ui::TtChatView(cont);
@@ -259,52 +192,53 @@ void SerialWindow::init() {
   cont_layout->addWidget(message_view_);
 
   message_model_ = new Ui::TtChatMessageModel;
-  QList<Ui::TtChatMessage*> list;
+  //QList<Ui::TtChatMessage*> list;
 
-  Ui::TtChatMessage* msg = new Ui::TtChatMessage;
-  msg->setContent(
-      "TESTSSSSSSSSSSSSSSSSSSSSSS\r\nSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS\r\nsjdsdj"
-      "skasdj"
-      "sadsakldjkas");
-  msg->setOutgoing(true);                  // 必须设置方向
-  msg->setBubbleColor(QColor("#DCF8C6"));  // 必须设置颜色
-  msg->setTimestamp(QDateTime::currentDateTime());
+  //Ui::TtChatMessage* msg = new Ui::TtChatMessage;
+  //msg->setContent(
+  //    "TESTSSSSSSSSSSSSSSSSSSSSSS\r\nSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS\r\nsjdsdj"
+  //    "skasdj"
+  //    "sadsakldjkas");
+  //msg->setOutgoing(true);                  // 必须设置方向
+  //msg->setBubbleColor(QColor("#DCF8C6"));  // 必须设置颜色
+  //msg->setTimestamp(QDateTime::currentDateTime());
 
-  Ui::TtChatMessage* msg1 = new Ui::TtChatMessage;
-  msg1->setContent("111111111111111111111111111111111111");
-  msg1->setOutgoing(true);                  // 必须设置方向
-  msg1->setBubbleColor(QColor("#9678dd"));  // 必须设置颜色
-  msg1->setTimestamp(QDateTime::currentDateTime());
+  //Ui::TtChatMessage* msg1 = new Ui::TtChatMessage;
+  //msg1->setContent("111111111111111111111111111111111111");
+  //msg1->setOutgoing(true);                  // 必须设置方向
+  //msg1->setBubbleColor(QColor("#9678dd"));  // 必须设置颜色
+  //msg1->setTimestamp(QDateTime::currentDateTime());
 
-  Ui::TtChatMessage* msg2 = new Ui::TtChatMessage;
-  msg2->setContent(
-      "1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n111111111111111111111111");
-  msg2->setOutgoing(true);                  // 必须设置方向
-  msg2->setBubbleColor(QColor("#ffe292"));  // 必须设置颜色
-  msg2->setTimestamp(QDateTime::currentDateTime());
+  //Ui::TtChatMessage* msg2 = new Ui::TtChatMessage;
+  //msg2->setContent(
+  //    "1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n111111111111111111111111");
+  //msg2->setOutgoing(true);                  // 必须设置方向
+  //msg2->setBubbleColor(QColor("#ffe292"));  // 必须设置颜色
+  //msg2->setTimestamp(QDateTime::currentDateTime());
 
-  Ui::TtChatMessage* msg3 = new Ui::TtChatMessage;
-  msg3->setContent("蔡韶山");
-  msg3->setOutgoing(true);                  // 必须设置方向
-  msg3->setBubbleColor(QColor("#d9edfd"));  // 必须设置颜色
-  msg3->setTimestamp(QDateTime::currentDateTime());
+  //Ui::TtChatMessage* msg3 = new Ui::TtChatMessage;
+  //msg3->setContent("蔡韶山");
+  //msg3->setOutgoing(true);                  // 必须设置方向
+  //msg3->setBubbleColor(QColor("#d9edfd"));  // 必须设置颜色
+  //msg3->setTimestamp(QDateTime::currentDateTime());
 
-  list.append(msg);
-  list.append(msg2);
-  list.append(msg1);
-  list.append(msg3);
+  //list.append(msg);
+  //list.append(msg2);
+  //list.append(msg1);
+  //list.append(msg3);
 
-  message_model_->appendMessages(list);
+  //message_model_->appendMessages(list);
 
   message_view_->setModel(message_model_);
+  message_view_->scrollToBottom();
 
   QWidget* bottomAll = new QWidget;
-  Ui::VerticalLayout* bottomAllLayout = new Ui::VerticalLayout;
+  Ui::TtVerticalLayout* bottomAllLayout = new Ui::TtVerticalLayout;
   bottomAll->setLayout(bottomAllLayout);
 
   // 下方自定义指令
   QWidget* tabs_and_count = new QWidget(this);
-  Ui::HorizontalLayout* tacLayout = new Ui::HorizontalLayout();
+  Ui::TtHorizontalLayout* tacLayout = new Ui::TtHorizontalLayout();
   tabs_and_count->setLayout(tacLayout);
 
   auto m_tabs = new QtMaterialTabs;
@@ -320,9 +254,9 @@ void SerialWindow::init() {
   tacLayout->addStretch();
 
   // 显示发送字节和接收字节数
-  auto send_byte = new Ui::TtNormalLabel(tr("发送字节数: 0 B"), tabs_and_count);
+  send_byte = new Ui::TtNormalLabel(tr("发送字节数: 0 B"), tabs_and_count);
   send_byte->setFixedHeight(30);
-  auto recv_byte = new Ui::TtNormalLabel(tr("接收字节数: 0 B"), tabs_and_count);
+  recv_byte = new Ui::TtNormalLabel(tr("接收字节数: 0 B"), tabs_and_count);
   recv_byte->setFixedHeight(30);
 
   tacLayout->addWidget(send_byte);
@@ -341,7 +275,7 @@ void SerialWindow::init() {
   messageEditLayout->setContentsMargins(3, 3, 3, 3);
   messageEditLayout->setSpacing(0);
 
-  auto editor = new QsciScintilla(messageEdit);
+  editor = new QsciScintilla(messageEdit);
   editor->setWrapMode(QsciScintilla::WrapWord);
   editor->setWrapVisualFlags(QsciScintilla::WrapFlagInMargin,
                              QsciScintilla::WrapFlagInMargin, 0);
@@ -349,15 +283,15 @@ void SerialWindow::init() {
   editor->setCaretForegroundColor(QColor("Coral"));
   editor->setCaretWidth(10);
 
-  editor->setCaretLineBackgroundColor(QColor("Red"));
+  //editor->setCaretLineBackgroundColor(QColor("Red"));
   editor->setMarginType(1, QsciScintilla::NumberMargin);
 
   messageEditLayout->addWidget(editor);
 
   QWidget* bottomBtnWidget = new QWidget(messageEdit);
   bottomBtnWidget->setMinimumHeight(40);
-  bottomBtnWidget->setStyleSheet("background-color: red");
-  Ui::HorizontalLayout* bottomBtnWidgetLayout = new Ui::HorizontalLayout;
+  //bottomBtnWidget->setStyleSheet("back)ground-color: red");
+  Ui::TtHorizontalLayout* bottomBtnWidgetLayout = new Ui::TtHorizontalLayout;
   bottomBtnWidgetLayout->setContentsMargins(QMargins());
   bottomBtnWidgetLayout->setSpacing(0);
   bottomBtnWidget->setLayout(bottomBtnWidgetLayout);
@@ -416,55 +350,12 @@ void SerialWindow::init() {
   VSplitter->addWidget(cont);
   VSplitter->addWidget(bottomAll);
 
-  serial_setting_->setSizePolicy(QSizePolicy::Preferred,
-                                 QSizePolicy::Preferred);
-  setSerialSetting();
-
-  QWidget* contentWidget1 = new QWidget;
-  QVBoxLayout* contentLayout1 = new QVBoxLayout(contentWidget1);
-  contentLayout1->setSpacing(0);
-  contentLayout1->setContentsMargins(QMargins());
-  contentLayout1->addWidget(serial_setting_);
-  contentWidget1->adjustSize();  // 确保大小正确
-  Ui::Drawer* drawer1 = new Ui::Drawer(tr("连接设置"), contentWidget1);
-  //Ui::Drawer* drawer1 = new Ui::Drawer(tr("连接设置"), sds);
-
-  QWidget* contentWidget2 = new QWidget;
-  contentWidget2->setStyleSheet("background-color: lightgreen;");
-  QVBoxLayout* contentLayout2 = new QVBoxLayout(contentWidget2);
-  // contentLayout2->addWidget(new QLabel("Content 2"));
-  // contentLayout2->addWidget(modify_title_btn_);
-  contentWidget2->adjustSize();  // 确保大小正确
-  Ui::Drawer* drawer2 = new Ui::Drawer(tr("变量"), contentWidget2);
-
-  Ui::TtLabelComboBox* c3 = new Ui::TtLabelComboBox(tr("模式: "));
-  c3->addItem("换行");
-  Ui::Drawer* drawer3 = new Ui::Drawer(tr("分帧"), c3);
-
-  Ui::TtLabelComboBox* c4 = new Ui::TtLabelComboBox(tr("模式: "));
-  Ui::Drawer* drawer4 = new Ui::Drawer(tr("心跳"), c4);
-
-  // 滚动区域
-  QScrollArea* scr = new QScrollArea(this);
-  QWidget* scrollContent = new QWidget(scr);
-  //scr->setWidget(scrollContent);
-  //scr->setWidgetResizable(true);
-  Ui::VerticalLayout* lascr = new Ui::VerticalLayout(scrollContent);
-
-  lascr->addWidget(drawer1, 0, Qt::AlignTop);
-  //lascr->addWidget(sds, 0, Qt::AlignTop);
-  lascr->addWidget(drawer2);
-  lascr->addWidget(drawer3);
-  lascr->addWidget(drawer4);
-  lascr->addStretch();
-  scrollContent->setLayout(lascr);
-
-  scr->setWidget(scrollContent);
-  scr->setWidgetResizable(true);
+  //setSerialSetting();
 
   // 左右分区
   mainSplitter->addWidget(VSplitter);
-  mainSplitter->addWidget(scr);
+  //serial_setting_ = new Widget::SerialSetting();
+  mainSplitter->addWidget(serial_setting_);
 
   // 主界面是左右分隔
   main_layout_->addWidget(mainSplitter);
@@ -486,7 +377,8 @@ void SerialWindow::init() {
       return;
     }
     Core::SerialPort::SerialError error = serial_port_->openSerialPort(
-        serial_setting_->defaultSerialPortConfiguration());
+        //serial_setting_->defaultSerialPortConfiguration());
+        serial_setting_->getSerialPortConfiguration());
     if (error != Core::SerialPort::NoError) {
       qDebug() << "inside";
       switch (error) {
@@ -511,26 +403,40 @@ void SerialWindow::init() {
     }
   });
 
-  connect(serial_port_.get(), &Core::SerialPort::recvData,
-          [this](QByteArray msg) {
-            //m_chatView->addMessage(QString(msg), false);  // 对方消息
-            auto tmp = new Ui::TtChatMessage();
-            tmp->setContent(msg);
-            tmp->setOutgoing(false);
-            tmp->setBubbleColor(QColor("#DCF8C6"));
-            QList<Ui::TtChatMessage*> list;
-            list.append(tmp);
-            message_model_->appendMessages(list);
-          });
+  connect(
+      serial_port_.get(), &Core::SerialPort::recvData, [this](QByteArray msg) {
+        recv_byte_count += msg.size();
+        auto tmp = new Ui::TtChatMessage();
+        tmp->setContent(msg);
+        tmp->setOutgoing(false);
+        tmp->setBubbleColor(QColor("#DCF8C6"));
+        QList<Ui::TtChatMessage*> list;
+        list.append(tmp);
+        message_model_->appendMessages(list);
+        recv_byte->setText(QString("接收字节数: %1 B").arg(recv_byte_count));
+        message_view_->scrollToBottom();
+      });
 
-  //connect(clear_history, &Ui::TtSvgButton::clicked, chat_view_,
-  //        &Ui::MessageDialog::deleteAllMessage);
+  connect(clear_history, &Ui::TtImageButton::clicked,
+          [this]() { message_model_->clearModelData(); });
 
-  //connect(sendBtn, &QtMaterialFlatButton::clicked, [this, editor]() {
-  //  // 发送消息
-  //  dialog_->addMessage(editor->text(), true);
-  //  serial_port_->sendData(editor->text());
-  //});
+  connect(sendBtn, &QtMaterialFlatButton::clicked, [this]() {
+    // 发送消息
+    auto msg = editor->text();
+    send_byte_count += msg.size();
+    auto tmp = new Ui::TtChatMessage();
+    tmp->setContent(msg);
+    tmp->setOutgoing(true);
+    tmp->setBubbleColor(QColor("#DCF8C6"));
+    QList<Ui::TtChatMessage*> list;
+    list.append(tmp);
+    message_model_->appendMessages(list);
+    // 串口发送
+    serial_port_->sendData(editor->text());
+
+    send_byte->setText(QString("发送字节数: %1 B").arg(send_byte_count));
+    message_view_->scrollToBottom();
+  });
 }
 
 void SerialWindow::setSerialSetting() {
@@ -544,6 +450,14 @@ void SerialWindow::setSerialSetting() {
   serial_setting_->setSerialPortsFluidControl();
 
   serial_setting_->displayDefaultSetting();
+}
+
+void SerialWindow::connectSignals() {
+  connect(save_btn_, &Ui::TtImageButton::clicked, [this]() {
+    // 保存配置界面, 但没有历史消息
+    cfg_.obj.insert("WindowTitle", title_->text());
+    cfg_.obj.insert("SerialSetting", serial_setting_->getSerialSetting());
+  });
 }
 
 }  // namespace Window

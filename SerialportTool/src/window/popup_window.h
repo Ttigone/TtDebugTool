@@ -4,8 +4,8 @@
 #include <QStackedLayout>
 
 namespace Ui {
-class VerticalLayout;
-class HorizontalLayout;
+class TtVerticalLayout;
+class TtHorizontalLayout;
 class TtNormalLabel;
 }  // namespace Ui
 

@@ -2,8 +2,11 @@
 #define UI_PCH_H
 
 #include <QObject>
-#include <QPropertyAnimation>
+#include <qglobal.h>
 #include <QTimer>
+#include <QPropertyAnimation>
+#include <QParallelAnimationGroup>
+#include <QSequentialAnimationGroup>
 
 #include <QString>
 #include <QPoint>

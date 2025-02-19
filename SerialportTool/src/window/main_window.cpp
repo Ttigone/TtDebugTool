@@ -98,14 +98,14 @@ MainWindow::MainWindow(QWidget* parent)
 
   //this->setWindowFlag(Qt::WindowStaysOnTopHint);
 
-  layout_ = new Ui::HorizontalLayout;
+  layout_ = new Ui::TtHorizontalLayout;
   central_widget_->setLayout(layout_);
   setCentralWidget(central_widget_);
 
   //setAttribute(Qt::WA_DontCreateNativeAncestors);
   // 拖拽右边时, 会出现宽度影响高度的情况
 
-  setWindowTitle(tr("Example MainWindow"));
+  setWindowTitle(tr("TtSerialPort"));
 
   loadStyleSheet(Theme::Dark);
 
@@ -120,7 +120,6 @@ MainWindow::MainWindow(QWidget* parent)
   auto test = new Window::PopUpWindow();
 
   QSplitter* mainSplitter = new QSplitter(this);
-  mainSplitter->setCollapsible(1, false);
   //popUpBodyWidget->setParent(mainSpliter);
   //QWidget* testW = new QWidget(mainSplitter);
   //testW->setStyleSheet("background-color: lightblue;");  // Drawer 的背景色
@@ -129,6 +128,8 @@ MainWindow::MainWindow(QWidget* parent)
   //Ui::TtPopUpDrawer* drawer = new Ui::TtPopUpDrawer(mainSpliter);
   //mainSpliter->addWidget(communication_connection_widget);
   mainSplitter->addWidget(tabWidget_);
+
+  mainSplitter->setCollapsible(1, false);
   // 创建 AnimatedDrawer 控制器
   Ui::TtAnimatedDrawer* controller =
       //new Ui::TtAnimatedDrawer(mainSplitter, testW, tabWidget_, this);
@@ -136,45 +137,107 @@ MainWindow::MainWindow(QWidget* parent)
 
   {
 
-    QWidget* insidetest = new QWidget;
-    auto il = new Ui::VerticalLayout(insidetest);
+    QWidget* linkList = new QWidget;
+    auto linkListLayout = new Ui::TtVerticalLayout(linkList);
 
-    Ui::TtNormalLabel* imla = new Ui::TtNormalLabel();
-    imla->setPixmap(
+    // 顶部
+    QWidget* titleWidget = new QWidget(linkList);
+    //titleWidget
+    //titleWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    //QWidget* titleWidget = new QWidget();
+    //titleWidget->setMinimumHeight(40);
+    //titleWidget->setMaximumHeight(40);
+    Ui::TtNormalLabel* title = new Ui::TtNormalLabel(tr("连接列表"), titleWidget);
+    //Ui::TtSvgButton* add =
+    //    new Ui::TtSvgButton(":/sys/plus-circle.svg", "", titleWidget);  // 刷新
+    Ui::TtImageButton* add =
+        new Ui::TtImageButton(":/sys/plus-circle.svg", titleWidget);  // 刷新
+    Ui::TtSvgButton* refresh =
+        new Ui::TtSvgButton(":/sys/refresh-normal.svg", ":/sys/refresh-hover.svg", titleWidget);  // 新建
+    refresh->setEnableToggle(false);
+    Ui::TtHorizontalLayout* titleLayout = new Ui::TtHorizontalLayout(titleWidget);
+    titleLayout->addWidget(title);
+    titleLayout->addStretch();
+    titleLayout->addWidget(add);
+    titleLayout->addSpacerItem(new QSpacerItem(10, 0));
+    titleLayout->addWidget(refresh);
+
+    linkListLayout->addWidget(titleWidget, 0, Qt::AlignTop);
+
+
+    // 首页界面
+    // 显示的图片
+    Ui::TtNormalLabel* displayInfo = new Ui::TtNormalLabel();
+    displayInfo->setPixmap(
         QPixmap::fromImage(QImage(":/sys/tmp.png").scaled(100, 100)));
-    il->addStretch();
-    il->addWidget(imla, 0, Qt::AlignCenter);
+    //linkListLayout->addStretch();
+    //linkListLayout->addWidget(displayInfo, 0, Qt::AlignCenter);
 
-    Ui::TtNormalLabel* la_ = new Ui::TtNormalLabel(tr("暂时没有可用的连接"));
-    il->addWidget(la_, 0, Qt::AlignCenter);
+    // 图片底下的文字
+    Ui::TtNormalLabel* displayWords = new Ui::TtNormalLabel(tr("暂时没有可用的连接"));
+    //il->addWidget(displayWords, 0, Qt::AlignCenter);
     // 点击后在 tab 弹出一个 新 tab, 用于设置
-    auto ib = new QPushButton(tr("新建连接"));
-    ib->setFixedSize(100, 28);
-    il->addSpacerItem(new QSpacerItem(0, 20));
-    il->addWidget(ib, 0, Qt::AlignCenter);
-    il->addStretch();
+    auto addLinkBtn = new QPushButton(tr("新建连接"));
+    addLinkBtn->setFixedSize(100, 28);
 
-    test->addPairedWidget(0, insidetest);
+
+    // 原始和切换逻辑
+    // 创建原始界面
+    auto original_widget_ = new QWidget();
+    //original_widget_->setStyleSheet("background-color : Coral");
+    Ui::TtVerticalLayout* tmpl = new Ui::TtVerticalLayout(original_widget_);
+    //tmpl->addSpacerItem(new QSpacerItem(10, 10));
+    tmpl->addStretch();
+    tmpl->addWidget(displayInfo, 0, Qt::AlignHCenter);
+    tmpl->addSpacerItem(new QSpacerItem(0, 20));
+    tmpl->addWidget(displayWords, 0, Qt::AlignHCenter);
+    tmpl->addWidget(addLinkBtn, 0, Qt::AlignHCenter);
+    tmpl->addStretch();
+
+
+    // 存储历史保存设置
+    auto historyLinkList = new QWidget();
+    historyLinkList->setStyleSheet("background-color: Coral");
+    
+
+    // 使用堆叠布局
+    auto stack_ = new QStackedWidget(linkList);
+    //stack_->setFixedHeight(40);
+    stack_->addWidget(original_widget_);
+    stack_->addWidget(historyLinkList);
+    
+    linkListLayout->addWidget(stack_, 1);
 
     // 新增的弹出框
-    connect(ib, &QPushButton::clicked, [this, controller]() {
+    connect(addLinkBtn, &QPushButton::clicked, [this, controller]() {
       qDebug() << "add new tab";
       FunctionSelectionWindow* test2 = new FunctionSelectionWindow();
       tabWidget_->addNewTab(test2, tr("新建连接"));
       // 连接信号槽
       QObject::connect(test2, &FunctionSelectionWindow::switchRequested,
                        [this](int widget_id) {
-                         tabWidget_->handleButtonClicked(tabWidget_->currentIndex(), widget_id);
+                         tabWidget_->handleButtonClicked(
+                             tabWidget_->currentIndex(), widget_id);
                        });
       // 切换到当前新增 tab
       tabWidget_->setCurrentWidget(test2);
-      //controller->closeDrawer();
     });
+
+
+    // 注册 0 号窗口
+    test->addPairedWidget(0, linkList);
+
+    //// 优化后的信号连接（仅需2个连接点）
+    //connect(modify_title_btn_, &Ui::TtImageButton::clicked, this,
+    //        &SerialWindow::switchToEditMode);
+
+
+
   }
 
   {
     QWidget* insidetest = new QWidget;
-    auto il = new Ui::VerticalLayout(insidetest);
+    auto il = new Ui::TtVerticalLayout(insidetest);
 
     Ui::TtNormalLabel* imla = new Ui::TtNormalLabel();
     imla->setPixmap(
@@ -214,7 +277,7 @@ MainWindow::MainWindow(QWidget* parent)
 
   {
     QWidget* insidetest = new QWidget;
-    auto il = new Ui::VerticalLayout(insidetest);
+    auto il = new Ui::TtVerticalLayout(insidetest);
 
     Ui::TtNormalLabel* imla = new Ui::TtNormalLabel();
     imla->setPixmap(
@@ -603,7 +666,7 @@ void MainWindow::loadStyleSheet(Theme theme) {
 }
 
 void MainWindow::setLeftBar() {
-  left_bar_ = new QWidget();
+  left_bar_ = new QWidget(this);
   left_bar_logic_ = new Ui::TtWidgetGroup(this);
   left_bar_logic_->setExclusive(true);
   communication_connection = new Ui::TtSvgButton(
@@ -628,7 +691,7 @@ void MainWindow::setLeftBar() {
   left_bar_logic_->addWidget(communication_instruction);
   left_bar_logic_->addWidget(realistic_simulation);
 
-  Ui::VerticalLayout* left_bar_layout = new Ui::VerticalLayout();
+  Ui::TtVerticalLayout* left_bar_layout = new Ui::TtVerticalLayout();
 
   // 添加按钮
   left_bar_layout->addWidget(communication_connection, 0, Qt::AlignTop);
@@ -668,7 +731,9 @@ void MainWindow::connectSignals() {
   QObject::connect(
       function_select_, &FunctionSelectionWindow::switchRequested,
       // [this](int widget_id) { tabWidget_->switchToWidget(widget_id); });
-      [this](int widget_id) { tabWidget_->handleButtonClicked(tabWidget_->currentIndex(), widget_id); });
+      [this](int widget_id) {
+        tabWidget_->handleButtonClicked(tabWidget_->currentIndex(), widget_id);
+      });
 }
 
 void MainWindow::registerTabWidget() {
@@ -682,7 +747,7 @@ void MainWindow::registerTabWidget() {
         // qDebug() << runtime.elapseMilliseconds();
         auto widget = new QWidget();
         // QVBoxLayout* layout = new QVBoxLayout();
-        Ui::VerticalLayout* layout = new Ui::VerticalLayout();
+        Ui::TtVerticalLayout* layout = new Ui::TtVerticalLayout();
         widget->setLayout(layout);
         layout->addWidget(d);
         return widget;
@@ -694,7 +759,7 @@ void MainWindow::registerTabWidget() {
       []() {
         Window::TcpWindow* d = new Window::TcpWindow();
         auto widget = new QWidget();
-        Ui::VerticalLayout* layout = new Ui::VerticalLayout(widget);
+        Ui::TtVerticalLayout* layout = new Ui::TtVerticalLayout(widget);
         layout->addWidget(d);
         return widget;
       },

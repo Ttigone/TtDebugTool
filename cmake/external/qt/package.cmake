@@ -2,8 +2,8 @@
 # find_package(Qt${QT_VERSION_MAJOR} OPTIONAL_COMPONENTS Quick QuickWidgets QUIET)
 
 
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS  Core Widgets SerialPort Qml Svg SvgWidgets StateMachine PrintSupport Concurrent)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS  Core  Widgets SerialPort Qml Svg SvgWidgets StateMachine PrintSupport Concurrent)
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS  Core Widgets SerialPort Qml Svg SvgWidgets StateMachine PrintSupport Concurrent Core5Compat)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS  Core  Widgets SerialPort Qml Svg SvgWidgets StateMachine PrintSupport Concurrent Core5Compat)
 
 if (QT_VERSION_MAJOR GREATER_EQUAL 6)
     find_package(Qt${QT_VERSION_MAJOR} COMPONENTS OpenGL OpenGLWidgets REQUIRED)

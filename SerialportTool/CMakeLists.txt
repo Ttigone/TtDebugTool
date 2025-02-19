@@ -27,6 +27,7 @@ set(PROJECT_SOURCES
   src/window/tcp_window.h src/window/tcp_window.cpp
 
   src/widget/serial_setting.h src/widget/serial_setting.cpp
+  src/widget/tcp_setting.h src/widget/tcp_setting.cpp
   src/widget/serial_operation.h src/widget/serial_operation.cpp
   src/widget/shortcut_instruction.h src/widget/shortcut_instruction.cpp
 

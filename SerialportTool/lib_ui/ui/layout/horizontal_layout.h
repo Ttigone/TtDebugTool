@@ -5,13 +5,18 @@
 
 namespace Ui {
 
-class HorizontalLayout : public QHBoxLayout {
+class TtHorizontalLayout : public QHBoxLayout {
  public:
-  HorizontalLayout();
+  TtHorizontalLayout();
+  TtHorizontalLayout(QWidget* widget);
+  ~TtHorizontalLayout();
+
  private:
   void init();
+
+  Q_DISABLE_COPY(TtHorizontalLayout)
 };
 
-} // namespace Ui
+}  // namespace Ui
 
 #endif  // UI_LAYOUT_HORIZONTAL_LAYOUT_H

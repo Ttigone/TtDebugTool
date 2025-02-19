@@ -7,6 +7,7 @@
 namespace Ui {
 class TtLabelComboBox;
 class TtLabelBtnComboBox;
+class TtVerticalLayout;
 } // namespace Ui
 
 namespace Core {
@@ -41,6 +42,8 @@ class SerialSetting : public QWidget {
 
   void displayDefaultSetting();
 
+  const QJsonObject& getSerialSetting();
+
  public Q_SLOTS:
   void setSerialPortsName();
   void setSerialPortsBaudRate();
@@ -50,8 +53,11 @@ class SerialSetting : public QWidget {
   void setSerialPortsFluidControl();
 
  private:
+  void init();
   void refreshSerialCOMx();
   QString matchingSerialCOMx(const QString& name);
+
+  Ui::TtVerticalLayout* main_layout_;
 
   Ui::TtLabelBtnComboBox* select_serial_port_;
   Ui::TtLabelComboBox* select_baud_rate_;
@@ -60,6 +66,10 @@ class SerialSetting : public QWidget {
   Ui::TtLabelComboBox *select_stop_bit_;
   Ui::TtLabelComboBox *select_fluid_control_;
 
+  Ui::TtLabelComboBox* framing_model_;
+  Ui::TtLabelComboBox* framing_timeout_;
+  Ui::TtLabelComboBox* framing_fixed_length_;
+
   bool has_old_settings;
 
   QList<int64> list_baud_rate_;
@@ -67,6 +77,8 @@ class SerialSetting : public QWidget {
   QMap<QString, uint8> map_parity_;
   QMap<QString, uint8> map_stop_bits_;
   QMap<QString, uint8> map_flow_control_;
+
+  QJsonObject serial_save_config_;
 };
 
 } // namespace Window

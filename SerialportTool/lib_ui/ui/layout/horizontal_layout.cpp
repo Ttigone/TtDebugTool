@@ -4,11 +4,17 @@
 
 namespace Ui {
 
-HorizontalLayout::HorizontalLayout() {
+TtHorizontalLayout::TtHorizontalLayout() : QHBoxLayout() {
   init();
 }
 
-void HorizontalLayout::init()
+TtHorizontalLayout::TtHorizontalLayout(QWidget* widget) : TtHorizontalLayout() {
+  widget->setLayout(this);
+}
+
+TtHorizontalLayout::~TtHorizontalLayout() {}
+
+void TtHorizontalLayout::init()
 {
   setContentsMargins(QMargins(0, 0, 0, 0));
   setSpacing(0);

@@ -1,11 +1,10 @@
-﻿/*****************************************************************//**
+﻿/*****************************************************************/ /**
  * \file   customize_fields.h
  * \brief  自定义编辑框
  * 
  * \author C3H3_Ttigone
  * \date   August 2024
  *********************************************************************/
-
 
 #ifndef UI_FIELDS_CUSTOMIZE_FIELDS_H
 #define UI_FIELDS_CUSTOMIZE_FIELDS_H
@@ -14,14 +13,13 @@
 #include <QLineEdit>
 
 namespace Ui {
-namespace Widgets {
 
-class TtCustomizeFields : public QLineEdit {
+class TtLineEdit : public QLineEdit {
   Q_OBJECT
  public:
-  explicit TtCustomizeFields(QWidget* parent = nullptr);
-  explicit TtCustomizeFields(const QString& text, QWidget* parent = nullptr);
-  ~TtCustomizeFields();
+  explicit TtLineEdit(QWidget* parent = nullptr);
+  explicit TtLineEdit(const QString& text, QWidget* parent = nullptr);
+  ~TtLineEdit();
 
   void setMaxWidth(int width);
   void setDefaultText(const QString& text);
@@ -43,16 +41,37 @@ class TtCustomizeFields : public QLineEdit {
 
   int max_len_;
 
-  QAction *front_action_;
-  QAction *end_action_;
+  QAction* front_action_;
+  QAction* end_action_;
 };
 
-}  // namespace Widgets
+class TtLabelLineEdit : public QWidget {
+  Q_OBJECT
+ public:
+  TtLabelLineEdit(Qt::AlignmentFlag flag, const QString& text = "",
+                  QWidget* parent = nullptr);
+  TtLabelLineEdit(const QString& text = "", QWidget* parent = nullptr);
+  ~TtLabelLineEdit();
+
+  QComboBox* body();
+  void addItem(const QString& atext, const QVariant& auserData = QVariant());
+
+  void setCurrentItem(qint8 index);
+  QString itemText(int index);
+  QString currentText();
+  int count();
+
+  void shortCurrentItemText();
+
+ signals:
+  void currentIndexChanged(int index);
+
+ private:
+  TtLineEdit* line_edit_;
+  QLabel* label_;
+};
+
 
 }  // namespace Ui
 
-
-
 #endif  // UI_FIELDS_CUSTOMIZE_FIELDS_H
-
-

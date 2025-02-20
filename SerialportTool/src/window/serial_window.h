@@ -30,6 +30,7 @@ class TtVerticalLayout;
 
 class TtChatView;
 class TtChatMessageModel;
+class TtTableWidget;
 }  // namespace Ui
 
 namespace Widget {
@@ -51,8 +52,12 @@ class SerialWindow : public QWidget {
  public:
   explicit SerialWindow(QWidget* parent = nullptr);
 
- signals:
+  QString getTitle();
 
+  QJsonObject getConfiguration() const;
+
+ signals:
+  void requestSaveConfig();
 
  private slots:
   void switchToEditMode();
@@ -95,6 +100,8 @@ class SerialWindow : public QWidget {
   QWidget* edit_widget_ = nullptr;
   QLineEdit* title_edit_ = nullptr;
   QStackedWidget* stack_ = nullptr;
+
+  Ui::TtTableWidget* instruction_table_;
 
   SerialSaveConfig cfg_;
 };

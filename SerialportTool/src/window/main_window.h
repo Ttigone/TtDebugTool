@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QObject>
+#include <QListWidget>
 
 #include "ui/window/window_switcher.h"
 
@@ -63,6 +64,7 @@ class MainWindow : public QMainWindow {
   void setLeftBar();
   void connectSignals();
   void registerTabWidget();
+  void addDifferentConfiguration(const QString &title);
 
   // void createDockWindows();
 
@@ -76,6 +78,8 @@ class MainWindow : public QMainWindow {
   QWidget* left_bar_;
   Ui::TtWidgetGroup *left_bar_logic_;
   //bool ishi{true};
+
+  QListWidget *history_link_list_;
 
   QVector<QVector<QWidget*>> stacked_;
 

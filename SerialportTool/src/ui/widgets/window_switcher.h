@@ -33,7 +33,7 @@ class ExtTabBarStyle : public QProxyStyle {
         QRect textRect = tab->rect.adjusted(
             4, 0, -24, 0);  // 左侧4px，右侧24px为关闭按钮留空
         if (tab->state & State_Sibling) {
-        //if (tab->state & State_Sunken) {  // 拖动
+          //if (tab->state & State_Sunken) {  // 拖动
           qDebug() << "silbling";
           painter->setOpacity(0.7);  // 半透明效果
         }
@@ -41,8 +41,8 @@ class ExtTabBarStyle : public QProxyStyle {
         // 绘制文字（自动省略号）
         painter->drawText(textRect, Qt::AlignLeft | Qt::AlignVCenter,
                           //fontMetrics().elidedText(tab->text, Qt::ElideRight,
-                          widget->fontMetrics().elidedText(tab->text, Qt::ElideRight,
-                                                   textRect.width()));
+                          widget->fontMetrics().elidedText(
+                              tab->text, Qt::ElideRight, textRect.width()));
         painter->setOpacity(1.0);  // 恢复不透明
       }
 
@@ -114,7 +114,7 @@ class ExtTabBar : public QTabBar {
 
  public:
   explicit ExtTabBar(QWidget* parent = nullptr) : QTabBar(parent) {
-    setStyle(new ExtTabBarStyle(style()));  // 应用自定义样式
+    //setStyle(new ExtTabBarStyle(style()));  // 应用自定义样式
     setMovable(true);
     setTabsClosable(true);  // 启用关闭按钮
     setMouseTracking(true);
@@ -226,6 +226,15 @@ class ExtTabBar : public QTabBar {
 
 class TabManager : public QTabWidget {
   Q_OBJECT
+  enum class TabType {
+    Serial,
+    Udp_client,
+    Modbus_client,
+    MQTT_client,
+    Udp_server,
+    Modbus_server,
+    MQTT_broker,
+  };
 
  public:
   using WidgetFactory = std::function<QWidget*()>;
@@ -234,13 +243,8 @@ class TabManager : public QTabWidget {
   explicit TabManager(QWidget* defalue_widget, QWidget* parent = nullptr);
   ~TabManager() override;
 
-  // 添加新的 Tab，默认包含 widget1
   void addNewTab(const QString& title = "");
-
-  // 添加新的 Tab，默认包含 widget1
   void addNewTab(QWidget* defaultWidget);
-
-  // 添加新的 Tab，默认包含 widget1
   void addNewTab(QWidget* defaultWidget, const QString& title);
 
   // 注册 Widget 工厂函数
@@ -251,6 +255,8 @@ class TabManager : public QTabWidget {
   void switchToWidget(int tabIndex, int widgetId);
 
   void setupTabBar();
+
+  [[nodiscard]] bool findWidget(QWidget* widget);
 
  signals:
   void newTabRequested();  // 新建标签信号
@@ -268,7 +274,11 @@ class TabManager : public QTabWidget {
 
   QHash<int, WidgetFactory> widgetFactories;  // Widget 工厂函数映射
   QHash<int, QString> widgetTitles;           // Widget 标题映射
-  QHash<int, QWidget*> widgetInstances;       // Widget 实例
+  QHash<QWidget*, QString> widgetInstances;   // Widget 实例
+
+  // 记录端口
+
+  //QVector<QWidget*> widgetInstances;       // Widget 实例
 };
 
 }  // namespace Ui

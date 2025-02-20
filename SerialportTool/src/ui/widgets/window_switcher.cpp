@@ -11,16 +11,16 @@ TabManager::TabManager(QWidget* parent) : QTabWidget(parent) {
 
 TabManager::TabManager(QWidget* defaultWidget, QWidget* parent)
     : QTabWidget(parent) {
-  setTabBar(new ExtTabBar());
+  //setTabBar(new ExtTabBar());
   addNewTab(defaultWidget);
 }
 
 TabManager::~TabManager() {
-  for (auto& widget : widgetInstances) {
-    if (widget) {
-      widget->deleteLater();
-    }
-  }
+  //for (auto& widget : widgetInstances) {
+  //  if (widget) {
+  //    widget->deleteLater();
+  //  }
+  //}
   // qDeleteAll(widgetInstances);
 };
 
@@ -83,7 +83,10 @@ void TabManager::switchToWidget(int tabIndex, int widgetId) {
 
   // qDebug() << runtime.elapseMilliseconds();
 
-  widgetInstances[widgetId] = newWidget;  // 存储原始指针
+  // 实例应当个性化
+  //widgetInstances[newWidget] = ;  // 存储原始指针
+
+
   // 设置 tab 的文本
   setTabText(tabIndex, widgetTitles[widgetId]);
   // 向 tabIndex 所有的 tab 界面设置界面 newWidget, title 为对应索引值
@@ -97,10 +100,14 @@ void TabManager::setupTabBar() {
   ExtTabBar* tabBar = new ExtTabBar(this);
   setTabBar(tabBar);
 
-  // 连接信号
-  connect(tabBar, &ExtTabBar::tabCloseRequested, this,
-          &TabManager::handleTabCloseRequested);
-  connect(tabBar, &ExtTabBar::newTabRequested, this, &TabManager::handleAddNewTab);
+  //// 连接信号
+  //connect(tabBar, &ExtTabBar::tabCloseRequested, this,
+  //        &TabManager::handleTabCloseRequested);
+  //connect(tabBar, &ExtTabBar::newTabRequested, this, &TabManager::handleAddNewTab);
+}
+
+bool TabManager::findWidget(QWidget* widget) {
+  return widgetInstances.contains(widget);
 }
 
 // void TabManager::handleButtonClicked(int tabIndex) {

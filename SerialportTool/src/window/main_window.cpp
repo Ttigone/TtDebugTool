@@ -7,44 +7,43 @@
 #include <QGuiApplication>
 #include <QLabel>
 #include <QListWidget>
+#include <QMargins>
 #include <QPushbutton>
 #include <QStackedLayout>
 #include <QTimer>
 #include <QVBoxLayout>
 #include <QtWidgets/QStyle>
+#include <qtconcurrentrun.h>
 
 #include <QWKWidgets/widgetwindowagent.h>
 #include <Qt-Advanced-Stylesheets/src/QtAdvancedStylesheet.h>
 #include <qtmaterialsnackbar.h>
+
+#include <ui/effects/animated_drawer.h>
+#include <ui/layout/vertical_layout.h>
+
+#include <ui/widgets/buttons.h>
+#include <ui/widgets/customizationtabwidget.h>
+#include <ui/widgets/labels.h>
+#include <ui/widgets/snack_bar.h>
+#include <ui/widgets/widget_group.h>
 
 #include <ui/window/title/window_button.h>
 #include <ui/window/title/windowbar.h>
 
 #include "core/serial_port.h"
 
-#include "ui/widgets/pop_widget.h"
-
-#include "ui/widgets/customizationtabwidget.h"
-
-#include "window/popup_window.h"
-
-#include <ui/layout/vertical_layout.h>
-#include <ui/widgets/buttons.h>
-
-#include "ui/control/TtPopUpDrawer.h"
 #include "window/function_selection_window.h"
-
-#include "ui/widgets/labels.h"
-#include "ui/widgets/snack_bar.h"
-
+#include "window/popup_window.h"
 #include "window/serial_window.h"
 #include "window/tcp_window.h"
 #include "window/udp_window.h"
 
-#include "ui/window/window_switcher.h"
+#include "ui/control/TtPopUpDrawer.h"
+#include "ui/widgets/pop_widget.h"
 
-#include <ui/effects/animated_drawer.h>
-#include <ui/widgets/widget_group.h>
+#include "ui/widgets/window_switcher.h"
+#include "storage/setting_manager.h"
 
 namespace Window {
 
@@ -147,15 +146,18 @@ MainWindow::MainWindow(QWidget* parent)
     //QWidget* titleWidget = new QWidget();
     //titleWidget->setMinimumHeight(40);
     //titleWidget->setMaximumHeight(40);
-    Ui::TtNormalLabel* title = new Ui::TtNormalLabel(tr("连接列表"), titleWidget);
+    Ui::TtNormalLabel* title =
+        new Ui::TtNormalLabel(tr("连接列表"), titleWidget);
     //Ui::TtSvgButton* add =
     //    new Ui::TtSvgButton(":/sys/plus-circle.svg", "", titleWidget);  // 刷新
     Ui::TtImageButton* add =
         new Ui::TtImageButton(":/sys/plus-circle.svg", titleWidget);  // 刷新
     Ui::TtSvgButton* refresh =
-        new Ui::TtSvgButton(":/sys/refresh-normal.svg", ":/sys/refresh-hover.svg", titleWidget);  // 新建
+        new Ui::TtSvgButton(":/sys/refresh-normal.svg",
+                            ":/sys/refresh-hover.svg", titleWidget);  // 新建
     refresh->setEnableToggle(false);
-    Ui::TtHorizontalLayout* titleLayout = new Ui::TtHorizontalLayout(titleWidget);
+    Ui::TtHorizontalLayout* titleLayout =
+        new Ui::TtHorizontalLayout(titleWidget);
     titleLayout->addWidget(title);
     titleLayout->addStretch();
     titleLayout->addWidget(add);
@@ -163,7 +165,6 @@ MainWindow::MainWindow(QWidget* parent)
     titleLayout->addWidget(refresh);
 
     linkListLayout->addWidget(titleWidget, 0, Qt::AlignTop);
-
 
     // 首页界面
     // 显示的图片
@@ -174,12 +175,12 @@ MainWindow::MainWindow(QWidget* parent)
     //linkListLayout->addWidget(displayInfo, 0, Qt::AlignCenter);
 
     // 图片底下的文字
-    Ui::TtNormalLabel* displayWords = new Ui::TtNormalLabel(tr("暂时没有可用的连接"));
+    Ui::TtNormalLabel* displayWords =
+        new Ui::TtNormalLabel(tr("暂时没有可用的连接"));
     //il->addWidget(displayWords, 0, Qt::AlignCenter);
     // 点击后在 tab 弹出一个 新 tab, 用于设置
     auto addLinkBtn = new QPushButton(tr("新建连接"));
     addLinkBtn->setFixedSize(100, 28);
-
 
     // 原始和切换逻辑
     // 创建原始界面
@@ -194,19 +195,33 @@ MainWindow::MainWindow(QWidget* parent)
     tmpl->addWidget(addLinkBtn, 0, Qt::AlignHCenter);
     tmpl->addStretch();
 
-
     // 存储历史保存设置
-    auto historyLinkList = new QWidget();
-    historyLinkList->setStyleSheet("background-color: Coral");
-    
+    //auto historyLinkWidget = new QWidget();
+    //history_link_list_ = new QListWidget(historyLinkWidget);
+    history_link_list_ = new QListWidget();
+    //historyLinkWidget->setStyleSheet("background-color: Coral");
 
     // 使用堆叠布局
     auto stack_ = new QStackedWidget(linkList);
     //stack_->setFixedHeight(40);
     stack_->addWidget(original_widget_);
-    stack_->addWidget(historyLinkList);
-    
+    //stack_->addWidget(historyLinkWidget);
+    stack_->addWidget(history_link_list_);
+
     linkListLayout->addWidget(stack_, 1);
+    // 监听 model 的行数变化
+    connect(history_link_list_->model(), &QAbstractItemModel::rowsInserted,
+            [=](const QModelIndex& parent, int first, int last) {
+              if (history_link_list_->count() == 1) {  // 从0变为1
+                stack_->setCurrentIndex(1);
+              }
+            });
+    connect(history_link_list_->model(), &QAbstractItemModel::rowsRemoved,
+            [=](const QModelIndex& parent, int first, int last) {
+              if (history_link_list_->count() == 0) {  // 从1变为0
+                stack_->setCurrentIndex(0);
+              }
+            });
 
     // 新增的弹出框
     connect(addLinkBtn, &QPushButton::clicked, [this, controller]() {
@@ -223,16 +238,12 @@ MainWindow::MainWindow(QWidget* parent)
       tabWidget_->setCurrentWidget(test2);
     });
 
-
     // 注册 0 号窗口
     test->addPairedWidget(0, linkList);
 
     //// 优化后的信号连接（仅需2个连接点）
     //connect(modify_title_btn_, &Ui::TtImageButton::clicked, this,
     //        &SerialWindow::switchToEditMode);
-
-
-
   }
 
   {
@@ -364,13 +375,17 @@ bool MainWindow::event(QEvent* event) {
       }
       break;
     }
-
     case QEvent::WindowDeactivate: {
       auto menu = menuWidget();
       if (menu) {
         menu->setProperty("bar-active", false);
         style()->polish(menu);
       }
+      break;
+    }
+    case QEvent::Close: {
+      // 保存设置
+      Storage::SettingsManager::instance().saveSettings();
       break;
     }
 
@@ -651,7 +666,7 @@ void MainWindow::loadStyleSheet(Theme theme) {
   AdvancedStylesheet.updateStylesheet();
 
   // now you can set the generated stylesheet
-  qApp->setStyleSheet(AdvancedStylesheet.styleSheet());
+  //qApp->setStyleSheet(AdvancedStylesheet.styleSheet());
   //     if (!styleSheet().isEmpty() && theme == currentTheme)
   //         return;
   //     currentTheme = theme;
@@ -740,16 +755,73 @@ void MainWindow::registerTabWidget() {
   // 注册 串口窗口
   tabWidget_->registerWidget(
       0,
-      []() {
-        // base::DetectRunningTime runtime;
-        Window::SerialWindow* d = new Window::SerialWindow();
-        // d->setStyleSheet("background-color: Coral");
-        // qDebug() << runtime.elapseMilliseconds();
+      [this]() {
+        //base::DetectRunningTime runtime;
+
+        //auto widget = new QWidget();
+        //Ui::TtVerticalLayout* layout = new Ui::TtVerticalLayout(widget);
+
+        //// 创建并显示加载动画
+        //QLabel* loadingLabel = new QLabel(widget);
+        //QMovie* loadingMovie = new QMovie(":/sys/loading.gif");
+        //loadingLabel->setMovie(loadingMovie);
+        //layout->addWidget(loadingLabel);
+        //loadingMovie->start();
+
+        //// 使用 QtConcurrent::run 在后台线程中创建 SerialWindow
+        //QFuture<Window::SerialWindow*> future =
+        //    QtConcurrent::run([this]() { return new Window::SerialWindow(); });
+        //// 使用 QFutureWatcher 监听线程完成
+        //QFutureWatcher<Window::SerialWindow*>* watcher =
+        //    new QFutureWatcher<Window::SerialWindow*>(this);
+
+        //connect(watcher, &QFutureWatcher<Window::SerialWindow*>::finished,
+        //        [this, watcher, layout, loadingLabel, loadingMovie]() {
+        //          Window::SerialWindow* d = watcher->result();
+        //          connect(d, &Window::SerialWindow::requestSaveConfig,
+        //                  [this, d]() {
+        //                    Storage::SettingsManager::instance().setSetting(
+        //                        "Serial", d->getConfiguration());
+        //                    // 向 ListWidget 添加 button
+        //                    addDifferentConfiguration(1);
+        //                    qDebug() << "save";
+        //                    // 只有关闭整个 app 的时候才会保存到本地
+        //                  });
+
+        //          // 移除加载动画并添加 SerialWindow
+        //          layout->removeWidget(loadingLabel);
+        //          loadingMovie->stop();
+        //          loadingLabel->deleteLater();
+        //          layout->addWidget(d);
+
+        //          qDebug() << "Create SerialWindow finished";
+        //          watcher->deleteLater();
+        //        });
+        //watcher->setFuture(future);
+
+        //qDebug() << "Create SerialWindow: " << runtime.elapseMilliseconds();
+        //return widget;
+
+        Window::SerialWindow* serial = new Window::SerialWindow();
         auto widget = new QWidget();
-        // QVBoxLayout* layout = new QVBoxLayout();
-        Ui::TtVerticalLayout* layout = new Ui::TtVerticalLayout();
-        widget->setLayout(layout);
-        layout->addWidget(d);
+        Ui::TtVerticalLayout* layout = new Ui::TtVerticalLayout(widget);
+        layout->addWidget(serial);
+
+        //qDebug() << "Create SerialWindow: " << runtime.elapseMilliseconds();
+        connect(serial, &Window::SerialWindow::requestSaveConfig,
+                [this, serial]() {
+                  //qDebug() << tabWidget_->currentIndex();
+                  qDebug() << "widget: " << tabWidget_->currentWidget()->winId();
+                  //if ()
+                  // 获取当前窗口的独特值, 是否已经保存到 listwidget, 
+                  // listwidget 需要建立索引, 
+                  addDifferentConfiguration(serial->getTitle());
+                  qDebug() << "save";
+                  // 只有关闭整个 app 的时候才会保存到本地
+
+                  Storage::SettingsManager::instance().setSetting(
+                      "Serial", serial->getConfiguration());
+                });
         return widget;
       },
       tr("未命名的串口连接"));
@@ -808,6 +880,19 @@ void MainWindow::registerTabWidget() {
   //   return QString("Second Tab");
 
   // });
+}
+
+void MainWindow::addDifferentConfiguration(const QString& title) {
+
+  QListWidgetItem* item = new QListWidgetItem();
+  Ui::TtSpecialDeleteButton* button = new Ui::TtSpecialDeleteButton(
+      title, ":/sys/displayport.svg", ":/sys/delete.svg", this);
+  //button->setStyleSheet("background-color: transparent");
+  // 必须先设置item的大小,否则按钮可能显示不完整
+  item->setSizeHint(button->sizeHint().shrunkBy(QMargins(3, 3, 3, 3)));
+  history_link_list_->addItem(item);
+  history_link_list_->setItemWidget(item, button);
+  qDebug() << "add Item";
 }
 
 // void MainWindow::createDockWindows()

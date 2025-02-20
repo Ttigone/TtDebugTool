@@ -383,6 +383,9 @@ class TtTableWidget : public QTableWidget {
 
   void setupHeaderRow();
 
+  void setupTable(const QJsonObject &record);
+  QJsonObject getTableRecord();
+
  private slots:
   void onAddRowButtonClicked();
 
@@ -395,19 +398,7 @@ class TtTableWidget : public QTableWidget {
     void setPaintRightBorder(bool isPaint) { paint_ = isPaint; }
 
    protected:
-    void paintEvent(QPaintEvent* event) override {
-      QWidget::paintEvent(event);
-
-      if (paint_) {
-        QPainter painter(this);
-        // painter.setPen(QPen(QColor("#212121")));  // 设置边框颜色
-        painter.setPen(QPen(QColor("#c6c6c6")));  // 设置边框颜色
-
-        // 画一个右边框，只在自定义区域内
-        // qDebug() << this->height();
-        painter.drawLine(width() - 1, 4, width() - 1, this->height() - 4);
-      }
-    }
+    void paintEvent(QPaintEvent* event) override;
 
    private:
     bool paint_;
@@ -423,13 +414,17 @@ class TtTableWidget : public QTableWidget {
   QWidget* createHeaderAddRowWidget();   // 创建添加行按钮
   QWidget* createHeaderSendMsgWidget();  // 创建发送按钮
 
-  QWidget* createFirstColumnWidget();   // 仅用于数据行
-  QWidget* createSecondColumnWidget();  // 仅用于数据行
-  QWidget* createThirdColumnWidget();   // 仅用于数据行
-  QWidget* createFourthColumnWidget();  // 仅用于数据行
-  QWidget* createFifthColumnWidget();   // 仅用于数据行
-  QWidget* createSixthColumnWidget();   // 仅用于数据行
+  QWidget* createFirstColumnWidget();    // 仅用于数据行
+  QWidget* createSecondColumnWidget();   // 仅用于数据行
+  QWidget* createThirdColumnWidget();    // 仅用于数据行
+  QWidget* createFourthColumnWidget();   // 仅用于数据行
+  QWidget* createFifthColumnWidget();    // 仅用于数据行
+  QWidget* createSixthColumnWidget();    // 仅用于数据行
   QWidget* createSeventhColumnWidget();  // 仅用于数据行
+
+  QJsonObject record_;
+  int rows_;
+  int cols_;
 };
 
 }  // namespace Ui

@@ -31,15 +31,18 @@ set(PROJECT_SOURCES
   src/widget/serial_operation.h src/widget/serial_operation.cpp
   src/widget/shortcut_instruction.h src/widget/shortcut_instruction.cpp
 
+  src/storage/setting_manager.h src/storage/setting_manager.cpp
+
   src/ui/widgets/text_widget.h src/ui/widgets/text_widget.cpp
   src/ui/widgets/pop_widget.h src/ui/widgets/pop_widget.cpp
+  ui/ui/widgets/window_switcher.h ui/ui/widgets/window_switcher.cpp
 )
 
 set(RES_QRC
-        # res/TtigoneChat.qrc
         res/windowbar/windowbar_icon.qrc
         res/sys-icon/sys-icon.qrc
         res/sys-icon/third/third.qrc
+        res/sys-gif/sys-gif.qrc
 )
 
 if (${QT_VERSION_MAJOR} GREATER_EQUAL 6)

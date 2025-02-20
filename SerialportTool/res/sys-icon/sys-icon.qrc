@@ -20,5 +20,9 @@
         <file>Instruction-configuration_pressed.svg</file>
         <file>real-time-simulation_pressed.svg</file>
         <file>plus-circle.svg</file>
+        <file>delete.svg</file>
+        <file>displayport.svg</file>
+        <file>link.svg</file>
+        <file>unlink.svg</file>
     </qresource>
 </RCC>

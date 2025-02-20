@@ -119,4 +119,4 @@ class TtChatMessage : public QObject {
 };
 
 }  // namespace Ui
-#endif // UI_CONTROL_CHATWIDGET_TTCHATMESSAGE_H
+#endif  // UI_CONTROL_CHATWIDGET_TTCHATMESSAGE_H

@@ -84,9 +84,76 @@ void TtTableWidget::setupHeaderRow() {
   setCellWidget(0, 6, createHeaderSendMsgWidget());
 }
 
+void TtTableWidget::setupTable(const QJsonObject& record) {
+  record_ = record;
+}
+
+QJsonObject TtTableWidget::getTableRecord() {
+  int rows = rowCount();
+  int cols = columnCount();
+  for (int i = 1; i < rows; ++i) {
+    QJsonArray record;
+    for (int j = 0; j < cols; ++j) {
+      switch (j) {
+        case 0: {
+          TtToggleButton* item =
+              cellWidget(i, j)->findChild<TtToggleButton*>("isEnableBtn");
+          if (item) {
+            bool isEnabled = item->isChecked();
+            //qDebug() << "test: " << isEnabled;
+            record.append(QJsonValue(isEnabled));
+          }
+          break;
+        }
+        case 1: {
+          TtLineEdit* item = cellWidget(i, j)->findChild<TtLineEdit*>("name");
+          if (item) {
+            auto text = item->text();
+            //qDebug() << "test: " << text;
+            record.append(QJsonValue(text));
+          }
+          break;
+        }
+        case 2: {
+          QComboBox* item = cellWidget(i, j)->findChild<QComboBox*>("type");
+          if (item) {
+            auto text = item->currentText();
+            //qDebug() << "test: " << text;
+            record.append(QJsonValue(text));
+          }
+          break;
+        }
+        case 3: {
+          TtLineEdit* item =
+              cellWidget(i, j)->findChild<TtLineEdit*>("content");
+          if (item) {
+            auto text = item->text();
+            //qDebug() << "test: " << text;
+            record.append(QJsonValue(text));
+          }
+          break;
+        }
+        case 4: {
+          QSpinBox* item = cellWidget(i, j)->findChild<QSpinBox*>("delay");
+          if (item) {
+            auto text = item->text();
+            //qDebug() << "test: " << text;
+            record.append(QJsonValue(text));
+          }
+          break;
+        }
+      }
+    }
+    // 序号, 数组
+    record_.insert(QString::number(i), record);
+  }
+  return record_;
+}
+
 void TtTableWidget::onAddRowButtonClicked() {
   // 在表格末尾插入新行
   int newRowIndex = rowCount();
+  qDebug() << newRowIndex;
   insertRow(newRowIndex);
 
   // 为新行的每一列创建固定的widget
@@ -97,11 +164,15 @@ void TtTableWidget::onAddRowButtonClicked() {
   setCellWidget(newRowIndex, 4, createFifthColumnWidget());
   setCellWidget(newRowIndex, 5, createSixthColumnWidget());
   setCellWidget(newRowIndex, 6, createSeventhColumnWidget());
+
+  // 确保调整大小
+  resizeRowsToContents();
+  resizeColumnsToContents();
 }
 
 void TtTableWidget::init() {
 
-  // setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   // 样式设置
   setStyleSheet(
       "QTableWidget {"
@@ -308,6 +379,7 @@ QWidget* TtTableWidget::createFirstColumnWidget() {
   layout->setContentsMargins(5, 2, 5, 2);
 
   TtToggleButton* isEnableBtn = new TtToggleButton(container);
+  isEnableBtn->setObjectName("isEnableBtn");  // 设置对象名称
   layout->addWidget(isEnableBtn);
 
   return container;
@@ -323,6 +395,7 @@ QWidget* TtTableWidget::createSecondColumnWidget() {
   TtLineEdit* lineEdit =
       // new Widgets::TtCustomizeFields(container);
       new TtLineEdit(tr("名称"), container);
+  lineEdit->setObjectName("name");  // 设置对象名称
   // lineEdit->setMinimumWidth(260);  // 无法生效
   // lineEdit->setFixedWidth(260);  // 无法生效
   lineEdit->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
@@ -339,6 +412,7 @@ QWidget* TtTableWidget::createThirdColumnWidget() {
 
   // 创建下拉框和数字输入框
   QComboBox* comboBox = new QComboBox(container);
+  comboBox->setObjectName("type");  // 设置对象名称
   comboBox->addItems({tr("TEXT"), tr("HEX")});
 
   layout->addWidget(comboBox);
@@ -351,13 +425,11 @@ QWidget* TtTableWidget::createFourthColumnWidget() {
   QHBoxLayout* layout = new QHBoxLayout(container);
   // layout->setContentsMargins(5, 2, 5, 2);
   layout->setContentsMargins(QMargins());
+  layout->setSpacing(0);
 
-  // // 创建下拉框和数字输入框
-  // QLineEdit* lineEdit = new QLineEdit(container);
   // 创建下拉框和数字输入框
-  TtLineEdit* lineEdit =
-      // new Widgets::TtCustomizeFields(container);
-      new TtLineEdit(tr("内容"), container);
+  TtLineEdit* lineEdit = new TtLineEdit(tr("内容"), container);
+  lineEdit->setObjectName("content");  // 设置对象名称
   layout->addWidget(lineEdit, 0, Qt::AlignLeft);
 
   return container;
@@ -365,11 +437,12 @@ QWidget* TtTableWidget::createFourthColumnWidget() {
 
 QWidget* TtTableWidget::createFifthColumnWidget() {
   QWidget* container = new QWidget(this);
+  container->setMinimumHeight(32);
   QHBoxLayout* layout = new QHBoxLayout(container);
   layout->setContentsMargins(5, 2, 5, 2);
 
   QSpinBox* spinBox = new QSpinBox(container);
-
+  spinBox->setObjectName("delay");  // 设置对象名称
   layout->addWidget(spinBox);
 
   return container;
@@ -381,7 +454,6 @@ QWidget* TtTableWidget::createSixthColumnWidget() {
   layout->setContentsMargins(QMargins());
 
   TtImageButton* deleteBtn = new TtImageButton(":/sys/trash.svg", container);
-
   layout->addWidget(deleteBtn);
 
   // 连接删除按钮信号
@@ -413,6 +485,20 @@ QWidget* TtTableWidget::createSeventhColumnWidget() {
   // });
 
   return container;
+}
+
+inline void TtTableWidget::HeaderWidget::paintEvent(QPaintEvent* event) {
+  QWidget::paintEvent(event);
+
+  if (paint_) {
+    QPainter painter(this);
+    // painter.setPen(QPen(QColor("#212121")));  // 设置边框颜色
+    painter.setPen(QPen(QColor("#c6c6c6")));  // 设置边框颜色
+
+    // 画一个右边框，只在自定义区域内
+    // qDebug() << this->height();
+    painter.drawLine(width() - 1, 4, width() - 1, this->height() - 4);
+  }
 }
 
 }  // namespace Ui

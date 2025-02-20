@@ -20,6 +20,8 @@ QT_END_NAMESPACE
 
 namespace Ui {
 
+class TtHorizontalLayout;
+
 class CommonButton : public AbstractButton {
  public:
   CommonButton(QWidget* parent = nullptr);
@@ -272,7 +274,7 @@ class TtSvgButton : public QWidget {
   Q_PROPERTY(QString svgPath2 READ svgSecondPath WRITE setSecondSvgPath)
   Q_PROPERTY(bool currentSvg READ currentSvg WRITE setCurrentSvg NOTIFY
                  currentSvgChanged)
-  Q_PROPERTY(QSize svgSize READ svgSize WRITE setSvgSize)  // 新增属性
+  Q_PROPERTY(QSize svgSize READ svgSize WRITE setSvgSize)   // 新增属性
   Q_PROPERTY(bool checked READ isChecked WRITE setChecked)  // 新增属性
  public:
   explicit TtSvgButton(QWidget* parent = nullptr);
@@ -350,6 +352,40 @@ class TtToggleButton : public QWidget {
   bool checked;
   qreal m_knobPosition;
   QPropertyAnimation* animation;
+};
+
+class TtSpecialDeleteButton : public QWidget {
+  Q_OBJECT
+ public:
+  explicit TtSpecialDeleteButton(QWidget* parent = nullptr);
+  explicit TtSpecialDeleteButton(const QString& name, const QString& icon_path,
+                                 const QString& delete_path,
+                                 QWidget* parent = nullptr);
+  ~TtSpecialDeleteButton() = default;
+
+  QSize sizeHint() const override;
+  QSize minimumSizeHint() const override;
+ signals:
+  void clicked();
+
+ protected:
+  void paintEvent(QPaintEvent* event) override;
+  void enterEvent(QEnterEvent* event) override;
+  void leaveEvent(QEvent* event) override;
+  void mousePressEvent(QMouseEvent* event) override;
+  void mouseReleaseEvent(QMouseEvent* event) override;
+
+ private:
+  Ui::TtHorizontalLayout* layout_;
+  bool is_hovered_;
+  bool is_pressed_;
+  QPixmap icon_;
+  QLabel name_;
+  QPushButton* delete_button_;
+  bool old_state_;
+  static const int ICON_SIZE = 20;
+  static const int PADDING = 2;
+  static const int SPACING = 6;
 };
 
 }  // namespace Ui

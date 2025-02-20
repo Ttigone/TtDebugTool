@@ -24,7 +24,6 @@ PRIVATE
   ui/window/title/window_button.h ui/window/title/window_button.cpp  ui/window/title/window_button_p.h
 
   ui/window/combobox.h ui/window/combobox.cpp
-  ui/window/window_switcher.h ui/window/window_switcher.cpp
 
 
   ui/style/style_core_types.h

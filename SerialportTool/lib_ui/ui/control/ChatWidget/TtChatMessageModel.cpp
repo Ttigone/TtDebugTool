@@ -455,10 +455,15 @@ void TtChatMessageModel::removeMessages(int first, int last) {
 
   beginRemoveRows(QModelIndex(), first, last);
   for (int i = last; i >= first; --i) {
-    QModelIndex idx = index(i);
-    QString id = data(idx, MessageIdRole).toString();
-    TtChatMessage* msg = m_messageMap.take(id);
-    delete msg;
+    QModelIndex idx = index(i);                        // 当前索引
+    QString id = data(idx, MessageIdRole).toString();  // 当前消息ID
+    TtChatMessage* msg = m_messageMap.take(id);        // 移除消息
+    m_blocks.last().messages.removeAll(msg);           // 移除消息
+    //if (msg) {
+    //  //delete msg;
+    //  msg->deleteLater();
+    //  //msg = nullptr;
+    //}
   }
   // 更新块结构...
   endRemoveRows();
@@ -595,14 +600,34 @@ void TtChatMessageModel::clearModelData() {
   //}
 
   //beginResetModel();
-  //for (auto& block : m_blocks) {
-  //  //delete block.messages.removeAll();
-  //  block.messages.removeAll();
-  //}
-  //m_blocks.clear();
-  //m_messageMap.clear();
+  ////for (auto& block : m_blocks) {
+  ////  //delete block.messages.removeAll();
+  ////  block.messages.removeAll();
+  ////}
+  ////m_blocks.clear();
+  ////m_messageMap.clear();
   //endResetModel();
+  beginResetModel();
+  clearAllSelections();
   removeMessages(0, rowCount() - 1);
+  endResetModel();
+  //if (m_messageMap.empty()) {
+  //  return;
+  //}
+  //beginResetModel();  // 通知视图模型即将被重置
+  //                    //for (auto& block : m_blocks) {
+  //                    //  delete block.messages;  // 删除消息对象
+  //// 删除消息对象
+  //for (auto& block : m_blocks) {
+  //  for (auto msg : block.messages) {
+  //    delete msg;
+  //  }
+  //  block.messages.clear();
+  //}
+  ////}
+  //m_blocks.clear();      // 清空消息块
+  //m_messageMap.clear();  // 清空消息映射
+  //endResetModel();       // 通知视图模型已经被重置
 }
 
 void TtChatMessageModel::loadInitialMessages() {}

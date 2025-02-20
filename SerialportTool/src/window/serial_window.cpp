@@ -14,14 +14,14 @@
 #include <ui/widgets/snack_bar.h>
 #include <ui/window/combobox.h>
 
-#include "widget/serial_setting.h"
-#include "widget/shortcut_instruction.h"
-
 #include <lib/qtmaterialcheckable.h>
 #include <qtmaterialflatbutton.h>
 #include <qtmaterialradiobutton.h>
 #include <qtmaterialsnackbar.h>
 #include <qtmaterialtabs.h>
+
+#include "widget/serial_setting.h"
+#include "widget/shortcut_instruction.h"
 
 namespace Window {
 
@@ -31,6 +31,14 @@ SerialWindow::SerialWindow(QWidget* parent)
       serial_setting_(new Widget::SerialSetting()) {
   init();
   connectSignals();
+}
+
+QString SerialWindow::getTitle() {
+  return title_->text();
+}
+
+QJsonObject SerialWindow::getConfiguration() const {
+  return cfg_.obj;
 }
 
 void SerialWindow::switchToEditMode() {
@@ -191,6 +199,8 @@ void SerialWindow::init() {
   cont_layout->addWidget(chose_function);
   cont_layout->addWidget(message_view_);
 
+  base::DetectRunningTime runtime;
+
   message_model_ = new Ui::TtChatMessageModel;
   //QList<Ui::TtChatMessage*> list;
 
@@ -246,7 +256,6 @@ void SerialWindow::init() {
   m_tabs->addTab(tr("手动"));
   // m_tabs
   m_tabs->addTab(tr("片段"));
-  m_tabs->addTab(tr("指令"));
   // m_tabs->setBackgroundColor(QColor::fromRgbF(255, 255, 255));
   m_tabs->setMinimumWidth(80);
 
@@ -262,28 +271,24 @@ void SerialWindow::init() {
   tacLayout->addWidget(send_byte);
   tacLayout->addWidget(recv_byte);
 
-  QStackedLayout* layout = new QStackedLayout;
+  QWidget* la_w = new QWidget(this);
+  QStackedLayout* layout = new QStackedLayout(la_w);
   layout->setContentsMargins(QMargins());
   layout->setSpacing(0);
-  QWidget* la_w = new QWidget(this);
-  la_w->setLayout(layout);
 
   QWidget* messageEdit = new QWidget(la_w);
   // messageEdit
   QVBoxLayout* messageEditLayout = new QVBoxLayout;
   messageEdit->setLayout(messageEditLayout);
-  messageEditLayout->setContentsMargins(3, 3, 3, 3);
+  messageEditLayout->setContentsMargins(3, 0, 3, 0);
   messageEditLayout->setSpacing(0);
 
   editor = new QsciScintilla(messageEdit);
   editor->setWrapMode(QsciScintilla::WrapWord);
   editor->setWrapVisualFlags(QsciScintilla::WrapFlagInMargin,
                              QsciScintilla::WrapFlagInMargin, 0);
-
   editor->setCaretForegroundColor(QColor("Coral"));
   editor->setCaretWidth(10);
-
-  //editor->setCaretLineBackgroundColor(QColor("Red"));
   editor->setMarginType(1, QsciScintilla::NumberMargin);
 
   messageEditLayout->addWidget(editor);
@@ -291,10 +296,8 @@ void SerialWindow::init() {
   QWidget* bottomBtnWidget = new QWidget(messageEdit);
   bottomBtnWidget->setMinimumHeight(40);
   //bottomBtnWidget->setStyleSheet("back)ground-color: red");
-  Ui::TtHorizontalLayout* bottomBtnWidgetLayout = new Ui::TtHorizontalLayout;
-  bottomBtnWidgetLayout->setContentsMargins(QMargins());
-  bottomBtnWidgetLayout->setSpacing(0);
-  bottomBtnWidget->setLayout(bottomBtnWidgetLayout);
+  Ui::TtHorizontalLayout* bottomBtnWidgetLayout =
+      new Ui::TtHorizontalLayout(bottomBtnWidget);
 
   QtMaterialRadioButton* choseText = new QtMaterialRadioButton(bottomBtnWidget);
   QtMaterialRadioButton* choseHex = new QtMaterialRadioButton(bottomBtnWidget);
@@ -310,51 +313,26 @@ void SerialWindow::init() {
 
   messageEditLayout->addWidget(bottomBtnWidget);
 
-  Ui::TtTableWidget* table = new Ui::TtTableWidget(la_w);
-  // Ui::TtToggleButton* button = new Ui::TtToggleButton();
-
-  // auto te = new Widget::ShortcutInstruction;
-  // te->setStyleSheet("background-color: Coral");
-
-  // Insert QPushButton
-  // QListWidgetItem* buttonItem = new QListWidgetItem(te);
-  // te->setItemWidget(buttonItem, button);
-
-  // Widget::HeaderWidget* ts = new Widget::HeaderWidget;
-  // te->addCustomWidget(ts);
-
-  // Widget::InstructionWidget* ttt = new Widget::InstructionWidget;
-  // te->addCustomWidget(ttt);
-
-  //layout->addWidget(table);
+  instruction_table_ = new Ui::TtTableWidget(la_w);
 
   layout->addWidget(messageEdit);
+  layout->addWidget(instruction_table_);
 
-  // layout->addWidget(table);
-
-  // // 创建自定义widget
-  // // QPushButton* button = new QPushButton("Click Me");
-  // Ui::TtToggleButton* button = new Ui::TtToggleButton();
-  // button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   layout->setCurrentIndex(0);
 
   connect(m_tabs, &QtMaterialTabs::currentChanged, [this, layout](int index) {
-    qDebug() << index;
+    //qDebug() << index;
     layout->setCurrentIndex(index);
   });
 
   bottomAllLayout->addWidget(tabs_and_count);
-  // bottomAllLayout->addWidget(messageEdit);
   bottomAllLayout->addWidget(la_w);
 
   VSplitter->addWidget(cont);
   VSplitter->addWidget(bottomAll);
 
-  //setSerialSetting();
-
   // 左右分区
   mainSplitter->addWidget(VSplitter);
-  //serial_setting_ = new Widget::SerialSetting();
   mainSplitter->addWidget(serial_setting_);
 
   // 主界面是左右分隔
@@ -366,6 +344,7 @@ void SerialWindow::init() {
 
   //SnackBarController::instance()->showMessage("这是一个测试消息", 2000);
   //SnackBarController::instance();
+
   connect(on_off_btn_, &Ui::TtSvgButton::clicked, [this, snack_bar_]() {
     // 检查是否处于打开状态
     //snack_bar_->addMessage(
@@ -437,6 +416,7 @@ void SerialWindow::init() {
     send_byte->setText(QString("发送字节数: %1 B").arg(send_byte_count));
     message_view_->scrollToBottom();
   });
+  qDebug() << "Create SerialWindow: " << runtime.elapseMilliseconds();
 }
 
 void SerialWindow::setSerialSetting() {
@@ -457,6 +437,11 @@ void SerialWindow::connectSignals() {
     // 保存配置界面, 但没有历史消息
     cfg_.obj.insert("WindowTitle", title_->text());
     cfg_.obj.insert("SerialSetting", serial_setting_->getSerialSetting());
+    cfg_.obj.insert("InstructionTable", instruction_table_->getTableRecord());
+    emit requestSaveConfig();
+    //qDebug() << cfg_.obj;
+    // 配置文件保存到文件中
+    // 当前的 tabWidget 匹配对应的 QJsonObject
   });
 }
 

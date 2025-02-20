@@ -70,6 +70,13 @@ class SerialSetting : public QWidget {
   Ui::TtLabelComboBox* framing_timeout_;
   Ui::TtLabelComboBox* framing_fixed_length_;
 
+
+  Ui::TtLabelComboBox* line_break_;
+
+  Ui::TtLabelComboBox* heartbeat_send_type_;
+  Ui::TtLabelComboBox* heartbeat_interval_;
+  Ui::TtLabelComboBox* heartbeat_content_;
+
   bool has_old_settings;
 
   QList<int64> list_baud_rate_;

@@ -121,7 +121,6 @@ void SerialSetting::displayDefaultSetting() {
 }
 
 const QJsonObject& SerialSetting::getSerialSetting() {
-  // TODO: 在此处插入 return 语句
   auto cfg = getSerialPortConfiguration();
   QJsonObject linkSetting;
   linkSetting.insert("PortName", QJsonValue(cfg.com));
@@ -133,14 +132,28 @@ const QJsonObject& SerialSetting::getSerialSetting() {
 
   QJsonObject framing;
   framing.insert("Model", QJsonValue(framing_model_->body()->currentText()));
-  QJsonObject framingKids;
-  framingKids.insert("Timeout", QJsonValue(framing_timeout_->body()->currentText()));
-  framingKids.insert("FixedLength", QJsonValue(framing_fixed_length_->body()->currentText()));
-  framing.insert("Kids", QJsonValue(framingKids));
+  framing.insert("Timeout",
+                 QJsonValue(framing_timeout_->body()->currentText()));
+  framing.insert("FixedLength",
+                 QJsonValue(framing_fixed_length_->body()->currentText()));
   serial_save_config_.insert("Framing", QJsonValue(framing));
 
-  return serial_save_config_;
+  QJsonObject lineFeed;
+  lineFeed.insert("LineFeed", QJsonValue(line_break_->body()->currentText()));
+  serial_save_config_.insert("Framing", QJsonValue(lineFeed));
 
+  QJsonObject heartbeat;
+  heartbeat.insert("Type", QJsonValue(heartbeat_send_type_->body()->currentText()));
+  heartbeat.insert("Interval",
+                 QJsonValue(heartbeat_interval_->body()->currentText()));
+  heartbeat.insert("Content",
+                 QJsonValue(heartbeat_content_->body()->currentText()));
+  serial_save_config_.insert("Heartbeat", QJsonValue(heartbeat));
+
+
+  //qDebug() << "Json: " << serial_save_config_;
+
+  return serial_save_config_;
 }
 
 void SerialSetting::setSerialPortsName() {
@@ -286,18 +299,54 @@ void SerialSetting::init() {
   framing_timeout_->setVisible(false);
   framing_fixed_length_->setVisible(false);
 
-  Ui::TtLabelComboBox* c3 = new Ui::TtLabelComboBox(tr("换行符: "));
-  c3->addItem("\\r");
-  c3->addItem("\\n");
-  c3->addItem("\\r\\n");
-  Ui::Drawer* drawer3 = new Ui::Drawer(tr("换行"), c3);
+  line_break_ = new Ui::TtLabelComboBox(tr("换行符: "));
+  line_break_->addItem("\\r");
+  line_break_->addItem("\\n");
+  line_break_->addItem("\\r\\n");
+  Ui::Drawer* drawer3 = new Ui::Drawer(tr("换行"), line_break_);
 
-  Ui::TtLabelComboBox* c4 = new Ui::TtLabelComboBox(tr("类型: "));
-  c4->addItem(tr("无"));
-  c4->addItem(tr("文本"));
-  c4->addItem(tr("HEX"));
-  // 选择文本或者 HEX 多出了间隔和内容
-  Ui::Drawer* drawer4 = new Ui::Drawer(tr("心跳"), c4);
+  QWidget* heartbeatWidget = new QWidget;
+  Ui::TtVerticalLayout* heartbeatWidgetLayout =
+      new Ui::TtVerticalLayout(heartbeatWidget);
+  heartbeatWidget->adjustSize();  // 确保大小正确
+  heartbeat_send_type_ = new Ui::TtLabelComboBox(tr("类型: "));
+  heartbeat_send_type_->addItem(tr("无"));
+  heartbeat_send_type_->addItem(tr("文本"));
+  heartbeat_send_type_->addItem(tr("HEX"));
+  heartbeat_interval_ = new Ui::TtLabelComboBox(tr("间隔: "));
+  heartbeat_content_ = new Ui::TtLabelComboBox(tr("内容: "));
+  heartbeatWidgetLayout->addWidget(heartbeat_send_type_);
+  heartbeatWidgetLayout->addWidget(heartbeat_interval_);
+  heartbeatWidgetLayout->addWidget(heartbeat_content_);
+  Ui::Drawer* drawer4 = new Ui::Drawer(tr("心跳"), heartbeatWidget);
+
+  connect(heartbeat_send_type_, &Ui::TtLabelComboBox::currentIndexChanged,
+          [this, heartbeatWidget, drawer4](int index) {
+            switch (index) {
+              case 0: {
+                heartbeat_interval_->setVisible(false);
+                heartbeat_content_->setVisible(false);
+                break;
+              }
+              case 1: {
+                heartbeat_interval_->setVisible(true);
+                heartbeat_content_->setVisible(true);
+                break;
+              }
+              case 2: {
+                heartbeat_interval_->setVisible(true);
+                heartbeat_content_->setVisible(true);
+                break;
+              }
+            }
+            const auto event =
+                new QResizeEvent(drawer4->size(), drawer4->size());
+            QCoreApplication::postEvent(drawer4, event);
+          });
+  heartbeat_send_type_->setCurrentItem(0);
+  heartbeat_interval_->setVisible(false);
+  heartbeat_content_->setVisible(false);
+
 
   // 滚动区域
   QScrollArea* scr = new QScrollArea(this);

@@ -9,6 +9,9 @@
 #ifndef UI_EFFECTS_ANIMATED_DRAWER_H
 #define UI_EFFECTS_ANIMATED_DRAWER_H
 
+#include <QSplitter>
+#include <QPropertyAnimation>
+
 namespace Ui {
 
 class TtAnimatedDrawer : public QObject {

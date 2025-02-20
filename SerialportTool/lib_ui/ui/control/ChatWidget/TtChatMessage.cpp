@@ -7,10 +7,10 @@ namespace Ui {
 TtChatMessage::TtChatMessage(QObject* parent)
     : QObject(parent), m_id(QUuid::createUuid().toString()) {
   // 初始化默认样式
-  m_bubbleColor = QColor("#DCF8C6");  // 默认浅绿色气泡
+  m_bubbleColor = QColor("#d4d4d8");  // 默认浅绿色气泡
   m_textColor = Qt::black;
   m_font.setFamily("Arial");
-  m_font.setPointSize(10);
+  m_font.setPointSize(12);
 }
 
 TtChatMessage::TtChatMessage(const QString& id, QObject* parent)

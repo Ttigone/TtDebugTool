@@ -1,8 +1,10 @@
 ﻿#include "ui/widgets/buttons.h"
 
 #include "ui/abstract_button.h"
+#include "ui/layout/horizontal_layout.h"
 #include "ui/layout/vertical_layout.h"
 
+#include <QIcon>
 #include <QMouseEvent>
 #include <QParallelAnimationGroup>
 #include <QPixmap>
@@ -694,6 +696,104 @@ void TtToggleButton::mousePressEvent(QMouseEvent* event) {
     setChecked(!checked);
   }
   QWidget::mousePressEvent(event);
+}
+
+TtSpecialDeleteButton::TtSpecialDeleteButton(QWidget* parent)
+    : QWidget(parent) {}
+
+TtSpecialDeleteButton::TtSpecialDeleteButton(const QString& name,
+                                             const QString& icon_path,
+                                             const QString& delete_path,
+                                             QWidget* parent)
+    : QWidget(parent),
+      is_hovered_(false),
+      is_pressed_(false),
+      name_(name, this),
+      icon_(icon_path),
+      old_state_(false) {
+  layout_ = new Ui::TtHorizontalLayout(this);
+  //layout_->setContentsMargins(5, 5, 5, 5);  // 设置边距
+  layout_->setSpacing(SPACING);  // 设置间距
+
+  // 创建图标标签
+  QLabel* iconLabel = new QLabel(this);
+  iconLabel->setPixmap(
+      icon_.scaled(20, 20, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+
+  // 添加到布局
+  layout_->addWidget(iconLabel);
+  // 设置文字标签
+  name_.setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
+  name_.setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+  layout_->addWidget(&name_);
+  layout_->addStretch();  // 右侧弹簧
+  delete_button_ = new QPushButton(this);
+  delete_button_->setIcon(QIcon(delete_path));
+  delete_button_->setStyleSheet("background-color: transparent");
+
+  layout_->addWidget(delete_button_);
+  // 设置整体大小策略
+  setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+}
+
+QSize TtSpecialDeleteButton::sizeHint() const {
+  // 计算文本宽度
+  QFontMetrics fm(name_.font());
+  int textWidth = fm.horizontalAdvance(name_.text());
+
+  // 总宽度 = 图标宽度 + 间距 + 文本宽度 + 左右内边距
+  int width = ICON_SIZE + SPACING + textWidth + (PADDING * 2);
+
+  // 高度 = 图标高度 + 上下内边距
+  int height = ICON_SIZE + (PADDING * 2);
+
+  return QSize(width, height);
+}
+
+QSize TtSpecialDeleteButton::minimumSizeHint() const {
+  // 最小尺寸可以设置得比 sizeHint 小一些
+  return QSize(ICON_SIZE * 2, ICON_SIZE);
+}
+
+void TtSpecialDeleteButton::paintEvent(QPaintEvent* event) {
+  QPainter painter(this);
+  QColor backgroundColor;
+  // 优先级：悬停 > 点击状态
+  if (old_state_) {
+    backgroundColor = QColor(186, 231, 255);  // 点击
+  } else {
+    backgroundColor = is_hovered_ ? QColor(229, 229, 229) : Qt::white;
+  }
+  painter.fillRect(rect(), backgroundColor);
+  QWidget::paintEvent(event);
+}
+
+void TtSpecialDeleteButton::enterEvent(QEnterEvent* event) {
+  is_hovered_ = true;
+  update();
+  QWidget::enterEvent(event);
+}
+
+void TtSpecialDeleteButton::leaveEvent(QEvent* event) {
+  is_hovered_ = false;
+  update();
+  QWidget::leaveEvent(event);
+}
+
+void TtSpecialDeleteButton::mousePressEvent(QMouseEvent* event) {
+  if (event->button() == Qt::LeftButton) {
+    is_pressed_ = true;
+    update();
+  }
+}
+
+void TtSpecialDeleteButton::mouseReleaseEvent(QMouseEvent* event) {
+  if (event->button() == Qt::LeftButton && is_pressed_) {
+    is_pressed_ = false;
+    old_state_ = !old_state_;  // 状态翻转
+    update();
+    emit clicked();
+  }
 }
 
 }  // namespace Ui

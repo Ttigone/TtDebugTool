@@ -8,6 +8,8 @@
 #include <QParallelAnimationGroup>
 #include <QSequentialAnimationGroup>
 
+#include <QJsonObject>
+
 #include <QString>
 #include <QPoint>
 #include <QRect>

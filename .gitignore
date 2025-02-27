@@ -2,3 +2,6 @@
 /.vs/
 /CMakePresets.json
 /CMakeUserPresets.json
+/build/
+/build-SerialportTool-Qt_6_4_3_MinGW_64_bit_1d886e-Debug
+/build-SerialportTool-Desktop_Qt_6_4_3_MSVC2019_64bit-Debug

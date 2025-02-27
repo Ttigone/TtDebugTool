@@ -9,18 +9,18 @@
 #ifndef UI_CONTROL_TTPOPUPDRAWER_H
 #define UI_CONTROL_TTPOPUPDRAWER_H
 
-#include <qsplitter.h>
-
+#include <QSplitter>
 #include <QStateMachine>
 #include <QTimer>
 
+#include "ui/Def.h"
 #include "ui/widgets/overlay_widget.h"
 
 namespace Ui {
 
 class TtPopUpDrawerPrivate;
 
-class TtPopUpDrawer : public TtOverlayWidget {
+class Tt_EXPORT TtPopUpDrawer : public TtOverlayWidget {
   Q_OBJECT
  public:
   TtPopUpDrawer(QWidget* parent = nullptr);

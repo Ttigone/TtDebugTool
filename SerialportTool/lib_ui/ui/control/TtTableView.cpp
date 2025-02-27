@@ -57,8 +57,8 @@
 
 #include "ui/control/TtTableView.h"
 
-#include <ui/widgets/buttons.h>
-#include <ui/widgets/fields/customize_fields.h>
+#include "ui/widgets/buttons.h"
+#include "ui/widgets/fields/customize_fields.h"
 
 #include <qheaderview.h>
 #include <qlineedit.h>
@@ -343,6 +343,7 @@ QWidget* TtTableWidget::createHeaderAddRowWidget() {
   layout->setContentsMargins(QMargins());
 
   TtImageButton* addSendBtn = new TtImageButton(":/sys/plus-circle.svg");
+  addSendBtn->setFixedSize(22, 22);
 
   connect(addSendBtn, &TtImageButton::clicked, this,
           &TtTableWidget::onAddRowButtonClicked);
@@ -363,7 +364,7 @@ QWidget* TtTableWidget::createHeaderSendMsgWidget() {
   layout->setContentsMargins(QMargins());
 
   TtImageButton* sendBtn = new TtImageButton(":/sys/send.svg");
-
+  sendBtn->setFixedSize(22, 22);
   layout->addWidget(sendBtn);
   // container->setStyleSheet(
   //     "background-color: #f0f0f0; border-right: 1px solid #c6c6c6;");
@@ -454,6 +455,7 @@ QWidget* TtTableWidget::createSixthColumnWidget() {
   layout->setContentsMargins(QMargins());
 
   TtImageButton* deleteBtn = new TtImageButton(":/sys/trash.svg", container);
+  deleteBtn->setFixedSize(22, 22);
   layout->addWidget(deleteBtn);
 
   // 连接删除按钮信号
@@ -473,7 +475,7 @@ QWidget* TtTableWidget::createSeventhColumnWidget() {
   layout->setContentsMargins(QMargins());
 
   TtImageButton* sendBtn = new TtImageButton(":/sys/send.svg", container);
-
+  sendBtn->setFixedSize(22, 22);
   layout->addWidget(sendBtn);
 
   // 连接删除按钮信号

@@ -12,12 +12,13 @@
 //class QAbstractButton;
 //class QLabel;
 //QT_END_NAMESPACE
+#include "ui/Def.h"
 
 namespace Ui {
 
 class WindowBarPrivate;
 
-class WindowBar : public QFrame {
+class Tt_EXPORT WindowBar : public QFrame {
   Q_OBJECT
   Q_DECLARE_PRIVATE(WindowBar)
 

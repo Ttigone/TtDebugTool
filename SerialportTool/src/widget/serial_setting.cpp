@@ -97,7 +97,7 @@ void SerialSetting::displayDefaultSetting() {
   }
   for (int i = 0; i < select_parity_bit_->count(); ++i) {
     // bug
-    qDebug() << select_parity_bit_->itemText(i);
+    // qDebug() << select_parity_bit_->itemText(i);
     if (select_parity_bit_->itemText(i).contains(
             QString::number(DefaultSetting.parity))) {
       select_parity_bit_->setCurrentItem(i);
@@ -350,6 +350,7 @@ void SerialSetting::init() {
 
   // 滚动区域
   QScrollArea* scr = new QScrollArea(this);
+  scr->setFrameStyle(QFrame::NoFrame);
   QWidget* scrollContent = new QWidget(scr);
   //scr->setWidget(scrollContent);
   //scr->setWidgetResizable(true);
@@ -374,7 +375,7 @@ void SerialSetting::refreshSerialCOMx() {}
 
 QString SerialSetting::matchingSerialCOMx(const QString& name) {
 
-  qDebug() << "pipie: " << name;
+  // qDebug() << "pipie: " << name;
   qDebug() << name.size();
   const auto serialPortInfos = QSerialPortInfo::availablePorts();
   for (const QSerialPortInfo& portInfo : serialPortInfos) {

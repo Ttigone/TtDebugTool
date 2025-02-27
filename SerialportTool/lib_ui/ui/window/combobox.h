@@ -1,20 +1,21 @@
-#ifndef WINDOW_COMBOBOX_H
-#define WINDOW_COMBOBOX_H
+#ifndef UI_WINDOW_COMBOBOX_H
+#define UI_WINDOW_COMBOBOX_H
+
 #include <QListView>
 
+#include "ui/Def.h"
 
 namespace Ui {
 
 class TtImageButton;
 
-class TtComboBox : public QComboBox {
+class Tt_EXPORT TtComboBox : public QComboBox {
  public:
   TtComboBox(QWidget* parent = nullptr);
   ~TtComboBox();
-
 };
 
-class TtLabelComboBox : public QWidget {
+class Tt_EXPORT TtLabelComboBox : public QWidget {
   Q_OBJECT
  public:
   TtLabelComboBox(Qt::AlignmentFlag flag, const QString &text = "", QWidget *parent = nullptr);
@@ -39,7 +40,7 @@ class TtLabelComboBox : public QWidget {
   QLabel *label_;
 };
 
-class TtLabelBtnComboBox : public QWidget {
+class Tt_EXPORT TtLabelBtnComboBox : public QWidget {
   Q_OBJECT
  public:
   TtLabelBtnComboBox(Qt::AlignmentFlag flag, const QString& text,
@@ -75,4 +76,4 @@ class TtLabelBtnComboBox : public QWidget {
 
 }  // namespace Ui
 
-#endif  // WINDOW_COMBOBOX_H
+#endif  // UI_WINDOW_COMBOBOX_H

@@ -11,14 +11,16 @@
 
 #include <QWidget>
 
+#include "ui/Def.h"
+
 namespace Ui {
 
-class TtOverlayWidget : public QWidget {
+class Tt_EXPORT TtOverlayWidget : public QWidget {
   Q_OBJECT
 
  public:
   explicit TtOverlayWidget(QWidget* parent = nullptr);
-  TtOverlayWidget();
+  ~TtOverlayWidget();
 
  protected:
   bool event(QEvent* event) override;

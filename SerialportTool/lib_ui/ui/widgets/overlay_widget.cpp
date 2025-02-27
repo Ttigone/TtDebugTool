@@ -8,7 +8,7 @@ TtOverlayWidget::TtOverlayWidget(QWidget* parent) : QWidget(parent) {
     parent->installEventFilter(this);
   }
 }
-TtOverlayWidget::TtOverlayWidget() {}
+TtOverlayWidget::~TtOverlayWidget() {}
 
 bool TtOverlayWidget::event(QEvent* event) {
   if (!parent()) {

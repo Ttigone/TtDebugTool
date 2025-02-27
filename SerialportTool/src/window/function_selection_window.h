@@ -3,15 +3,19 @@
 
 #include <QWidget>
 
+#include "ui/widgets/window_switcher.h"
+
 namespace Ui {
 class CommonButton;
 class TtWordsButton;
 class TtNormalLabel;
+class TtElidedLabel;
 } // namespace Ui
 
 namespace Window {
 
 class FunctionSelectionWindow : public QWidget {
+  // class FunctionSelectionWindow : public Ui::CustomTabPage {
   Q_OBJECT
  public:
   explicit FunctionSelectionWindow(QWidget* parent = nullptr);
@@ -39,9 +43,7 @@ class FunctionSelectionWindow : public QWidget {
   void init();
 
   // 标志
-  Ui::TtNormalLabel* label_;
-
-  Ui::TtWordsButton* serial_;  // 串口
+  Ui::TtElidedLabel* label_;
 
   // 功能窗口布局
   QGridLayout *function_layout_;

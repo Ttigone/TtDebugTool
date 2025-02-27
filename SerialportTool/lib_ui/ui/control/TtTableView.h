@@ -373,9 +373,11 @@
 
 #include <QTableWidget>
 
+#include "ui/Def.h"
+
 namespace Ui {
 
-class TtTableWidget : public QTableWidget {
+class Tt_EXPORT TtTableWidget : public QTableWidget {
  public:
   explicit TtTableWidget(QWidget* parent = nullptr);
   // TtTableWidget(int rows, int columns, QWidget* parent = nullptr);

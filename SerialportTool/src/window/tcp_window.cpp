@@ -9,7 +9,7 @@
 #include <ui/widgets/buttons.h>
 #include <ui/widgets/collapsible_panel.h>
 #include <ui/widgets/labels.h>
-#include <ui/widgets/snack_bar.h>
+#include <ui/widgets/message_bar.h>
 #include <ui/window/combobox.h>
 
 #include "widget/serial_setting.h"
@@ -63,8 +63,8 @@ void TcpWindow::switchToDisplayMode() {
 }
 
 void TcpWindow::init() {
-  main_layout_ = new Ui::TtVerticalLayout;
-  setLayout(main_layout_);
+  main_layout_ = new Ui::TtVerticalLayout(this);
+  // setLayout(main_layout_);
 
   title_ = new Ui::TtNormalLabel(tr("未命名串口连接"));
   // 编辑命名按钮
@@ -125,8 +125,7 @@ void TcpWindow::init() {
   // 删除按钮, 是需要保存在 leftbar 才会添加的
 
   // 开关按钮
-  on_off_btn_ =
-      new Ui::TtSvgButton(":/sys/start_up.svg", ":/sys/turn_off.svg", this);
+  on_off_btn_ = new Ui::TtSvgButton(":/sys/start_up.svg", this);
 
   tmpl2->addWidget(save_btn_);
   tmpl2->addWidget(on_off_btn_, 0, Qt::AlignRight);
@@ -151,7 +150,7 @@ void TcpWindow::init() {
 
   chose_function_layout->addStretch();
   Ui::TtSvgButton* clear_history =
-      new Ui::TtSvgButton(":/sys/trash.svg", ":/sys/trash.svg", chose_function);
+      new Ui::TtSvgButton(":/sys/trash.svg", chose_function);
   // clear_history->setFixedSize(36, 28);
 
   //auto bgr = new CustomButtonGroup(chose_function);
@@ -171,8 +170,7 @@ void TcpWindow::init() {
 
   // 上方选择功能以及信息框
   QWidget* cont = new QWidget;
-  Ui::TtVerticalLayout* cont_layout = new Ui::TtVerticalLayout;
-  cont->setLayout(cont_layout);
+  Ui::TtVerticalLayout* cont_layout = new Ui::TtVerticalLayout(cont);
 
   message_view_ = new Ui::TtChatView(cont);
   message_view_->setResizeMode(QListView::Adjust);
@@ -224,8 +222,7 @@ void TcpWindow::init() {
   message_view_->scrollToBottom();
 
   QWidget* bottomAll = new QWidget;
-  Ui::TtVerticalLayout* bottomAllLayout = new Ui::TtVerticalLayout;
-  bottomAll->setLayout(bottomAllLayout);
+  Ui::TtVerticalLayout* bottomAllLayout = new Ui::TtVerticalLayout(bottomAll);
 
   // 下方自定义指令
   QWidget* tabs_and_count = new QWidget(this);
@@ -394,23 +391,23 @@ void TcpWindow::init() {
     //  serial_port_->closeSerialPort();
     //  return;
     //}
-    //Core::SerialPort::SerialError error = serial_port_->openSerialPort(
+    //Core::SerialPortWorker::SerialError error = serial_port_->openSerialPort(
     //    //serial_setting_->defaultSerialPortConfiguration());
     //    serial_setting_->getSerialPortConfiguration());
-    //if (error != Core::SerialPort::NoError) {
+    //if (error != Core::SerialPortWorker::NoError) {
     //  qDebug() << "inside";
     //  switch (error) {
-    //    case Core::SerialPort::Open:
+    //    case Core::SerialPortWorker::Open:
     //      // 已经被占用
     //      snack_bar_->addMessage(
     //          "无法打开串口: attempting to open an already opened");
     //      break;
-    //    case Core::SerialPort::Permission:
+    //    case Core::SerialPortWorker::Permission:
     //      snack_bar_->addMessage(
     //          "无法打开串口: attempting to open an already opened device by "
     //          "another process or a user");
     //      break;
-    //    case Core::SerialPort::DeviceNotFound:
+    //    case Core::SerialPortWorker::DeviceNotFound:
     //      qDebug() << "do it";
     //      snack_bar_->addInstantMessage(
     //          "无法打开串口: attempting to open an non-existing device");
@@ -422,7 +419,7 @@ void TcpWindow::init() {
   });
 
   //connect(
-  //    serial_port_.get(), &Core::SerialPort::recvData, [this](QByteArray msg) {
+  //    serial_port_.get(), &Core::SerialPortWorker::recvData, [this](QByteArray msg) {
   //      recv_byte_count += msg.size();
   //      auto tmp = new Ui::TtChatMessage();
   //      tmp->setContent(msg);

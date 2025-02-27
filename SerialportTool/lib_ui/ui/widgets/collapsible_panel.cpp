@@ -18,8 +18,8 @@ DrawerButton::DrawerButton(const QString& title, QWidget* parent): QPushButton(t
         background-color: rgba(0, 0, 0, 0.05); /* 悬停时轻微变亮 */
     }
 )");
-  //setAttribute(Qt::WA_OpaquePaintEvent);    // 避免背景重绘
-  //setAttribute(Qt::WA_NoSystemBackground);  // 禁用系统背景
+  // setAttribute(Qt::WA_OpaquePaintEvent);  // 避免背景重绘
+  setAttribute(Qt::WA_NoSystemBackground);  // 禁用系统背景
   initializeArrow();
 }
 
@@ -37,13 +37,13 @@ void DrawerButton::paintEvent(QPaintEvent* event) {
 
   QPainter painter(this);
   painter.setRenderHints(QPainter::Antialiasing |
-                         QPainter::SmoothPixmapTransform, true);
+                         QPainter::SmoothPixmapTransform);
   QStyleOptionButton option;
   initStyleOption(&option);
 
   painter.save();
   // 计算箭头位置
-  QRect arrowRect(5, height() / 2 - 6, 12, 12); // 左侧箭头的矩形区域
+  QRect arrowRect(10, height() / 2 - 8, 16, 16);  // 左侧箭头的矩形区域
 
   // 旋转箭头
   painter.translate(arrowRect.center());
@@ -52,18 +52,21 @@ void DrawerButton::paintEvent(QPaintEvent* event) {
 
   painter.setBrush(option.palette.buttonText());
   painter.setPen(Qt::NoPen);
-  painter.drawPolygon(m_arrowPolygon.translated(arrowRect.topLeft()));
+  painter.drawPath(m_arrowPath.translated(arrowRect.topLeft()));
 
   painter.restore();
 }
 
 void DrawerButton::initializeArrow() {
-  m_arrowPolygon << QPoint(0, 3)   // 左点
-      << QPoint(6, 0)   // 顶点
-      << QPoint(6, 6);  // 右点（调整为更平衡的形状）
+  m_arrowPath.moveTo(0, 5);
+  m_arrowPath.lineTo(8, 0);
+  m_arrowPath.lineTo(16, 5);
+  m_arrowPath.lineTo(8, 10);
+  m_arrowPath.closeSubpath();
 }
 
-Drawer::Drawer(const QString& title, QWidget* contentWidget, QWidget* parent): QWidget(parent), contentWidget(contentWidget), isOpen(false) {
+Drawer::Drawer(const QString& title, QWidget* contentWidget, QWidget* parent)
+    : QWidget(parent), contentWidget(contentWidget), isOpen(false) {
   initializeLayout(title);
   initializeAnimations();
   connectSignals();
@@ -85,13 +88,12 @@ void Drawer::resizeEvent(QResizeEvent* event) {
 }
 
 void Drawer::toggle() {
-  // 如果动画正在运行，停止当前动画
-  if (animation->state() == QAbstractAnimation::Running) {
-    animation->stop();
-    arrowAnimation->stop();
-    return;
+  isOpen = !isOpen;
+  if (isOpen) {
+    openDrawer();
+  } else {
+    closeDrawer();
   }
-  isOpen ? closeDrawer() : openDrawer();
 }
 
 void Drawer::initializeLayout(const QString& title) {
@@ -100,7 +102,7 @@ void Drawer::initializeLayout(const QString& title) {
   mainLayout->setSpacing(0);
 
   toggleButton = new DrawerButton(title, this);
-  toggleButton->setFixedHeight(40);
+  toggleButton->setMinimumHeight(40);
 
   wrapperWidget = new QWidget(this);
   wrapperWidget->setSizePolicy(QSizePolicy::Expanding,
@@ -117,7 +119,7 @@ void Drawer::initializeLayout(const QString& title) {
 
 void Drawer::initializeAnimations() {
   animation = new QPropertyAnimation(wrapperWidget, "maximumHeight", this);
-  animation->setDuration(250);
+  animation->setDuration(200);
   animation->setEasingCurve(QEasingCurve::OutQuad);
 
   arrowAnimation =
@@ -133,15 +135,12 @@ void Drawer::connectSignals() {
 }
 
 void Drawer::openDrawer() {
-  isOpen = true;
   wrapperWidget->setVisible(true);  // 确保内容可见
   startAnimation(0, contentHeight());
   startArrowAnimation(0, 90);
 }
 
 void Drawer::closeDrawer() {
-  isOpen = false;
-  wrapperWidget->setVisible(false);  // 确保内容可见
   startAnimation(contentHeight(), 0);
   startArrowAnimation(90, 0);
 }
@@ -174,5 +173,6 @@ int Drawer::contentHeight() const {
          wrapperWidget->layout()->contentsMargins().top() +
          wrapperWidget->layout()->contentsMargins().bottom();
 }
+
 } // namespace Ui
 

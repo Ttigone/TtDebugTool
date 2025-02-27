@@ -3,9 +3,11 @@
 
 #include <QHBoxLayout>
 
+#include "ui/Def.h"
+
 namespace Ui {
 
-class TtHorizontalLayout : public QHBoxLayout {
+class Tt_EXPORT TtHorizontalLayout : public QHBoxLayout {
  public:
   TtHorizontalLayout();
   TtHorizontalLayout(QWidget* widget);

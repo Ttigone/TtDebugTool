@@ -4,12 +4,10 @@
 
 namespace Ui {
 
-TtVerticalLayout::TtVerticalLayout() {
+// TtVerticalLayout::TtVerticalLayout(QWidget* widget) : TtVerticalLayout() {
+TtVerticalLayout::TtVerticalLayout(QWidget* widget) : QVBoxLayout(widget) {
   init();
-}
-
-TtVerticalLayout::TtVerticalLayout(QWidget* widget) : TtVerticalLayout() {
-  widget->setLayout(this);
+  // widget->setLayout(this);
 }
 
 TtVerticalLayout::~TtVerticalLayout()

@@ -3,11 +3,13 @@
 
 #include <QPushButton>
 
+#include "ui/Def.h"
+
 namespace Ui {
 
 class WindowbarButtonPrivate;
 
-class WindowbarButton : public QPushButton {
+class Tt_EXPORT WindowbarButton : public QPushButton {
   Q_OBJECT
   Q_DECLARE_PRIVATE(WindowbarButton)
   Q_PROPERTY(QIcon iconNormal READ iconNormal WRITE setIconNormal FINAL)

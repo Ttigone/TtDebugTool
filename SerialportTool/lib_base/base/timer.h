@@ -49,7 +49,7 @@ auto MeasureExecutionTime(T&& obj, Ret (T::*func)(Args...), Args&&... args) {
 }
 
 namespace base {
-class Timer final : QObject {
+class Timer final : public QObject {
  public:
   explicit Timer(std::unique_ptr<QThread*> thread,
                  std::function<void()> callback = nullptr);
@@ -116,8 +116,6 @@ class Timer final : QObject {
   bool adjusted_ : 1;
   unsigned repeat_ : 1;
 #endif
-
-
 };
 
 class DetectRunningTime {

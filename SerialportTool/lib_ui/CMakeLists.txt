@@ -1,24 +1,59 @@
-add_library(lib_ui STATIC)
-add_library(desktop-app::lib_ui ALIAS lib_ui)
+cmake_minimum_required(VERSION 3.16)
+
+#project(lib_ui VERSION 1.0.0 LANGUAGES CXX)
+set(TARGET_NAME lib_ui)
 
 set(CMAKE_AUTOMOC ON)
+# set(CMAKE_AUTOUIC OFF)
+# set_target_properties(lib_ui PROPERTIES AUTOUIC ON)
 
-get_filename_component(src_loc . REALPATH)
+option(TTLIBUI_LIBRARY_BUILD_STATIC_LIB "Build static library." OFF)
 
-# target_precompile_headers(lib_ui
-# PRIVATE 
-#   $<$<COMPILE_LANGUAGE:CXX,OBJCXX>:${src_loc}/base/basic_pch.h>
-# )
+# 设置输出路径
+set(LIB_UI_OUT_ROOT "${CMAKE_BINARY_DIR}/${PROJECT_NAME}")
 
-set_target_properties(lib_ui PROPERTIES AUTOMOC ON)
-set_target_properties(lib_ui PROPERTIES AUTOUIC OFF)
 
-target_precompile_headers(lib_ui PRIVATE $<$<COMPILE_LANGUAGE:CXX,OBJCXX>:${src_loc}/ui/ui_pch.h>)
+add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
+add_definitions(-DTTLIBUI_LIBRARY) # 在库项目中定义 TTLIBUI_LIBRARY
 
-target_sources(lib_ui
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${LIB_UI_OUT_ROOT})
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${LIB_UI_OUT_ROOT})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${LIB_UI_OUT_ROOT})
+
+if (TTLIBUI_LIBRARY_BUILD_STATIC_LIB)
+    set(LIB_TYPE "STATIC")
+else ()
+    set(LIB_TYPE "SHARED")
+endif ()
+
+if (${QT_VERSION_MAJOR} GREATER_EQUAL 6)
+    qt_add_library(${TARGET_NAME} ${LIB_TYPE}
+        # ${PROJECT_SOURCES}
+    )
+else ()
+    add_library(${TARGET_NAME} ${LIB_TYPE}
+        # ${PROJECT_SOURCES}
+    )
+endif ()
+
+set_target_properties(${TARGET_NAME} PROPERTIES AUTOUIC OFF)
+
+# 没有使用
+# target_precompile_headers(lib_ui PRIVATE $<$<COMPILE_LANGUAGE:CXX,OBJCXX>:${src_loc}/ui/ui_pch.h>)
+# target_precompile_headers(lib_ui PRIVATE ${src_loc}/ui/ui_pch.h)
+target_precompile_headers(${TARGET_NAME} PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/ui/ui_pch.h
+    # ${CMAKE_CURRENT_SOURCE_DIR}/ui/Def.h
+)
+
+
+target_sources(${TARGET_NAME}
 PRIVATE
   ui/ui_pch.h
   ui/Def.h
+  ui/singleton.h
+  ui/TtTheme.h ui/TtTheme.cpp
+  ui/TtTheme_p.h
 
   ui/window/title/windowbar.h ui/window/title/windowbar.cpp  ui/window/title/windowbar_p.h
   ui/window/title/window_button.h ui/window/title/window_button.cpp  ui/window/title/window_button_p.h
@@ -46,8 +81,9 @@ PRIVATE
   ui/widgets/customizationtabwidget.h ui/widgets/customizationtabwidget.cpp
   ui/widgets/collapsible_panel.h ui/widgets/collapsible_panel.cpp
   ui/widgets/overlay_widget.h ui/widgets/overlay_widget.cpp
-  ui/widgets/snack_bar.h ui/widgets/snack_bar.cpp
   ui/widgets/widget_group.h ui/widgets/widget_group.cpp
+  ui/widgets/message_bar.h ui/widgets/message_bar.cpp
+  ui/widgets/message_bar_p.h ui/widgets/message_bar_p.cpp
 
   ui/layout/vertical_layout.h ui/layout/vertial_layout.cpp
   ui/layout/horizontal_layout.h ui/layout/horizontal_layout.cpp
@@ -58,17 +94,31 @@ PRIVATE
   ui/control/ChatWidget/TtChatMessage.h  ui/control/ChatWidget/TtChatMessage.cpp
   ui/control/ChatWidget/TtChatMessageDelegate.h  ui/control/ChatWidget/TtChatMessageDelegate.cpp
   ui/control/ChatWidget/TtChatMessageModel.h  ui/control/ChatWidget/TtChatMessageModel.cpp
-	ui/control/TtPopUpDrawer.h ui/control/TtPopUpDrawer.cpp
-	ui/control/TtPopUpDrawer_p.h
+  ui/control/TtPopUpDrawer.h ui/control/TtPopUpDrawer.cpp
+  ui/control/TtPopUpDrawer_p.h
+  ui/control/TtIconButton.h ui/control/TtIconButton.cpp
+  ui/control/TtIconButton_p.h ui/control/TtIconButton_p.cpp
 )
+
+
+add_library(desktop-app::lib_ui ALIAS ${TARGET_NAME}) # 别名
+
+
+if (MINGW)
+    set_target_properties(${TARGET_NAME} PROPERTIES PREFIX "")
+endif ()
+if (MSVC)
+    # 后缀添加了一个 lib_ui.dll -> lib_uid.dll
+    set_target_properties(${TARGET_NAME} PROPERTIES DEBUG_POSTFIX "d")
+endif ()
 
 # 省略相对路径的麻烦
-target_include_directories(lib_ui
+target_include_directories(${TARGET_NAME}
 PUBLIC
-  ${src_loc}
+  ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-target_link_libraries(lib_ui
+target_link_libraries(${TARGET_NAME}
 PUBLIC
     desktop-app::lib_base
 )
@@ -77,5 +127,18 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build." FORCE)
 endif()
 
+
+install(TARGETS ${TARGET_NAME}
+    ARCHIVE DESTINATION ${LIB_UI_OUT_ROOT}/lib
+    LIBRARY DESTINATION ${LIB_UI_OUT_ROOT}}/lib
+    RUNTIME DESTINATION ${LIB_UI_OUT_ROOT}}/bin
+)
+
+# 设置动态库的输出路径
+#set_target_properties(${TARGET_NAME} PROPERTIES
+    #LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
+    #RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
+    #ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
+#)
 
 

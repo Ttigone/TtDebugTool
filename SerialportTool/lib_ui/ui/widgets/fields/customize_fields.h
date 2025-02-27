@@ -12,9 +12,11 @@
 #include <QCompleter>
 #include <QLineEdit>
 
+#include "ui/Def.h"
+
 namespace Ui {
 
-class TtLineEdit : public QLineEdit {
+class Tt_EXPORT TtLineEdit : public QLineEdit {
   Q_OBJECT
  public:
   explicit TtLineEdit(QWidget* parent = nullptr);
@@ -45,7 +47,7 @@ class TtLineEdit : public QLineEdit {
   QAction* end_action_;
 };
 
-class TtLabelLineEdit : public QWidget {
+class Tt_EXPORT TtLabelLineEdit : public QWidget {
   Q_OBJECT
  public:
   TtLabelLineEdit(Qt::AlignmentFlag flag, const QString& text = "",
@@ -70,7 +72,6 @@ class TtLabelLineEdit : public QWidget {
   TtLineEdit* line_edit_;
   QLabel* label_;
 };
-
 
 }  // namespace Ui
 

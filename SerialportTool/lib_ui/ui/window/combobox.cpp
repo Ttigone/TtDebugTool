@@ -119,8 +119,7 @@ TtLabelBtnComboBox::TtLabelBtnComboBox(Qt::AlignmentFlag flag,
     : QWidget(parent) {
   QHBoxLayout* layout = new QHBoxLayout(this);
   part_ = new TtLabelComboBox(flag, text, this);
-  auto refresh_btn = new Ui::TtSvgButton(":/sys/refresh-normal.svg",
-                                         ":/sys/refresh-hover.svg", this);
+  auto refresh_btn = new Ui::TtSvgButton(":/sys/refresh-normal.svg", this);
   refresh_btn->setEnableToggle(true);
 
   layout->addWidget(part_);
@@ -137,8 +136,7 @@ TtLabelBtnComboBox::TtLabelBtnComboBox(const QString& text, QWidget* parent)
   QHBoxLayout* layout = new QHBoxLayout(this);
   layout->setContentsMargins(QMargins());
   layout->setSpacing(0);
-  auto refresh_btn = new Ui::TtSvgButton(":/sys/refresh-normal.svg",
-                                         ":/sys/refresh-hover.svg", this);
+  auto refresh_btn = new Ui::TtSvgButton(":/sys/refresh-normal.svg", this);
   refresh_btn->setEnableToggle(true);
   //refresh_btn->setObjectName("test");
 

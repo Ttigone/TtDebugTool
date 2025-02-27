@@ -6,8 +6,10 @@
 #include <QFont>
 #include <QObject>
 
+#include "ui/Def.h"
+
 namespace Ui {
-class TtChatMessage : public QObject {
+class Tt_EXPORT TtChatMessage : public QObject {
   Q_OBJECT
 
   // 基础属性

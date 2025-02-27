@@ -1,5 +1,6 @@
 #include <QApplication>
 #include <QTextCodec>
+#include "qt-easy-logger-main/logger.h"
 
 #include "storage/setting_manager.h"
 #include "window/main_window.h"
@@ -29,17 +30,17 @@ int main(int argc, char* argv[]) {
       QStringLiteral("SerialportTool-C3H3_Ttigone"));
   QCoreApplication::setOrganizationName(QStringLiteral("WWB-Qt"));
 
-  // 设置全局字体
-  QFont font("Microsoft YaHei", 10);  // 微软雅黑，10号字体
-  QApplication::setFont(font);
+  // // 设置全局字体
+  // QFont font("Microsoft YaHei", 10);  // 微软雅黑，10号字体
+  // QApplication::setFont(font);
 
-  //// 设置全局调色板
-  QPalette palette;
-  palette.setColor(QPalette::Text , Qt::black);   // 按钮文字颜色
-  //palette.setColor(QPalette::WindowText, Qt::blue);  // 窗口文字颜色
-  //palette.setColor(QPalette::Button, Qt::yellow);    // 按钮颜色
-  //palette.setColor(QPalette::ButtonText, Qt::red);   // 按钮文字颜色
-  QApplication::setPalette(palette);
+  // // 设置全局调色板
+  // QPalette palette;
+  // palette.setColor(QPalette::Text, Qt::black);       // 按钮文字颜色
+  // palette.setColor(QPalette::WindowText, Qt::blue);  // 窗口文字颜色
+  // palette.setColor(QPalette::Button, Qt::yellow);    // 按钮颜色
+  // palette.setColor(QPalette::ButtonText, Qt::red);   // 按钮文字颜色
+  // QApplication::setPalette(palette);
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
   // 适用精确缩放
@@ -55,6 +56,7 @@ int main(int argc, char* argv[]) {
 #endif
 
 #if defined(Q_OS_WIN) && (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
+  // setDarkBorderToWindow(); // 仅在 Windows 下调用
   //const auto osName = QSysInfo::prettyProductName();
   //if (osName.startsWith("Windows 10") || osName.startsWith("Windows 11")) {
   //  // 风格
@@ -71,6 +73,11 @@ int main(int argc, char* argv[]) {
   }
 #endif
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
+  // QGuiApplication::setHighDpiScaleFactorRoundingPolicy(
+  //     Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
+#endif
+
   QCoreApplication::setAttribute(Qt::AA_DontCreateNativeWidgetSiblings);
 
   QString filePath = "serial_settings.json";
@@ -81,6 +88,8 @@ int main(int argc, char* argv[]) {
 
   //注冊异常捕获函数
   //SetUnhandledExceptionFilter((LPTOP_LEVEL_EXCEPTION_FILTER)ApplicationCrashHandler);
+
+  // qInstallMessageHandler(h::Logger::messageHandler);  // 启用功能
 
   Window::MainWindow w;
   w.show();

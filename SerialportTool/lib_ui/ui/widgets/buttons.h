@@ -10,6 +10,7 @@
 #define UI_WIDGETS_BUTTONS_H
 
 #include "ui/abstract_button.h"
+#include "ui/widgets/labels.h"
 
 #include <QtSvgWidgets/QtSvgWidgets>
 
@@ -95,7 +96,7 @@ class ConnerButton : public AbstractButton {
   QParallelAnimationGroup* animation_group_;
 };
 
-class TtWordsButton : public AbstractButton {
+class Tt_EXPORT TtWordsButton : public AbstractButton {
   // class WordsButton : public CommonButton {
  public:
   TtWordsButton(const QString& text, QWidget* parent = nullptr);
@@ -132,7 +133,7 @@ class TtWordsButton : public AbstractButton {
   AbstractButton* cooperate_btn_;
 };
 
-class TtImageButton : public QWidget {
+class Tt_EXPORT TtImageButton : public QWidget {
   Q_OBJECT
  public:
   TtImageButton(const QString& svgPath, QWidget* parent = nullptr);
@@ -190,7 +191,7 @@ class TtImageButton : public QWidget {
   bool is_pressed_;
 };
 
-class RichTextButton : public QWidget {
+class Tt_EXPORT RichTextButton : public QWidget {
   Q_OBJECT
   Q_PROPERTY(QColor normalColor READ normalColor WRITE setNormalColor NOTIFY
                  normalColorChanged)
@@ -256,8 +257,9 @@ class RichTextButton : public QWidget {
 
   QImage image_;         // 图标
   QLabel* title_;        // 标题
-  QLabel* description_;  // 描述
-  QSize icon_size_;      // 图标大小
+  // QLabel* description_;  // 描述
+  TtElidedLabel* description_;  // 描述
+  QSize icon_size_;             // 图标大小
 
   QColor normal_color_;
   QColor hover_color_;
@@ -268,31 +270,19 @@ class RichTextButton : public QWidget {
   QPropertyAnimation* color_animation_;  // 颜色动画
 };
 
-class TtSvgButton : public QWidget {
+class Tt_EXPORT TtSvgButton : public QWidget {
   Q_OBJECT
-  Q_PROPERTY(QString svgPath1 READ svgFirstPath WRITE setFirstSvgPath)
-  Q_PROPERTY(QString svgPath2 READ svgSecondPath WRITE setSecondSvgPath)
-  Q_PROPERTY(bool currentSvg READ currentSvg WRITE setCurrentSvg NOTIFY
-                 currentSvgChanged)
   Q_PROPERTY(QSize svgSize READ svgSize WRITE setSvgSize)   // 新增属性
   Q_PROPERTY(bool checked READ isChecked WRITE setChecked)  // 新增属性
  public:
   explicit TtSvgButton(QWidget* parent = nullptr);
-  TtSvgButton(const QString& svgPath1, const QString& svgPath2,
-              QWidget* parent = nullptr);
+  TtSvgButton(const QString& svgPath, QWidget* parent = nullptr);
 
-  QString svgFirstPath() const;
-  void setFirstSvgPath(const QString& svgPath1);
-
-  QString svgSecondPath() const;
-  void setSecondSvgPath(const QString& svgPath2);
-
-  bool currentSvg() const;
-  void setCurrentSvg(bool currentSvg);
-
-  void setState(bool state);
+  void setColors(const QColor& firstColor, const QColor& secondColor);
+  void setHoverBackgroundColor(const QColor& color);
 
   QSize svgSize() const;
+  void setSvgSize(const int& w, const int& h);
   void setSvgSize(const QSize& size);
 
   bool isChecked() const;
@@ -302,32 +292,34 @@ class TtSvgButton : public QWidget {
 
  signals:
   void clicked();
-  void currentSvgChanged();
+  void toggled(bool checked);
 
  protected:
   void paintEvent(QPaintEvent* event) override;
-  void mousePressEvent(QMouseEvent* event) override;
   void enterEvent(QEnterEvent* event) override;
   void leaveEvent(QEvent* event) override;
+  void mousePressEvent(QMouseEvent* event) override;
   void mouseReleaseEvent(QMouseEvent* event) override;
 
- private slots:
-  void toggleSvg();
-
  private:
-  void loadSvg();
+  void updateSvgContent();
 
-  QString svg_path1_;
-  QString svg_path2_;
-  bool current_svg_;
   bool is_pressed_;
   QSvgRenderer* svg_renderer_;
   QSize svg_size_;
-  bool is_enable_toggle_;
   bool is_checked_;
+
+  QString svg_path_;
+  QColor first_color_;
+  QColor second_color_;
+  QColor normal_color_;
+  QColor hover_color_;
+  QColor hover_bg_color_;
+
+  bool is_hovered_;
 };
 
-class TtToggleButton : public QWidget {
+class Tt_EXPORT TtToggleButton : public QWidget {
   Q_OBJECT
   Q_PROPERTY(qreal knobPosition READ knobPosition WRITE setKnobPosition)
 
@@ -354,7 +346,7 @@ class TtToggleButton : public QWidget {
   QPropertyAnimation* animation;
 };
 
-class TtSpecialDeleteButton : public QWidget {
+class Tt_EXPORT TtSpecialDeleteButton : public QWidget {
   Q_OBJECT
  public:
   explicit TtSpecialDeleteButton(QWidget* parent = nullptr);
@@ -363,15 +355,23 @@ class TtSpecialDeleteButton : public QWidget {
                                  QWidget* parent = nullptr);
   ~TtSpecialDeleteButton() = default;
 
-  QSize sizeHint() const override;
-  QSize minimumSizeHint() const override;
+  // 在实现文件中添加
+  void setChecked(bool checked) {
+    old_state_ = checked;
+    update();  // 触发重绘
+  }
+
+  void setTitle(const QString& title) { name_->setText(title); }
+
  signals:
   void clicked();
+  void deleteRequest();
 
  protected:
   void paintEvent(QPaintEvent* event) override;
   void enterEvent(QEnterEvent* event) override;
   void leaveEvent(QEvent* event) override;
+  void resizeEvent(QResizeEvent* event) override;
   void mousePressEvent(QMouseEvent* event) override;
   void mouseReleaseEvent(QMouseEvent* event) override;
 
@@ -380,12 +380,9 @@ class TtSpecialDeleteButton : public QWidget {
   bool is_hovered_;
   bool is_pressed_;
   QPixmap icon_;
-  QLabel name_;
-  QPushButton* delete_button_;
+  TtElidedLabel* name_;
+  TtSvgButton* delete_button_;
   bool old_state_;
-  static const int ICON_SIZE = 20;
-  static const int PADDING = 2;
-  static const int SPACING = 6;
 };
 
 }  // namespace Ui

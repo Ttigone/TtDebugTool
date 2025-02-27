@@ -12,9 +12,11 @@
 #include <QSplitter>
 #include <QPropertyAnimation>
 
+#include "ui/Def.h"
+
 namespace Ui {
 
-class TtAnimatedDrawer : public QObject {
+class Tt_EXPORT TtAnimatedDrawer : public QObject {
   Q_OBJECT
 
   Q_PROPERTY(int animationWidth READ animationWidth WRITE
@@ -53,6 +55,7 @@ class TtAnimatedDrawer : public QObject {
   void closeDrawer();
 
   bool isDrawerVisible() const { return isDrawerVisible_; }
+  bool targetDrawerVisible() const { return targetDrawerVisible_; }
 
  private slots:
   void updateSplitterLayout(int drawerWidth) {
@@ -64,17 +67,41 @@ class TtAnimatedDrawer : public QObject {
     splitter_->setSizes(sizes);
   }
 
-  void onAnimationFinished() {
-    isDrawerVisible_ = targetDrawerVisible_;
-    if (!isDrawerVisible_) {
-      drawer_->setVisible(false);
-    }
-    splitter_->update();
-    splitter_->widget(0)->updateGeometry();
-    splitter_->widget(1)->updateGeometry();
-  }
+  void onAnimationFinished();
 
  private:
+  void saveWidgetStates() {
+    if (!drawer_)
+      return;
+
+    // 保存主容器的状态
+    originalStates[drawer_] = {drawer_->minimumSize(), drawer_->sizePolicy()};
+
+    // 保存所有子控件的状态
+    for (QWidget* child : drawer_->findChildren<QWidget*>()) {
+      originalStates[child] = {child->minimumSize(), child->sizePolicy()};
+    }
+  }
+
+  void restoreWidgetStates() {
+    if (!drawer_)
+      return;
+
+    // 恢复所有保存的状态
+    for (auto it = originalStates.begin(); it != originalStates.end(); ++it) {
+      if (QWidget* widget = it.key()) {
+        widget->setMinimumSize(it.value().minimumSize);
+        widget->setSizePolicy(it.value().sizePolicy);
+      }
+    }
+
+    // 强制更新布局
+    if (drawer_->layout()) {
+      drawer_->layout()->activate();
+    }
+    drawer_->updateGeometry();
+  }
+
   QSplitter* splitter_;
   QWidget* drawer_;
   QWidget* contentWidget_;
@@ -83,6 +110,13 @@ class TtAnimatedDrawer : public QObject {
   int current_animation_width_;  // 当前 Drawer 的宽度
   bool isDrawerVisible_;         // Drawer 的可见状态
   bool targetDrawerVisible_;     // 新增目标状态变量
+
+  // 保存子控件的原始尺寸策略和最小尺寸
+  struct WidgetState {
+    QSize minimumSize;
+    QSizePolicy sizePolicy;
+  };
+  QHash<QWidget*, WidgetState> originalStates;
 };
 
 }  // namespace Ui

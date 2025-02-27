@@ -5,6 +5,7 @@
 #include <QPointer>
 #include <QTimer>
 
+#include "ui/Def.h"
 #include "ui/control/ChatWidget/TtChatMessageDelegate.h"
 #include "ui/control/ChatWidget/TtChatMessageModel.h"
 
@@ -103,7 +104,7 @@ private:
 
 #else
 
-class TtChatView : public QListView {
+class Tt_EXPORT TtChatView : public QListView {
   Q_OBJECT
 
   Q_PROPERTY(bool loadingOlderMessages READ isLoadingOlderMessages NOTIFY

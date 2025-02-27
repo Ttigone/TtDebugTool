@@ -1,48 +1,37 @@
 #ifndef UI_CONTROL_TTBUTTONBOX_H
 #define UI_CONTROL_TTBUTTONBOX_H
 
+#include "ui/ui_pch.h"
 
 namespace Ui {
 
-class TtButtonGroup : public QWidget {
-  Q_OBJECT
+class TtSpecialDeleteButton;
 
+class Tt_EXPORT WidgetGroup : public QObject {
+  Q_OBJECT
  public:
-  explicit TtButtonGroup(QWidget* parent = nullptr);
+  explicit WidgetGroup(QObject* parent = nullptr);
+  // void addButton(TtSpecialDeleteButton* button);
+  void addButton(const QString& uuid, TtSpecialDeleteButton* button);
+  // void setCurrentIndex(int index);
+  void setCurrentIndex(QString index);
+  int currentIndex() const;
 
  signals:
-  void firstButtonClicked();
-  void secondButtonClicked();
+  // void currentIndexChanged(int index);
+  void currentIndexChanged(QString index);
+
+ public slots:
+  void updateUuid(const QString& index);
 
  private slots:
-  void buttonClicked(QAbstractButton* button);
-  void animateButton(QPushButton* button, qreal scale);
+  void handleButtonClicked();
 
  private:
-  void setupUI();
-  void initConnections();
-
-  QPushButton* button1;
-  QPushButton* button2;
-  QButtonGroup* buttonGroup;
-
-  // Animation instances
-  QSequentialAnimationGroup* animation1;
-  QSequentialAnimationGroup* animation2;
-
-  // Initial sizes
-  QSize button1InitialSize;
-  QSize button2InitialSize;
-
-  // Stylesheet
-  static const QString styleSheet;
-};
-
-
-// 按钮组 管理一群按钮的点击事件和触发事件, 配对
-class TtButtonBox {
- public:
-  TtButtonBox();
+  // QList<TtSpecialDeleteButton*> m_buttons;
+  QMap<QString, TtSpecialDeleteButton*> buttons_;
+  int m_currentIndex;
+  QString current_uuid_;
 };
 
 } // namespace Ui

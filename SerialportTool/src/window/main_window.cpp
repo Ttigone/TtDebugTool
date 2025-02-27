@@ -25,7 +25,7 @@
 #include <ui/widgets/buttons.h>
 #include <ui/widgets/customizationtabwidget.h>
 #include <ui/widgets/labels.h>
-#include <ui/widgets/snack_bar.h>
+#include <ui/widgets/message_bar.h>
 #include <ui/widgets/widget_group.h>
 
 #include <ui/window/title/window_button.h>
@@ -41,9 +41,13 @@
 
 #include "ui/control/TtPopUpDrawer.h"
 #include "ui/widgets/pop_widget.h"
+#include "ui/widgets/session_manager.h"
 
-#include "ui/widgets/window_switcher.h"
+#include <ui/window/title/window_button.h>
 #include "storage/setting_manager.h"
+#include "ui/widgets/window_switcher.h"
+
+#include <ui/widgets/widget_group.h>
 
 namespace Window {
 
@@ -87,13 +91,18 @@ static inline void emulateLeaveEvent(QWidget* widget) {
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent), central_widget_(new QWidget(this)) {
-  window_agent_ = new QWK::WidgetWindowAgent(this);
-  //installWindowAgent();
-  setMinimumWidth(1024);
-  setMinimumHeight(720);
-  //window_agent_->centralize();
 
-  // this->showMaximized();
+  qDebug() << "MainWindow constructor thread:" << QThread::currentThread();
+
+  // statusBar()->addWidget(new Ui::TtSvgButton());
+  window_agent_ = new QWK::WidgetWindowAgent(this);
+  installWindowAgent();
+  setProperty("TtBaseClassName", "TtWindow");
+  setObjectName("TtWindow");
+  resize(800, 600);
+
+  window_agent_->centralize();
+
 
   //this->setWindowFlag(Qt::WindowStaysOnTopHint);
 
@@ -113,102 +122,82 @@ MainWindow::MainWindow(QWidget* parent)
   function_select_ = new FunctionSelectionWindow();
 
   // 初始界面是 test111
-  tabWidget_ = new Ui::TabManager(function_select_, this);
+  tabWidget_ = new Ui::TabManager(function_select_);
 
   // 容纳一定了 widget, 以供外部切换, 直接存放 widget, 而非设定
   auto test = new Window::PopUpWindow();
 
   QSplitter* mainSplitter = new QSplitter(this);
-  //popUpBodyWidget->setParent(mainSpliter);
-  //QWidget* testW = new QWidget(mainSplitter);
-  //testW->setStyleSheet("background-color: lightblue;");  // Drawer 的背景色
-  //mainSplitter->addWidget(testW);
   mainSplitter->addWidget(test);
-  //Ui::TtPopUpDrawer* drawer = new Ui::TtPopUpDrawer(mainSpliter);
-  //mainSpliter->addWidget(communication_connection_widget);
+  test->setMinimumWidth(1);
   mainSplitter->addWidget(tabWidget_);
 
+  mainSplitter->setStretchFactor(0, 1);
+  mainSplitter->setStretchFactor(1, 3);
+
+  mainSplitter->setCollapsible(0, true);
   mainSplitter->setCollapsible(1, false);
   // 创建 AnimatedDrawer 控制器
   Ui::TtAnimatedDrawer* controller =
-      //new Ui::TtAnimatedDrawer(mainSplitter, testW, tabWidget_, this);
       new Ui::TtAnimatedDrawer(mainSplitter, test, tabWidget_, this);
 
   {
-
     QWidget* linkList = new QWidget;
-    auto linkListLayout = new Ui::TtVerticalLayout(linkList);
+    auto linkListLayout = new QGridLayout(linkList);
 
-    // 顶部
-    QWidget* titleWidget = new QWidget(linkList);
-    //titleWidget
-    //titleWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-    //QWidget* titleWidget = new QWidget();
-    //titleWidget->setMinimumHeight(40);
-    //titleWidget->setMaximumHeight(40);
-    Ui::TtNormalLabel* title =
-        new Ui::TtNormalLabel(tr("连接列表"), titleWidget);
-    //Ui::TtSvgButton* add =
-    //    new Ui::TtSvgButton(":/sys/plus-circle.svg", "", titleWidget);  // 刷新
-    Ui::TtImageButton* add =
-        new Ui::TtImageButton(":/sys/plus-circle.svg", titleWidget);  // 刷新
-    Ui::TtSvgButton* refresh =
-        new Ui::TtSvgButton(":/sys/refresh-normal.svg",
-                            ":/sys/refresh-hover.svg", titleWidget);  // 新建
-    refresh->setEnableToggle(false);
-    Ui::TtHorizontalLayout* titleLayout =
-        new Ui::TtHorizontalLayout(titleWidget);
-    titleLayout->addWidget(title);
-    titleLayout->addStretch();
-    titleLayout->addWidget(add);
-    titleLayout->addSpacerItem(new QSpacerItem(10, 0));
-    titleLayout->addWidget(refresh);
+    Ui::TtNormalLabel* title = new Ui::TtNormalLabel(tr("连接列表"), linkList);
 
-    linkListLayout->addWidget(titleWidget, 0, Qt::AlignTop);
+    QWidget* btnWidget = new QWidget(linkList);
+    Ui::TtHorizontalLayout* btnWidgetLayout =
+        new Ui::TtHorizontalLayout(btnWidget);
+    // // 以下两个会消失
+    Ui::TtSvgButton* addBtn =
+        new Ui::TtSvgButton(":/sys/plus-circle.svg", btnWidget);  // 刷新
+    addBtn->setSvgSize(QSize(18, 18));
+    Ui::TtSvgButton* refreshBtn =
+        new Ui::TtSvgButton(":/sys/refresh-normal.svg", btnWidget);  // 新建
+    refreshBtn->setSvgSize(QSize(18, 18));
+    refreshBtn->setColors(Qt::black, Qt::blue);
+    btnWidgetLayout->addWidget(addBtn);
+    btnWidgetLayout->addSpacerItem(new QSpacerItem(5, 0));
+    btnWidgetLayout->addWidget(refreshBtn);
+
+    linkListLayout->addWidget(title, 0, 0, Qt::AlignTop);
+    linkListLayout->addWidget(btnWidget, 0, 1, Qt::AlignRight);
 
     // 首页界面
     // 显示的图片
     Ui::TtNormalLabel* displayInfo = new Ui::TtNormalLabel();
     displayInfo->setPixmap(
-        QPixmap::fromImage(QImage(":/sys/tmp.png").scaled(100, 100)));
-    //linkListLayout->addStretch();
-    //linkListLayout->addWidget(displayInfo, 0, Qt::AlignCenter);
+        QPixmap::fromImage(QImage(":/sys/tmp.png").scaled(88, 88)));
 
     // 图片底下的文字
     Ui::TtNormalLabel* displayWords =
         new Ui::TtNormalLabel(tr("暂时没有可用的连接"));
-    //il->addWidget(displayWords, 0, Qt::AlignCenter);
     // 点击后在 tab 弹出一个 新 tab, 用于设置
     auto addLinkBtn = new QPushButton(tr("新建连接"));
-    addLinkBtn->setFixedSize(100, 28);
+    addLinkBtn->setMinimumSize(100, 28);
 
-    // 原始和切换逻辑
     // 创建原始界面
     auto original_widget_ = new QWidget();
-    //original_widget_->setStyleSheet("background-color : Coral");
     Ui::TtVerticalLayout* tmpl = new Ui::TtVerticalLayout(original_widget_);
-    //tmpl->addSpacerItem(new QSpacerItem(10, 10));
     tmpl->addStretch();
-    tmpl->addWidget(displayInfo, 0, Qt::AlignHCenter);
     tmpl->addSpacerItem(new QSpacerItem(0, 20));
     tmpl->addWidget(displayWords, 0, Qt::AlignHCenter);
     tmpl->addWidget(addLinkBtn, 0, Qt::AlignHCenter);
     tmpl->addStretch();
 
     // 存储历史保存设置
-    //auto historyLinkWidget = new QWidget();
-    //history_link_list_ = new QListWidget(historyLinkWidget);
-    history_link_list_ = new QListWidget();
-    //historyLinkWidget->setStyleSheet("background-color: Coral");
+    history_link_list_ = new Ui::SessionManager();
+    history_link_list_->setSelectionMode(QAbstractItemView::NoSelection);
 
     // 使用堆叠布局
     auto stack_ = new QStackedWidget(linkList);
-    //stack_->setFixedHeight(40);
     stack_->addWidget(original_widget_);
-    //stack_->addWidget(historyLinkWidget);
     stack_->addWidget(history_link_list_);
 
-    linkListLayout->addWidget(stack_, 1);
+    linkListLayout->addWidget(stack_, 1, 0, 1, 2);
+
     // 监听 model 的行数变化
     connect(history_link_list_->model(), &QAbstractItemModel::rowsInserted,
             [=](const QModelIndex& parent, int first, int last) {
@@ -225,7 +214,7 @@ MainWindow::MainWindow(QWidget* parent)
 
     // 新增的弹出框
     connect(addLinkBtn, &QPushButton::clicked, [this, controller]() {
-      qDebug() << "add new tab";
+      // qDebug() << "add new tab";
       FunctionSelectionWindow* test2 = new FunctionSelectionWindow();
       tabWidget_->addNewTab(test2, tr("新建连接"));
       // 连接信号槽
@@ -236,6 +225,38 @@ MainWindow::MainWindow(QWidget* parent)
                        });
       // 切换到当前新增 tab
       tabWidget_->setCurrentWidget(test2);
+    });
+
+    // 新增的弹出框
+    connect(addBtn, &Ui::TtSvgButton::clicked, [this, controller]() {
+      // qDebug() << "add new tab";
+      FunctionSelectionWindow* test2 = new FunctionSelectionWindow();
+      tabWidget_->addNewTab(test2, tr("新建连接"));
+      // 连接信号槽
+      QObject::connect(test2, &FunctionSelectionWindow::switchRequested,
+                       [this](int widget_id) {
+                         tabWidget_->handleButtonClicked(
+                             tabWidget_->currentIndex(), widget_id);
+                       });
+      // 切换到当前新增 tab
+      tabWidget_->setCurrentWidget(test2);
+    });
+
+    // 新增的弹出框
+    connect(refreshBtn, &Ui::TtSvgButton::clicked, [this, controller]() {
+      Ui::TtMessageBar::information(TtMessageBarType::Top, "无",
+                                    tr("连接列表已刷新"), 1000);
+      // // qDebug() << "add new tab";
+      // FunctionSelectionWindow* test2 = new FunctionSelectionWindow();
+      // tabWidget_->addNewTab(test2, tr("新建连接"));
+      // // 连接信号槽
+      // QObject::connect(test2, &FunctionSelectionWindow::switchRequested,
+      //                  [this](int widget_id) {
+      //                    tabWidget_->handleButtonClicked(
+      //                        tabWidget_->currentIndex(), widget_id);
+      //                  });
+      // // 切换到当前新增 tab
+      // tabWidget_->setCurrentWidget(test2);
     });
 
     // 注册 0 号窗口
@@ -251,8 +272,7 @@ MainWindow::MainWindow(QWidget* parent)
     auto il = new Ui::TtVerticalLayout(insidetest);
 
     Ui::TtNormalLabel* imla = new Ui::TtNormalLabel();
-    imla->setPixmap(
-        QPixmap::fromImage(QImage(":/sys/tmp.png").scaled(100, 100)));
+    imla->setPixmap(QPixmap::fromImage(QImage(":/sys/tmp.png").scaled(88, 88)));
     il->addStretch();
     il->addWidget(imla, 0, Qt::AlignCenter);
 
@@ -265,7 +285,6 @@ MainWindow::MainWindow(QWidget* parent)
     il->addWidget(ib, 0, Qt::AlignCenter);
     il->addStretch();
 
-    test->addPairedWidget(1, insidetest);
 
     // 新增的弹出框
     connect(ib, &QPushButton::clicked, [this, controller]() {
@@ -282,8 +301,9 @@ MainWindow::MainWindow(QWidget* parent)
                        });
       // 切换到当前新增 tab
       tabWidget_->setCurrentWidget(test2);
-      //controller->closeDrawer();
     });
+
+    test->addPairedWidget(1, insidetest);
   }
 
   {
@@ -291,8 +311,7 @@ MainWindow::MainWindow(QWidget* parent)
     auto il = new Ui::TtVerticalLayout(insidetest);
 
     Ui::TtNormalLabel* imla = new Ui::TtNormalLabel();
-    imla->setPixmap(
-        QPixmap::fromImage(QImage(":/sys/tmp.png").scaled(100, 100)));
+    imla->setPixmap(QPixmap::fromImage(QImage(":/sys/tmp.png").scaled(88, 88)));
     il->addStretch();
     il->addWidget(imla, 0, Qt::AlignCenter);
 
@@ -305,7 +324,7 @@ MainWindow::MainWindow(QWidget* parent)
     //il->addWidget(ib, 0, Qt::AlignCenter);
     //il->addStretch();
 
-    test->addPairedWidget(2, insidetest);
+    // test->addPairedWidget(2, insidetest);
 
     //// 新增的弹出框
     //connect(ib, &QPushButton::clicked, [this, controller]() {
@@ -331,27 +350,24 @@ MainWindow::MainWindow(QWidget* parent)
   layout_->addWidget(mainSplitter);
 
   connect(left_bar_logic_, &Ui::TtWidgetGroup::widgetClicked,
-          [this, test, controller](int index) {
-            //qDebug() << index;
+          [test, controller](int index) {
             // 打开
-            if (controller->isDrawerVisible()) {
+            if (controller->targetDrawerVisible()) {
               // 重复
               if (!test->switchToWidget(index)) {
-                //qDebug() << "close";
                 controller->closeDrawer();
               }
             } else {
-              //qDebug() << "open";
               test->switchToWidget(index);
               controller->openDrawer();
             }
           });
 
-  //connect(communication_connection, &Ui::TtSvgButton::clicked,
-  //        [this, test, mainSplitter, controller]() {
-  //          controller->toggleDrawer();
-  //          //Ui::SnackBarController::instance()->showMessage("这是一个测试消息", 2000);
-  //        });
+  buttonGroup = new Ui::WidgetGroup(this);
+
+  // 不是根据 index 切换, 而是特定的 uuid, 如果 tabwidget 不存在 uuid, 那么新建立 tab, 应当传递 uuid
+  connect(buttonGroup, &Ui::WidgetGroup::currentIndexChanged, tabWidget_,
+          &Ui::TabManager::switchToCurrentIndex);
 
   connectSignals();
 }
@@ -640,8 +656,7 @@ void MainWindow::installWindowAgent() {
 
 void MainWindow::loadStyleSheet(Theme theme) {
 
-  //qDebug() << "yes";
-
+#if 0
   //QString AppDir = qApp->applicationDirPath();
   QString AppDir("F:/MyProject/SerialportTool/out/build");
   //qDebug() << AppDir;
@@ -664,9 +679,11 @@ void MainWindow::loadStyleSheet(Theme theme) {
   AdvancedStylesheet.setCurrentTheme("dark_teal");
 
   AdvancedStylesheet.updateStylesheet();
+  
+  qApp->setStyleSheet(AdvancedStylesheet.styleSheet());
+#endif
 
   // now you can set the generated stylesheet
-  //qApp->setStyleSheet(AdvancedStylesheet.styleSheet());
   //     if (!styleSheet().isEmpty() && theme == currentTheme)
   //         return;
   //     currentTheme = theme;
@@ -682,22 +699,20 @@ void MainWindow::loadStyleSheet(Theme theme) {
 
 void MainWindow::setLeftBar() {
   left_bar_ = new QWidget(this);
+  // left_bar_->setStyleSheet("background-color: Coral");
   left_bar_logic_ = new Ui::TtWidgetGroup(this);
   left_bar_logic_->setExclusive(true);
-  communication_connection = new Ui::TtSvgButton(
-      ":/sys/communicating-junctions.svg",
-      ":/sys/communicating-junctions_pressed.svg", left_bar_);
-  communication_connection->setFixedSize(46, 46);
+  communication_connection =
+      new Ui::TtSvgButton(":/sys/communicating-junctions.svg", left_bar_);
+  communication_connection->setColors(Qt::black, Qt::blue);
 
-  communication_instruction = new Ui::TtSvgButton(
-      ":/sys/Instruction-configuration.svg",
-      ":/sys/Instruction-configuration_pressed.svg", left_bar_);
-  communication_instruction->setFixedSize(46, 46);
+  communication_instruction =
+      new Ui::TtSvgButton(":/sys/Instruction-configuration.svg", left_bar_);
+  communication_instruction->setColors(Qt::black, Qt::blue);
 
   realistic_simulation =
-      new Ui::TtSvgButton(":/sys/real-time-simulation.svg",
-                          ":/sys/real-time-simulation_pressed.svg", left_bar_);
-  realistic_simulation->setFixedSize(46, 46);
+      new Ui::TtSvgButton(":/sys/real-time-simulation.svg", left_bar_);
+  realistic_simulation->setColors(Qt::black, Qt::blue);
 
   communication_connection->setStyleSheet("padding: 5px 10px;");
   communication_instruction->setStyleSheet("padding: 5px 10px;");
@@ -706,34 +721,26 @@ void MainWindow::setLeftBar() {
   left_bar_logic_->addWidget(communication_instruction);
   left_bar_logic_->addWidget(realistic_simulation);
 
-  Ui::TtVerticalLayout* left_bar_layout = new Ui::TtVerticalLayout();
+  Ui::TtVerticalLayout* left_bar_layout = new Ui::TtVerticalLayout(left_bar_);
 
   // 添加按钮
+  left_bar_layout->addSpacerItem(new QSpacerItem(0, 10));
   left_bar_layout->addWidget(communication_connection, 0, Qt::AlignTop);
+  left_bar_layout->addSpacerItem(new QSpacerItem(0, 20));
   left_bar_layout->addWidget(communication_instruction);
+  left_bar_layout->addSpacerItem(new QSpacerItem(0, 20));
   left_bar_layout->addWidget(realistic_simulation);
   left_bar_layout->addStretch();
 
-  //left_bar_->addWidget();
   left_bar_->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
-  left_bar_->setLayout(left_bar_layout);
   left_bar_->setMinimumWidth(40);
 
-  // 显示 2 次, 出现异常
-  //Ui::SnackBarController::instance()->showMessage("这是一个测试消息", 2000);
-  //Ui::SnackBarController::instance()->showMessage("这是一个测试消息", 2000);
-  //for (int i = 0; i < 100; ++i) {
-  //  QTimer::singleShot(i * 100, [] {
-  //    Ui::SnackBarController::instance()->showMessage("测试消息");
-  //  });
-  //}
+  // int i = 0;
+  // connect(communication_connection, &Ui::TtSvgButton::clicked,
+  //         [this]() { qDebug() << ++i; });
 }
 
 void MainWindow::connectSignals() {
-  //connect(communication_connection, &Ui::TtSvgButton::clicked, [this]() {
-  //  //communication_connection_widget->triggerSwitch();
-  //
-
   //  Ui::SnackBarController::instance()->showMessage("这是一个测试消息", 2000);
   //});
   // 处理点击 close Pop 时, 按钮恢复, 是否需要切换到新的 tab
@@ -741,6 +748,11 @@ void MainWindow::connectSignals() {
   //  communication_connection->setState(true);
   //  qDebug() << "also close";
   //});
+
+  connect(history_link_list_, &Ui::SessionManager::uuidsChanged, buttonGroup,
+          &Ui::WidgetGroup::updateUuid);
+  connect(history_link_list_, &Ui::SessionManager::uuidsChanged, tabWidget_,
+          &Ui::TabManager::removeUuidWidget);
 
   // 点击按钮信号连接
   QObject::connect(
@@ -803,39 +815,44 @@ void MainWindow::registerTabWidget() {
         //return widget;
 
         Window::SerialWindow* serial = new Window::SerialWindow();
-        auto widget = new QWidget();
-        Ui::TtVerticalLayout* layout = new Ui::TtVerticalLayout(widget);
-        layout->addWidget(serial);
+        // auto widget = new QWidget();
+        // Ui::TtVerticalLayout* layout = new Ui::TtVerticalLayout(widget);
+        // layout->addWidget(serial);
 
         //qDebug() << "Create SerialWindow: " << runtime.elapseMilliseconds();
-        connect(serial, &Window::SerialWindow::requestSaveConfig,
-                [this, serial]() {
-                  //qDebug() << tabWidget_->currentIndex();
-                  qDebug() << "widget: " << tabWidget_->currentWidget()->winId();
-                  //if ()
-                  // 获取当前窗口的独特值, 是否已经保存到 listwidget, 
-                  // listwidget 需要建立索引, 
-                  addDifferentConfiguration(serial->getTitle());
-                  qDebug() << "save";
-                  // 只有关闭整个 app 的时候才会保存到本地
+        connect(
+            serial, &Window::SerialWindow::requestSaveConfig, [this, serial]() {
+              //qDebug() << tabWidget_->currentIndex();
 
-                  Storage::SettingsManager::instance().setSetting(
-                      "Serial", serial->getConfiguration());
-                });
-        return widget;
+              // 获取当前窗口的独特值, 是否已经保存到 listwidget,
+              addDifferentConfiguration(serial->getTitle(),
+                                        tabWidget_->getCurrentWidgetUUid());
+              // 设置标题名
+              tabWidget_->setTabTitle(serial->getTitle());
+              // 能够获取得到
+              // qDebug() << "save" << ;
+
+              // 只有关闭整个 app 的时候才会保存到本地
+              Storage::SettingsManager::instance().setSetting(
+                  "Serial", serial->getConfiguration());
+              Ui::TtMessageBar::success(TtMessageBarType::Top, "",
+                                        tr("保存成功"), 1000);
+            });
+        // return widget;
+        return serial;
       },
       tr("未命名的串口连接"));
   // 注册 TCP客户端窗口
   tabWidget_->registerWidget(
       1,
       []() {
-        Window::TcpWindow* d = new Window::TcpWindow();
-        auto widget = new QWidget();
-        Ui::TtVerticalLayout* layout = new Ui::TtVerticalLayout(widget);
-        layout->addWidget(d);
-        return widget;
+        Window::TcpWindow* tcp = new Window::TcpWindow();
+        // auto widget = new QWidget();
+        // Ui::TtVerticalLayout* layout = new Ui::TtVerticalLayout(widget);
+        // layout->addWidget(d);
+        return tcp;
       },
-      tr("未命 TCP 连接"));
+      tr("未命 TCP 客户端连接"));
 
   //// 注册 UDP客户端窗口
   //tabWidget_->registerWidget(
@@ -882,17 +899,20 @@ void MainWindow::registerTabWidget() {
   // });
 }
 
-void MainWindow::addDifferentConfiguration(const QString& title) {
-
-  QListWidgetItem* item = new QListWidgetItem();
+void MainWindow::addDifferentConfiguration(const QString& title,
+                                           const QString& uuid) {
+  // 先判断是否已经存在了这个记录, 有则不增加
   Ui::TtSpecialDeleteButton* button = new Ui::TtSpecialDeleteButton(
       title, ":/sys/displayport.svg", ":/sys/delete.svg", this);
-  //button->setStyleSheet("background-color: transparent");
-  // 必须先设置item的大小,否则按钮可能显示不完整
-  item->setSizeHint(button->sizeHint().shrunkBy(QMargins(3, 3, 3, 3)));
-  history_link_list_->addItem(item);
-  history_link_list_->setItemWidget(item, button);
-  qDebug() << "add Item";
+
+  // 判断是否存在
+
+  // 仅是显示
+  history_link_list_->addAdaptiveWidget(title, uuid, button);
+  // 切换的逻辑处理
+  buttonGroup->addButton(uuid, button);
+
+  // qDebug() << "add Item";
 }
 
 // void MainWindow::createDockWindows()

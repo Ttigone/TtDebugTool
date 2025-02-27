@@ -1,6 +1,6 @@
 set(project_langs C CXX)
 
-cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 
 project(SerialportTool
     LANGUAGES ${project_langs}

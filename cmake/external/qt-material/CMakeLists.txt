@@ -9,6 +9,14 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    # MSVC 专用选项
+    add_compile_options(/Zc:__cplusplus)
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    # MinGW (g++) 专用选项
+    add_compile_options(-fpermissive)
+endif()
+
 # 如果要生成共享库还是静态库
 option(QtMaterial_BUILD_STATIC "Build as static library" ON)
 if(QtMaterial_BUILD_STATIC)

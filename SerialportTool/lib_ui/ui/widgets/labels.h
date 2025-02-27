@@ -10,11 +10,12 @@
 #define UI_WIDGETS_LABELS_H
 
 #include "base/timer.h"
-#include "ui/mb_widget.h"
+#include "ui/Def.h"
 #include "ui/click_handler.h"
+#include "ui/mb_widget.h"
 #include "ui/style/style_core_types.h"
-#include "ui/text/text_entity.h"
 #include "ui/text/text.h"
+#include "ui/text/text_entity.h"
 #include "ui/widgets/popup_menu.h"
 
 #include <any>
@@ -204,7 +205,7 @@ class FlatLabel : public MbWidget, public ClickHandlerHost {
   bool _tryMakeSimilarLines = false;
 };
 
-class TtNormalLabel : public QLabel {
+class Tt_EXPORT TtNormalLabel : public QLabel {
  public:
   TtNormalLabel(QWidget* parent = nullptr);
   TtNormalLabel(const QString& text, QWidget* parent = nullptr);
@@ -215,6 +216,54 @@ class TtNormalLabel : public QLabel {
   /// @brief init
   /// 初始化
   void init();
+};
+
+class Tt_EXPORT TtElidedLabel : public QLabel {
+  Q_OBJECT
+  Q_PROPERTY(Qt::TextElideMode elideMode READ elideMode WRITE setElideMode)
+
+ public:
+  explicit TtElidedLabel(const QString& text = QString(),
+                         QWidget* parent = nullptr)
+      : QLabel(text, parent) {
+    setContentsMargins(0, 0, 0, 0);
+    setMinimumWidth(0);
+    setIndent(0);
+  }
+
+  Qt::TextElideMode elideMode() const { return mode_; }
+  void setElideMode(Qt::TextElideMode mode) {
+    mode_ = mode;
+    update();
+  }
+
+ protected:
+  void paintEvent(QPaintEvent* event) override {
+    if (text().isEmpty()) {
+      QLabel::paintEvent(event);
+      return;
+    }
+
+    QPainter painter(this);
+    QFontMetrics fm = painter.fontMetrics();
+
+    // qDebug() << "content width: " << contentsRect().width();
+    const int availableWidth = contentsRect().width();
+
+    // 处理极端小宽度情况
+    if (availableWidth <= fm.horizontalAdvance("...")) {
+      painter.drawText(rect(), alignment(), "...");
+      return;
+    }
+
+    // QString elidedText = fm.elidedText(text(), mode_, width());
+    QString elidedText = fm.elidedText(text(), mode_, availableWidth);
+    // qDebug() << "rect: " << rect();
+    painter.drawText(rect(), alignment(), elidedText);
+  }
+
+ private:
+  Qt::TextElideMode mode_ = Qt::ElideRight;
 };
 
 }  // namespace Ui

@@ -68,11 +68,19 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_compile_options(${TARGET_NAME} PRIVATE -Wall -Wextra -pedantic)
 endif()
 
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    # MSVC 专用选项
+    add_compile_options(/Zc:__cplusplus)
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    # MinGW (g++) 专用选项
+    add_compile_options(-fpermissive)
+endif()
+
 # 安装规则
 if(NOT DEFINED PREFIX)
     set(PREFIX ${CMAKE_SOURCE_DIR}/../installed)
     message(${PREFIX})
-    message(WARNING "Install Prefix not set")
+    # message(WARNING "Install Prefix not set")
 endif()
 
 install(TARGETS ${TARGET_NAME}

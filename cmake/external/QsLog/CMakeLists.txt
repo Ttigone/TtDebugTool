@@ -15,6 +15,13 @@ set(CMAKE_AUTORCC ON)
 find_package(Qt6 REQUIRED COMPONENTS Core)
 include_directories(${Qt6Core_INCLUDE_DIRS})
 
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    # MSVC 专用选项
+    add_compile_options(/Zc:__cplusplus)
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    # MinGW (g++) 专用选项
+    add_compile_options(-fpermissive)
+endif()
 
 # Setting up the target
 add_library(QsLog SHARED

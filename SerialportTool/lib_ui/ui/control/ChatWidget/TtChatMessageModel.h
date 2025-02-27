@@ -2,6 +2,8 @@
 #define UI_CONTROL_TTCHATMESSAGEMODEL_H
 
 #include <QAbstractListModel>
+
+#include "ui/Def.h"
 #include "ui/control/ChatWidget/TtChatMessage.h"
 
 namespace Ui {
@@ -96,7 +98,7 @@ class TtChatMessageModel : public QAbstractListModel {
 };
 #else
 
-class TtChatMessageModel : public QAbstractListModel {
+class Tt_EXPORT TtChatMessageModel : public QAbstractListModel {
   Q_OBJECT
 
  public:

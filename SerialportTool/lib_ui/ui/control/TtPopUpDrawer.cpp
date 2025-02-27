@@ -1,10 +1,9 @@
-﻿#include <QCoreApplication>
+﻿#include "ui/control/TtPopUpDrawer.h"
+
+#include <QCoreApplication>
+#include <QMouseEvent>
 #include <QPropertyAnimation>
 #include <QSignalTransition>
-
-#include "ui/control/TtPopUpDrawer.h"
-
-#include <QMouseEvent>
 
 #include "ui/control/TtPopUpDrawer_p.h"
 

@@ -22,6 +22,15 @@ set(scintilla_loc ${third_party}/QScintilla_src-2.14.1/scintilla)
 add_definitions(-DQT_DEPRECATED_WARNINGS)
 add_definitions(-DSCINTILLA_QT -DSCI_LEXER -DINCLUDE_DEPRECATED_FEATURES)
 
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    # MSVC 专用选项
+    add_compile_options(/Zc:__cplusplus)
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    # MinGW (g++) 专用选项
+    add_compile_options(-fpermissive)
+endif()
+
+
 # 源文件和头文件
 file(GLOB_RECURSE PROJECT_SRC
     ${qscintilla_loc}/*.cpp

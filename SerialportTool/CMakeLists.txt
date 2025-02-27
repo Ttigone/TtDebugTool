@@ -2,6 +2,14 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    # MSVC 专用选项
+    add_compile_options(/Zc:__cplusplus)
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    # MinGW (g++) 专用选项
+    add_compile_options(-fpermissive)
+endif()
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -35,7 +43,9 @@ set(PROJECT_SOURCES
 
   src/ui/widgets/text_widget.h src/ui/widgets/text_widget.cpp
   src/ui/widgets/pop_widget.h src/ui/widgets/pop_widget.cpp
-  ui/ui/widgets/window_switcher.h ui/ui/widgets/window_switcher.cpp
+  src/ui/widgets/window_switcher.h src/ui/widgets/window_switcher.cpp
+  src/ui/widgets/session_manager.h src/ui/widgets/session_manager.cpp
+
 )
 
 set(RES_QRC
@@ -45,6 +55,11 @@ set(RES_QRC
         res/sys-gif/sys-gif.qrc
 )
 
+# add_compile_options(-fpermissive)  # 全局启用宽松模式
+
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+
+
 if (${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(${PROJECT_NAME}
             MANUAL_FINALIZATION
@@ -52,11 +67,16 @@ if (${QT_VERSION_MAJOR} GREATER_EQUAL 6)
             ${RES_QRC}
     )
 else()
-  add_executable(SerialportTool)
-    target_sources(SerialportTool PRIVATE ${PROJECT_SOURCES} ${RES_QRC}
-    )
+  add_executable(${PROJECT_NAME})
+    target_sources(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCES} ${RES_QRC})
 endif ()
 
+# # 设置编译选项
+# if(MSVC)
+#     add_compile_options(/Zc:__cplusplus)  # MSVC 格式
+# elseif(MINGW)
+#     # MinGW 不需要此选项
+# endif()
 
 
 # 添加编译选项
@@ -73,19 +93,20 @@ include_directories(${third_party})
 target_link_libraries(SerialportTool 
 PRIVATE
   desktop-app::lib_base
-  desktop-app::lib_ui 
+  desktop-app::lib_ui
+  # lib_ui
   QWindowKit::Widgets
   external_qtadvancedcss
   external_qt-material
   qscintilla2_qt
   QsLog
+  qt-easy-logger
 )
-
 # 查看链接的库
 get_target_property(LINK_LIBS SerialportTool LINK_LIBRARIES)
 message(STATUS "Libraries linked to MyExecutable: ${LINK_LIBS}")
 
 target_precompile_headers(SerialportTool PRIVATE $<$<COMPILE_LANGUAGE:CXX,OBJCXX>:${src_loc}/stdafx.h>)
 
-install(TARGETS SerialportTool DESTINATION bin)
+# install(TARGETS SerialportTool DESTINATION bin)
 

@@ -13,6 +13,8 @@ PopUpWindow::PopUpWindow(QWidget* parent)
 }
 
 void PopUpWindow::addPairedWidget(int index, QWidget* widget) {
+  widget->setParent(this);
+  // 动画完成后恢复状态
   layout_->insertWidget(index, widget);
   //registerWidget(widget);
   registered_widgets_.insert(index, widget);

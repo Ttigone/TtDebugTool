@@ -412,7 +412,8 @@ TtChatView::TtChatView(QWidget* parent)
       m_fetchTimer(new QTimer(this))
 {
   // setStyleSheet("background-color: black");
-  setMinimumWidth(520);
+  // setMinimumWidth();
+  setFrameShape(QFrame::NoFrame);
   setItemDelegate(m_delegate);
   setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);

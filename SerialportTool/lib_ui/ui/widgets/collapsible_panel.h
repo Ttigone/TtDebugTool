@@ -2,16 +2,19 @@
 #define UI_WIDGETS_COLLAPSIBLE_PANEL_H
 
 #include <QEvent>
-#include <QToolBox>
-#include <QWidget>
 #include <QIcon>
-#include <QTreeWidget>
+#include <QPainterPath>
 #include <QPropertyAnimation>
 #include <QScrollArea>
+#include <QToolBox>
+#include <QTreeWidget>
+#include <QWidget>
+
+#include "ui/Def.h"
 
 namespace Ui {
 
-class DrawerButton : public QPushButton {
+class Tt_EXPORT DrawerButton : public QPushButton {
   Q_OBJECT
   Q_PROPERTY(qreal arrowRotation READ arrowRotation WRITE setArrowRotation)
 
@@ -27,18 +30,18 @@ protected:
 private:
   void initializeArrow();
   qreal m_arrowRotation; // 箭头旋转角度
-  QPolygon m_arrowPolygon;
+  // QPolygon m_arrowPolygon;
+  QPainterPath m_arrowPath;
 };
 
-class Drawer : public QWidget {
+class Tt_EXPORT Drawer : public QWidget {
   Q_OBJECT
  public:
   Drawer(const QString &title, QWidget *contentWidget, QWidget *parent = nullptr);
 
-  bool eventFilter(QObject* obj, QEvent* event) override;
-
 protected:
-   void resizeEvent(QResizeEvent* event) override;
+ bool eventFilter(QObject* obj, QEvent* event) override;
+ void resizeEvent(QResizeEvent* event) override;
 
 private slots:
   void toggle();
@@ -60,12 +63,13 @@ private:
   int contentHeight() const;
 
 private:
-  QPushButton *toggleButton;
-  QWidget *contentWidget;
-  QWidget *wrapperWidget;  // 包装 contentWidget 的容器
-  QPropertyAnimation *animation;
-  QPropertyAnimation *arrowAnimation;
-  bool isOpen;
+ // QPushButton *toggleButton;
+ DrawerButton* toggleButton;
+ QWidget* contentWidget;
+ QWidget* wrapperWidget;  // 包装 contentWidget 的容器
+ QPropertyAnimation* animation;
+ QPropertyAnimation* arrowAnimation;
+ bool isOpen;
 };
 
 } // namespace Ui

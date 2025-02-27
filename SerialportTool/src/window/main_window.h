@@ -5,8 +5,7 @@
 #include <QObject>
 #include <QListWidget>
 
-#include "ui/window/window_switcher.h"
-
+#include <ui/control/buttonbox/TtButtonBox.h>
 #include <ui/layout/horizontal_layout.h>
 #include <ui/layout/vertical_layout.h>
 
@@ -20,10 +19,12 @@ class CustomTabWidget;
 class PopWidget;
 class TtSvgButton;
 class TtWidgetGroup;
+class SessionManager;
+class TabManager;
 }  // namespace Ui
 
 namespace Core {
-class SerialPort;
+class SerialPortWorker;
 }  // namespace Core
 
 class QtMaterialSnackbar;
@@ -64,7 +65,7 @@ class MainWindow : public QMainWindow {
   void setLeftBar();
   void connectSignals();
   void registerTabWidget();
-  void addDifferentConfiguration(const QString &title);
+  void addDifferentConfiguration(const QString& title, const QString& uuid);
 
   // void createDockWindows();
 
@@ -79,13 +80,15 @@ class MainWindow : public QMainWindow {
   Ui::TtWidgetGroup *left_bar_logic_;
   //bool ishi{true};
 
-  QListWidget *history_link_list_;
+  // QListWidget *history_link_list_;
+  Ui::SessionManager* history_link_list_;
 
   QVector<QVector<QWidget*>> stacked_;
 
   Ui::TtSvgButton* communication_connection;
   Ui::TtSvgButton* communication_instruction;
   Ui::TtSvgButton* realistic_simulation;
+  int i = 0;
 
   // tab 页面
   Ui::TabManager* tabWidget_;
@@ -96,6 +99,8 @@ class MainWindow : public QMainWindow {
   // 要赋值父对象, 这个父对象也就是 canves
   // 弹出的 widget 的左侧应该在 left_bar_ 的右侧对齐
   Ui::PopWidget* communication_connection_widget;
+
+  Ui::WidgetGroup* buttonGroup;
 };
 
 }  // namespace Window

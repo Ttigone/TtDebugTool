@@ -11,9 +11,11 @@
 
 #include <QTextEdit>
 
+#include "ui/Def.h"
+
 namespace Ui {
 
-class MessageEdit : public QTextEdit {
+class Tt_EXPORT MessageEdit : public QTextEdit {
  public:
   struct MsgInfo {
     QString MsgFlag;  //"text,image,file"

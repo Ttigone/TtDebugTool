@@ -8,6 +8,7 @@
 #include <QStyledItemDelegate>
 #include <QTextLayout>
 
+#include "ui/Def.h"
 namespace Ui {
 
 class TtChatMessage;
@@ -110,7 +111,7 @@ class TtChatMessageDelegate : public QStyledItemDelegate {
 
 #else
 
-class TtChatMessageDelegate : public QStyledItemDelegate {
+class Tt_EXPORT TtChatMessageDelegate : public QStyledItemDelegate {
   Q_OBJECT
  public:
   enum RenderQuality {

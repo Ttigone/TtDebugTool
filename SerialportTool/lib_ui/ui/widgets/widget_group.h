@@ -11,9 +11,11 @@
 
 #include <QEvent>
 
+#include "ui/Def.h"
+
 namespace Ui {
 
-class TtWidgetGroup : public QObject {
+class Tt_EXPORT TtWidgetGroup : public QObject {
   Q_OBJECT
  public:
   TtWidgetGroup(QObject* parent);
@@ -63,30 +65,43 @@ class TtWidgetGroup : public QObject {
   void widgetToggled(QWidget* widget, bool checked);
 
  protected:
+  // bool eventFilter(QObject* obj, QEvent* event) override {
+  //   if (event->type() == QEvent::MouseButtonPress) {
+  //     //if (event->type() == QEvent::MouseButtonRelease) {
+  //     //event
+  //     QWidget* widget = qobject_cast<QWidget*>(obj);
+  //     if (widget && widgets_.contains(widget)) {
+  //       is_pressed_ = true;
+  //       //  bool checked = !widget->property("checked").toBool();
+  //       //  updateWidgetState(widget, checked);
+  //       //  //qDebug() << widgets_.indexOf(widget);
+  //       //  emit widgetClicked(widgets_.indexOf(widget));
+  //       //  //return true;  // 阻止事件继续传播
+  //     }
+  //   } else if (event->type() == QEvent::MouseButtonRelease) {
+  //     QWidget* widget = qobject_cast<QWidget*>(obj);
+  //     if (widget && widgets_.contains(widget)) {
+  //       if (is_pressed_) {
+  //         is_pressed_ = false;
+  //         bool checked = !widget->property("checked").toBool();
+  //         updateWidgetState(widget, checked);
+  // 			//qDebug() << widgets_.indexOf(widget);
+  //         emit widgetClicked(widgets_.indexOf(widget));
+  //         return true;  // 阻止事件继续传播
+  //       }
+  //     }
+  //   }
+  //   return QObject::eventFilter(obj, event);
+  // }
+
   bool eventFilter(QObject* obj, QEvent* event) override {
-    if (event->type() == QEvent::MouseButtonPress) {
-      //if (event->type() == QEvent::MouseButtonRelease) {
-      //event
+    if (event->type() == QEvent::MouseButtonRelease) {
       QWidget* widget = qobject_cast<QWidget*>(obj);
       if (widget && widgets_.contains(widget)) {
-        is_pressed_ = true;
-        //  bool checked = !widget->property("checked").toBool();
-        //  updateWidgetState(widget, checked);
-        //  //qDebug() << widgets_.indexOf(widget);
-        //  emit widgetClicked(widgets_.indexOf(widget));
-        //  //return true;  // 阻止事件继续传播
-      }
-    } else if (event->type() == QEvent::MouseButtonRelease) {
-      QWidget* widget = qobject_cast<QWidget*>(obj);
-      if (widget && widgets_.contains(widget)) {
-        if (is_pressed_) {
-          is_pressed_ = false;
-          bool checked = !widget->property("checked").toBool();
-          updateWidgetState(widget, checked);
-					//qDebug() << widgets_.indexOf(widget);
-          emit widgetClicked(widgets_.indexOf(widget));
-          return true;  // 阻止事件继续传播
-        }
+        bool checked = !widget->property("checked").toBool();
+        updateWidgetState(widget, checked);
+        emit widgetClicked(widgets_.indexOf(widget));
+        return true;  // 阻止事件继续传播
       }
     }
     return QObject::eventFilter(obj, event);

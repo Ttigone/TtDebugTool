@@ -177,8 +177,9 @@ void SerialWindow::init() {
 
   title_ = new Ui::TtNormalLabel(tr("未命名串口连接"));
   // 编辑命名按钮
-  modify_title_btn_ = new Ui::TtImageButton(":/sys/edit_name.svg", this);
-  modify_title_btn_->setFixedSize(22, 22);
+  // modify_title_btn_ = new Ui::TtImageButton(":/sys/edit_name.svg", this);
+  modify_title_btn_ = new Ui::TtSvgButton(":/sys/edit_name.svg", this);
+  modify_title_btn_->setSvgSize(18, 18);
 
   // 创建原始界面
   original_widget_ = new QWidget(this);
@@ -192,7 +193,6 @@ void SerialWindow::init() {
 
   // 创建编辑界面
   edit_widget_ = new QWidget(this);
-  // title_edit_ = new QLineEdit(this);
   title_edit_ = new Ui::TtLineEdit(this);
 
   Ui::TtHorizontalLayout* edit_layout =
@@ -203,12 +203,14 @@ void SerialWindow::init() {
 
   // 使用堆叠布局
   stack_ = new QStackedWidget(this);
-  stack_->setFixedHeight(40);
+  // stack_->setFixedHeight(40);
+  stack_->setMaximumHeight(40);
+  // stack_->resize(40);
   stack_->addWidget(original_widget_);
   stack_->addWidget(edit_widget_);
 
   // 优化后的信号连接（仅需2个连接点）
-  connect(modify_title_btn_, &Ui::TtImageButton::clicked, this,
+  connect(modify_title_btn_, &Ui::TtSvgButton::clicked, this,
           &SerialWindow::switchToEditMode);
 
   Ui::TtHorizontalLayout* tmpP1 = new Ui::TtHorizontalLayout;

@@ -5,62 +5,85 @@
 namespace Core {
 
 TcpServer::TcpServer(QObject* parent) : QTcpServer(parent) {
-  // 初始化 fortune 列表，存储不同的命运消息（字符串）
-  fortunes_ << tr("你过着狗一样的生活。别上家具。") << tr("你必须考虑明天。")
-            << tr("你会被一声巨响惊讶。") << tr("再过一个小时你会感到饿。")
-            << tr("你可能有邮件。")
-            << tr("你不能在不伤害永恒的情况下消磨时间。")
-            << tr("计算机并不聪明。它们只是认为自己聪明。");
+  // 配置线程池
+  thread_pool_.setMaxThreadCount(QThread::idealThreadCount() * 2);
 }
 
-void TcpServer::incomingConnection(qintptr socket_descriptor) {
-  // 随机选择一个命运信息
-  QString fortune =
-      fortunes_.at(QRandomGenerator::global()->bounded(fortunes_.size()));
-
-  // 创建新的 TcpSocketThread 线程对象, 处理连接
-  TcpSocketThread* thread =
-      new TcpSocketThread(socket_descriptor, fortune, this);
-
-  // 连接线程的 finished 信号和 deleteLater 槽, 线程完成 run 后自动删除对象
-  connect(thread, &TcpSocketThread::finished, thread,
-          &TcpSocketThread::deleteLater);
-
-  // 启动线程
-  thread->start();
-}
-
-TcpSocketThread::TcpSocketThread(qintptr socket_descriptor,
-                                 const QString& fortune, QObject* parent)
-    : QThread(parent), socket_descriptor_(socket_descriptor), text_(fortune) {
-  // 初始化线程, 保存套接字描述符和要发送的文本信息
-}
-
-void TcpSocketThread::run() {
-  // Tcp 套接字
-  QTcpSocket tcpSocket;
-
-  // 设置套接字描述符, 失败发出信号
-  if (!tcpSocket.setSocketDescriptor(socket_descriptor_)) {
-    emit error(tcpSocket.error());
-    return;
+bool TcpServer::startServer(const Core::TcpServerConfiguration& config) {
+  if (isListening()) {
+    return true;
   }
 
-  // 存储发送数据的块
-  QByteArray block;
-  // 数据流对象, 只写
-  QDataStream out(&block, QIODevice::WriteOnly);
-  // 设置数据流版本
-  out.setVersion(QDataStream::Qt_6_4);
-  // 写入数据流
-  out << text_;
+  // qDebug() << config.port;
+  if (!listen(QHostAddress::Any, config.port)) {
+    // if (!listen(QHostAddress::Any, 33333)) {
+    emit errorOccurred(tr("无法启动服务: ") + errorString());
+    return false;
+  }
 
-  // 数据块写入套接字
-  tcpSocket.write(block);
-  // 断开与主机的连接
-  tcpSocket.disconnectFromHost();
-  // 等待断开连接
-  tcpSocket.waitForDisconnected();
+  emit serverStarted();
+  return true;
+}
+
+void TcpServer::stopServer() {
+  if (isListening()) {
+    close();
+    emit serverStopped();
+  }
+}
+
+bool TcpServer::isRunning() const {
+  return isListening();
+}
+
+void TcpServer::incomingConnection(qintptr handle) {
+  qDebug() << "new";
+  thread_pool_.start(new SocketTask(handle));
+}
+
+SocketTask::SocketTask(qintptr handle)
+    : socket_descriptor_(handle), socket_(nullptr) {
+  setAutoDelete(true);
+}
+
+void SocketTask::run() {
+  // QTcpSocket socket;
+  socket_ = new QTcpSocket();
+  if (!socket_->setSocketDescriptor(socket_descriptor_)) {
+    qWarning() << "Socket error:" << socket_->error();
+    delete socket_;
+    return;
+  }
+  QByteArray block;
+  QDataStream out(&block, QIODevice::WriteOnly);
+  out.setByteOrder(QDataStream::LittleEndian);  // 设置与接收端一致的字节序
+  // out.setVersion(QDataStream::Qt_6_4);
+  // out << message_;
+  // 前三个字节是 0
+  // out << "TEST";
+  // bug 头部有多余的字节
+  QString m_message("TEST");
+  out.writeBytes(m_message.toUtf8().constData(), m_message.size());
+
+  // 异步写入
+  socket_->write(block);
+
+  // 监听客户端输入
+  QObject::connect(socket_, &QTcpSocket::readyRead, [this]() {
+    QByteArray data = socket_->readAll();
+    qDebug() << "收到客户端消息:" << data;
+    // 处理客户端请求，例如回复响应
+  });
+
+  // 监听断开信号
+  QObject::connect(socket_, &QTcpSocket::disconnected,
+                   [this]() { socket_->deleteLater(); });
+
+  // 进入事件循环
+  QEventLoop loop;
+  QObject::connect(socket_, &QTcpSocket::disconnected, &loop,
+                   &QEventLoop::quit);
+  loop.exec();
 }
 
 }  // namespace Core

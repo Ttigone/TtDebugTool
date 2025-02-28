@@ -55,7 +55,7 @@ class Tt_EXPORT TtLabelLineEdit : public QWidget {
   TtLabelLineEdit(const QString& text = "", QWidget* parent = nullptr);
   ~TtLabelLineEdit();
 
-  QComboBox* body();
+  TtLineEdit* body();
   void addItem(const QString& atext, const QVariant& auserData = QVariant());
 
   void setCurrentItem(qint8 index);

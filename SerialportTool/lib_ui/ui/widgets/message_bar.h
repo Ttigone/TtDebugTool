@@ -1,6 +1,6 @@
 ﻿/*****************************************************************/ /**
- * \file   snack_bar.h
- * \brief  
+ * \file   message_bar.h
+ * \brief  消息弹出框
  * 
  * \author C3H3_Ttigone
  * \date   August 2024
@@ -14,9 +14,6 @@ class QApplication;
 class QObject;
 class QTimer;
 QT_END_NAMESPACE
-// #include <QApplication>
-// #include <QObject>
-// #include <QTimer>
 
 #include "ui/Def.h"
 #include "ui/ui_pch.h"

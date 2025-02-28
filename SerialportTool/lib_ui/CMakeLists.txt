@@ -16,6 +16,7 @@ set(LIB_UI_OUT_ROOT "${CMAKE_BINARY_DIR}/${PROJECT_NAME}")
 add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 add_definitions(-DTTLIBUI_LIBRARY) # 在库项目中定义 TTLIBUI_LIBRARY
 
+# 设置库导出路径
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${LIB_UI_OUT_ROOT})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${LIB_UI_OUT_ROOT})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${LIB_UI_OUT_ROOT})
@@ -98,6 +99,8 @@ PRIVATE
   ui/control/TtPopUpDrawer_p.h
   ui/control/TtIconButton.h ui/control/TtIconButton.cpp
   ui/control/TtIconButton_p.h ui/control/TtIconButton_p.cpp
+ ui/control/TtMaskWidget.h ui/control/TtMaskWidget.cpp
+ ui/control/TtMaskWidget_p.h 
 )
 
 

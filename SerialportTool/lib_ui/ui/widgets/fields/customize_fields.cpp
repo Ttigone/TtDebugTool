@@ -126,4 +126,8 @@ TtLabelLineEdit::TtLabelLineEdit(const QString& text, QWidget* parent)
 
 TtLabelLineEdit::~TtLabelLineEdit() {}
 
+TtLineEdit* TtLabelLineEdit::body() {
+  return line_edit_;
+}
+
 }  // namespace Ui

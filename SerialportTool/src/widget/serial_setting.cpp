@@ -16,12 +16,6 @@ Core::SerialPortConfiguration DefaultSetting = {
 
 SerialSetting::SerialSetting(QWidget* parent)
     : QWidget(parent)
-//select_serial_port_(new Ui::TtLabelBtnComboBox(tr("串口:"), this)),
-//select_baud_rate_(new Ui::TtLabelComboBox(tr("波特率:"), this)),
-//select_data_bit_(new Ui::TtLabelComboBox(tr("数据位:"), this)),
-//select_parity_bit_(new Ui::TtLabelComboBox(tr("校验位:"), this)),
-//select_stop_bit_(new Ui::TtLabelComboBox(tr("停止位:"), this)),
-//select_fluid_control_(new Ui::TtLabelComboBox(tr("流控:"), this)) {
 {
   init();
 }
@@ -246,15 +240,13 @@ void SerialSetting::init() {
   setSerialPortsFluidControl();
   displayDefaultSetting();
 
-  QWidget* contentWidget1 = new QWidget;
-  QVBoxLayout* contentLayout1 = new QVBoxLayout(contentWidget1);
-  contentLayout1->setSpacing(0);
-  contentLayout1->setContentsMargins(QMargins());
-  //contentLayout1->addWidget(serial_setting_);
-  contentLayout1->addWidget(serialConfigWidget);
-  contentWidget1->adjustSize();  // 确保大小正确
-  Ui::Drawer* drawer1 = new Ui::Drawer(tr("连接设置"), contentWidget1);
-  //Ui::Drawer* drawer1 = new Ui::Drawer(tr("连接设置"), sds);
+  QWidget* linkSettingWidget = new QWidget;
+  QVBoxLayout* linkSettingWidgetLayout = new QVBoxLayout(linkSettingWidget);
+  linkSettingWidgetLayout->setSpacing(0);
+  linkSettingWidgetLayout->setContentsMargins(QMargins());
+  linkSettingWidgetLayout->addWidget(serialConfigWidget);
+  linkSettingWidget->adjustSize();  // 确保大小正确
+  Ui::Drawer* drawer1 = new Ui::Drawer(tr("连接设置"), linkSettingWidget);
 
   QWidget* framingWidget = new QWidget;
   Ui::TtVerticalLayout* framingWidgetLayout =
@@ -273,7 +265,7 @@ void SerialSetting::init() {
   Ui::Drawer* drawer2 = new Ui::Drawer(tr("分帧"), framingWidget);
 
   connect(framing_model_, &Ui::TtLabelComboBox::currentIndexChanged,
-          [this, framingWidget, drawer2](int index) {
+          [this, drawer2](int index) {
             switch (index) {
               case 0: {
                 framing_timeout_->setVisible(false);

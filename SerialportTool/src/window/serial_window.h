@@ -83,7 +83,8 @@ class SerialWindow : public QWidget, public Ui::TabManager::ISerializable {
 
   QString title;
   Ui::TtNormalLabel* title_;             // 名称
-  Ui::TtImageButton* modify_title_btn_;  // 修改连接名称
+  // Ui::TtImageButton* modify_title_btn_;  // 修改连接名称
+  Ui::TtSvgButton* modify_title_btn_;  // 修改连接名称
   // Ui::TtImageButton* save_btn_;          // 保存连接记录
   Ui::TtSvgButton* save_btn_;    // 保存连接记录
   Ui::TtSvgButton* on_off_btn_;  // 开启 or 关闭

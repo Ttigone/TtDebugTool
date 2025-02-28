@@ -26,6 +26,7 @@ class TtImageButton;
 class TtSvgButton;
 class MessageDialog;
 class TtVerticalLayout;
+class TtLineEdit;
 
 class TtChatView;
 class TtChatMessageModel;
@@ -34,6 +35,10 @@ class TtChatMessageModel;
 namespace Widget {
 class TcpServerSetting;
 }  // namespace Widget
+
+namespace Core {
+class TcpServer;
+}
 
 namespace Window {
 
@@ -47,14 +52,18 @@ class TcpWindow : public QWidget {
  private slots:
   void switchToEditMode();
   void switchToDisplayMode();
+  // 更新服务端状态
+  void updateServerStatus();
 
  private:
   void init();
+  void connectSignals();
 
   Ui::TtVerticalLayout* main_layout_;
 
   Ui::TtNormalLabel* title_;             // 名称
-  Ui::TtImageButton* modify_title_btn_;  // 修改连接名称
+  // Ui::TtImageButton* modify_title_btn_;  // 修改连接名称
+  Ui::TtSvgButton* modify_title_btn_;    // 修改连接名称
   Ui::TtImageButton* save_btn_;          // 保存连接记录
   Ui::TtSvgButton* on_off_btn_;          // 开启 or 关闭
 
@@ -63,7 +72,8 @@ class TcpWindow : public QWidget {
   // 数据
   Ui::TtChatMessageModel* message_model_;
 
-  Widget::TcpServerSetting *tcp_server_setting_;
+  Core::TcpServer* tcp_server_;
+  Widget::TcpServerSetting* tcp_server_setting_;
 
   Ui::TtNormalLabel *send_byte;
   Ui::TtNormalLabel *recv_byte;
@@ -73,10 +83,12 @@ class TcpWindow : public QWidget {
   // 使用开源编辑组件 QScintilla
   QsciScintilla* editor;
 
-  QWidget* original_widget_ = nullptr;
-  QWidget* edit_widget_ = nullptr;
-  QLineEdit* title_edit_ = nullptr;
-  QStackedWidget* stack_ = nullptr;
+  QWidget* original_widget_{nullptr};
+  QWidget* edit_widget_{nullptr};
+  Ui::TtLineEdit* title_edit_{nullptr};
+  QStackedWidget* stack_{nullptr};
+
+  bool tcp_opened_{false};
 };
 
 } // namespace Window

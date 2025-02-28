@@ -44,7 +44,7 @@ class SerialSetting : public QWidget {
 
   const QJsonObject& getSerialSetting();
 
- public Q_SLOTS:
+ public slots:
   void setSerialPortsName();
   void setSerialPortsBaudRate();
   void setSerialPortsDataBit();

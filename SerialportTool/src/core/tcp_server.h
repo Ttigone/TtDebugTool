@@ -2,28 +2,29 @@
 #define CORE_TCP_SERVER_H
 
 #include <QObject>
+#include <QRunnable>
 #include <QTcpServer>
 #include <QTcpSocket>
+#include <QThreadPool>
 
 namespace Core {
 
-class TcpSocketThread : public QThread {
-  Q_OBJECT
+struct TcpServerConfiguration {
+  QString host;
+  quint16 port;
 
+  TcpServerConfiguration(const QString& host, quint16 port)
+      : host(host), port(port) {}
+};
+
+class SocketTask : public QRunnable {
  public:
-  TcpSocketThread(qintptr socket_descriptor, const QString& fortune,
-                  QObject* parent);
-
-  // 重写 run() 方法, 线程执行入口
+  SocketTask(qintptr handle);
   void run() override;
-
- signals:
-  void error(QTcpSocket::SocketError error);
-
+  
  private:
-  // socket 描述符
   qintptr socket_descriptor_;
-  QString text_;
+  QTcpSocket* socket_;
 };
 
 class TcpServer : public QTcpServer {
@@ -31,12 +32,22 @@ class TcpServer : public QTcpServer {
  public:
   explicit TcpServer(QObject* parent = nullptr);
 
+  bool startServer(const Core::TcpServerConfiguration& config);
+  void stopServer();
+  bool isRunning() const;
+
+ signals:
+  void serverStarted();
+  void serverStopped();
+  void errorOccurred(const QString& error);
+
  protected:
   // 重写 incomingConnection 方法, 处理新的连接
-  void incomingConnection(qintptr socket_descriptor) override;
+  void incomingConnection(qintptr handle) override;
 
  private:
   QStringList fortunes_;
+  QThreadPool thread_pool_;
 };
 
 }  // namespace Core

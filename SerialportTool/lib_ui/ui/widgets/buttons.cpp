@@ -443,7 +443,8 @@ void RichTextButton::init() {
 
   auto imageLabel = new QLabel();
   imageLabel->setMaximumSize(40, 60);
-  imageLabel->setPixmap(QPixmap::fromImage(image_).scaled(30, 30));
+  imageLabel->setPixmap(QPixmap::fromImage(image_).scaled(
+      30, 30, Qt::KeepAspectRatio, Qt::SmoothTransformation));
   imageLabel->setStyleSheet("border: 0");
 
   //title_->setMaximumHeight(30);
@@ -524,8 +525,6 @@ bool TtSvgButton::isChecked() const {
 }
 
 void TtSvgButton::setChecked(bool checked) {
-  // is_checked_ = checked;
-  // setState(!is_checked_);
   if (is_checked_ != checked) {
     is_checked_ = checked;
     updateSvgContent();

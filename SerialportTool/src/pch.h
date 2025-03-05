@@ -1,7 +1,7 @@
-// #ifndef STDAFX_H
-// #define STDAFX_H
+#ifndef PCH_H
+#define PCH_H
 
-// #endif // STDAFX_H
+#endif // PCH_H
 
 #define __HUGE
 

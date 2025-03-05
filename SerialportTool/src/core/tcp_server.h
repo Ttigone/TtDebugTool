@@ -17,11 +17,23 @@ struct TcpServerConfiguration {
       : host(host), port(port) {}
 };
 
-class SocketTask : public QRunnable {
+class SocketTask : public QObject, public QRunnable {
+  Q_OBJECT
  public:
   SocketTask(qintptr handle);
   void run() override;
-  
+
+ signals:
+  void socketCreate(QTcpSocket* socket);
+  void dataReceived(const QByteArray& data);
+
+ public slots:
+  void sendMessage(const QByteArray& message) {
+    if (socket_ && socket_->state() == QAbstractSocket::ConnectedState) {
+      socket_->write(message);
+    }
+  }
+
  private:
   qintptr socket_descriptor_;
   QTcpSocket* socket_;
@@ -35,19 +47,24 @@ class TcpServer : public QTcpServer {
   bool startServer(const Core::TcpServerConfiguration& config);
   void stopServer();
   bool isRunning() const;
+  void sendMessageToClients(const QByteArray& message);
 
  signals:
   void serverStarted();
   void serverStopped();
   void errorOccurred(const QString& error);
+  void dataReceived(const QByteArray& data);
 
  protected:
   // 重写 incomingConnection 方法, 处理新的连接
   void incomingConnection(qintptr handle) override;
 
  private:
-  QStringList fortunes_;
+  Q_DISABLE_COPY(TcpServer);
+
   QThreadPool thread_pool_;
+  QMutex client_mutex_;                // 互斥访问客户端列表
+  QList<QTcpSocket*> client_sockets_;  // 客户端列表
 };
 
 }  // namespace Core

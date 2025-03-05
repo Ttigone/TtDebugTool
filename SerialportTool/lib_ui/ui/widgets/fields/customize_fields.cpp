@@ -130,4 +130,8 @@ TtLineEdit* TtLabelLineEdit::body() {
   return line_edit_;
 }
 
+QString TtLabelLineEdit::currentText() {
+  return line_edit_->text();
+}
+
 }  // namespace Ui

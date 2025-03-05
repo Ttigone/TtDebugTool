@@ -9,6 +9,7 @@ class TtLabelLineEdit;
 
 namespace Core {
 struct TcpServerConfiguration;
+struct TcpClientConfiguration;
 }  // namespace Core
 
 namespace Widget {
@@ -27,7 +28,10 @@ class TcpServerSetting : public QWidget {
   void setPort();
 
  private:
+  void setHostAddress();
+
   QVBoxLayout* main_layout_;
+
   Ui::TtLabelComboBox* host_;
   Ui::TtLabelLineEdit * port_;
 
@@ -35,7 +39,6 @@ class TcpServerSetting : public QWidget {
   Ui::TtLabelComboBox* framing_timeout_;
   Ui::TtLabelComboBox* framing_fixed_length_;
 
-  // Ui::TtLabelComboBox *retransmission_;
   Ui::TtLabelBtnComboBox* retransmission_;
 };
 
@@ -45,6 +48,29 @@ class TcpClientSetting : public QWidget {
  public:
   TcpClientSetting(QWidget* parent = nullptr);
   ~TcpClientSetting();
+
+  Core::TcpClientConfiguration getTcpClientConfiguration();
+
+ private:
+  void setHostAddress();
+
+  QVBoxLayout* main_layout_;
+  Ui::TtLabelComboBox* target_host_;
+  Ui::TtLabelLineEdit* target_port_;
+  Ui::TtLabelLineEdit* self_host_;
+  Ui::TtLabelLineEdit* self_port_;
+
+  Ui::TtLabelLineEdit* send_packet_interval_;
+
+  Ui::TtLabelComboBox* framing_model_;
+  Ui::TtLabelComboBox* framing_timeout_;
+  Ui::TtLabelComboBox* framing_fixed_length_;
+
+  Ui::TtLabelBtnComboBox* retransmission_;
+
+  Ui::TtLabelComboBox* heartbeat_send_type_;
+  Ui::TtLabelComboBox* heartbeat_interval_;
+  Ui::TtLabelComboBox* heartbeat_content_;
 };
 
 }  // namespace Widget

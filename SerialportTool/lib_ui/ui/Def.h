@@ -34,8 +34,8 @@ enum ThemeMode {
   Light = 0x0000,
   Dark = 0x0001,
 };
-Q_ENUM_CREATE(ThemeMode)
 
+Q_ENUM_CREATE(ThemeMode)
 enum ThemeColor {
   ScrollBarHandle,
   ToggleSwitchNoToggledCenter,

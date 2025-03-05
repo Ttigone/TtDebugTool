@@ -1,4 +1,4 @@
-#include "serial_window.h"
+#include "window/serial_window.h"
 
 #include <QTableView>
 
@@ -137,7 +137,7 @@ void SerialWindow::switchToDisplayMode() {
 }
 
 void SerialWindow::showErrorMessage(const QString& text) {
-  Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""), text, 500, this);
+  Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""), text, 1500, this);
   on_off_btn_->setChecked(false);
   serial_port_opened = false;
 }

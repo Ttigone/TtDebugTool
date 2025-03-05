@@ -9,6 +9,8 @@
 #include <ui/layout/horizontal_layout.h>
 #include <ui/layout/vertical_layout.h>
 
+#include "Def.h"
+
 namespace QWK {
 class WidgetWindowAgent;
 }  // namespace QWK
@@ -65,7 +67,8 @@ class MainWindow : public QMainWindow {
   void setLeftBar();
   void connectSignals();
   void registerTabWidget();
-  void addDifferentConfiguration(const QString& title, const QString& uuid);
+  void addDifferentConfiguration(TtFunctionalCategory::Category type,
+                                 const QString& title, const QString& uuid);
 
   // void createDockWindows();
 
@@ -82,6 +85,7 @@ class MainWindow : public QMainWindow {
 
   // QListWidget *history_link_list_;
   Ui::SessionManager* history_link_list_;
+  Ui::SessionManager* history_mock_list_;
 
   QVector<QVector<QWidget*>> stacked_;
 

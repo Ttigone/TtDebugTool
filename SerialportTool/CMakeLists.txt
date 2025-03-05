@@ -19,12 +19,14 @@ get_filename_component(res_loc res REALPATH)
 
 set(PROJECT_SOURCES
   src/main.cpp
-  src/stdafx.h
+  src/pch.h
+  src/Def.h
 
   src/core/serial_port.h src/core/serial_port.cpp
   src/core/udp_server.h src/core/udp_server.cpp
   src/core/tcp_server.h src/core/tcp_server.cpp
   src/core/tcp_client.h src/core/tcp_client.cpp
+  src/core/udp_client.h src/core/udp_client.cpp
 
   src/window/main_window.h src/window/main_window.cpp
   src/window/left_bar.h src/window/left_bar.cpp
@@ -33,9 +35,11 @@ set(PROJECT_SOURCES
   src/window/serial_window.h src/window/serial_window.cpp
   src/window/udp_window.h src/window/udp_window.cpp
   src/window/tcp_window.h src/window/tcp_window.cpp
+  src/window/mqtt_window.h src/window/mqtt_window.cpp
 
   src/widget/serial_setting.h src/widget/serial_setting.cpp
   src/widget/tcp_setting.h src/widget/tcp_setting.cpp
+  src/widget/udp_setting.h src/widget/udp_setting.cpp
   src/widget/shortcut_instruction.h src/widget/shortcut_instruction.cpp
 
   src/storage/setting_manager.h src/storage/setting_manager.cpp
@@ -105,7 +109,7 @@ PRIVATE
 get_target_property(LINK_LIBS SerialportTool LINK_LIBRARIES)
 message(STATUS "Libraries linked to MyExecutable: ${LINK_LIBS}")
 
-target_precompile_headers(SerialportTool PRIVATE $<$<COMPILE_LANGUAGE:CXX,OBJCXX>:${src_loc}/stdafx.h>)
+target_precompile_headers(SerialportTool PRIVATE $<$<COMPILE_LANGUAGE:CXX,OBJCXX>:${src_loc}/pch.h>)
 
 # install(TARGETS SerialportTool DESTINATION bin)
 

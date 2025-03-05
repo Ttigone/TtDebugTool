@@ -1,23 +1,13 @@
 ﻿#ifndef TCP_WINDOW_H
 #define TCP_WINDOW_H
 
-#include <QWidget>
-#include <QApplication>
-#include <QButtonGroup>
-#include <QHBoxLayout>
-#include <QHeaderView>
-#include <QLineEdit>
-#include <QParallelAnimationGroup>
-#include <QPlainTextEdit>
-#include <QPropertyAnimation>
-#include <QPushButton>
-#include <QStackedWidget>
-#include <QStyledItemDelegate>
-#include <QTableView>
-#include <QTextBlock>
-#include <QToolBox>
-
 #include <Qsci/qsciscintilla.h>
+
+#include "Def.h"
+
+QT_BEGIN_NAMESPACE
+class QStackedWidget;
+QT_END_NAMESPACE
 
 namespace Ui {
 class TtNormalLabel;
@@ -34,26 +24,34 @@ class TtChatMessageModel;
 
 namespace Widget {
 class TcpServerSetting;
+class TcpClientSetting;
 }  // namespace Widget
 
 namespace Core {
 class TcpServer;
-}
+class TcpClient;
+}  // namespace Core
 
 namespace Window {
 
 class TcpWindow : public QWidget {
   Q_OBJECT
  public:
-  explicit TcpWindow(QWidget* parent = nullptr);
+  explicit TcpWindow(TtProtocolType::ProtocolRole role,
+                     QWidget* parent = nullptr);
+
+  QString getTitle();
 
  signals:
+  void requestSaveConfig();
+  void requestSendMessage(const QByteArray& data);
 
  private slots:
   void switchToEditMode();
   void switchToDisplayMode();
   // 更新服务端状态
   void updateServerStatus();
+  void onDataReceived(const QByteArray& data);
 
  private:
   void init();
@@ -64,16 +62,20 @@ class TcpWindow : public QWidget {
   Ui::TtNormalLabel* title_;             // 名称
   // Ui::TtImageButton* modify_title_btn_;  // 修改连接名称
   Ui::TtSvgButton* modify_title_btn_;    // 修改连接名称
-  Ui::TtImageButton* save_btn_;          // 保存连接记录
-  Ui::TtSvgButton* on_off_btn_;          // 开启 or 关闭
+  // Ui::TtImageButton* save_btn_;          // 保存连接记录
+  Ui::TtSvgButton* save_btn_;    // 保存连接记录
+  Ui::TtSvgButton* on_off_btn_;  // 开启 or 关闭
 
   // 消息展示框
   Ui::TtChatView* message_view_;
   // 数据
   Ui::TtChatMessageModel* message_model_;
 
-  Core::TcpServer* tcp_server_;
-  Widget::TcpServerSetting* tcp_server_setting_;
+  Core::TcpClient* tcp_client_{nullptr};
+  Core::TcpServer* tcp_server_{nullptr};
+
+  Widget::TcpServerSetting* tcp_server_setting_{nullptr};
+  Widget::TcpClientSetting* tcp_client_setting_{nullptr};
 
   Ui::TtNormalLabel *send_byte;
   Ui::TtNormalLabel *recv_byte;
@@ -89,6 +91,8 @@ class TcpWindow : public QWidget {
   QStackedWidget* stack_{nullptr};
 
   bool tcp_opened_{false};
+
+  TtProtocolType::ProtocolRole role_;
 };
 
 } // namespace Window

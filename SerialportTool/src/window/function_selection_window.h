@@ -49,6 +49,38 @@ class FunctionSelectionWindow : public QWidget {
   QGridLayout *function_layout_;
 };
 
+class SimulateFunctionSelectionWindow : public QWidget {
+  Q_OBJECT
+ public:
+  explicit SimulateFunctionSelectionWindow(QWidget* parent = nullptr);
+  ~SimulateFunctionSelectionWindow();
+
+ signals:
+  void toTcp();
+  void toUdp();
+  void toModubus();
+  void toMQTT();
+
+ signals:
+  ///
+  /// @brief switchRequested
+  /// @param targetWidgetId
+  /// 切换到对应的 界面
+  void switchRequested(int targetWidgetId);
+
+ private:
+  ///
+  /// @brief init
+  /// 初始化函数
+  void init();
+
+  // 标志
+  Ui::TtElidedLabel* label_;
+
+  // 功能窗口布局
+  QGridLayout* function_layout_;
+};
+
 } // namespace Window
 
 #endif  // FUNCTION_SELECTION_WINDOW_H

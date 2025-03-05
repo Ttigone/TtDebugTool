@@ -1,7 +1,7 @@
-#include "popup_window.h"
+#include "window/popup_window.h"
 
-#include "ui/layout/horizontal_layout.h"
-#include "ui/layout/vertical_layout.h"
+#include <ui/layout/horizontal_layout.h>
+#include <ui/layout/vertical_layout.h>
 
 #include "ui/widgets/labels.h"
 

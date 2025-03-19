@@ -27,9 +27,18 @@ PUBLIC
 	# ${third_party}/QsLog
 )
 
+
+target_include_directories(external_qt SYSTEM
+INTERFACE
+)
+
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core)
+
+
 target_link_libraries(lib_base
 PUBLIC
-  external_qt
+    Qt${QT_VERSION_MAJOR}::Core
 )
 
 if(NOT CMAKE_BUILD_TYPE)

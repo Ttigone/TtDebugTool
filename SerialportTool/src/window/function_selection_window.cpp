@@ -6,6 +6,8 @@
 #include <ui/layout/vertical_layout.h>
 #include <ui/widgets/labels.h>
 
+#include "Def.h"
+
 namespace Window {
 
 FunctionSelectionWindow::FunctionSelectionWindow(QWidget* parent)
@@ -74,22 +76,17 @@ void FunctionSelectionWindow::init()
   scrollLayout->addStretch();
 
   connect(serial_, &Ui::RichTextButton::clicked,
-          [this]() { emit switchRequested(0); });
-
+          [this]() { emit switchRequested(TtProtocolRole::Serial); });
   connect(tcp_, &Ui::RichTextButton::clicked,
-          [this]() { emit switchRequested(1); });
-
+          [this]() { emit switchRequested(TtProtocolRole::TcpClient); });
   connect(udp_, &Ui::RichTextButton::clicked,
-          [this]() { emit switchRequested(2); });
-
+          [this]() { emit switchRequested(TtProtocolRole::UdpClient); });
   connect(mqtt_, &Ui::RichTextButton::clicked,
-          [this]() { emit switchRequested(3); });
-
+          [this]() { emit switchRequested(TtProtocolRole::MqttClient); });
   connect(modbus_, &Ui::RichTextButton::clicked,
-          [this]() { emit switchRequested(4); });
-
+          [this]() { emit switchRequested(TtProtocolRole::ModbusClient); });
   connect(blueteeth_, &Ui::RichTextButton::clicked,
-          [this]() { emit switchRequested(5); });
+          [this]() { emit switchRequested(TtProtocolRole::BlueTeeth); });
 }
 
 SimulateFunctionSelectionWindow::SimulateFunctionSelectionWindow(
@@ -144,15 +141,15 @@ void SimulateFunctionSelectionWindow::init() {
   scrollLayout->addStretch();
 
   connect(tcp_, &Ui::RichTextButton::clicked,
-          [this]() { emit switchRequested(6); });
+          [this]() { emit switchRequested(TtProtocolRole::TcpServer); });
 
   connect(udp_, &Ui::RichTextButton::clicked,
-          [this]() { emit switchRequested(7); });
+          [this]() { emit switchRequested(TtProtocolRole::UdpServer); });
 
   connect(mqtt_, &Ui::RichTextButton::clicked,
-          [this]() { emit switchRequested(8); });
+          [this]() { emit switchRequested(TtProtocolRole::MqttBroker); });
 
   connect(modbus_, &Ui::RichTextButton::clicked,
-          [this]() { emit switchRequested(9); });
+          [this]() { emit switchRequested(TtProtocolRole::ModbusServer); });
 }
 }

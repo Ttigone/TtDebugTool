@@ -12,8 +12,8 @@ class SessionManager : public QListWidget {
   SessionManager(QWidget* parent = nullptr);
   ~SessionManager() = default;
 
-  [[nodiscard]] bool addAdaptiveWidget(const QString& title,
-                                       const QString& uuid, QWidget* widget);
+  bool addAdaptiveWidget(const QString& title, const QString& uuid,
+                         QWidget* widget);
 
  protected:
   void resizeEvent(QResizeEvent* event) override {

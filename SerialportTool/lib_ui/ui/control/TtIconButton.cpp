@@ -22,7 +22,7 @@ TtIconButton::TtIconButton(QPixmap pix, QWidget* parent)
     : QPushButton(parent), d_ptr(new TtIconButtonPrivate()) {
   Q_D(TtIconButton);
   d->q_ptr = this;
-  d->iconPix_ = pix.copy();
+  d->icon_pix_ = pix.copy();
   d->pHoverAlpha_ = 0;
   d->pOpacity_ = 1;
   d->pLightHoverColor_ = TtThemeColor(TtThemeType::Light, BasicHoverAlpha);
@@ -34,10 +34,11 @@ TtIconButton::TtIconButton(QPixmap pix, QWidget* parent)
 
   d->pIsSelected_ = false;
   d->pBorderRadius_ = 0;
-  d->_themeMode = tTheme->getThemeMode();
+  d->theme_mode_ = tTheme->getThemeMode();
   connect(this, &TtIconButton::pIsSelectedChanged, this, [=]() { update(); });
-  connect(tTheme, &TtTheme::themeModeChanged, this,
-          [=](TtThemeType::ThemeMode themeMode) { d->_themeMode = themeMode; });
+  connect(
+      tTheme, &TtTheme::themeModeChanged, this,
+      [=](TtThemeType::ThemeMode themeMode) { d->theme_mode_ = themeMode; });
 }
 
 TtIconButton::TtIconButton(TtIconType::IconName awesome, QWidget* parent) {}
@@ -62,7 +63,7 @@ TtIconType::IconName TtIconButton::getAwesome() const {
 
 void TtIconButton::setPixmap(QPixmap pix) {
   Q_D(TtIconButton);
-  d->iconPix_ = pix.copy();
+  d->icon_pix_ = pix.copy();
 }
 
 bool TtIconButton::event(QEvent* event) {
@@ -70,31 +71,31 @@ bool TtIconButton::event(QEvent* event) {
   switch (event->type()) {
     case QEvent::Enter: {
       if (isEnabled() && !d->pIsSelected_) {
-        d->isAlphaAnimationFinished_ = false;
+        d->is_alpha_animation_finished_ = false;
         QPropertyAnimation* alphaAnimation =
             new QPropertyAnimation(d, "pHoverAlpha");
         connect(alphaAnimation, &QPropertyAnimation::valueChanged, this,
                 [=](const QVariant& value) { update(); });
         connect(alphaAnimation, &QPropertyAnimation::finished, this,
-                [=]() { d->isAlphaAnimationFinished_ = true; });
+                [=]() { d->is_alpha_animation_finished_ = true; });
         alphaAnimation->setDuration(175);
         alphaAnimation->setStartValue(d->pHoverAlpha_);
-        // alphaAnimation->setEndValue(d->_themeMode == ElaThemeType::Light
-        //                                 ? d->_pLightHoverColor.alpha()
-        //                                 : d->_pDarkHoverColor.alpha());
+        alphaAnimation->setEndValue(d->theme_mode_ == TtThemeType::Light
+                                        ? d->pLightHoverColor_.alpha()
+                                        : d->pDarkHoverColor_.alpha());
         alphaAnimation->start(QAbstractAnimation::DeleteWhenStopped);
       }
       break;
     }
     case QEvent::Leave: {
       if (isEnabled() && !d->pIsSelected_) {
-        d->isAlphaAnimationFinished_ = false;
+        d->is_alpha_animation_finished_ = false;
         QPropertyAnimation* alphaAnimation =
             new QPropertyAnimation(d, "pHoverAlpha");
         connect(alphaAnimation, &QPropertyAnimation::valueChanged, this,
                 [=](const QVariant& value) { update(); });
         connect(alphaAnimation, &QPropertyAnimation::finished, this,
-                [=]() { d->isAlphaAnimationFinished_ = true; });
+                [=]() { d->is_alpha_animation_finished_ = true; });
         alphaAnimation->setDuration(175);
         alphaAnimation->setStartValue(d->pHoverAlpha_);
         alphaAnimation->setEndValue(0);
@@ -117,36 +118,46 @@ void TtIconButton::paintEvent(QPaintEvent* event) {
   painter.setRenderHints(QPainter::SmoothPixmapTransform |
                          QPainter::Antialiasing | QPainter::TextAntialiasing);
   painter.setPen(Qt::NoPen);
-  if (d->isAlphaAnimationFinished_ || d->pIsSelected_) {
-    // painter.setBrush(d->pIsSelected_ ? d->themeMode_ == TtThemeType::Light ? d->pLightHoverColor_ : d->pDarkHoverColor_
-    //                  : isEnabled()   ? underMouse() ? d->themeMode_ == TtThemeType::Light ? d->pLightHoverColor_ : d->pDarkHoverColor_ : Qt::transparent
-    //                                  : Qt::transparent);
+  if (d->is_alpha_animation_finished_ || d->pIsSelected_) {
+    painter.setBrush(d->pIsSelected_ ? d->theme_mode_ == TtThemeType::Light
+                                           ? d->pLightHoverColor_
+                                           : d->pDarkHoverColor_
+                     : isEnabled()   ? underMouse()
+                                           ? d->theme_mode_ == TtThemeType::Light
+                                                 ? d->pLightHoverColor_
+                                                 : d->pDarkHoverColor_
+                                           : Qt::transparent
+                                     : Qt::transparent);
   } else {
-    // QColor hoverColor = d->_themeMode == TtThemeType::Light
-    //                         ? d->_pLightHoverColor
-    //                         : d->_pDarkHoverColor;
-    // hoverColor.setAlpha(d->pHoverAlpha);
-    // painter.setBrush(hoverColor);
+    QColor hoverColor = d->theme_mode_ == TtThemeType::Light
+                            ? d->pLightHoverColor_
+                            : d->pDarkHoverColor_;
+    hoverColor.setAlpha(d->pHoverAlpha_);
+    painter.setBrush(hoverColor);
   }
   painter.drawRoundedRect(rect(), d->pBorderRadius_, d->pBorderRadius_);
   // 图标绘制
-  if (!d->iconPix_.isNull()) {
+  if (!d->icon_pix_.isNull()) {
     QPainterPath path;
     path.addEllipse(rect());
     painter.setClipPath(path);
-    painter.drawPixmap(rect(), d->iconPix_);
+    painter.drawPixmap(rect(), d->icon_pix_);
   } else {
-    // painter.setPen(isEnabled()
-    // ? d->_themeMode == TtThemeType::Light
-    //       ? underMouse() ? d->_pLightHoverIconColor
-    //                      : d->_pLightIconColor
-    //   : underMouse() ? d->_pDarkHoverIconColor
-    //                  : d->_pDarkIconColor
-    // : ElaThemeColor(d->_themeMode, BasicTextDisable));
+    painter.setPen(isEnabled()
+                       ? d->theme_mode_ == TtThemeType::Light
+                             ? underMouse() ? d->pLightHoverIconColor_
+                                            : d->pLightIconColor_
+                         : underMouse() ? d->pDarkHoverIconColor_
+                                        : d->pDarkIconColor_
+                       : TtThemeColor(d->theme_mode_, BasicTextDisable));
     painter.drawText(rect(), Qt::AlignCenter,
                      QChar((unsigned short)d->pAwesome_));
   }
   painter.restore();
 }
+
+TtIconButtonPrivate::TtIconButtonPrivate(QObject* parent) : QObject(parent) {}
+
+TtIconButtonPrivate::~TtIconButtonPrivate() {}
 
 }  // namespace Ui

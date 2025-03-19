@@ -16,6 +16,11 @@ set(LIB_UI_OUT_ROOT "${CMAKE_BINARY_DIR}/${PROJECT_NAME}")
 add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 add_definitions(-DTTLIBUI_LIBRARY) # 在库项目中定义 TTLIBUI_LIBRARY
 
+set(RES_QRC
+    ui/res/font/fonts.qrc
+)
+
+
 # 设置库导出路径
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${LIB_UI_OUT_ROOT})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${LIB_UI_OUT_ROOT})
@@ -28,7 +33,9 @@ else ()
 endif ()
 
 if (${QT_VERSION_MAJOR} GREATER_EQUAL 6)
-    qt_add_library(${TARGET_NAME} ${LIB_TYPE}
+    qt_add_library(${TARGET_NAME}
+        ${LIB_TYPE}
+        ${RES_QRC}
         # ${PROJECT_SOURCES}
     )
 else ()
@@ -50,57 +57,81 @@ target_precompile_headers(${TARGET_NAME} PRIVATE
 
 target_sources(${TARGET_NAME}
 PRIVATE
-  ui/ui_pch.h
-  ui/Def.h
-  ui/singleton.h
-  ui/TtTheme.h ui/TtTheme.cpp
-  ui/TtTheme_p.h
+    ui/ui_pch.h
+    ui/Def.h
+    ui/singleton.h
+    ui/TtTheme.h ui/TtTheme.cpp
+    ui/TtTheme_p.h
 
-  ui/window/title/windowbar.h ui/window/title/windowbar.cpp  ui/window/title/windowbar_p.h
-  ui/window/title/window_button.h ui/window/title/window_button.cpp  ui/window/title/window_button_p.h
-
-  ui/window/combobox.h ui/window/combobox.cpp
+    ui/window/title/windowbar.h ui/window/title/windowbar.cpp  ui/window/title/windowbar_p.h
+    ui/window/title/window_button.h ui/window/title/window_button.cpp  ui/window/title/window_button_p.h
 
 
-  ui/style/style_core_types.h
-  ui/style/style_font.h ui/style/style_font.cpp
-  ui/text/text.h ui/text/text.cpp
-  ui/text/text_entity.h ui/text/text_entity.cpp
+    ui/style/style_core_types.h
+    ui/style/style_font.h ui/style/style_font.cpp
+    ui/style/TtCheckBoxStyle.h ui/style/TtCheckBoxStyle.cpp
+    ui/style/TtLineEditStyle.h ui/style/TtLineEditStyle.cpp
+    ui/style/TtComboBoxStyle.h ui/style/TtComboBoxStyle.cpp
+    ui/style/TtScrollBarStyle.h ui/style/TtScrollBarStyle.cpp
+    ui/style/TtRadioButtonStyle.h ui/style/TtRadioButtonStyle.cpp
+    ui/style/TtListViewStyle.h ui/style/TtListViewStyle.cpp
+    ui/style/TtBaseTableStyle.h ui/style/TtBaseTableStyle.cpp
 
-  ui/effects/animation_value.h ui/effects/animation_value.cpp
-  ui/effects/animated_drawer.h ui/effects/animated_drawer.cpp
+    ui/text/text.h ui/text/text.cpp
+    ui/text/text_entity.h ui/text/text_entity.cpp
 
-  ui/click_handler.h ui/click_handler.cpp
-  ui/mb_widget.h ui/mb_widget.cpp
-  ui/abstract_button.h ui/abstract_button.cpp
+    ui/effects/animation_value.h ui/effects/animation_value.cpp
+    ui/effects/animated_drawer.h ui/effects/animated_drawer.cpp
 
-  ui/widgets/buttons.h ui/widgets/buttons.cpp
-  ui/widgets/labels.h ui/widgets/labels.cpp
-  ui/widgets/message_textedit.h ui/widgets/message_textedit.cpp
-  ui/widgets/fields/customize_edit.h ui/widgets/fields/customize_edit.cpp
-  ui/widgets/fields/customize_fields.h ui/widgets/fields/customize_fields.cpp
-  ui/widgets/customizationtabwidget.h ui/widgets/customizationtabwidget.cpp
-  ui/widgets/collapsible_panel.h ui/widgets/collapsible_panel.cpp
-  ui/widgets/overlay_widget.h ui/widgets/overlay_widget.cpp
-  ui/widgets/widget_group.h ui/widgets/widget_group.cpp
-  ui/widgets/message_bar.h ui/widgets/message_bar.cpp
-  ui/widgets/message_bar_p.h ui/widgets/message_bar_p.cpp
+    ui/click_handler.h ui/click_handler.cpp
+    ui/mb_widget.h ui/mb_widget.cpp
+    ui/abstract_button.h ui/abstract_button.cpp
 
-  ui/layout/vertical_layout.h ui/layout/vertial_layout.cpp
-  ui/layout/horizontal_layout.h ui/layout/horizontal_layout.cpp
+    ui/widgets/buttons.h ui/widgets/buttons.cpp
+    ui/widgets/labels.h ui/widgets/labels.cpp
+    ui/widgets/message_textedit.h ui/widgets/message_textedit.cpp
+    ui/widgets/fields/customize_edit.h ui/widgets/fields/customize_edit.cpp
+    ui/widgets/fields/customize_fields.h ui/widgets/fields/customize_fields.cpp
+    ui/widgets/customizationtabwidget.h ui/widgets/customizationtabwidget.cpp
+    ui/widgets/collapsible_panel.h ui/widgets/collapsible_panel.cpp
+    ui/widgets/overlay_widget.h ui/widgets/overlay_widget.cpp
+    ui/widgets/widget_group.h ui/widgets/widget_group.cpp
+    ui/widgets/message_bar.h ui/widgets/message_bar.cpp
+    ui/widgets/message_bar_p.h ui/widgets/message_bar_p.cpp
 
-  ui/control/buttonbox/TtButtonBox.h ui/control/buttonbox/TtButtonBox.cpp
-  ui/control/TtTableView.h ui/control/TtTableView.cpp
-  ui/control/ChatWidget/TtChatView.h  ui/control/ChatWidget/TtChatView.cpp
-  ui/control/ChatWidget/TtChatMessage.h  ui/control/ChatWidget/TtChatMessage.cpp
-  ui/control/ChatWidget/TtChatMessageDelegate.h  ui/control/ChatWidget/TtChatMessageDelegate.cpp
-  ui/control/ChatWidget/TtChatMessageModel.h  ui/control/ChatWidget/TtChatMessageModel.cpp
-  ui/control/TtPopUpDrawer.h ui/control/TtPopUpDrawer.cpp
-  ui/control/TtPopUpDrawer_p.h
-  ui/control/TtIconButton.h ui/control/TtIconButton.cpp
-  ui/control/TtIconButton_p.h ui/control/TtIconButton_p.cpp
- ui/control/TtMaskWidget.h ui/control/TtMaskWidget.cpp
- ui/control/TtMaskWidget_p.h 
+    ui/layout/vertical_layout.h ui/layout/vertial_layout.cpp
+    ui/layout/horizontal_layout.h ui/layout/horizontal_layout.cpp
+
+    ui/control/TtPopUpDrawer.h ui/control/TtPopUpDrawer.cpp
+    ui/control/TtPopUpDrawer_p.h
+    ui/control/TtIconButton.h ui/control/TtIconButton.cpp
+    ui/control/TtIconButton_p.h
+    ui/control/TtMaskWidget.h ui/control/TtMaskWidget.cpp
+    ui/control/TtMaskWidget_p.h
+    ui/control/TtCheckBox.h ui/control/TtCheckBox.cpp
+    ui/control/TtLineEdit.h ui/control/TtLineEdit.cpp
+    ui/control/TtLineEdit_p.h
+    ui/control/TtComboBox.h ui/control/TtComboBox.cpp
+    ui/control/TtComboBox_p.h
+    ui/control/TtScrollBar.h ui/control/TtScrollBar.cpp
+    ui/control/TtScrollBar_p.h
+    ui/control/TtRadioButton.h ui/control/TtRadioButton.cpp
+    ui/control/TtRadioButton_p.h
+    ui/control/TtListView.h ui/control/TtListView.cpp
+    ui/control/TtListView_p.h
+    ui/control/TtDialog.h ui/control/TtDialog.cpp
+    ui/control/TtDialog_p.h
+    ui/control/TtSwitchButton.h ui/control/TtSwitchButton.cpp
+
+
+    ui/control/buttonbox/TtButtonBox.h ui/control/buttonbox/TtButtonBox.cpp
+    ui/control/ChatWidget/TtChatView.h  ui/control/ChatWidget/TtChatView.cpp
+    ui/control/ChatWidget/TtChatMessage.h  ui/control/ChatWidget/TtChatMessage.cpp
+    ui/control/ChatWidget/TtChatMessageDelegate.h  ui/control/ChatWidget/TtChatMessageDelegate.cpp
+    ui/control/ChatWidget/TtChatMessageModel.h  ui/control/ChatWidget/TtChatMessageModel.cpp
+    ui/control/TableWidget/TtBaseTableWidget.h ui/control/TableWidget/TtBaseTableWidget.cpp
+    ui/control/TableWidget/TtHeaderView.h ui/control/TableWidget/TtHeaderView.cpp
+
 )
 
 
@@ -124,6 +155,7 @@ PUBLIC
 target_link_libraries(${TARGET_NAME}
 PUBLIC
     desktop-app::lib_base
+    external_qt
 )
 
 if(NOT CMAKE_BUILD_TYPE)

@@ -106,9 +106,15 @@ Q_END_ENUM_CREATE(TtMessageBarType)
 Q_BEGIN_ENUM_CREATE(TtIconType)
 enum IconName {
   None = 0x0,
+  Check = 0xea6c,
 };
 Q_ENUM_CREATE(IconName)
 Q_END_ENUM_CREATE(TtIconType)
+
+Q_BEGIN_ENUM_CREATE(TtPopUpDirection)
+enum PopUpDirection { Left, Right, Top, Bottom };
+Q_ENUM_CREATE(PopUpDirection)
+Q_END_ENUM_CREATE(TtPopUpDirection)
 
 // 等效
 // namespace TtMessageBarType {

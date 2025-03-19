@@ -1,9 +1,9 @@
 #include "widget/udp_setting.h"
 
+#include <ui/control/TtComboBox.h>
+#include <ui/control/TtLineEdit.h>
 #include <ui/layout/vertical_layout.h>
 #include <ui/widgets/collapsible_panel.h>
-#include <ui/widgets/fields/customize_fields.h>
-#include <ui/window/combobox.h>
 
 #include "core/udp_client.h"
 #include "core/udp_server.h"
@@ -89,6 +89,26 @@ Core::UdpServerConfiguration UdpServerSetting::getUdpServerConfiguration() {
   Core::UdpServerConfiguration config(self_ip_->body()->text(),
                                       self_port_->body()->text());
   return config;
+}
+
+const QJsonObject& UdpServerSetting::getUdpServerSetting() {
+  auto config = getUdpServerConfiguration();
+  QJsonObject linkSetting;
+  linkSetting.insert("SelfHost", QJsonValue(config.self_host));
+  linkSetting.insert("SelfPort", QJsonValue(config.self_port));
+  udp_server_save_config_.insert("LinkSetting", QJsonValue(linkSetting));
+  return udp_server_save_config_;
+  QJsonObject framing;
+  framing.insert("Model", QJsonValue(framing_model_->body()->currentText()));
+  framing.insert("Timeout",
+                 QJsonValue(framing_timeout_->body()->currentText()));
+  framing.insert("FixedLength",
+                 QJsonValue(framing_fixed_length_->body()->currentText()));
+  udp_server_save_config_.insert("Framing", QJsonValue(framing));
+  QJsonObject retransmission;
+  retransmission.insert("Target", QJsonValue(retransmission_->currentText()));
+  udp_server_save_config_.insert("Retransmission", QJsonValue(retransmission));
+  return udp_server_save_config_;
 }
 
 UdpClientSetting::UdpClientSetting(QWidget* parent) : QWidget(parent) {
@@ -211,6 +231,30 @@ Core::UdpClientConfiguration UdpClientSetting::getUdpClientConfiguration() {
       target_ip_->currentText(), target_port_->currentText(),
       self_ip_->currentText(), self_port_->currentText());
   return config;
+}
+
+const QJsonObject& UdpClientSetting::getUdpClientSetting() {
+  auto config = getUdpClientConfiguration();
+  QJsonObject linkSetting;
+  linkSetting.insert("Mode", QJsonValue(config.mode));
+  linkSetting.insert("TargetHost", QJsonValue(config.target_ip));
+  linkSetting.insert("TargetPort", QJsonValue(config.target_port));
+  linkSetting.insert("SelfHost", QJsonValue(config.self_ip));
+  linkSetting.insert("SelfPort", QJsonValue(config.self_port));
+  linkSetting.insert("SendPacketInterval",
+                     QJsonValue(send_packet_interval_->currentText()));
+  udp_client_save_config_.insert("LinkSetting", QJsonValue(linkSetting));
+  QJsonObject framing;
+  framing.insert("Model", QJsonValue(framing_model_->body()->currentText()));
+  framing.insert("Timeout",
+                 QJsonValue(framing_timeout_->body()->currentText()));
+  framing.insert("FixedLength",
+                 QJsonValue(framing_fixed_length_->body()->currentText()));
+  udp_client_save_config_.insert("Framing", QJsonValue(framing));
+  QJsonObject retransmission;
+  retransmission.insert("Target", QJsonValue(retransmission_->currentText()));
+  udp_client_save_config_.insert("Retransmission", QJsonValue(retransmission));
+  return udp_client_save_config_;
 }
 
 void UdpClientSetting::setLinkMode() {

@@ -39,7 +39,7 @@ add_library(qt-easy-logger STATIC
 
 target_link_libraries(qt-easy-logger PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
 
-target_include_directories(qt-easy-logger PUBLIC ${LIBRARY_SOURCES})
+target_include_directories(qt-easy-logger PUBLIC ${third_party}/qt-easy-logger-main)
 
 
 # 安装规则（可选）

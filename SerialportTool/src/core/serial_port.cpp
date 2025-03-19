@@ -20,17 +20,17 @@ SerialPortWorker::SerialPortWorker(QObject* parent)
 }
 
 SerialPortWorker::~SerialPortWorker() {
-  qDebug() << "开始析构 SerialPortWorker" << QThread::currentThread();
+  // qDebug() << "开始析构 SerialPortWorker" << QThread::currentThread();
 
   if (serial_ && serial_->isOpen()) {
-    qDebug() << "关闭串口";
+    // qDebug() << "关闭串口";
     serial_->close();
   }
 
-  qDebug() << "删除serial_对象";
+  // qDebug() << "删除serial_对象";
   delete serial_;
 
-  qDebug() << "SerialPortWorker析构完成";
+  // qDebug() << "SerialPortWorker析构完成";
   // qDebug() << "delete" << QThread::currentThread();
   // if (serial_ && serial_->isOpen()) {
   //   serial_->close();

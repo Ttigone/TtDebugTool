@@ -18,14 +18,16 @@ void TtPopUpDrawerPrivate::init() {
   widget_ = new TtPopUpDrawerWidget;
   state_machine_ = new TtPopUpDrawerStateMachine(widget_, q);
   window_ = new QWidget;  // 展示设置的窗口
-  width_ = 250;
+  // width_ = 100;
   //width_ = 10;  // 弹出的宽度
   click_to_close_ = false;
   auto_raise_ = true;
   closed_ = true;
   overlay_ = false;
+  direction_ = TtPopUpDirection::Right;
 
   QVBoxLayout* layout = new QVBoxLayout;
+  layout->setContentsMargins(QMargins());
   layout->addWidget(window_);
 
   // widget 是最底层的窗口, 上面覆盖了一个 window_, 用于显示外部设备的 widget
@@ -49,30 +51,54 @@ TtPopUpDrawer::TtPopUpDrawer(QWidget* parent)
     : TtOverlayWidget(parent), d_ptr(new TtPopUpDrawerPrivate(this)) {
   // 隐私类初始化函数
   d_func()->init();
-  //closeDrawer();
+  if (parent) {
+    parent->installEventFilter(this);  // 监听父窗口事件
+  }
 }
 
 TtPopUpDrawer::~TtPopUpDrawer() {}
 
-void TtPopUpDrawer::setDrawerWidth(int width) {
+void TtPopUpDrawer::setDrawerSize(int size) {
   Q_D(TtPopUpDrawer);
-
-  // 避免宽度为 0 时显示 Drawer
-  if (width <= 0) {
-    d->width_ = 0;
+  if (size <= 0) {
+    d->size_ = 0;
     return;
   }
-
-  d->width_ = width;
-  // 更新状态机
+  d->size_ = size;
+  // 更新尺寸后强制重设布局
+  // d->widget_->layout()->activate();
   d->state_machine_->updatePropertyAssignments();
-  d->widget_->setFixedWidth(width + 16);
+  d->widget_->updateGeometry();
+  // d->widget_->setFixedWidth(size);
+  update();
 }
 
-int TtPopUpDrawer::drawerWidth() const {
+int TtPopUpDrawer::drawerSize() const {
   Q_D(const TtPopUpDrawer);
-  return d->width_;
+  return d->size_;
 }
+
+void TtPopUpDrawer::setDrawerWidth(int width) {}
+
+// void TtPopUpDrawer::setDrawerWidth(int width) {
+//   Q_D(TtPopUpDrawer);
+
+//   // 避免宽度为 0 时显示 Drawer
+//   if (width <= 0) {
+//     d->width_ = 0;
+//     return;
+//   }
+
+//   d->width_ = width;
+//   // 更新状态机
+//   d->state_machine_->updatePropertyAssignments();
+//   d->widget_->setFixedWidth(width + 16);
+// }
+
+// int TtPopUpDrawer::drawerWidth() const {
+//   Q_D(const TtPopUpDrawer);
+//   return d->width_;
+// }
 
 void TtPopUpDrawer::setDrawerLayout(QLayout* layout) {
   Q_D(TtPopUpDrawer);
@@ -151,7 +177,10 @@ bool TtPopUpDrawer::event(QEvent* event) {
       // 不是覆盖的模式
       if (!d->overlay_) {
         qDebug() << "region: " << d->widget_->rect();
-        setMask(QRegion(d->widget_->rect()));
+        qDebug() << "geometry: " << d->widget_->geometry();
+        auto widgetGeometry = d->widget_->geometry();
+        // setMask(QRegion(d->widget_->rect()));
+        setMask(QRegion(widgetGeometry));
       }
       break;
     case QEvent::ParentChange: {
@@ -172,6 +201,24 @@ bool TtPopUpDrawer::event(QEvent* event) {
 bool TtPopUpDrawer::eventFilter(QObject* obj, QEvent* event) {
   Q_D(TtPopUpDrawer);
 
+  if (obj == parent()) {  // 监听父窗口事件
+    if (event->type() == QEvent::Resize) {
+      // 父窗口大小变化时强制更新抽屉
+      QMetaObject::invokeMethod(
+          this,
+          [this, d]() {
+            if (!d->closed_) {
+              // 立即更新抽屉位置
+              d->widget_->setOffset(QPoint(0, 0));
+              // 更新状态机参数
+              d->state_machine_->updatePropertyAssignments();
+            }
+          },
+          Qt::QueuedConnection);
+    }
+  }
+  return TtOverlayWidget::eventFilter(obj, event);
+
   switch (event->type()) {
     // 监听鼠标摁下
     case QEvent::MouseButtonPress: {
@@ -180,7 +227,6 @@ bool TtPopUpDrawer::eventFilter(QObject* obj, QEvent* event) {
       if (mouseEvent) {
         const bool canClose = d->click_to_close_ || d->overlay_;
         if (!d->widget_->geometry().contains(mouseEvent->pos()) && canClose) {
-          //qDebug() << "close in out";
           // 鼠标不在 widget 上
           closeDrawer();
         }
@@ -204,60 +250,181 @@ void TtPopUpDrawer::paintEvent(QPaintEvent* event) {
   Q_UNUSED(event)
   Q_D(TtPopUpDrawer);
 
+  TtPopUpDrawer* parentDrawer = qobject_cast<TtPopUpDrawer*>(parent());
+  if (!parentDrawer)
+    return;
+
+  // 获取实际可用区域
+  QRect validRect = geometry().intersected(parentDrawer->rect());
+  if (validRect != geometry()) {
+    qWarning() << "Drawer position out of bounds, auto correcting...";
+    setGeometry(validRect);  // 自动修正到合法区域
+  }
+
   // 处于关闭状态
   if (!d->overlay_ || d->state_machine_->isInClosedState()) {
     return;
   }
   QPainter painter(this);
   // 透明度是动态 0 - 0.4
-  qDebug() << "opacity() " << d->state_machine_->opacity();
+  // qDebug() << "opacity() " << d->state_machine_->opacity();
   painter.setOpacity(d->state_machine_->opacity());
   //qDebug() << "rect: " << rect();
   painter.fillRect(rect(), Qt::SolidPattern);
 }
 
+void TtPopUpDrawer::resizeEvent(QResizeEvent* event) {
+  // Q_D(TtPopUpDrawer);
+  // d->state_machine_->updatePropertyAssignments();
+  // TtOverlayWidget::resizeEvent(event);
+  Q_D(TtPopUpDrawer);
+
+  // 确保状态机参数更新使用最新尺寸
+  d->state_machine_->updatePropertyAssignments();
+
+  // 如果抽屉处于打开状态，立即更新位置
+  if (!d->closed_) {
+    d->widget_->setOffset(QPoint(0, 0));  // 强制重设到正确位置
+  }
+
+  TtOverlayWidget::resizeEvent(event);
+}
+
 TtPopUpDrawerWidget::TtPopUpDrawerWidget(QWidget* parent)
-    : TtOverlayWidget(parent), offset_(0) {}
+    : TtOverlayWidget(parent), offset_(0, 0) {}
 
 TtPopUpDrawerWidget::~TtPopUpDrawerWidget() {}
 
-void TtPopUpDrawerWidget::setOffset(int offset) {
+// void TtPopUpDrawerWidget::setOffset(int offset) {
+void TtPopUpDrawerWidget::setOffset(QPoint offset) {
+  // 平移
+  // qDebug() << "offset: " << offset;
   offset_ = offset;
 
-  QWidget* widget = parentWidget();
-  // 弹出界面是 this
-  this->setStyleSheet("background-color: blue");
-  if (widget) {
-    // 向右平移 ???
-    qDebug() << "set geometry: " << widget->rect().translated(offset, 0);
-    setGeometry(widget->rect().translated(offset, 0));
+  TtPopUpDrawer* parentDrawer = qobject_cast<TtPopUpDrawer*>(parent());
+  if (!parentDrawer) {
+    return;
   }
+
+  const int size = parentDrawer->drawerSize();
+  const auto dir = parentDrawer->getDirection();
+  qDebug() << "parent-width" << parentDrawer->width();
+  qDebug() << "size: " << size;
+
+  QRect newGeometry;
+  switch (dir) {
+    case TtPopUpDirection::Left:
+      // newGeometry = QRect(-size + offset.x(), 0, size, parentDrawer->height());
+      newGeometry = QRect(offset.x(), 0, size, parentDrawer->height());
+      break;
+    case TtPopUpDirection::Right:
+      // newGeometry = QRect(parentDrawer->width() + offset.x(), 0, size,
+      //                     parentDrawer->height());
+      newGeometry = QRect(parentDrawer->width() - size + offset.x(), 0, size,
+                          parentDrawer->height());
+      break;
+    case TtPopUpDirection::Top:
+      // newGeometry = QRect(0, -size + offset.y(), parentDrawer->width(), size);
+      newGeometry = QRect(0, offset.y(), parentDrawer->width(), size);
+      break;
+    case TtPopUpDirection::Bottom:
+      // newGeometry = QRect(0, parentDrawer->height() + offset.y(),
+      //                     parentDrawer->width(), size);
+      newGeometry = QRect(0, parentDrawer->height() - size + offset.y(),
+                          parentDrawer->width(), size);
+      break;
+  }
+  qDebug() << "new: " << newGeometry;
+  // setStyleSheet("background-color: blue");
+  setGeometry(newGeometry);
   update();
+
+  // QWidget* widget = parentWidget();
+  // // 弹出界面是 this
+  // this->setStyleSheet("background-color: blue");
+  // if (widget) {
+  //   // 向右平移 ???
+
+  //   qDebug() << "set geometry: " << widget->rect().translated(offset, 0);
+  //   setGeometry(widget->rect().translated(offset, 0));
+  // }
+  // update();
 }
 
 void TtPopUpDrawerWidget::paintEvent(QPaintEvent* event) {
-  Q_UNUSED(event)
+  TtPopUpDrawer* parentDrawer = qobject_cast<TtPopUpDrawer*>(parent());
+  if (!parentDrawer)
+    return;
+
+  TtPopUpDirection::PopUpDirection dir = parentDrawer->getDirection();
+  // 根据方向绘制阴影和内容...
+
+  // Q_UNUSED(event)
 
   QPainter painter(this);
 
-  QBrush brush;
-  brush.setStyle(Qt::SolidPattern);
-  brush.setColor(Qt::white);
-  painter.setBrush(brush);
-  painter.setPen(Qt::NoPen);
+  // QBrush brush;
+  // brush.setStyle(Qt::SolidPattern);
+  // brush.setColor(Qt::white);
+  // painter.setBrush(brush);
+  // painter.setPen(Qt::NoPen);
 
-  painter.drawRect(rect().adjusted(0, 0, -16, 0));
+  // painter.drawRect(rect().adjusted(0, 0, -16, 0));
 
-  QLinearGradient gradient(QPointF(width() - 16, 0), QPointF(width(), 0));
+  // QLinearGradient gradient(QPointF(width() - 16, 0), QPointF(width(), 0));
+  // gradient.setColorAt(0, QColor(0, 0, 0, 80));
+  // gradient.setColorAt(0.5, QColor(0, 0, 0, 20));
+  // gradient.setColorAt(1, QColor(0, 0, 0, 0));
+  // painter.setBrush(QBrush(gradient));
+
+  // painter.drawRect(width() - 16, 0, 16, height());
+  // 主体绘制
+  QRect contentRect;
+  switch (dir) {
+    case TtPopUpDirection::Left:
+      contentRect = rect().adjusted(0, 0, -16, 0);
+      break;
+    case TtPopUpDirection::Right:
+      contentRect = rect().adjusted(16, 0, 0, 0);
+      break;
+    case TtPopUpDirection::Top:
+      contentRect = rect().adjusted(0, 0, 0, -16);
+      break;
+    case TtPopUpDirection::Bottom:
+      contentRect = rect().adjusted(0, 16, 0, 0);
+      break;
+  }
+  painter.fillRect(contentRect, Qt::white);
+
+  // 阴影绘制
+  QLinearGradient gradient;
+  switch (dir) {
+    case TtPopUpDirection::Left:
+      gradient.setStart(contentRect.right(), 0);
+      gradient.setFinalStop(contentRect.right() + 16, 0);
+      break;
+    case TtPopUpDirection::Right:
+      gradient.setStart(contentRect.left() - 16, 0);
+      gradient.setFinalStop(contentRect.left(), 0);
+      break;
+    case TtPopUpDirection::Top:
+      gradient.setStart(0, contentRect.bottom());
+      gradient.setFinalStop(0, contentRect.bottom() + 16);
+      break;
+    case TtPopUpDirection::Bottom:
+      gradient.setStart(0, contentRect.top() - 16);
+      gradient.setFinalStop(0, contentRect.top());
+      break;
+  }
   gradient.setColorAt(0, QColor(0, 0, 0, 80));
   gradient.setColorAt(0.5, QColor(0, 0, 0, 20));
   gradient.setColorAt(1, QColor(0, 0, 0, 0));
-  painter.setBrush(QBrush(gradient));
-
-  painter.drawRect(width() - 16, 0, 16, height());
+  painter.fillRect(rect(), gradient);
 }
+
 QRect TtPopUpDrawerWidget::overlayGeometry() const {
-  return TtOverlayWidget::overlayGeometry().translated(offset_, 0);
+  // return TtOverlayWidget::overlayGeometry().translated(offset_.x(), 0);
+  return TtOverlayWidget::overlayGeometry();
 }
 
 TtPopUpDrawerStateMachine::TtPopUpDrawerStateMachine(
@@ -355,7 +522,7 @@ TtPopUpDrawerStateMachine::TtPopUpDrawerStateMachine(
   // 在 TtPopUpDrawerStateMachine 构造函数中：
   QObject::connect(opening_state_, &QState::entered, [this]() {
     if (closing_state_->active()) {
-      //machine()->cancelDelayedEvent();
+      // machine()->cancelDelayedEvent();
     }
   });
 
@@ -375,29 +542,72 @@ bool TtPopUpDrawerStateMachine::isInClosedState() const {
   return closed_state_->active();
 }
 void TtPopUpDrawerStateMachine::updatePropertyAssignments() {
-  // 关闭时候的位移
-  //const qreal closedOffset = -(drawer_->width() + 32);
-  const qreal closedOffset = -(drawer_->width());
-  // 672
-  qDebug() << "drawer->width" << drawer_->width();
+  //   // 关闭时候的位移
+  //   //const qreal closedOffset = -(drawer_->width() + 32);
+  //   const qreal closedOffset = -(drawer_->width());
+  //   // 672
+  //   // qDebug() << "drawer->width" << drawer_->width();
 
-  //qDebug() << "close offset: " << closedOffset;
+  //   //qDebug() << "close offset: " << closedOffset;
 
-  // closing 和 closed
-  closing_state_->assignProperty(drawer_, "offset", closedOffset);
+  //   // closing 和 closed
+  //   closing_state_->assignProperty(drawer_, "offset", closedOffset);
+  //   closed_state_->assignProperty(drawer_, "offset", closedOffset);
+
+  //   // 透明度为 0, 完全看不见
+  //   closing_state_->assignProperty(this, "opacity", 0);
+  //   closed_state_->assignProperty(this, "opacity", 0);
+  //   //closing_state_->assignProperty(this, "opacity", 1);
+  //   //closed_state_->assignProperty(this, "opacity", 1);
+
+  //   opening_state_->assignProperty(drawer_, "offset", 0);
+  //   //opening_state_->assignProperty(drawer_, "offset", 1);
+  //   // 真正能看见的是 this???
+  //   //opening_state_->assignProperty(this, "opacity", 0.4);
+  //   opening_state_->assignProperty(this, "opacity", 0.4);
+  //   //qDebug() << "update";
+
+  QPoint closedOffset;
+  // const QWidget* parent = main_->parentWidget();
+  const int size = main_->drawerSize();
+  const auto dir = main_->getDirection();
+
+  // 确保父窗口尺寸有效
+  const QWidget* parent = main_->parentWidget();
+  const int parentWidth = parent ? parent->width() : main_->width();
+  const int parentHeight = parent ? parent->height() : main_->height();
+
+  switch (dir) {
+    case TtPopUpDirection::Left:
+      closedOffset = QPoint(-size - 16, 0);
+      break;
+    case TtPopUpDirection::Right:
+      // closedOffset = QPoint(main_->width() + 16, 0);
+      closedOffset = QPoint(parentWidth + 16, 0);
+      break;
+    case TtPopUpDirection::Top:
+      closedOffset = QPoint(0, -size - 16);
+      break;
+    case TtPopUpDirection::Bottom:
+      // closedOffset = QPoint(0, main_->height() + 16);
+      closedOffset = QPoint(0, parentHeight + 16);
+      break;
+    default:
+      closedOffset = QPoint(parentWidth + 16, 0);
+  }
+
+  // closedOffset = QPoint(-300, 0);
+  // closedOffset = QPoint(300, 0);
+  // qDebug() << "closedOffset" << closedOffset;
+  // qDebug() << "closedOffset" << closedOffset;
+
   closed_state_->assignProperty(drawer_, "offset", closedOffset);
+  closing_state_->assignProperty(drawer_, "offset", closedOffset);
 
-  // 透明度为 0, 完全看不见
   closing_state_->assignProperty(this, "opacity", 0);
   closed_state_->assignProperty(this, "opacity", 0);
-  //closing_state_->assignProperty(this, "opacity", 1);
-  //closed_state_->assignProperty(this, "opacity", 1);
-
-  opening_state_->assignProperty(drawer_, "offset", 0);
-  //opening_state_->assignProperty(drawer_, "offset", 1);
-  // 真正能看见的是 this???
-  //opening_state_->assignProperty(this, "opacity", 0.4);
   opening_state_->assignProperty(this, "opacity", 0.4);
-  //qDebug() << "update";
+  drawer_->setOffset(closedOffset);
 }
+
 }  // namespace Ui

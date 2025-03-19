@@ -1,5 +1,5 @@
-#ifndef UDP_WINDOW_H
-#define UDP_WINDOW_H
+#ifndef WINDOW_UDP_WINDOW_H
+#define WINDOW_UDP_WINDOW_H
 
 #include <Qsci/qsciscintilla.h>
 
@@ -11,6 +11,8 @@ class QStackedWidget;
 QT_END_NAMESPACE
 
 namespace Ui {
+
+class TtTableWidget;
 class TtNormalLabel;
 class CommonButton;
 class TtImageButton;
@@ -41,7 +43,8 @@ class UdpWindow : public QWidget {
   explicit UdpWindow(TtProtocolType::ProtocolRole role,
                      QWidget* parent = nullptr);
 
-  QString getTitle();
+  QString getTitle() const;
+  QJsonObject getConfiguration() const;
 
  signals:
   void requestSaveConfig();
@@ -65,10 +68,9 @@ class UdpWindow : public QWidget {
   Ui::TtSvgButton* save_btn_;    // 保存连接记录
   Ui::TtSvgButton* on_off_btn_;  // 开启 or 关闭
 
-  // 消息展示框
   Ui::TtChatView* message_view_;
-  // 数据
   Ui::TtChatMessageModel* message_model_;
+  Ui::TtTableWidget* instruction_table_;
 
   Core::UdpClient* udp_client_{nullptr};
   Core::UdpServer* udp_server_{nullptr};
@@ -91,9 +93,9 @@ class UdpWindow : public QWidget {
   bool opened_{false};
 
   TtProtocolType::ProtocolRole role_;
+  QJsonObject config_;
 };
 
 } // namespace Window
 
-
-#endif  // UDP_WINDOW_H
+#endif  // WINDOW_UDP_WINDOW_H

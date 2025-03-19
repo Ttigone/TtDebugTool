@@ -65,15 +65,17 @@ struct TextWithEntities {
   /// @brief 追加文本
   /// @param other
   /// @return
-  TextWithEntities& append(TextWithEntities&& other) {}
+  // TextWithEntities& append(TextWithEntities&& other) {}
 
-  TextWithEntities& append(const TextWithEntities& other) {}
+  // TextWithEntities& append(const TextWithEntities& other) {}
 
-  TextWithEntities& append(const QString& other) {}
+  // TextWithEntities& append(const QString& other) {}
 
-  TextWithEntities& append(const QLatin1String& other) {}
+  // TextWithEntities& append(const QLatin1String& other) {}
 
-  TextWithEntities& append(const QChar& other) {}
+  // TextWithEntities& append(const QChar& other) {
+  //   // return
+  // }
 };
 
 struct TextForMimeData

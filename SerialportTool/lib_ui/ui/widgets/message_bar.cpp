@@ -8,6 +8,8 @@
 #include <QPropertyAnimation>
 #include <QResizeEvent>
 
+#include "ui/TtTheme.h"
+
 namespace Ui {
 
 void TtMessageBar::success(TtMessageBarType::PositionPolicy policy,
@@ -99,8 +101,8 @@ void TtMessageBar::paintEvent(QPaintEvent* event) {
   painter.setRenderHints(QPainter::SmoothPixmapTransform |
                          QPainter::Antialiasing | QPainter::TextAntialiasing);
   // 高性能阴影
-  // eTheme->drawEffectShadow(&painter, rect(), d->_shadowBorderWidth,
-  //                          d->_borderRadius);
+  Ui::tTheme->drawEffectShadow(&painter, rect(), d->_shadowBorderWidth,
+                               d->_borderRadius);
 
   // 背景和图标绘制
   painter.save();
@@ -246,7 +248,7 @@ TtMessageBar::TtMessageBar(TtMessageBarType::PositionPolicy policy,
   setFixedHeight(60);
   setMouseTracking(true);
   d->pOpacity_ = 1;  // 宏创建
-  setFont(QFont("微软雅黑"));
+  // setFont(QFont("微软雅黑"));
   parent->installEventFilter(this);  // 安装监听器
   // 关闭按钮
   // d->_closeButton =

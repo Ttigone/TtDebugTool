@@ -1,9 +1,9 @@
 ﻿#include "widget/tcp_setting.h"
 
+#include <ui/control/TtComboBox.h>
+#include <ui/control/TtLineEdit.h>
 #include <ui/layout/vertical_layout.h>
 #include <ui/widgets/collapsible_panel.h>
-#include <ui/widgets/fields/customize_fields.h>
-#include <ui/window/combobox.h>
 #include <QNetworkInterface>
 
 #include "core/tcp_client.h"
@@ -91,9 +91,30 @@ Core::TcpServerConfiguration TcpServerSetting::getTcpServerConfiguration() {
   // 使用构造函数初始化
   Core::TcpServerConfiguration cfg(host_->body()->currentText(),
                                    port_->body()->text().toLong());
-  // qDebug() << host_->body()->currentText();
 
   return cfg;
+}
+
+const QJsonObject& TcpServerSetting::getTcpServerSetting() {
+  auto config = getTcpServerConfiguration();
+  QJsonObject linkSetting;
+  linkSetting.insert("SelfHost", QJsonValue(config.host));
+  linkSetting.insert("SelfPort", QJsonValue(config.port));
+  tcp_server_save_config_.insert("LinkSetting", QJsonValue(linkSetting));
+
+  QJsonObject framing;
+  framing.insert("Model", QJsonValue(framing_model_->body()->currentText()));
+  framing.insert("Timeout",
+                 QJsonValue(framing_timeout_->body()->currentText()));
+  framing.insert("FixedLength",
+                 QJsonValue(framing_fixed_length_->body()->currentText()));
+  tcp_server_save_config_.insert("Framing", QJsonValue(framing));
+
+  QJsonObject retransmission;
+  retransmission.insert("Target", QJsonValue(retransmission_->currentText()));
+  tcp_server_save_config_.insert("Retransmission", QJsonValue(retransmission));
+
+  return tcp_server_save_config_;
 }
 
 void TcpServerSetting::setHost() {}
@@ -105,7 +126,7 @@ void TcpServerSetting::setHostAddress() {
   for (const QHostAddress& address : ipAddresses) {
     host_->addItem(address.toString());
   }
-  // host_->body()->setInsertPolicy(QComboBox::InsertAlphabetically);
+  host_->body()->model()->sort(0);
 }
 
 TcpClientSetting::TcpClientSetting(QWidget* parent) : QWidget(parent) {
@@ -193,7 +214,6 @@ TcpClientSetting::TcpClientSetting(QWidget* parent) : QWidget(parent) {
 TcpClientSetting::~TcpClientSetting() {}
 
 Core::TcpClientConfiguration TcpClientSetting::getTcpClientConfiguration() {
-  // qDebug() << self_port_->body()->text().toLong();
   Core::TcpClientConfiguration cfg(target_host_->body()->currentText(),
                                    target_port_->body()->text(),
                                    self_host_->body()->text(),
@@ -201,11 +221,36 @@ Core::TcpClientConfiguration TcpClientSetting::getTcpClientConfiguration() {
   return cfg;
 }
 
+const QJsonObject& TcpClientSetting::getTcpClientSetting() {
+  auto config = getTcpClientConfiguration();
+  QJsonObject linkSetting;
+  linkSetting.insert("TargetHost", QJsonValue(config.target_host));
+  linkSetting.insert("TargetPort", QJsonValue(config.target_port));
+  linkSetting.insert("SelfHost", QJsonValue(config.self_host));
+  linkSetting.insert("SelfPort", QJsonValue(config.self_port));
+  tcp_client_save_config_.insert("LinkSetting", QJsonValue(linkSetting));
+
+  QJsonObject framing;
+  framing.insert("Model", QJsonValue(framing_model_->body()->currentText()));
+  framing.insert("Timeout",
+                 QJsonValue(framing_timeout_->body()->currentText()));
+  framing.insert("FixedLength",
+                 QJsonValue(framing_fixed_length_->body()->currentText()));
+  tcp_client_save_config_.insert("Framing", QJsonValue(framing));
+
+  QJsonObject retransmission;
+  retransmission.insert("Target", QJsonValue(retransmission_->currentText()));
+  tcp_client_save_config_.insert("Retransmission", QJsonValue(retransmission));
+
+  return tcp_client_save_config_;
+}
+
 void TcpClientSetting::setHostAddress() {
   QList<QHostAddress> ipAddresses = QNetworkInterface::allAddresses();
   for (const QHostAddress& address : ipAddresses) {
     target_host_->addItem(address.toString());
   }
+  target_host_->body()->model()->sort(0);
 }
 
 }  // namespace Widget

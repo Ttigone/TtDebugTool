@@ -1,5 +1,5 @@
-﻿#ifndef TCP_WINDOW_H
-#define TCP_WINDOW_H
+﻿#ifndef WINDOW_TCP_WINDOW_H
+#define WINDOW_TCP_WINDOW_H
 
 #include <Qsci/qsciscintilla.h>
 
@@ -10,6 +10,7 @@ class QStackedWidget;
 QT_END_NAMESPACE
 
 namespace Ui {
+class TtTableWidget;
 class TtNormalLabel;
 class CommonButton;
 class TtImageButton;
@@ -40,7 +41,8 @@ class TcpWindow : public QWidget {
   explicit TcpWindow(TtProtocolType::ProtocolRole role,
                      QWidget* parent = nullptr);
 
-  QString getTitle();
+  QString getTitle() const;
+  QJsonObject getConfiguration() const;
 
  signals:
   void requestSaveConfig();
@@ -49,7 +51,6 @@ class TcpWindow : public QWidget {
  private slots:
   void switchToEditMode();
   void switchToDisplayMode();
-  // 更新服务端状态
   void updateServerStatus();
   void onDataReceived(const QByteArray& data);
 
@@ -59,17 +60,15 @@ class TcpWindow : public QWidget {
 
   Ui::TtVerticalLayout* main_layout_;
 
-  Ui::TtNormalLabel* title_;             // 名称
-  // Ui::TtImageButton* modify_title_btn_;  // 修改连接名称
-  Ui::TtSvgButton* modify_title_btn_;    // 修改连接名称
-  // Ui::TtImageButton* save_btn_;          // 保存连接记录
-  Ui::TtSvgButton* save_btn_;    // 保存连接记录
-  Ui::TtSvgButton* on_off_btn_;  // 开启 or 关闭
+  Ui::TtNormalLabel* title_;
+  Ui::TtSvgButton* modify_title_btn_;
+  Ui::TtSvgButton* save_btn_;
+  Ui::TtSvgButton* on_off_btn_;
 
-  // 消息展示框
   Ui::TtChatView* message_view_;
-  // 数据
   Ui::TtChatMessageModel* message_model_;
+
+  Ui::TtTableWidget* instruction_table_;
 
   Core::TcpClient* tcp_client_{nullptr};
   Core::TcpServer* tcp_server_{nullptr};
@@ -82,7 +81,6 @@ class TcpWindow : public QWidget {
   quint64 send_byte_count = 0;
   quint64 recv_byte_count = 0;
 
-  // 使用开源编辑组件 QScintilla
   QsciScintilla* editor;
 
   QWidget* original_widget_{nullptr};
@@ -93,6 +91,7 @@ class TcpWindow : public QWidget {
   bool tcp_opened_{false};
 
   TtProtocolType::ProtocolRole role_;
+  QJsonObject config_;
 };
 
 } // namespace Window

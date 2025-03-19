@@ -34,7 +34,7 @@ class FunctionSelectionWindow : public QWidget {
   /// @brief switchRequested
   /// @param targetWidgetId
   /// 切换到对应的 界面
-  void switchRequested(int targetWidgetId);
+  void switchRequested(TtProtocolRole::Role role);
 
  private:
   ///
@@ -66,7 +66,7 @@ class SimulateFunctionSelectionWindow : public QWidget {
   /// @brief switchRequested
   /// @param targetWidgetId
   /// 切换到对应的 界面
-  void switchRequested(int targetWidgetId);
+  void switchRequested(TtProtocolRole::Role role);
 
  private:
   ///

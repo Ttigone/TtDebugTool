@@ -5,16 +5,14 @@
 #include <ui/control/ChatWidget/TtChatMessage.h>
 #include <ui/control/ChatWidget/TtChatMessageModel.h>
 #include <ui/control/ChatWidget/TtChatView.h>
-#include <ui/control/TtTableView.h>
+#include <ui/control/TtLineEdit.h>
+#include <ui/control/TtRadioButton.h>
 #include <ui/layout/horizontal_layout.h>
 #include <ui/layout/vertical_layout.h>
 #include <ui/widgets/buttons.h>
 #include <ui/widgets/collapsible_panel.h>
 #include <ui/widgets/labels.h>
 #include <ui/widgets/message_bar.h>
-#include <ui/window/combobox.h>
-
-#include <ui/widgets/fields/customize_fields.h>
 
 #include <lib/qtmaterialcheckable.h>
 #include <qtmaterialflatbutton.h>
@@ -22,8 +20,8 @@
 #include <qtmaterialsnackbar.h>
 #include <qtmaterialtabs.h>
 
+#include "ui/controls/TtTableView.h"
 #include "widget/serial_setting.h"
-#include "widget/shortcut_instruction.h"
 
 namespace Window {
 
@@ -304,42 +302,6 @@ void SerialWindow::init() {
   base::DetectRunningTime runtime;
 
   message_model_ = new Ui::TtChatMessageModel;
-  //QList<Ui::TtChatMessage*> list;
-
-  //Ui::TtChatMessage* msg = new Ui::TtChatMessage;
-  //msg->setContent(
-  //    "TESTSSSSSSSSSSSSSSSSSSSSSS\r\nSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS\r\nsjdsdj"
-  //    "skasdj"
-  //    "sadsakldjkas");
-  //msg->setOutgoing(true);                  // 必须设置方向
-  //msg->setBubbleColor(QColor("#DCF8C6"));  // 必须设置颜色
-  //msg->setTimestamp(QDateTime::currentDateTime());
-
-  //Ui::TtChatMessage* msg1 = new Ui::TtChatMessage;
-  //msg1->setContent("111111111111111111111111111111111111");
-  //msg1->setOutgoing(true);                  // 必须设置方向
-  //msg1->setBubbleColor(QColor("#9678dd"));  // 必须设置颜色
-  //msg1->setTimestamp(QDateTime::currentDateTime());
-
-  //Ui::TtChatMessage* msg2 = new Ui::TtChatMessage;
-  //msg2->setContent(
-  //    "1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n1\n111111111111111111111111");
-  //msg2->setOutgoing(true);                  // 必须设置方向
-  //msg2->setBubbleColor(QColor("#ffe292"));  // 必须设置颜色
-  //msg2->setTimestamp(QDateTime::currentDateTime());
-
-  //Ui::TtChatMessage* msg3 = new Ui::TtChatMessage;
-  //msg3->setContent("蔡韶山");
-  //msg3->setOutgoing(true);                  // 必须设置方向
-  //msg3->setBubbleColor(QColor("#d9edfd"));  // 必须设置颜色
-  //msg3->setTimestamp(QDateTime::currentDateTime());
-
-  //list.append(msg);
-  //list.append(msg2);
-  //list.append(msg1);
-  //list.append(msg3);
-
-  //message_model_->appendMessages(list);
 
   message_view_->setModel(message_model_);
   message_view_->scrollToBottom();
@@ -401,8 +363,10 @@ void SerialWindow::init() {
   Ui::TtHorizontalLayout* bottomBtnWidgetLayout =
       new Ui::TtHorizontalLayout(bottomBtnWidget);
 
-  QtMaterialRadioButton* choseText = new QtMaterialRadioButton(bottomBtnWidget);
-  QtMaterialRadioButton* choseHex = new QtMaterialRadioButton(bottomBtnWidget);
+  // QtMaterialRadioButton* choseText = new QtMaterialRadioButton(bottomBtnWidget);
+  // QtMaterialRadioButton* choseHex = new QtMaterialRadioButton(bottomBtnWidget);
+  Ui::TtRadioButton* choseText = new Ui::TtRadioButton(bottomBtnWidget);
+  Ui::TtRadioButton* choseHex = new Ui::TtRadioButton(bottomBtnWidget);
   choseText->setText("TEXT");
   choseHex->setText("HEX");
 
@@ -472,7 +436,11 @@ void SerialWindow::init() {
           [this]() { message_model_->clearModelData(); });
 
   connect(sendBtn, &QtMaterialFlatButton::clicked, [this]() {
-    // 发送消息
+    if (!serial_port_opened) {
+      Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""), tr("串口未打开"),
+                              1500, this);
+      return;
+    }
     QString data = editor->text();
     send_byte_count += data.size();
     auto tmp = new Ui::TtChatMessage();
@@ -483,14 +451,8 @@ void SerialWindow::init() {
     list.append(tmp);
     message_model_->appendMessages(list);
     // 串口发送
-
-    // QMetaObject::invokeMethod(serial_port_.get(), "sendData",
-    // Qt::QueuedConnection, Q_ARG(QString, data));
     QMetaObject::invokeMethod(serial_port_, "sendData", Qt::QueuedConnection,
                               Q_ARG(QString, data));
-
-    // serial_port_->sendData(editor->text());
-
     send_byte->setText(QString("发送字节数: %1 B").arg(send_byte_count));
     message_view_->scrollToBottom();
   });
@@ -499,8 +461,6 @@ void SerialWindow::init() {
 }
 
 void SerialWindow::setSerialSetting() {
-  // 初始 app 时, 随机地设置串口配置
-  // 选择可以选择全部, 但是显示的时候, 只显示 COMx
   serial_setting_->setSerialPortsName();
   serial_setting_->setSerialPortsBaudRate();
   serial_setting_->setSerialPortsDataBit();
@@ -512,13 +472,10 @@ void SerialWindow::setSerialSetting() {
 }
 
 void SerialWindow::connectSignals() {
-
   connect(save_btn_, &Ui::TtSvgButton::clicked, [this]() {
-    // 保存配置界面, 但没有历史消息
     cfg_.obj.insert("WindowTitle", title_->text());
     cfg_.obj.insert("SerialSetting", serial_setting_->getSerialSetting());
     cfg_.obj.insert("InstructionTable", instruction_table_->getTableRecord());
-    // qDebug() << "yes";
     // Ui::TtMessageBar::success(
     //     TtMessageBarType::Top, "警告",
     //     // "输入框不能为空，请填写完整信息。", 3000, this);

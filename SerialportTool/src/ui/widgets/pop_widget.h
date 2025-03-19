@@ -29,8 +29,8 @@ protected:
 
   bool is_open_;
   // 弹出的窗口
-  //QtMaterialDrawer *const drawer_;
-  TtPopUpDrawer *const drawer_;
+  // QtMaterialDrawer* const drawer_;
+  TtPopUpDrawer* const drawer_;
 
   // 弹出窗口的内容
   QVBoxLayout *drawer_layout_;

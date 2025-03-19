@@ -22,10 +22,15 @@ class TtPopUpDrawerPrivate;
 
 class Tt_EXPORT TtPopUpDrawer : public TtOverlayWidget {
   Q_OBJECT
+  Q_PROPERTY_CREATE(TtPopUpDirection::PopUpDirection, Direction)
  public:
   TtPopUpDrawer(QWidget* parent = nullptr);
   ~TtPopUpDrawer();
 
+  void setDrawerSize(int size);
+  int drawerSize() const;
+
+  // 修改
   void setDrawerWidth(int width);
   int drawerWidth() const;
 
@@ -52,6 +57,7 @@ class Tt_EXPORT TtPopUpDrawer : public TtOverlayWidget {
   bool event(QEvent* event) override;
   bool eventFilter(QObject* obj, QEvent* event) override;
   void paintEvent(QPaintEvent* event) override;
+  void resizeEvent(QResizeEvent* event) override;
 
   const QScopedPointer<TtPopUpDrawerPrivate> d_ptr;
 
@@ -62,13 +68,13 @@ class Tt_EXPORT TtPopUpDrawer : public TtOverlayWidget {
 
 class TtPopUpDrawerWidget : public TtOverlayWidget {
   Q_OBJECT
-  Q_PROPERTY(int offset WRITE setOffset READ offset)
+  Q_PROPERTY(QPoint offset WRITE setOffset READ offset)
  public:
   explicit TtPopUpDrawerWidget(QWidget* parent = nullptr);
   ~TtPopUpDrawerWidget();
 
-  void setOffset(int offset);
-  int offset() const { return offset_; }
+  void setOffset(QPoint offset);
+  QPoint offset() const { return offset_; }
 
  protected:
   void paintEvent(QPaintEvent* event) override;
@@ -76,7 +82,7 @@ class TtPopUpDrawerWidget : public TtOverlayWidget {
   QRect overlayGeometry() const override;
 
  private:
-  int offset_;
+  QPoint offset_;
 };
 
 class TtPopUpDrawerStateMachine : public QStateMachine {
@@ -112,162 +118,6 @@ class TtPopUpDrawerStateMachine : public QStateMachine {
   qreal opacity_;                // 透明度
 };
 
-//class DrawerController : public QObject {
-//  Q_OBJECT
-//
-// public:
-//  DrawerController(QSplitter* splitter, TtPopUpDrawer* drawer,
-//                   QWidget* contentWidget, QObject* parent = nullptr)
-//      : QObject(parent),
-//        splitter_(splitter),
-//        drawer_(drawer),
-//        contentWidget_(contentWidget),
-//        drawerOpenSize_(250) {  // 默认 Drawer 打开大小
-//    // 初始化
-//    connect(drawer_, &TtPopUpDrawer::willClose, this,
-//            &DrawerController::onDrawerClosed);
-//  }
-//
-//  void toggleDrawer() {
-//    if (isDrawerOpen()) {
-//      closeDrawer();
-//    } else {
-//      openDrawer();
-//    }
-//  }
-//
-//  bool isDrawerOpen() const {
-//    return splitter_->sizes()[0] > 0;  // 判断 Drawer 是否可见
-//  }
-//
-//  void openDrawer() {
-//    // 恢复 Drawer 的大小
-//    QList<int> sizes = splitter_->sizes();
-//    sizes[0] = drawerOpenSize_;  // 显示 Drawer
-//    sizes[1] =
-//        splitter_->width() - drawerOpenSize_;  // 调整 contentWidget 的大小
-//    splitter_->setSizes(sizes);
-//
-//    drawer_->openDrawer();
-//  }
-//
-//  void closeDrawer() {
-//    // 记录当前 Drawer 大小
-//    drawerOpenSize_ = splitter_->sizes()[0];
-//
-//    // 隐藏 Drawer
-//    QList<int> sizes = splitter_->sizes();
-//    sizes[0] = 0;                   // 隐藏 Drawer
-//    sizes[1] = splitter_->width();  // contentWidget 占满
-//    splitter_->setSizes(sizes);
-//
-//    drawer_->closeDrawer();
-//  }
-//
-// private slots:
-//  void onDrawerClosed() {
-//    // 处理 Drawer 关闭逻辑（如果需要额外操作）
-//  }
-//
-// private:
-//  QSplitter* splitter_;
-//  TtPopUpDrawer* drawer_;
-//  QWidget* contentWidget_;
-//  int drawerOpenSize_;  // 记录 Drawer 打开的大小
-//};
-//class DrawerController : public QObject {
-//  Q_OBJECT
-//
-// public:
-//  DrawerController(QSplitter* splitter, TtPopUpDrawer* drawer,
-//                   QWidget* contentWidget, QObject* parent = nullptr)
-//      : QObject(parent),
-//        splitter_(splitter),
-//        drawer_(drawer),
-//        contentWidget_(contentWidget),
-//        drawerOpenSize_(250),      // 默认 Drawer 打开大小
-//        isDrawerVisible_(false) {  // 初始状态为隐藏
-//    // 初始化
-//    connect(drawer_, &TtPopUpDrawer::willClose, this,
-//            &DrawerController::onDrawerClosed);
-//  }
-//
-//  void toggleDrawer() {
-//    if (isDrawerVisible_) {
-//      closeDrawer();
-//    } else {
-//      openDrawer();
-//    }
-//  }
-//
-//  bool isDrawerOpen() const { return isDrawerVisible_; }
-//
-//  void openDrawer() {
-//    if (isDrawerVisible_)
-//      return;
-//
-//    // 把 Drawer 添加回 QSplitter
-//    if (!splitter_->widget(0)) {
-//      splitter_->insertWidget(0, drawer_);
-//    }
-//
-//    // 恢复 Drawer 的大小
-//    QList<int> sizes = splitter_->sizes();
-//    sizes[0] = drawerOpenSize_;  // 显示 Drawer
-//    sizes[1] =
-//        splitter_->width() - drawerOpenSize_;  // 调整 contentWidget 的大小
-//    splitter_->setSizes(sizes);
-//
-//    drawer_->openDrawer();
-//    isDrawerVisible_ = true;
-//  }
-//
-//  void closeDrawer() {
-//    if (!isDrawerVisible_)
-//      return;
-//
-//    // 记录当前 Drawer 大小
-//    drawerOpenSize_ = splitter_->sizes()[0];
-//
-//    // 隐藏 Drawer
-//    QList<int> sizes = splitter_->sizes();
-//    sizes[0] = 0;                   // 隐藏 Drawer
-//    sizes[1] = splitter_->width();  // contentWidget 占满
-//    splitter_->setSizes(sizes);
-//
-//    drawer_->closeDrawer();
-//
-//    // 延迟移除 Drawer，确保动画正常完成
-//    QTimer::singleShot(220, this, [this]() {
-//      splitter_->widget(0)->setParent(nullptr);  // 从 splitter 中移除 Drawer
-//    });
-//
-//    isDrawerVisible_ = false;
-//  }
-//
-//  void handleSplitterMoved() {
-//    // 避免通过拖动分隔栏强制显示 Drawer
-//    //if (!isDrawerVisible_ && splitter_->sizes()[0] > 0) {
-//    //  closeDrawer();
-//    //}
-//  }
-//
-// private slots:
-//  void onDrawerClosed() {
-//    // 处理 Drawer 关闭逻辑（如果需要额外操作）
-//    qDebug() << "Drawer closed";
-//  }
-//
-// private:
-//  QSplitter* splitter_;
-//  TtPopUpDrawer* drawer_;
-//  QWidget* contentWidget_;
-//  int drawerOpenSize_;    // 记录 Drawer 打开的大小
-//  bool isDrawerVisible_;  // 用于记录 Drawer 的显示状态
-//};
-//
-//
-//
 }  // namespace Ui
 
 #endif  // !UI_CONTROL_TTPOPUPDRAWER_H

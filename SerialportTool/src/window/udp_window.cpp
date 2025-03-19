@@ -3,15 +3,13 @@
 #include <ui/control/ChatWidget/TtChatMessage.h>
 #include <ui/control/ChatWidget/TtChatMessageModel.h>
 #include <ui/control/ChatWidget/TtChatView.h>
-#include <ui/control/TtTableView.h>
+#include <ui/control/TtLineEdit.h>
 #include <ui/layout/horizontal_layout.h>
 #include <ui/layout/vertical_layout.h>
 #include <ui/widgets/buttons.h>
 #include <ui/widgets/collapsible_panel.h>
-#include <ui/widgets/fields/customize_fields.h>
 #include <ui/widgets/labels.h>
 #include <ui/widgets/message_bar.h>
-#include <ui/window/combobox.h>
 
 #include <lib/qtmaterialcheckable.h>
 #include <qtmaterialflatbutton.h>
@@ -21,6 +19,7 @@
 
 #include "core/udp_client.h"
 #include "core/udp_server.h"
+#include "ui/controls/TtTableView.h"
 #include "widget/udp_setting.h"
 
 namespace Window {
@@ -50,7 +49,11 @@ UdpWindow::UdpWindow(TtProtocolType::ProtocolRole role, QWidget* parent)
   connectSignals();
 }
 
-QString UdpWindow::getTitle() {
+QJsonObject UdpWindow::getConfiguration() const {
+  return config_;
+}
+
+QString UdpWindow::getTitle() const {
   return title_->text();
 }
 
@@ -264,10 +267,10 @@ void UdpWindow::init() {
   QStackedLayout* layout = new QStackedLayout;
   layout->setContentsMargins(QMargins());
   layout->setSpacing(0);
-  QWidget* la_w = new QWidget(this);
-  la_w->setLayout(layout);
+  QWidget* basicWidget = new QWidget(this);
+  basicWidget->setLayout(layout);
 
-  QWidget* messageEdit = new QWidget(la_w);
+  QWidget* messageEdit = new QWidget(basicWidget);
   // messageEdit
   QVBoxLayout* messageEditLayout = new QVBoxLayout;
   messageEdit->setLayout(messageEditLayout);
@@ -305,17 +308,17 @@ void UdpWindow::init() {
 
   messageEditLayout->addWidget(bottomBtnWidget);
 
-  Ui::TtTableWidget* table = new Ui::TtTableWidget(la_w);
+  instruction_table_ = new Ui::TtTableWidget(basicWidget);
 
   layout->addWidget(messageEdit);
+  layout->addWidget(instruction_table_);
   layout->setCurrentIndex(0);
 
   connect(m_tabs, &QtMaterialTabs::currentChanged,
           [this, layout](int index) { layout->setCurrentIndex(index); });
 
   bottomAllLayout->addWidget(tabs_and_count);
-  // bottomAllLayout->addWidget(messageEdit);
-  bottomAllLayout->addWidget(la_w);
+  bottomAllLayout->addWidget(basicWidget);
 
   VSplitter->addWidget(cont);
   VSplitter->addWidget(bottomAll);
@@ -381,7 +384,27 @@ void UdpWindow::init() {
   });
 }
 
-void UdpWindow::connectSignals() {}
+void UdpWindow::connectSignals() {
+  connect(save_btn_, &Ui::TtSvgButton::clicked, [this]() {
+    config_.insert("WindowTitile", title_->text());
+    if (role_ == TtProtocolType::Client) {
+      config_.insert("UdpClientSetting",
+                     udp_client_setting_->getUdpClientSetting());
+    } else if (role_ == TtProtocolType::Server) {
+      config_.insert("UdpServerSetting",
+                     udp_server_setting_->getUdpServerSetting());
+    }
+    config_.insert("InstructionTable", instruction_table_->getTableRecord());
+    // Ui::TtMessageBar::success(
+    //     TtMessageBarType::Top, "警告",
+    //     // "输入框不能为空，请填写完整信息。", 3000, this);
+    //     "输入框不能为空，请填写完整信息。", 3000, this);
+    emit requestSaveConfig();
+    //qDebug() << cfg_.obj;
+    // 配置文件保存到文件中
+    // 当前的 tabWidget 匹配对应的 QJsonObject
+  });
+}
 
 } // namespace Window
 

@@ -475,7 +475,10 @@ TtSvgButton::TtSvgButton(QWidget* parent)
       is_pressed_(false),
       svg_renderer_(new QSvgRenderer(this)),
       svg_size_(22, 22) {
-  setMinimumSize(22, 22);
+  setObjectName("TtSvgButton");
+  // setMinimumSize(22, 22);
+  // resize(22, 22);
+  // setFixedSize(22, 22);
 }
 
 TtSvgButton::TtSvgButton(const QString& svgPath, QWidget* parent)
@@ -487,10 +490,11 @@ TtSvgButton::TtSvgButton(const QString& svgPath, QWidget* parent)
       is_pressed_(false),
       is_hovered_(false),
       is_checked_(false) {
-  setMinimumSize(22, 22);
+  // setMinimumSize(22, 22);
+  // resize(22, 22);
+  // setFixedSize(22, 22);
   setAttribute(Qt::WA_Hover);
   updateSvgContent();
-  // connect(this, &TtSvgButton::clicked, this, &TtSvgButton::toggleSvg);
 }
 
 void TtSvgButton::setColors(const QColor& firstColor,
@@ -503,6 +507,14 @@ void TtSvgButton::setColors(const QColor& firstColor,
 void TtSvgButton::setHoverBackgroundColor(const QColor& color) {
   hover_bg_color_ = color;
   update();
+}
+
+void TtSvgButton::setText(const QString& text) {
+  if (text_ != text) {
+    text_ = text;
+    updateGeometry();
+    update();
+  }
 }
 
 QSize TtSvgButton::svgSize() const {
@@ -532,11 +544,8 @@ void TtSvgButton::setChecked(bool checked) {
   }
 }
 
-void TtSvgButton::setEnableToggle(bool toggle) {
-  // is_enable_toggle_ = toggle;
-  // if (is_enable_toggle_) {
-  //   disconnect(this, &TtSvgButton::clicked, nullptr, nullptr);
-  // }
+void TtSvgButton::setEnableHoldToCheck(bool enable) {
+  enable_hold_to_check_ = enable;
 }
 
 void TtSvgButton::paintEvent(QPaintEvent* event) {
@@ -548,7 +557,22 @@ void TtSvgButton::paintEvent(QPaintEvent* event) {
   // 绘制悬停背景
   if (is_hovered_) {
     painter.fillRect(rect(), hover_bg_color_);
+    // painter.fillRect(QRect(svg_size_.), hover_bg_color_);
   }
+  // 怀疑是 size 为 0
+  // painter.fillRect(rect(), QColor(12, 12, 12));
+
+  // int padding = 4;  // 边距
+  // QRect svgRect(QPoint(padding, (height() - svg_size_.height()) / 2),
+  //               svg_size_);
+  // svg_renderer_->render(&painter, svgRect);
+
+  // if (!text_.isEmpty()) {
+  //   painter.setPen(current_color_);
+  //   int textX = svgRect.right() + padding;
+  //   QRect textRect(textX, 0, width() - textX - padding, height());
+  //   painter.drawText(textRect, Qt::AlignVCenter | Qt::AlignLeft, text_);
+  // }
 
   // 绘制SVG
   QRect svgRect;
@@ -572,8 +596,12 @@ void TtSvgButton::leaveEvent(QEvent* event) {
 }
 
 void TtSvgButton::mousePressEvent(QMouseEvent* event) {
+  // qDebug() << "test";
   if (event->button() == Qt::LeftButton) {
     is_pressed_ = true;
+    if (enable_hold_to_check_) {
+      setChecked(true);
+    }
     update();
   }
   QWidget::mousePressEvent(event);
@@ -582,13 +610,26 @@ void TtSvgButton::mousePressEvent(QMouseEvent* event) {
 void TtSvgButton::mouseReleaseEvent(QMouseEvent* event) {
   if (event->button() == Qt::LeftButton && is_pressed_) {
     is_pressed_ = false;
-    setChecked(!is_checked_);
-    // static int i = 0;
-    // qDebug() << "c" << ++i;
+    if (enable_hold_to_check_) {
+      setChecked(false);
+    } else {
+      setChecked(!is_checked_);
+    }
     emit clicked();
     update();
   }
   QWidget::mouseReleaseEvent(event);
+}
+
+QSize TtSvgButton::sizeHint() const {
+  QFontMetrics fm(font());
+  int textWidth = fm.horizontalAdvance(text_);
+  int padding = 4;
+  int totalWidth = svg_size_.width() + textWidth + 3 * padding;
+  int height = qMax(svg_size_.height(), fm.height()) + 2 * padding;
+
+  // qDebug() << "size:" << QSize(totalWidth, height);
+  return QSize(totalWidth, height);
 }
 
 void TtSvgButton::updateSvgContent() {
@@ -600,17 +641,10 @@ void TtSvgButton::updateSvgContent() {
   QString svgContent = file.readAll();
   file.close();
 
-  // QColor currentColor = is_checked_ ? first_color_ : second_color_;
-  QColor currentColor = is_checked_ ? second_color_ : first_color_;
-  // if (is_checked_) {
-  //   qDebug() << "y";
-  // } else {
-  //   qDebug() << "n";
-  // }
-
+  current_color_ = is_checked_ ? second_color_ : first_color_;
   // 替换颜色
   svgContent.replace(QRegularExpression("fill=\"[^\"]*\""),
-                     QString("fill=\"%1\"").arg(currentColor.name()));
+                     QString("fill=\"%1\"").arg(current_color_.name()));
 
   svg_renderer_->load(svgContent.toUtf8());
   update();
@@ -627,69 +661,6 @@ void TtImageButton::setSvg(const QString& path) {
   update();  // 重新绘制按钮
 }
 
-TtToggleButton::TtToggleButton(QWidget* parent)
-    : QWidget(parent),
-      checked(false),
-      m_knobPosition(2.0),
-      animation(new QPropertyAnimation(this, "knobPosition", this)) {
-  setFixedSize(36, 20);
-  animation->setDuration(200);
-  animation->setEasingCurve(QEasingCurve::OutBounce);
-}
-
-bool TtToggleButton::isChecked() const {
-  return checked;
-}
-
-void TtToggleButton::setChecked(bool checked_) {
-  if (checked != checked_) {
-    checked = checked_;
-    animation->stop();
-    if (checked) {
-      animation->setStartValue(m_knobPosition);
-      animation->setEndValue(width() - height() + 2.0);  // Right position
-    } else {
-      animation->setStartValue(m_knobPosition);
-      animation->setEndValue(2.0);  // Left position
-    }
-    animation->start();
-    emit toggled(checked);
-  }
-}
-
-qreal TtToggleButton::knobPosition() const {
-  return m_knobPosition;
-}
-
-void TtToggleButton::setKnobPosition(qreal position) {
-  m_knobPosition = position;
-  update();
-}
-
-void TtToggleButton::paintEvent(QPaintEvent* /*event*/) {
-  QPainter painter(this);
-  painter.setRenderHint(QPainter::Antialiasing);
-
-  // Draw background
-  QColor backgroundColor = checked ? QColor("#4cd964") : QColor("#e5e5e5");
-  painter.setBrush(backgroundColor);
-  painter.setPen(Qt::NoPen);
-  QRectF backgroundRect(0, 0, width(), height());
-  painter.drawRoundedRect(backgroundRect, height() / 2, height() / 2);
-
-  // Draw knob
-  QColor knobColor = QColor("#ffffff");
-  painter.setBrush(knobColor);
-  QRectF knobRect(m_knobPosition, 2, height() - 4, height() - 4);
-  painter.drawEllipse(knobRect);
-}
-
-void TtToggleButton::mousePressEvent(QMouseEvent* event) {
-  if (event->button() == Qt::LeftButton) {
-    setChecked(!checked);
-  }
-  QWidget::mousePressEvent(event);
-}
 
 TtSpecialDeleteButton::TtSpecialDeleteButton(QWidget* parent)
     : QWidget(parent) {}
@@ -770,10 +741,29 @@ void TtSpecialDeleteButton::mousePressEvent(QMouseEvent* event) {
 void TtSpecialDeleteButton::mouseReleaseEvent(QMouseEvent* event) {
   if (event->button() == Qt::LeftButton && is_pressed_) {
     is_pressed_ = false;
-    // old_state_ = !old_state_;  // 状态翻转
     update();
     emit clicked();
   }
 }
+
+TtTextButton::TtTextButton(QWidget* parent) : QPushButton(parent) {
+  setStyleSheet("background-color: transparent");
+}
+
+TtTextButton::TtTextButton(const QString& text, QWidget* parent)
+    : Ui::TtTextButton(parent) {
+  setText(text);
+}
+
+TtTextButton::TtTextButton(const QColor& color, const QString& text,
+                           QWidget* parent)
+    : Ui::TtTextButton(parent) {
+  QPalette palette = this->palette();
+  palette.setColor(QPalette::ButtonText, color);
+  setPalette(palette);
+  setText(text);
+}
+
+TtTextButton::~TtTextButton() {}
 
 }  // namespace Ui

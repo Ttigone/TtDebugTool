@@ -2,10 +2,10 @@
 
 #include "core/serial_port.h"
 
+#include <ui/control/TtComboBox.h>
 #include <ui/layout/horizontal_layout.h>
 #include <ui/layout/vertical_layout.h>
 #include <ui/widgets/collapsible_panel.h>
-#include <ui/window/combobox.h>
 
 namespace Widget {
 

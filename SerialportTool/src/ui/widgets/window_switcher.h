@@ -1,5 +1,5 @@
-#ifndef WINDOW_SWITCHER_H
-#define WINDOW_SWITCHER_H
+#ifndef UI_WINDOW_SWITCHER_H
+#define UI_WINDOW_SWITCHER_H
 
 #include <qmimedata.h>
 #include <qtimer.h>
@@ -15,6 +15,8 @@
 
 #include <QToolButton>
 #include <functional>
+
+#include "Def.h"
 
 namespace Ui {
 
@@ -90,16 +92,6 @@ class ExtTabBar : public QTabBar {
 
 class TabManager : public QTabWidget {
   Q_OBJECT
-  // 所有打开过界面的, 都会有记录保存, 不管是什么类型的
-  enum class TabType : char {
-    Serial,
-    Udp_client,
-    Modbus_client,
-    MQTT_client,
-    Udp_server,
-    Modbus_server,
-    MQTT_broker,
-  };
 
  public:
   // 定义序列化接口
@@ -112,6 +104,8 @@ class TabManager : public QTabWidget {
 
   using WidgetFactory = std::function<QWidget*()>;
 
+  static uint16_t SpecialTypeNums(TtProtocolRole::Role role);
+
   explicit TabManager(QWidget* defalue_widget, QWidget* parent = nullptr);
   ~TabManager() override;
 
@@ -120,11 +114,11 @@ class TabManager : public QTabWidget {
   void addNewTab(QWidget* defaultWidget, const QString& title);
 
   // 注册 Widget 工厂函数
-  void registerWidget(int widgetId, const WidgetFactory& factory,
+  void registerWidget(TtProtocolRole::Role role, const WidgetFactory& factory,
                       const QString& title);
 
   // 在指定 Tab 中切换 Widget
-  void switchToWidget(int tabIndex, int widgetId);
+  void switchToWidget(int tabIndex, TtProtocolRole::Role role);
 
   void setupTabBar();
 
@@ -143,14 +137,12 @@ class TabManager : public QTabWidget {
  signals:
   void newTabRequested();  // 新建标签信号
 
-  // private slots:
  public slots:
   // 处理 widget1 中按钮点击事件
-  void handleButtonClicked(int tabIndex, int widgetId);
+  void handleButtonClicked(int tabIndex, TtProtocolRole::Role role);
   void handleAddNewTab();                   // 处理关闭标签
   void handleTabCloseRequested(int index);  // 处理关闭标签
   void removeUuidWidget(const QString& index);
-
   void switchToCurrentIndex(const QString& index);
 
  private:
@@ -230,9 +222,12 @@ class TabManager : public QTabWidget {
   const int maxClosedTabs_ = 10;
   QPoint dragStartPosition_;
 
-  QHash<int, WidgetFactory> widgetFactories;  // Widget 工厂函数映射
-  QHash<int, QString> widgetTitles;           // Widget 标题映射
+  QHash<TtProtocolRole::Role, WidgetFactory>
+      widgetFactories;                                // Widget 工厂函数映射
+  QHash<TtProtocolRole::Role, QString> widgetTitles;  // Widget 标题映射
   QMap<QString, QWidget*> widgetInstances;    // Widget 实例
+
+  static QMap<TtProtocolRole::Role, int> type_map_;
 };
 
 /*
@@ -265,4 +260,4 @@ class CustomTabPage : public QWidget, public TabManager::ISerializable {
 
 }  // namespace Ui
 
-#endif  // WINDOW_SWITCHER_H
+#endif  // UI_WINDOW_SWITCHER_H

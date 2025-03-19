@@ -3,7 +3,6 @@
 
 #include "core/serial_port.h"
 
-// #include
 namespace Ui {
 class TtLabelComboBox;
 class TtLabelBtnComboBox;

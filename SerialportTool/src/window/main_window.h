@@ -1,5 +1,5 @@
-#ifndef MAIN_WINDOW_H
-#define MAIN_WINDOW_H
+#ifndef WINDOW_MAIN_WINDOW_H
+#define WINDOW_MAIN_WINDOW_H
 
 #include <QMainWindow>
 #include <QObject>
@@ -83,8 +83,8 @@ class MainWindow : public QMainWindow {
   Ui::TtWidgetGroup *left_bar_logic_;
   //bool ishi{true};
 
-  // QListWidget *history_link_list_;
   Ui::SessionManager* history_link_list_;
+  Ui::SessionManager* history_instruction_list_;
   Ui::SessionManager* history_mock_list_;
 
   QVector<QVector<QWidget*>> stacked_;
@@ -109,4 +109,4 @@ class MainWindow : public QMainWindow {
 
 }  // namespace Window
 
-#endif  // MAIN_WINDOW_H
+#endif  // WINDOW_MAIN_WINDOW_H

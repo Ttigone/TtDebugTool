@@ -23,7 +23,7 @@ namespace Ui {
 
 class TtHorizontalLayout;
 
-class CommonButton : public AbstractButton {
+class Tt_EXPORT CommonButton : public AbstractButton {
  public:
   CommonButton(QWidget* parent = nullptr);
   CommonButton(const QImage& image, QWidget* parent = nullptr);
@@ -42,7 +42,7 @@ class CommonButton : public AbstractButton {
   void paintEvent(QPaintEvent* event) override;
 };
 
-class ConnerButton : public AbstractButton {
+class Tt_EXPORT ConnerButton : public AbstractButton {
   Q_OBJECT
   Q_PROPERTY(QRectF rect READ rect WRITE setRect)
   Q_PROPERTY(qint16 font READ fontSize WRITE setFontSize)
@@ -280,6 +280,7 @@ class Tt_EXPORT TtSvgButton : public QWidget {
 
   void setColors(const QColor& firstColor, const QColor& secondColor);
   void setHoverBackgroundColor(const QColor& color);
+  void setText(const QString& text);
 
   QSize svgSize() const;
   void setSvgSize(const int& w, const int& h);
@@ -288,7 +289,7 @@ class Tt_EXPORT TtSvgButton : public QWidget {
   bool isChecked() const;
   void setChecked(bool checked);
 
-  void setEnableToggle(bool toggle);
+  void setEnableHoldToCheck(bool enable);
 
  signals:
   void clicked();
@@ -300,6 +301,7 @@ class Tt_EXPORT TtSvgButton : public QWidget {
   void leaveEvent(QEvent* event) override;
   void mousePressEvent(QMouseEvent* event) override;
   void mouseReleaseEvent(QMouseEvent* event) override;
+  QSize sizeHint() const override;
 
  private:
   void updateSvgContent();
@@ -308,42 +310,18 @@ class Tt_EXPORT TtSvgButton : public QWidget {
   QSvgRenderer* svg_renderer_;
   QSize svg_size_;
   bool is_checked_;
+  bool enable_hold_to_check_;
 
   QString svg_path_;
+  QString text_;
   QColor first_color_;
   QColor second_color_;
+  QColor current_color_;
   QColor normal_color_;
   QColor hover_color_;
   QColor hover_bg_color_;
 
   bool is_hovered_;
-};
-
-class Tt_EXPORT TtToggleButton : public QWidget {
-  Q_OBJECT
-  Q_PROPERTY(qreal knobPosition READ knobPosition WRITE setKnobPosition)
-
- public:
-  explicit TtToggleButton(QWidget* parent = nullptr);
-  bool isChecked() const;
-
- signals:
-  void toggled(bool checked);
-
- public slots:
-  void setChecked(bool checked);
-
- protected:
-  void paintEvent(QPaintEvent* event) override;
-  void mousePressEvent(QMouseEvent* event) override;
-
-  qreal knobPosition() const;
-  void setKnobPosition(qreal position);
-
- private:
-  bool checked;
-  qreal m_knobPosition;
-  QPropertyAnimation* animation;
 };
 
 class Tt_EXPORT TtSpecialDeleteButton : public QWidget {
@@ -383,6 +361,18 @@ class Tt_EXPORT TtSpecialDeleteButton : public QWidget {
   TtElidedLabel* name_;
   TtSvgButton* delete_button_;
   bool old_state_;
+};
+
+class Tt_EXPORT TtTextButton : public QPushButton {
+  Q_OBJECT
+ public:
+  explicit TtTextButton(QWidget* parent = nullptr);
+  explicit TtTextButton(const QString& text, QWidget* parent = nullptr);
+  explicit TtTextButton(const QColor& color, const QString& text,
+                        QWidget* parent = nullptr);
+  ~TtTextButton();
+
+ private:
 };
 
 }  // namespace Ui

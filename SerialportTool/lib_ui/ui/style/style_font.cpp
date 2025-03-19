@@ -20,10 +20,7 @@ void StyleInitFontsResource()
 
 }
 
-
-namespace style
-{ 
-
+namespace style {
 
 const QString& SystemFontTag()
 {
@@ -67,5 +64,4 @@ int RegisterFontFamily(const QString& family)
 
 } // namespace internal
 
-} // namespace style
-
+}  // namespace style

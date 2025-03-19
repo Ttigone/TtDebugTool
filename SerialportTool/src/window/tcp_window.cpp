@@ -3,15 +3,13 @@
 #include <ui/control/ChatWidget/TtChatMessage.h>
 #include <ui/control/ChatWidget/TtChatMessageModel.h>
 #include <ui/control/ChatWidget/TtChatView.h>
-#include <ui/control/TtTableView.h>
+#include <ui/control/TtLineEdit.h>
 #include <ui/layout/horizontal_layout.h>
 #include <ui/layout/vertical_layout.h>
 #include <ui/widgets/buttons.h>
 #include <ui/widgets/collapsible_panel.h>
-#include <ui/widgets/fields/customize_fields.h>
 #include <ui/widgets/labels.h>
 #include <ui/widgets/message_bar.h>
-#include <ui/window/combobox.h>
 
 #include <lib/qtmaterialcheckable.h>
 #include <qtmaterialflatbutton.h>
@@ -23,7 +21,7 @@
 
 #include "core/tcp_client.h"
 #include "core/tcp_server.h"
-#include "widget/shortcut_instruction.h"
+#include "ui/controls/TtTableView.h"
 #include "widget/tcp_setting.h"
 
 namespace Window {
@@ -48,7 +46,6 @@ TcpWindow::TcpWindow(TtProtocolType::ProtocolRole role, QWidget* parent)
             [this](const QString& error) {
               Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""), error,
                                       1500, this);
-              // qDebug() << "eeeor ";
               on_off_btn_->setChecked(false);
               tcp_opened_ = false;
             });
@@ -67,7 +64,11 @@ TcpWindow::TcpWindow(TtProtocolType::ProtocolRole role, QWidget* parent)
   connectSignals();
 }
 
-QString TcpWindow::getTitle() {
+QJsonObject TcpWindow::getConfiguration() const {
+  return config_;
+}
+
+QString TcpWindow::getTitle() const {
   return title_->text();
 }
 
@@ -280,11 +281,10 @@ void TcpWindow::init() {
   QStackedLayout* layout = new QStackedLayout;
   layout->setContentsMargins(QMargins());
   layout->setSpacing(0);
-  QWidget* la_w = new QWidget(this);
-  la_w->setLayout(layout);
+  QWidget* basicWidget = new QWidget(this);
+  basicWidget->setLayout(layout);
 
-  QWidget* messageEdit = new QWidget(la_w);
-  // messageEdit
+  QWidget* messageEdit = new QWidget(basicWidget);
   QVBoxLayout* messageEditLayout = new QVBoxLayout;
   messageEdit->setLayout(messageEditLayout);
   messageEditLayout->setContentsMargins(3, 3, 3, 3);
@@ -301,7 +301,6 @@ void TcpWindow::init() {
 
   QWidget* bottomBtnWidget = new QWidget(messageEdit);
   bottomBtnWidget->setMinimumHeight(40);
-  //bottomBtnWidget->setStyleSheet("back)ground-color: red");
   Ui::TtHorizontalLayout* bottomBtnWidgetLayout = new Ui::TtHorizontalLayout;
   bottomBtnWidgetLayout->setContentsMargins(QMargins());
   bottomBtnWidgetLayout->setSpacing(0);
@@ -321,9 +320,10 @@ void TcpWindow::init() {
 
   messageEditLayout->addWidget(bottomBtnWidget);
 
-  Ui::TtTableWidget* table = new Ui::TtTableWidget(la_w);
+  instruction_table_ = new Ui::TtTableWidget(basicWidget);
 
   layout->addWidget(messageEdit);
+  layout->addWidget(instruction_table_);
   layout->setCurrentIndex(0);
 
   connect(m_tabs, &QtMaterialTabs::currentChanged, [this, layout](int index) {
@@ -331,16 +331,13 @@ void TcpWindow::init() {
   });
 
   bottomAllLayout->addWidget(tabs_and_count);
-  // bottomAllLayout->addWidget(messageEdit);
-  bottomAllLayout->addWidget(la_w);
+  bottomAllLayout->addWidget(basicWidget);
 
   VSplitter->addWidget(cont);
   VSplitter->addWidget(bottomAll);
 
-  // 左右分区
   mainSplitter->addWidget(VSplitter);
 
-  // 根据不同的角色，选择添加不同的窗口
   if (role_ == TtProtocolType::Client) {
     tcp_client_setting_ = new Widget::TcpClientSetting;
     mainSplitter->addWidget(tcp_client_setting_);
@@ -349,7 +346,6 @@ void TcpWindow::init() {
     mainSplitter->addWidget(tcp_server_setting_);
   }
 
-  // 主界面是左右分隔
   main_layout_->addWidget(mainSplitter);
 
   connect(on_off_btn_, &Ui::TtSvgButton::clicked, [this]() {
@@ -360,7 +356,6 @@ void TcpWindow::init() {
       } else if (role_ == TtProtocolType::Server) {
         tcp_server_->close();
       }
-      // tcp_opened_ = false;
     } else {
       if (role_ == TtProtocolType::Client) {
         qDebug() << "connectToServer";
@@ -371,7 +366,6 @@ void TcpWindow::init() {
         tcp_server_->startServer(
             tcp_server_setting_->getTcpServerConfiguration());
       }
-      // tcp_opened_ = true;
     }
   });
 
@@ -391,7 +385,6 @@ void TcpWindow::init() {
 
     if (role_ == TtProtocolType::Client) {
       tcp_client_->sendMessage(data.toUtf8());
-      // emit requestSendMessage(data.toUtf8());
     } else {
       tcp_server_->sendMessageToClients(data.toUtf8());
     }
@@ -403,11 +396,15 @@ void TcpWindow::init() {
 
 void TcpWindow::connectSignals() {
   connect(save_btn_, &Ui::TtSvgButton::clicked, [this]() {
-    // 保存配置界面, 但没有历史消息
-    // cfg_.obj.insert("WindowTitle", title_->text());
-    // cfg_.obj.insert("SerialSetting", serial_setting_->getSerialSetting());
-    // cfg_.obj.insert("InstructionTable", instruction_table_->getTableRecord());
-    // qDebug() << "yes";
+    config_.insert("WindowTitile", title_->text());
+    if (role_ == TtProtocolType::Client) {
+      config_.insert("TcpClientSetting",
+                     tcp_client_setting_->getTcpClientSetting());
+    } else if (role_ == TtProtocolType::Server) {
+      config_.insert("TcpServerSetting",
+                     tcp_server_setting_->getTcpServerSetting());
+    }
+    config_.insert("InstructionTable", instruction_table_->getTableRecord());
     // Ui::TtMessageBar::success(
     //     TtMessageBarType::Top, "警告",
     //     // "输入框不能为空，请填写完整信息。", 3000, this);

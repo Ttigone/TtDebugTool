@@ -1,6 +1,8 @@
 ﻿#ifndef UI_CONTROL_TTPOPUPDRAWER_P_H
 #define UI_CONTROL_TTPOPUPDRAWER_P_H
 
+#include "ui/Def.h"
+
 namespace Ui {
 
 class TtPopUpDrawer;
@@ -22,7 +24,9 @@ class TtPopUpDrawerPrivate {
   TtPopUpDrawerWidget* widget_;
   TtPopUpDrawerStateMachine* state_machine_;  // 状态机
   QWidget* window_;
-  int width_;
+  TtPopUpDirection::PopUpDirection direction_;
+  // int width_;
+  int size_;
   bool click_to_close_;
   bool auto_raise_;
   bool closed_;

@@ -7,6 +7,10 @@ namespace Ui {
 class TtLabelComboBox;
 class TtLabelBtnComboBox;
 class TtLabelLineEdit;
+class TtLabelLineEdit;
+class TtCheckBox;
+class TtVerticalLayout;
+class TtRadioButton;
 }  // namespace Ui
 
 namespace Core {
@@ -24,6 +28,8 @@ class UdpServerSetting : public QWidget {
 
   Core::UdpServerConfiguration getUdpServerConfiguration();
 
+  const QJsonObject& getUdpServerSetting();
+
  signals:
 
  private:
@@ -37,6 +43,8 @@ class UdpServerSetting : public QWidget {
   Ui::TtLabelComboBox* framing_fixed_length_;
 
   Ui::TtLabelBtnComboBox* retransmission_;
+
+  QJsonObject udp_server_save_config_;
 };
 
 class UdpClientSetting : public QWidget {
@@ -46,6 +54,8 @@ class UdpClientSetting : public QWidget {
   ~UdpClientSetting();
 
   Core::UdpClientConfiguration getUdpClientConfiguration();
+
+  const QJsonObject& getUdpClientSetting();
 
  signals:
 
@@ -67,6 +77,8 @@ class UdpClientSetting : public QWidget {
   Ui::TtLabelComboBox* framing_fixed_length_;
 
   Ui::TtLabelBtnComboBox* retransmission_;
+
+  QJsonObject udp_client_save_config_;
 };
 
 }  // namespace Widget

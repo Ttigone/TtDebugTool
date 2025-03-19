@@ -21,8 +21,7 @@ namespace Ui {
 
 class TtThemePrivate;
 
-// class Tt_EXPORT TtTheme : public QObject {
-class TtTheme : public QObject {
+class Tt_EXPORT TtTheme : public QObject {
   Q_OBJECT
   Q_Q_CREATE(TtTheme)
   // 单例

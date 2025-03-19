@@ -33,23 +33,7 @@ class Tt_EXPORT TtAnimatedDrawer : public QObject {
     updateSplitterLayout(width);
   }
 
-  void toggleDrawer() {
-    if (animation_->state() == QPropertyAnimation::Running) {
-      // 如果动画正在运行，反转方向
-      if (targetDrawerVisible_) {
-        closeDrawer();
-      } else {
-        openDrawer();
-      }
-    } else {
-      // 否则根据当前状态切换
-      if (isDrawerVisible_) {
-        closeDrawer();
-      } else {
-        openDrawer();
-      }
-    }
-  }
+  void toggleDrawer();
 
   void openDrawer();
   void closeDrawer();
@@ -58,49 +42,14 @@ class Tt_EXPORT TtAnimatedDrawer : public QObject {
   bool targetDrawerVisible() const { return targetDrawerVisible_; }
 
  private slots:
-  void updateSplitterLayout(int drawerWidth) {
-    if (!splitter_ || splitter_->count() < 2)
-      return;
-
-    const int total = splitter_->width();
-    QList<int> sizes{drawerWidth, total - drawerWidth};
-    splitter_->setSizes(sizes);
-  }
+  void updateSplitterLayout(int drawerWidth);
 
   void onAnimationFinished();
 
  private:
-  void saveWidgetStates() {
-    if (!drawer_)
-      return;
+  // void saveWidgetStates();
 
-    // 保存主容器的状态
-    originalStates[drawer_] = {drawer_->minimumSize(), drawer_->sizePolicy()};
-
-    // 保存所有子控件的状态
-    for (QWidget* child : drawer_->findChildren<QWidget*>()) {
-      originalStates[child] = {child->minimumSize(), child->sizePolicy()};
-    }
-  }
-
-  void restoreWidgetStates() {
-    if (!drawer_)
-      return;
-
-    // 恢复所有保存的状态
-    for (auto it = originalStates.begin(); it != originalStates.end(); ++it) {
-      if (QWidget* widget = it.key()) {
-        widget->setMinimumSize(it.value().minimumSize);
-        widget->setSizePolicy(it.value().sizePolicy);
-      }
-    }
-
-    // 强制更新布局
-    if (drawer_->layout()) {
-      drawer_->layout()->activate();
-    }
-    drawer_->updateGeometry();
-  }
+  void restoreWidgetStates();
 
   QSplitter* splitter_;
   QWidget* drawer_;
@@ -111,12 +60,12 @@ class Tt_EXPORT TtAnimatedDrawer : public QObject {
   bool isDrawerVisible_;         // Drawer 的可见状态
   bool targetDrawerVisible_;     // 新增目标状态变量
 
-  // 保存子控件的原始尺寸策略和最小尺寸
-  struct WidgetState {
-    QSize minimumSize;
-    QSizePolicy sizePolicy;
-  };
-  QHash<QWidget*, WidgetState> originalStates;
+  // // 保存子控件的原始尺寸策略和最小尺寸
+  // struct WidgetState {
+  //   QSize minimumSize;
+  //   QSizePolicy sizePolicy;
+  // };
+  // QHash<QWidget*, WidgetState> originalStates;
 };
 
 }  // namespace Ui

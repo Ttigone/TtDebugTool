@@ -1,5 +1,5 @@
-#ifndef POPUP_WINDOW_H
-#define POPUP_WINDOW_H
+#ifndef WINDOW_POPUP_WINDOW_H
+#define WINDOW_POPUP_WINDOW_H
 
 #include <QStackedLayout>
 
@@ -33,4 +33,4 @@ class PopUpWindow : public QWidget {
 
 }  // namespace Window
 
-#endif  // POPUP_WINDOW_H
+#endif  // WINDOW_POPUP_WINDOW_H

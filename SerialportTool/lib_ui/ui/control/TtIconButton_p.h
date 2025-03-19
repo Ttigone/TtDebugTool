@@ -34,9 +34,9 @@ class TtIconButtonPrivate : public QObject {
   ~TtIconButtonPrivate();
 
  private:
-  QPixmap iconPix_;
-  bool isAlphaAnimationFinished_{true};
-  TtThemeType::ThemeMode _themeMode;
+  QPixmap icon_pix_;
+  bool is_alpha_animation_finished_ = true;
+  TtThemeType::ThemeMode theme_mode_;
 };
 
 }  // namespace Ui

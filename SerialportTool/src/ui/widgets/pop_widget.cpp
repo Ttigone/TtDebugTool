@@ -3,11 +3,14 @@
 #include <ui/control/TtPopUpDrawer.h>
 #include "qtmaterialdrawer_internal.h"
 
+#include <ui/Def.h>
+
 namespace Ui {
 
 PopWidget::PopWidget(QWidget* parent)
     : QWidget(parent),
       drawer_(new TtPopUpDrawer(parent)),
+      // drawer_(new QtMaterialDrawer(parent)),
       is_open_(false) {
   init();
 }
@@ -47,6 +50,8 @@ void PopWidget::init() {
   drawer_->setClickOutsideToClose(true);
   drawer_->setOverlayMode(true);
   drawer_->setAutoRaise(true);
+  drawer_->setDrawerSize(300);
+  drawer_->setDirection(TtPopUpDirection::Left);
 
   drawer_layout_ = new QVBoxLayout;
   drawer_layout_->setContentsMargins(QMargins());

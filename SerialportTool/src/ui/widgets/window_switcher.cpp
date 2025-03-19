@@ -10,11 +10,23 @@
 
 namespace Ui {
 
+QMap<TtProtocolRole::Role, int> TabManager::type_map_ = {
+    {TtProtocolRole::Serial, 0},       {TtProtocolRole::TcpClient, 0},
+    {TtProtocolRole::TcpServer, 0},    {TtProtocolRole::UdpClient, 0},
+    {TtProtocolRole::UdpServer, 0},    {TtProtocolRole::MqttClient, 0},
+    {TtProtocolRole::MqttBroker, 0},   {TtProtocolRole::ModbusClient, 0},
+    {TtProtocolRole::ModbusServer, 0}, {TtProtocolRole::BlueTeeth, 0},
+};
+
+uint16_t TabManager::SpecialTypeNums(TtProtocolRole::Role role) {
+  return type_map_[role];
+}
+
 TabManager::TabManager(QWidget* defaultWidget, QWidget* parent)
     : QTabWidget(parent) {
   setTabBar(new ExtTabBar());
   setupCornerButton();
-  setTabBarAutoHide(true);
+  // setTabBarAutoHide(true);
 
   setStyleSheet(R"(
     QTabWidget::pane {
@@ -91,14 +103,15 @@ void TabManager::addNewTab(QWidget* defaultWidget, const QString& title) {
   // updateTabStyle(tabIndex);
 }
 
-void TabManager::registerWidget(int widgetId, const WidgetFactory& factory,
+void TabManager::registerWidget(TtProtocolRole::Role role,
+                                const WidgetFactory& factory,
                                 const QString& title) {
   // widgetid 注册的窗口标识符 [2]
-  widgetFactories[widgetId] = factory;
-  widgetTitles[widgetId] = title;
+  widgetFactories[role] = factory;
+  widgetTitles[role] = title;
 }
 
-void TabManager::switchToWidget(int tabIndex, int widgetId) {
+void TabManager::switchToWidget(int tabIndex, TtProtocolRole::Role role) {
   // 根据 id 切换目标 widget
   // base::DetectRunningTime runtime;
 
@@ -107,7 +120,7 @@ void TabManager::switchToWidget(int tabIndex, int widgetId) {
     return;  // 无效的 Tab 索引
   }
 
-  if (!widgetFactories.contains(widgetId)) {
+  if (!widgetFactories.contains(role)) {
     qDebug() << "no register";
     return;  // 未注册的 Widget ID
   }
@@ -116,16 +129,16 @@ void TabManager::switchToWidget(int tabIndex, int widgetId) {
   // 实现原地操作
   // 根据 index 去索引 widget, 目标切换窗口!!! 点击的时候对应的 index
   QWidget* currentWidget = widget(tabIndex);
-  //qDebug() << "cur: tabIndex - " << tabIndex;
   if (currentWidget) {
     currentWidget->deleteLater();
   }
 
   // 创建新的 Widget
-  QWidget* newWidget = widgetFactories[widgetId]();
+  QWidget* newWidget = widgetFactories[role]();
+
+  type_map_[role]++;
 
   // qDebug() << runtime.elapseMilliseconds();
-
   // 实例应当个性化
   //widgetInstances[newWidget] = ;  // 存储原始指针
   // 根据 uuid 标识
@@ -133,9 +146,9 @@ void TabManager::switchToWidget(int tabIndex, int widgetId) {
 
 
   // 设置 tab 的文本
-  setTabText(tabIndex, widgetTitles[widgetId]);
+  setTabText(tabIndex, widgetTitles[role]);
   // 向 tabIndex 所有的 tab 界面设置界面 newWidget, title 为对应索引值
-  insertTab(tabIndex, newWidget, widgetTitles[widgetId]);
+  insertTab(tabIndex, newWidget, widgetTitles[role]);
 
   setupCustomTabButton(tabIndex);
   // updateTabStyle(tabIndex);
@@ -317,11 +330,11 @@ void TabManager::deserializeTab(const QJsonObject& obj) {
 }
 
 // void TabManager::handleButtonClicked(int tabIndex) {
-void TabManager::handleButtonClicked(int tabIndex, int widgetId) {
+void TabManager::handleButtonClicked(int tabIndex, TtProtocolRole::Role role) {
   // 假设点击按钮后切换到 widget2
   //qDebug() << 
   // TODO 信号只传递了要切换的 widgetid, 但是没有 tabindex !!!
-  switchToWidget(tabIndex, widgetId);  // widgetId = 2 是 widget2
+  switchToWidget(tabIndex, role);  // widgetId = 2 是 widget2
 }
 
 void TabManager::handleAddNewTab() {

@@ -1,5 +1,5 @@
-#ifndef SERIAL_WINDOW_H
-#define SERIAL_WINDOW_H
+#ifndef WINDOW_SERIAL_WINDOW_H
+#define WINDOW_SERIAL_WINDOW_H
 
 #include <QApplication>
 #include <QButtonGroup>
@@ -125,4 +125,4 @@ class SerialWindow : public QWidget, public Ui::TabManager::ISerializable {
 
 }  // namespace Window
 
-#endif  // SERIAL_WINDOW_H
+#endif  // WINDOW_SERIAL_WINDOW_H

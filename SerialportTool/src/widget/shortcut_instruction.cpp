@@ -1,5 +1,6 @@
 #include "widget/shortcut_instruction.h"
 #include <qscrollbar.h>
+#include <ui/control/TtSwitchButton.h>
 #include <ui/widgets/buttons.h>
 
 namespace Widget {
@@ -126,7 +127,7 @@ void InstructionWidget::init() {
   QHBoxLayout* layout = new QHBoxLayout;
   body->setLayout(layout);
 
-  auto enableBtn = new Ui::TtToggleButton(this);
+  auto enableBtn = new Ui::TtSwitchButton(this);
   // QLabel* isEnable = new QLabel(tr("启用"));
   auto nameLineEdit = new QLineEdit(tr("名称"));
   QComboBox* formatComboBox = new QComboBox();

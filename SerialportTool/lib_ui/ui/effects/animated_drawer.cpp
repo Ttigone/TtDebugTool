@@ -29,11 +29,31 @@ TtAnimatedDrawer::TtAnimatedDrawer(QSplitter* splitter, QWidget* drawer,
           &TtAnimatedDrawer::onAnimationFinished);
 }
 
+void TtAnimatedDrawer::toggleDrawer() {
+  if (animation_->state() == QPropertyAnimation::Running) {
+    // 如果动画正在运行，反转方向
+    if (targetDrawerVisible_) {
+      closeDrawer();
+    } else {
+      openDrawer();
+    }
+  } else {
+    // 否则根据当前状态切换
+    if (isDrawerVisible_) {
+      closeDrawer();
+    } else {
+      openDrawer();
+    }
+  }
+}
+
 void TtAnimatedDrawer::openDrawer() {
   if (animation_->state() == QAbstractAnimation::Running &&
       targetDrawerVisible_) {
     return;
   }
+  // 一开始打开时候的状态
+  restoreWidgetStates();
 
   drawer_->setVisible(true);
   animation_->stop();
@@ -57,15 +77,20 @@ void TtAnimatedDrawer::closeDrawer() {
       !targetDrawerVisible_) {
     return;
   }
+
+  // 恢复之前可能未完成的策略修改
+  restoreWidgetStates();  // 新增：在关闭前恢复控件状态
+
   animation_->stop();
 
+  // 跳过的控件
+  QSet<QWidget*> skipWidgets;
   // 保存子控件原始尺寸策略，以便恢复
   QList<QPair<QWidget*, QSizePolicy>> originalPolicies;
   QMap<QWidget*, QByteArray> originalLayouts;  // 保存布局信息
 
   QList<QWidget*> selfButtons = drawer_->findChildren<QWidget*>(
       "TtSpecialDeleteButton");  // 找到 wwww 控件
-  QSet<QWidget*> skipWidgets;
   for (QWidget* button : selfButtons) {
     skipWidgets.insert(button);
     // 封装控件的子节点
@@ -75,34 +100,27 @@ void TtAnimatedDrawer::closeDrawer() {
     }
   }
 
+  // 添加 refreshBtn 到跳过列表
+  QList<QWidget*> refreshBtns = drawer_->findChildren<QWidget*>("TtSvgButton");
+  for (QWidget* btn : refreshBtns) {
+    skipWidgets.insert(btn);
+  }
+
   QList<QWidget*> children = drawer_->findChildren<QWidget*>();
   for (QWidget* child : children) {
     originalPolicies.append(qMakePair(child, child->sizePolicy()));
-    // 允许水平方向自由缩放
-    QSizePolicy sp = child->sizePolicy();
-    sp.setHorizontalPolicy(QSizePolicy::Ignored);
-    if (skipWidgets.contains(child)) {
-      // qDebug() << "跳过 wwww 或其子控件";
-      continue;
+    if (!skipWidgets.contains(child)) {
+      QSizePolicy sp = child->sizePolicy();
+      sp.setHorizontalPolicy(QSizePolicy::Ignored);
+      child->setSizePolicy(sp);
     }
-    child->setSizePolicy(sp);
-    // child->setMinimumWidth(0);
-    // child->setMaximumWidth(16777215);  // 重置为默认最大值
   }
 
   // 存储原始策略以便恢复
-  QVariant var;
-  var.setValue(originalPolicies);
-  drawer_->setProperty("originalSizePolicies", var);
-  // qDebug() << originalPolicies;
-
-  // // 禁用布局更新
-  // if (drawer_->layout()) {
-  //   drawer_->layout()->setEnabled(false);
-  // }
+  drawer_->setProperty("originalSizePolicies",
+                       QVariant::fromValue(originalPolicies));
 
   targetDrawerVisible_ = false;
-
   // 直接记录当前宽度，避免在动画过程中获取错误值
   const int currentWidth = splitter_->sizes().value(0, default_width_);
   default_width_ = currentWidth;
@@ -112,11 +130,19 @@ void TtAnimatedDrawer::closeDrawer() {
 
 }
 
+void TtAnimatedDrawer::updateSplitterLayout(int drawerWidth) {
+  if (!splitter_ || splitter_->count() < 2)
+    return;
+
+  const int total = splitter_->width();
+  QList<int> sizes{drawerWidth, total - drawerWidth};
+  splitter_->setSizes(sizes);
+}
+
 void TtAnimatedDrawer::onAnimationFinished() {
   isDrawerVisible_ = targetDrawerVisible_;
   if (!isDrawerVisible_) {
     // 关闭的状态
-    // qDebug() << "guanbi";
     drawer_->setVisible(false);
     QVariant var = drawer_->property("originalSizePolicies");
     if (var.isValid()) {
@@ -125,19 +151,37 @@ void TtAnimatedDrawer::onAnimationFinished() {
         pair.first->setSizePolicy(pair.second);
       }
     }
-
-    // // 恢复布局更新
-    // if (drawer_->layout()) {
-    //   drawer_->layout()->setEnabled(true);
-    // }
-
   } else {
-    // qDebug() << "dakai";
   }
 
   splitter_->update();
   splitter_->widget(0)->updateGeometry();
   splitter_->widget(1)->updateGeometry();
+}
+
+// void TtAnimatedDrawer::saveWidgetStates() {
+//   if (!drawer_)
+//     return;
+
+//   // 保存主容器的状态
+//   originalStates[drawer_] = {drawer_->minimumSize(), drawer_->sizePolicy()};
+
+//   // 保存所有子控件的状态
+//   for (QWidget* child : drawer_->findChildren<QWidget*>()) {
+//     originalStates[child] = {child->minimumSize(), child->sizePolicy()};
+//   }
+// }
+
+void TtAnimatedDrawer::restoreWidgetStates() {
+  QVariant var = drawer_->property("originalSizePolicies");
+  if (var.isValid()) {
+    auto originalPolicies = var.value<QList<QPair<QWidget*, QSizePolicy>>>();
+    for (const auto& pair : originalPolicies) {
+      pair.first->setSizePolicy(pair.second);
+    }
+    drawer_->setProperty("originalSizePolicies",
+                         QVariant());  // 清除保存的状态
+  }
 }
 
 }  // namespace Ui

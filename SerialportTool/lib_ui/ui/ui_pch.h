@@ -75,14 +75,16 @@
 #define Q_PROPERTY_CREATE(TYPE, M)                          \
   Q_PROPERTY(TYPE p##M MEMBER p##M##_ NOTIFY p##M##Changed) \
  public:                                                    \
-  Q_SIGNAL void p##M##Changed();                            \
   void set##M(TYPE M) {                                     \
-    p##M##_ = M;                                            \
-    Q_EMIT p##M##Changed();                                 \
+    if (p##M##_ != M) {                                     \
+      p##M##_ = M;                                          \
+      Q_EMIT p##M##Changed();                               \
+    }                                                       \
   }                                                         \
   TYPE get##M() const {                                     \
     return p##M##_;                                         \
   }                                                         \
+  Q_SIGNAL void p##M##Changed();                            \
                                                             \
  private:                                                   \
   TYPE p##M##_;

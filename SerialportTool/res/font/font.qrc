@@ -18,5 +18,6 @@
         <file>roboto/Roboto-Regular.ttf</file>
         <file>roboto/Roboto-Thin.ttf</file>
         <file>roboto/Roboto-ThinItalic.ttf</file>
+        <file>iconfont.ttf</file>
     </qresource>
 </RCC>

@@ -12,6 +12,7 @@ class TtLineEditPrivate : public QObject {
   Q_D_CREATE(TtLineEdit)
   Q_PROPERTY_CREATE_D(int, BorderRadius)
   Q_PROPERTY_CREATE_D(bool, IsClearButtonEnable)
+  Q_PROPERTY_CREATE_D(bool, IsReadOnlyNoClearButtonEnable)
   Q_PROPERTY_CREATE(qreal, ExpandMarkWidth)
  public:
   explicit TtLineEditPrivate(QObject* parent = nullptr);

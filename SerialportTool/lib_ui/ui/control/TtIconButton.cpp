@@ -2,6 +2,7 @@
 #include "ui/control/TtIconButton_p.h"
 
 #include <QEvent>
+#include <QFontDatabase>
 #include <QPainterPath>
 
 #include "ui/TtTheme.h"
@@ -136,6 +137,12 @@ void TtIconButton::paintEvent(QPaintEvent* event) {
     painter.setBrush(hoverColor);
   }
   painter.drawRoundedRect(rect(), d->pBorderRadius_, d->pBorderRadius_);
+
+  int fontId =
+      QFontDatabase::addApplicationFont(":/font/fontawesome-webfont.ttf");
+  QString family = QFontDatabase::applicationFontFamilies(fontId).at(0);
+  QFont iconFont(family);
+  painter.setFont(iconFont);
   // 图标绘制
   if (!d->icon_pix_.isNull()) {
     QPainterPath path;
@@ -151,7 +158,8 @@ void TtIconButton::paintEvent(QPaintEvent* event) {
                                         : d->pDarkIconColor_
                        : TtThemeColor(d->theme_mode_, BasicTextDisable));
     painter.drawText(rect(), Qt::AlignCenter,
-                     QChar((unsigned short)d->pAwesome_));
+                     // QChar((unsigned short)d->pAwesome_));
+                     QChar(0xf00d));
   }
   painter.restore();
 }

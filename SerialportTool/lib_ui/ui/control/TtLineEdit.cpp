@@ -47,10 +47,19 @@ TtLineEdit::TtLineEdit(const QString& text, QWidget* parent)
 
 TtLineEdit::~TtLineEdit() {}
 
+void TtLineEdit::setReadOnlyNoClearButton(bool enable) {
+  Q_D(TtLineEdit);
+  d->pIsReadOnlyNoClearButtonEnable_ = enable;
+}
+
 // 设置清除按钮是否启用
 void TtLineEdit::setIsClearButtonEnable(bool isClearButtonEnable) {
   Q_D(TtLineEdit);
-  d->pIsClearButtonEnable_ = isClearButtonEnable;
+  if (d->pIsReadOnlyNoClearButtonEnable_) {
+    d->pIsClearButtonEnable_ = isClearButtonEnable && !isReadOnly();
+  } else {
+    d->pIsClearButtonEnable_ = isClearButtonEnable;
+  }
   // 调用基类的方法设置清除按钮是否启用
   setClearButtonEnabled(isClearButtonEnable);
   // 发射清除按钮启用状态改变的信号
@@ -68,9 +77,16 @@ void TtLineEdit::focusInEvent(QFocusEvent* event) {
   // 发射获得焦点的信号，并传递当前文本
   Q_EMIT focusIn(this->text());
   if (event->reason() == Qt::MouseFocusReason) {
-    if (d->pIsClearButtonEnable_) {
-      // 如果清除按钮启用，显示清除按钮
-      setClearButtonEnabled(true);
+    if (d->pIsReadOnlyNoClearButtonEnable_) {
+      if (d->pIsClearButtonEnable_ && !isReadOnly()) {
+        // 如果清除按钮启用，显示清除按钮
+        setClearButtonEnabled(true);
+      }
+    } else {
+      if (d->pIsClearButtonEnable_) {
+        // 如果清除按钮启用，显示清除按钮
+        setClearButtonEnabled(true);
+      }
     }
     // 创建一个属性动画，用于动画扩展标记的宽度
     QPropertyAnimation* markAnimation =
@@ -199,6 +215,7 @@ void TtLineEditPrivate::init() {
   pExpandMarkWidth_ = 0;
   // 启用清除按钮
   pIsClearButtonEnable_ = true;
+  pIsReadOnlyNoClearButtonEnable_ = false;
 
   // // 事件总线相关设置
   // // 创建一个名为 "WMWindowClicked" 的事件，用于处理窗口点击事件

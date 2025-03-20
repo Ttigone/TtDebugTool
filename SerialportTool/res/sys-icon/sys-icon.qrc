@@ -20,5 +20,6 @@
         <file>unlink.svg</file>
         <file>plus.svg</file>
         <file>graph-up.svg</file>
+        <file>edit.svg</file>
     </qresource>
 </RCC>

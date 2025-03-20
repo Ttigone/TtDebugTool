@@ -24,17 +24,23 @@
 namespace Window {
 
 ModbusWindow::ModbusWindow(TtProtocolType::ProtocolRole role, QWidget* parent) {
-  modbus_master_ = new Core::ModbusMaster;
+  init();
+  modbus_master_ = new Core::ModbusMaster();
   connect(modbus_master_, &Core::ModbusMaster::errorOccurred, this,
           [this](const QString& error) {
             Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""), error, 1500,
                                     this);
           });
-  connect(modbus_master_, &Core::ModbusMaster::dataReceived,
-          [this](const QVector<quint16>& data) {
-            qDebug() << "get data: " << data;
-          });
-  init();
+  // connect(modbus_master_, &Core::ModbusMaster::dataReceived,
+  //         [this](const QVector<quint16>& data) {
+  //           qDebug() << "get datas: " << data;
+  //           holding_registers_table_->setValue(data);
+  //         });
+  // QMetaObject::connect(modbus_master_, &Core::ModbusMaster::dataReceived, this,
+  //                      QOverload<const int&, const QVector<quint16>&>::of(
+  //                          &Window::ModbusWindow::sloveDataReceived));
+  QObject::connect(modbus_master_, &Core::ModbusMaster::dataReceived, this,
+                   &Window::ModbusWindow::sloveDataReceived);
 }
 
 ModbusWindow::~ModbusWindow() {}
@@ -67,6 +73,12 @@ void ModbusWindow::switchToEditMode() {
 void ModbusWindow::switchToDisplayMode() {
   title_->setText(title_edit_->text());
   stack_->setCurrentWidget(original_widget_);
+}
+
+void ModbusWindow::sloveDataReceived(const int& addr,
+                                     const QVector<quint16>& data) {
+  // qDebug() << addr << data[0];
+  holding_registers_table_->setValue(addr, data);
 }
 
 void ModbusWindow::init() {
@@ -206,6 +218,12 @@ void ModbusWindow::init() {
 
 void ModbusWindow::connectSignals() {
   connect(on_off_btn_, &Ui::TtSvgButton::clicked, [this]() {
+    if (modbus_master_->isConnected()) {
+      qDebug() << "断开";
+      modbus_master_->toDisconnect();
+      modbus_client_setting_->setControlState(true);
+      return;
+    }
     modbus_master_->setupConfiguration(
         modbus_client_setting_->getModbusClientConfiguration());
     if (!modbus_master_->isConnected()) {
@@ -219,9 +237,6 @@ void ModbusWindow::connectSignals() {
         on_off_btn_->setChecked(false);
         modbus_client_setting_->setControlState(true);
       }
-    } else {
-      qDebug() << "断开";
-      modbus_master_->toDisconnect();
     }
   });
 
@@ -315,7 +330,8 @@ QWidget* ModbusWindow::createHoldingRegisterWidget() {
   plusButton->setIcon(QIcon(":/sys/plus-circle.svg"));
   bottomWidgetLayout->addWidget(plusButton);
 
-  auto table = new Ui::TtModbusTableWidget(holdingRegistersWidget);
+  holding_registers_table_ =
+      new Ui::TtModbusTableWidget(holdingRegistersWidget);
   // auto table = new QTableView;
   // 创建模型和委托实例
   // Ui::TableModel* model = new Ui::TableModel(this);
@@ -341,18 +357,27 @@ QWidget* ModbusWindow::createHoldingRegisterWidget() {
   // 读取 / 写入 修改对应框
 
   // refresh
-  connect(refresh_btn_, &Ui::TtSvgButton::clicked, [this, table]() {
-    // 读取数据
+  connect(refresh_btn_, &Ui::TtSvgButton::clicked, [this]() {
+    // 只能一个个读取, 然后按照行逐一返回
     // table 需要根据行, 获取地址, 获取后, 将数据写到对应行
-    table->getRowValue(1, 1);
+    if (holding_registers_table_->rowCount() > 1) {
+      modbus_master_->readHoldingData(
+          holding_registers_table_->getAddressValue(), 1);
+    }
   });
 
-  coilsWidgetLayout->addWidget(table, 1);
+  connect(holding_registers_table_, &Ui::TtModbusTableWidget::valueConfirmed,
+          [this](const int& address, const int& value) {
+            qDebug() << "T: " << address << value;
+            modbus_master_->writeHoldingData(address, QVector<quint16>(value),
+                                             1);
+          });
+
+  coilsWidgetLayout->addWidget(holding_registers_table_, 1);
   coilsWidgetLayout->addWidget(bottomWidget, 0, Qt::AlignBottom);
 
   connect(plusButton, &QPushButton::clicked, this,
-          [this, table]() { table->addRow(); });
-  // [this, table]() {});
+          [this]() { holding_registers_table_->addRow(); });
   return holdingRegistersWidget;
 }
 

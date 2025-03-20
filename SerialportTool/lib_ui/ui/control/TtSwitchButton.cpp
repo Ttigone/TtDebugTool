@@ -134,7 +134,7 @@ void TtSwitchButton::paintEvent(QPaintEvent* event) {
 
   // 绘制文本
   if (!text_.isEmpty()) {
-    painter.setPen(checked ? Qt::white : Qt::black);
+    painter.setPen(Qt::black);
     painter.setFont(font());
     painter.drawText(
         textRect,

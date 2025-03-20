@@ -2,6 +2,7 @@
 #define WIDGET_MODBUS_SETTING_H
 
 #include <QWidget>
+#include "Def.h"
 
 namespace Ui {
 class TtLabelComboBox;
@@ -27,6 +28,8 @@ class ModbusClientSetting : public QWidget {
 
   Core::ModbusMasterConfiguration getModbusClientConfiguration();
   const QJsonObject& getModbusClientSetting();
+
+  TtModbusProcotol::Type getModbusLinkType();
 
  public slots:
   void setLinkType();

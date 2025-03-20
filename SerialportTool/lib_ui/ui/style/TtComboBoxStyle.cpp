@@ -1,5 +1,6 @@
 #include "TtComboBoxStyle.h"
 
+#include <QFontDatabase>
 #include <QPainterPath>
 
 #include "ui/TtTheme.h"
@@ -187,7 +188,10 @@ void TtComboBoxStyle::drawComplexControl(ComplexControl control,
         QRect expandIconRect = subControlRect(
             QStyle::CC_ComboBox, copt, QStyle::SC_ScrollBarAddPage, widget);
         if (expandIconRect.isValid()) {
-          QFont iconFont = QFont(":/font/iconfont.ttf");
+          int fontId = QFontDatabase::addApplicationFont(
+              ":/font/fontawesome-webfont.ttf");
+          QString family = QFontDatabase::applicationFontFamilies(fontId).at(0);
+          QFont iconFont(family);
           iconFont.setPixelSize(15);
           painter->setFont(iconFont);
           painter->setPen(
@@ -204,7 +208,7 @@ void TtComboBoxStyle::drawComplexControl(ComplexControl control,
           // painter->drawText(expandIconRect, Qt::AlignCenter,
           //                   QChar((unsigned short)TtIconType::AngleDown));
           // painter->drawText(expandIconRect, Qt::AlignCenter, QChar('X'));
-          painter->drawText(expandIconRect, Qt::AlignCenter, QChar(0xe612));
+          painter->drawText(expandIconRect, Qt::AlignCenter, QChar(0xf106));
           painter->restore();
         }
       }

@@ -76,25 +76,40 @@ class ModbusMaster : public QObject {
   //                          server_);  //写保持寄存器
   // }
 
-  void readCoilsData(const int& startAddr, const quint16& size) {
+  void readCoilsData(const int& startAddr, const quint16& size,
+                     const int& serverAddr) {
     readModbusData(QModbusDataUnit::Coils, startAddr, size,
-                   server_);  //读线圈
+                   serverAddr);  //读线圈
   }
-  void readHoldingData(const int& startAddr, const quint16& size) {
+
+  void readHoldingData(const QVector<int>& addrs, const int& serverAddr) {
+    // 直接传入一系列地址, 接收只能一个一个值接收, 因为 1 字节请求, 需要拆分
+    for (auto it = addrs.cbegin(); it != addrs.cend(); ++it) {
+      readModbusData(QModbusDataUnit::HoldingRegisters, *it, 1, serverAddr);
+    }
+    // readModbusData(QModbusDataUnit::HoldingRegisters, startAddr, size,
+    //                serverAddr);  //读保持寄存器
+  }
+
+  void readHoldingData(const int& startAddr, const quint16& size,
+                       const int& serverAddr) {
     readModbusData(QModbusDataUnit::HoldingRegisters, startAddr, size,
-                   server_);  //读保持寄存器
+                   serverAddr);  //读保持寄存器
   }
-  void writeCoilsData(const int& startAddr, const QVector<quint16>& values) {
+  void writeCoilsData(const int& startAddr, const QVector<quint16>& values,
+                      const int& serverAddr) {
     writeModbusData(QModbusDataUnit::Coils, startAddr, values,
-                    server_);  //写线圈
+                    serverAddr);  //写线圈
   }
-  void writeHoldingData(const int& startAddr, const QVector<quint16>& values) {
+  void writeHoldingData(const int& startAddr, const QVector<quint16>& values,
+                        const int& serverAddr) {
     writeModbusData(QModbusDataUnit::HoldingRegisters, startAddr, values,
-                    server_);  //写保持寄存器
+                    serverAddr);  //写保持寄存器
   }
 
  signals:
-  void dataReceived(const QVector<quint16>& data);
+  void dataReceived(const int& startAddr, const QVector<quint16>& data);
+  // void dataReceived(const QVector<quint16>& data);
   void errorOccurred(const QString& error);
 
  private slots:
@@ -108,7 +123,6 @@ class ModbusMaster : public QObject {
   void configUdpParam();
 
   QModbusClient* modbusDevice = nullptr;
-  const int server_ = 8;
 };
 
 }  // namespace Core

@@ -16,10 +16,6 @@ set(LIB_UI_OUT_ROOT "${CMAKE_BINARY_DIR}/${PROJECT_NAME}")
 add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 add_definitions(-DTTLIBUI_LIBRARY) # 在库项目中定义 TTLIBUI_LIBRARY
 
-set(RES_QRC
-    ui/res/font/fonts.qrc
-)
-
 
 # 设置库导出路径
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${LIB_UI_OUT_ROOT})
@@ -35,7 +31,7 @@ endif ()
 if (${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_library(${TARGET_NAME}
         ${LIB_TYPE}
-        ${RES_QRC}
+        ui/res/fonts.qrc
         # ${PROJECT_SOURCES}
     )
 else ()
@@ -57,6 +53,8 @@ target_precompile_headers(${TARGET_NAME} PRIVATE
 
 target_sources(${TARGET_NAME}
 PRIVATE
+    ui/res/fonts.qrc
+
     ui/ui_pch.h
     ui/Def.h
     ui/singleton.h

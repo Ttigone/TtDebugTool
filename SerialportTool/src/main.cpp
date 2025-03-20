@@ -33,6 +33,11 @@ int main(int argc, char* argv[]) {
       QStringLiteral("SerialportTool-C3H3_Ttigone"));
   QCoreApplication::setOrganizationName(QStringLiteral("WWB-Qt"));
 
+  QFontDatabase::addApplicationFont(":/font/iconfont.ttf");
+  auto fid =
+      QFontDatabase::addApplicationFont(":/font/fontawesome-webfont.ttf");
+  qDebug() << "TEST: " << QFontDatabase::applicationFontFamilies(fid);
+
   // 设置全局字体
   QFont font(":/font/roboto/Roboto-Black.ttf", 10);  // 微软雅黑，10号字体
   app.setFont(font);

@@ -19,6 +19,7 @@ class Tt_EXPORT TtLineEdit : public QLineEdit {
   explicit TtLineEdit(const QString& text, QWidget* parent = nullptr);
   ~TtLineEdit();
 
+  void setReadOnlyNoClearButton(bool enable);
   // void setMaxWidth(int width);
   // void setDefaultText(const QString& text);
 

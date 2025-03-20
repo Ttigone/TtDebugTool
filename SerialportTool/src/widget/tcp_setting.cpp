@@ -127,6 +127,7 @@ void TcpServerSetting::setHostAddress() {
     host_->addItem(address.toString());
   }
   host_->body()->model()->sort(0);
+  host_->body()->setCurrentIndex(0);
 }
 
 TcpClientSetting::TcpClientSetting(QWidget* parent) : QWidget(parent) {
@@ -251,6 +252,7 @@ void TcpClientSetting::setHostAddress() {
     target_host_->addItem(address.toString());
   }
   target_host_->body()->model()->sort(0);
+  target_host_->body()->setCurrentIndex(0);
 }
 
 }  // namespace Widget

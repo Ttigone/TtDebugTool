@@ -52,6 +52,10 @@ const QJsonObject& ModbusClientSetting::getModbusClientSetting() {
   return modbus_client_save_config_;
 }
 
+TtModbusProcotol::Type ModbusClientSetting::getModbusLinkType() {
+  return link_type_->currentData().value<TtModbusProcotol::Type>();
+}
+
 void ModbusClientSetting::setLinkType() {
   link_type_->addItem(tr("RTU"), TtModbusProcotol::RTU);
   link_type_->addItem(tr("RTU-ASCll"), TtModbusProcotol::RTU_ASCLL);
@@ -72,6 +76,7 @@ void ModbusClientSetting::setSerialPortsBaudRate() {
   foreach (int64 baud_rate, QSerialPortInfo::standardBaudRates()) {
     baud_->addItem(QString::number(baud_rate), baud_rate);
   }
+  baud_->body()->setCurrentText("9600");
 }
 
 void ModbusClientSetting::setSerialPortsDataBit() {
@@ -101,6 +106,7 @@ void ModbusClientSetting::setSerialPortsStopBit() {
 
 void ModbusClientSetting::setControlState(bool state) {
   link_type_->setEnabled(state);
+  path_->setEnabled(state);
   port_->setEnabled(state);
   baud_->setEnabled(state);
   data_bit_->setEnabled(state);

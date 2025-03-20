@@ -16,9 +16,17 @@ ModbusMaster::~ModbusMaster() {
 void ModbusMaster::setupConfiguration(const ModbusMasterConfiguration& config) {
   qDebug() << config.com << config.baud_rate << config.parity
            << config.data_bits << config.stop_bits;
+  // 重复打开关闭
+  if (modbusDevice) {
+    qDebug() << "dele ag";
+    modbusDevice->disconnectDevice();
+    delete modbusDevice;
+    modbusDevice = nullptr;
+  }
   if (config.type == TtModbusProcotol::RTU ||
       config.type == TtModbusProcotol::RTU_ASCLL) {
     qDebug() << "R";
+    qDebug() << config.com;
     modbusDevice = new QModbusRtuSerialClient(this);
     modbusDevice->setConnectionParameter(QModbusDevice::SerialPortNameParameter,
                                          config.com);
@@ -53,11 +61,16 @@ bool ModbusMaster::connectModbusDevice(bool reconnect) {
 }
 
 bool ModbusMaster::isConnected() {
-  return modbusDevice->state() == QModbusDevice::ConnectedState;
+  if (modbusDevice) {
+    return modbusDevice->state() == QModbusDevice::ConnectedState;
+  }
+  return false;
 }
 
 void ModbusMaster::toDisconnect() {
-  modbusDevice->disconnectDevice();
+  if (modbusDevice) {
+    modbusDevice->disconnectDevice();
+  }
 }
 
 /*
@@ -79,10 +92,12 @@ void ModbusMaster::readModbusData(const QModbusDataUnit::RegisterType& dataType,
   if (modbusDevice->state() != QModbusDevice::ConnectedState) {
     // 链接设备
     modbusDevice->connectDevice();
-    emit dataReceived(resultDatas);
+    // emit dataReceived(startAddr, resultDatas);
+    emit errorOccurred("Device not connected");
+    return;
     // return resultDatas;
   }
-  // 数据单元
+  // 数据单元都是以一长串地址发送
   QModbusDataUnit dataUnit(dataType, startAddr, size);
   // 发射读取请求
   QModbusReply* reply = modbusDevice->sendReadRequest(dataUnit, serverAddr);
@@ -104,6 +119,7 @@ void ModbusMaster::readModbusData(const QModbusDataUnit::RegisterType& dataType,
         //                 .arg(reply->errorString())
         //                 .arg(reply->rawResult().exceptionCode(), -1, 16);
       } else {
+        // timeout
         emit errorOccurred(
             QString("readModbusData error:%1").arg(reply->errorString()));
         // qDebug()
@@ -118,7 +134,12 @@ void ModbusMaster::readModbusData(const QModbusDataUnit::RegisterType& dataType,
     }
     reply->deleteLater();
   }
-  emit dataReceived(resultDatas);
+  // emit dataReceived(resultDatas);
+  if (size == 1) {
+    emit dataReceived(startAddr, resultDatas);
+  } else {
+    // emit dataReceived(resultDatas);
+  }
   // return resultDatas;
 }
 
@@ -140,36 +161,65 @@ bool ModbusMaster::writeModbusData(
 
   QModbusDataUnit dataUnit(dataType, startAddr, values.size());
   dataUnit.setValues(values);
-  QModbusReply* reply = modbusDevice->sendWriteRequest(dataUnit, serverAddr);
-  if (reply) {
+  qDebug() << dataUnit.startAddress() << dataUnit.values();
+
+  // QModbusReply* reply = modbusDevice->sendWriteRequest(dataUnit, serverAddr);
+  // if (reply) {
+  //   if (!reply->isFinished()) {
+  //     //出错提示
+  //     connect(reply, &QModbusReply::finished, this, [this, reply]() {
+  //       if (reply->error() != QModbusDevice::NoError) {
+  //         if (reply->error() == QModbusDevice::ProtocolError) {
+  //           emit errorOccurred(
+  //               QString("writeModbusData error:%1(exception code = %2)")
+  //                   .arg(reply->errorString())
+  //                   .arg(reply->rawResult().exceptionCode(), -1, 16));
+  //           // qDebug() << QString("writeModbusData error:%1(exception code = %2)")
+  //           //                 .arg(reply->errorString())
+  //           //                 .arg(reply->rawResult().exceptionCode(), -1, 16);
+  //         } else {
+  //           emit errorOccurred(
+  //               QString("writeModbusData error:%1").arg(reply->errorString()));
+  //           // qDebug() << QString("writeModbusData error:%1")
+  //           //                 .arg(reply->errorString());
+  //         }
+  //       }
+  //       reply->deleteLater();
+  //     });
+  //   } else {
+  //     reply->deleteLater();
+  //   }
+  //   return true;
+  // } else {
+  //   return false;
+  // }
+
+  if (auto* reply = modbusDevice->sendWriteRequest(dataUnit, serverAddr)) {
     if (!reply->isFinished()) {
-      //出错提示
       connect(reply, &QModbusReply::finished, this, [this, reply]() {
-        if (reply->error() != QModbusDevice::NoError) {
-          if (reply->error() == QModbusDevice::ProtocolError) {
-            emit errorOccurred(
-                QString("writeModbusData error:%1(exception code = %2)")
-                    .arg(reply->errorString())
-                    .arg(reply->rawResult().exceptionCode(), -1, 16));
-            // qDebug() << QString("writeModbusData error:%1(exception code = %2)")
-            //                 .arg(reply->errorString())
-            //                 .arg(reply->rawResult().exceptionCode(), -1, 16);
-          } else {
-            emit errorOccurred(
-                QString("writeModbusData error:%1").arg(reply->errorString()));
-            // qDebug() << QString("writeModbusData error:%1")
-            //                 .arg(reply->errorString());
-          }
+        const auto error = reply->error();
+        if (error == QModbusDevice::ProtocolError) {
+          emit errorOccurred(
+              QString("writeModbusData error:%1(exception code = 0x%2)")
+                  .arg(reply->errorString())
+                  .arg(reply->rawResult().exceptionCode(), -1, 16));
+        } else if (error != QModbusDevice::NoError) {
+          emit errorOccurred(QString("Write response error: %1 (code: 0x%2)")
+                                 .arg(reply->errorString())
+                                 .arg(error, -1, 16));
         }
         reply->deleteLater();
       });
     } else {
       reply->deleteLater();
+      return true;
     }
-    return true;
   } else {
+    emit errorOccurred(
+        QString("Write error: %1").arg(modbusDevice->errorString()));
     return false;
   }
+  return true;
 }
 
 // void ModbusMaster::errorOccurred(QModbusDevice::Error error) {}

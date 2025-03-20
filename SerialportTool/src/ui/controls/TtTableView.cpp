@@ -581,20 +581,56 @@ TtModbusTableWidget::~TtModbusTableWidget() {}
 
 void TtModbusTableWidget::setRowValue(int row, int col, const QString& data) {}
 
-QVector<QString> TtModbusTableWidget::getRowValue(int row, int col) {
-  QVector<QString> result;
+QVector<int> TtModbusTableWidget::getAddressValue() {
+  auto values = getRowValue(1);
+  QVector<int> results;
+  for (auto it = values.cbegin(); it != values.cend(); ++it) {
+    results.append(it->toInt());
+  }
+  return results;
+}
+
+void TtModbusTableWidget::setValue(const QString& data) {
   for (int i = 1; i < this->rowCount(); ++i) {
-    // 获取地址
-    QWidget* widget = cellWidget(i, 1);
+    QWidget* widget = cellWidget(i, 3);
     if (widget) {
       TtLineEdit* lineEdit = widget->findChild<TtLineEdit*>();
       if (lineEdit) {
-        result.append(lineEdit->text());
+        lineEdit->setText(data);
       }
     }
   }
-  qDebug() << result;
-  return result;
+}
+
+void TtModbusTableWidget::setValue(const int& addr,
+                                   const QVector<quint16>& data) {
+  for (int i = 1; i < this->rowCount(); ++i) {
+    QWidget* widget = cellWidget(i, 1);
+    if (widget) {
+      TtLineEdit* lineEdit = widget->findChild<TtLineEdit*>();
+      if (lineEdit && lineEdit->text() == QString::number(addr)) {
+        QWidget* widget = cellWidget(i, 3);
+        if (widget) {
+          TtLineEdit* lineEdit = widget->findChild<TtLineEdit*>();
+          if (lineEdit) {
+            lineEdit->setText(QString::number(data[0]));
+          }
+        }
+      }
+    }
+  }
+}
+
+void TtModbusTableWidget::setValue(const QVector<quint16>& data) {
+  for (int i = 1; i < this->rowCount(); ++i) {
+    QWidget* widget = cellWidget(i, 3);
+    if (widget) {
+      TtLineEdit* lineEdit = widget->findChild<TtLineEdit*>();
+      if (lineEdit) {
+        lineEdit->setText(QString::number((data[i - 1])));
+      }
+    }
+  }
 }
 
 void TtModbusTableWidget::setTable(const QJsonObject& record) {
@@ -703,6 +739,20 @@ void TtModbusTableWidget::setCellWidget(int row, int column, QWidget* widget) {
   cellWidgetCache_[widget][row] = widget;  // 缓存控件
 }
 
+QVector<QString> TtModbusTableWidget::getRowValue(int col) {
+  QVector<QString> result;
+  for (int i = 1; i < this->rowCount(); ++i) {
+    QWidget* widget = cellWidget(i, col);
+    if (widget) {
+      TtLineEdit* lineEdit = widget->findChild<TtLineEdit*>();
+      if (lineEdit) {
+        result.append(lineEdit->text());
+      }
+    }
+  }
+  return result;
+}
+
 void TtModbusTableWidget::addRow() {
   // 在表格末尾插入新行
   int newRowIndex = rowCount();
@@ -721,6 +771,62 @@ void TtModbusTableWidget::addRow() {
   // // 确保调整大小
   resizeRowsToContents();
   resizeColumnsToContents();
+}
+
+void TtModbusTableWidget::onValueChanged() {
+  TtLineEdit* valueEdit = qobject_cast<TtLineEdit*>(sender());
+  if (!valueEdit)
+    return;
+
+  // 查找对应的行
+  for (int i = 0; i < rowsData_.size(); ++i) {
+    if (rowsData_[i].value == valueEdit) {
+      rowsData_[i].confirmButton->show();
+      rowsData_[i].cancelButton->show();
+      rowsData_[i].value->setReadOnly(true);
+      // emit valueModified(i + 1); // +1 因为首行是标题
+      break;
+    }
+  }
+}
+
+void TtModbusTableWidget::onConfirmClicked() {
+  QPushButton* btn = qobject_cast<QPushButton*>(sender());
+  if (!btn)
+    return;
+
+  // 查找对应的行
+  for (int i = 0; i < rowsData_.size(); ++i) {
+    if (rowsData_[i].confirmButton == btn) {
+      rowsData_[i].originalValue = rowsData_[i].value->text();
+      btn->hide();
+      rowsData_[i].cancelButton->hide();
+      rowsData_[i].editButton->show();
+      rowsData_[i].value->setReadOnly(true);
+      emit valueConfirmed(rowsData_[i].address->text().toInt(),
+                          rowsData_[i].value->text().toInt());
+      break;
+    }
+  }
+}
+
+void TtModbusTableWidget::onCancelClicked() {
+  QPushButton* btn = qobject_cast<QPushButton*>(sender());
+  if (!btn)
+    return;
+
+  // 查找对应的行
+  for (int i = 0; i < rowsData_.size(); ++i) {
+    if (rowsData_[i].cancelButton == btn) {
+      rowsData_[i].value->setText(rowsData_[i].originalValue);
+      btn->hide();
+      rowsData_[i].confirmButton->hide();
+      rowsData_[i].editButton->show();
+      rowsData_[i].value->setReadOnly(true);
+      // emit valueCancelled(i + 1);
+      break;
+    }
+  }
 }
 
 void TtModbusTableWidget::initHeader() {
@@ -748,7 +854,32 @@ void TtModbusTableWidget::setupRow(int row) {
   data.checkBtn = createCheckButton();
   data.address = new TtLineEdit(this);
   data.addressName = new TtLineEdit(this);
+
   data.value = new TtLineEdit(this);
+  data.editButton = new QPushButton(QIcon(":/sys/edit.svg"), "", this);
+  data.confirmButton = new QPushButton(QIcon(":/sys/link.svg"), "", this);
+  data.cancelButton = new QPushButton(QIcon(":/sys/trash.svg"), "", this);
+  data.confirmButton->setFixedSize(20, 20);
+  data.cancelButton->setFixedSize(20, 20);
+  data.confirmButton->hide();
+  data.cancelButton->hide();
+  data.originalValue = data.value->text();  // 保存初始值
+
+  // 创建包含 Value 编辑框和按钮的容器
+  QWidget* valueContainer = new QWidget(this);
+  QHBoxLayout* valueLayout = new QHBoxLayout(valueContainer);
+  valueLayout->setContentsMargins(0, 0, 0, 0);
+  valueLayout->setSpacing(2);
+  valueLayout->addWidget(data.value, 1);
+  valueLayout->addWidget(data.cancelButton);
+  valueLayout->addWidget(data.confirmButton);
+  valueLayout->addWidget(data.editButton);
+  data.cancelButton->setVisible(false);
+  data.cancelButton->setVisible(false);
+  data.editButton->setVisible(true);
+  data.value->setReadOnly(true);
+  data.value->setReadOnlyNoClearButton(true);
+
   data.description = new TtLineEdit(this);
 
   auto makeCell = [this](QWidget* content) {
@@ -758,9 +889,39 @@ void TtModbusTableWidget::setupRow(int row) {
   setCellWidget(row, 0, makeCell(data.checkBtn));
   setCellWidget(row, 1, makeCell(data.address));
   setCellWidget(row, 2, makeCell(data.addressName));
-  setCellWidget(row, 3, makeCell(data.value));
+  // setCellWidget(row, 3, makeCell(data.value));
+  setCellWidget(row, 3, makeCell(valueContainer));
   setCellWidget(row, 4, makeCell(data.description));
   setCellWidget(row, 5, createGraphAndDeleteButton());
+
+  connect(data.editButton, &QPushButton::clicked, this, [this, data]() {
+    auto btn = qobject_cast<QPushButton*>(sender());
+    if (!btn)
+      return;
+
+    // // 查找对应的行
+    // for (int i = 0; i < rowsData_.size(); ++i) {
+    //   if (rowsData_[i].value == valueEdit) {
+    //     rowsData_[i].confirmButton->show();
+    //     rowsData_[i].cancelButton->show();
+    //     // emit valueModified(i + 1); // +1 因为首行是标题
+    //     break;
+    //   }
+    // }
+    // 编辑
+    data.cancelButton->setVisible(true);
+    data.confirmButton->setVisible(true);
+    data.editButton->setVisible(false);
+    data.value->setReadOnly(false);
+  });
+
+  // 连接信号
+  // connect(data.value, &TtLineEdit::textChanged, this,
+  //         &TtModbusTableWidget::onValueChanged);
+  connect(data.confirmButton, &QPushButton::clicked, this,
+          &TtModbusTableWidget::onConfirmClicked);
+  connect(data.cancelButton, &QPushButton::clicked, this,
+          &TtModbusTableWidget::onCancelClicked);
 
   rowsData_.append(data);
 }

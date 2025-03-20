@@ -10,6 +10,8 @@ class QStackedWidget;
 QT_END_NAMESPACE
 
 namespace Ui {
+
+class TtModbusTableWidget;
 class TtNormalLabel;
 class CommonButton;
 class TtImageButton;
@@ -47,6 +49,8 @@ class ModbusWindow : public QWidget {
  private slots:
   void switchToEditMode();
   void switchToDisplayMode();
+  // void sloveDataReceived(const QVector<quint16>& data);
+  void sloveDataReceived(const int& addr, const QVector<quint16>& data);
 
  private:
   void init();
@@ -84,6 +88,8 @@ class ModbusWindow : public QWidget {
   TtProtocolType::ProtocolRole role_;
 
   Core::ModbusMaster* modbus_master_;
+
+  Ui::TtModbusTableWidget* holding_registers_table_;
 
   QJsonObject config_;
 };

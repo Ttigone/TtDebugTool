@@ -13,6 +13,7 @@ class TtCheckBox;
 class TtSvgButton;
 
 class TtTableWidget : public QTableWidget {
+  Q_OBJECT
  public:
   explicit TtTableWidget(QWidget* parent = nullptr);
   ~TtTableWidget();
@@ -163,27 +164,45 @@ class TtTableWidget : public QTableWidget {
 };
 
 class TtModbusTableWidget : public QTableWidget {
+  Q_OBJECT
  public:
   explicit TtModbusTableWidget(QWidget* parent = nullptr);
   ~TtModbusTableWidget();
 
   void setRowValue(int row, int col, const QString& data);
-  QVector<QString> getRowValue(int row, int col);
+  QVector<int> getAddressValue();
+  void setValue(const QString& data);
+  void setValue(const int& addr, const QVector<quint16>& data);
+  void setValue(const QVector<quint16>& data);
 
   void setTable(const QJsonObject& record);
   QJsonObject getTableRecord();
 
   void setCellWidget(int row, int column, QWidget* widget);
 
+ signals:
+  void valueConfirmed(int addr, int value);  // 值被确认保存
+
  public slots:
   void addRow();
 
+ private slots:
+  void onValueChanged();
+  void onConfirmClicked();
+  void onCancelClicked();
+
  private:
+  QVector<QString> getRowValue(int col);
+
   struct TableRow {
     TtCheckBox* checkBtn = nullptr;
     TtLineEdit* address = nullptr;
     TtLineEdit* addressName = nullptr;
     TtLineEdit* value = nullptr;
+    QPushButton* editButton = nullptr;     // 新增
+    QPushButton* confirmButton = nullptr;  // 新增
+    QPushButton* cancelButton = nullptr;   // 新增
+    QString originalValue;                 // 新增
     TtLineEdit* description = nullptr;
     bool fromPool = false;
   };

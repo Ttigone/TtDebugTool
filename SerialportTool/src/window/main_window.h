@@ -52,10 +52,9 @@ class MainWindow : public QMainWindow {
   };
   Q_ENUM(Theme)
 
- public Q_SLOTS:
-  void showSnackbar();
+  void initLanguageMenu();
 
- Q_SIGNALS:
+ signals:
   void themeChanged();
 
  protected:

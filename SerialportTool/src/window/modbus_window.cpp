@@ -31,14 +31,6 @@ ModbusWindow::ModbusWindow(TtProtocolType::ProtocolRole role, QWidget* parent) {
             Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""), error, 1500,
                                     this);
           });
-  // connect(modbus_master_, &Core::ModbusMaster::dataReceived,
-  //         [this](const QVector<quint16>& data) {
-  //           qDebug() << "get datas: " << data;
-  //           holding_registers_table_->setValue(data);
-  //         });
-  // QMetaObject::connect(modbus_master_, &Core::ModbusMaster::dataReceived, this,
-  //                      QOverload<const int&, const QVector<quint16>&>::of(
-  //                          &Window::ModbusWindow::sloveDataReceived));
   QObject::connect(modbus_master_, &Core::ModbusMaster::dataReceived, this,
                    &Window::ModbusWindow::sloveDataReceived);
 }
@@ -62,12 +54,9 @@ void ModbusWindow::switchToEditMode() {
   anim->setEndValue(1);
   anim->start(QAbstractAnimation::DeleteWhenStopped);
 
-  // 预先获取之前的标题
   title_edit_->setText(title_->text());
-  // 显示 edit 模式
   stack_->setCurrentWidget(edit_widget_);
-  // 获取焦点
-  title_edit_->setFocus();  // 自动聚焦输入框
+  title_edit_->setFocus();
 }
 
 void ModbusWindow::switchToDisplayMode() {
@@ -77,8 +66,17 @@ void ModbusWindow::switchToDisplayMode() {
 
 void ModbusWindow::sloveDataReceived(const int& addr,
                                      const QVector<quint16>& data) {
-  // qDebug() << addr << data[0];
   holding_registers_table_->setValue(addr, data);
+}
+
+void ModbusWindow::getHoldingRegisterValue() {
+  if (!modbus_master_->isConnected()) {
+    return;
+  }
+  if (holding_registers_table_->rowCount() > 1) {
+    modbus_master_->readHoldingData(holding_registers_table_->getAddressValue(),
+                                    1);
+  }
 }
 
 void ModbusWindow::init() {
@@ -90,7 +88,7 @@ void ModbusWindow::init() {
   }
 
   // 编辑命名按钮
-  modify_title_btn_ = new Ui::TtSvgButton(":/sys/edit_name.svg", this);
+  modify_title_btn_ = new Ui::TtSvgButton(":/sys/edit.svg", this);
   modify_title_btn_->setSvgSize(18, 18);
 
   // 创建原始界面
@@ -222,6 +220,7 @@ void ModbusWindow::connectSignals() {
       qDebug() << "断开";
       modbus_master_->toDisconnect();
       modbus_client_setting_->setControlState(true);
+      refresh_btn_->setEnable(false);
       return;
     }
     modbus_master_->setupConfiguration(
@@ -232,10 +231,12 @@ void ModbusWindow::connectSignals() {
         qDebug() << "链接成功";
         on_off_btn_->setChecked(true);
         modbus_client_setting_->setControlState(false);
+        refresh_btn_->setEnable(true);
       } else {
         qDebug() << "链接失败";
         on_off_btn_->setChecked(false);
         modbus_client_setting_->setControlState(true);
+        refresh_btn_->setEnable(false);
       }
     }
   });
@@ -252,6 +253,21 @@ void ModbusWindow::connectSignals() {
     // config_.insert("InstructionTable", instruction_table_->getTableRecord());
     emit requestSaveConfig();
   });
+
+  QObject::connect(&refresh_timer_, &QTimer::timeout, this,
+                   &Window::ModbusWindow::getHoldingRegisterValue);
+
+  connect(modbus_client_setting_,
+          &Widget::ModbusClientSetting::autoRefreshStateChanged,
+          [this](bool enable) {
+            if (enable) {
+              refresh_timer_.setInterval(
+                  modbus_client_setting_->getRefreshInterval());
+              refresh_timer_.start();
+            } else {
+              refresh_timer_.stop();
+            }
+          });
 }
 
 QWidget* ModbusWindow::createCoilWidget() {
@@ -356,21 +372,25 @@ QWidget* ModbusWindow::createHoldingRegisterWidget() {
 
   // 读取 / 写入 修改对应框
 
-  // refresh
-  connect(refresh_btn_, &Ui::TtSvgButton::clicked, [this]() {
-    // 只能一个个读取, 然后按照行逐一返回
-    // table 需要根据行, 获取地址, 获取后, 将数据写到对应行
-    if (holding_registers_table_->rowCount() > 1) {
-      modbus_master_->readHoldingData(
-          holding_registers_table_->getAddressValue(), 1);
-    }
-  });
+  // // refresh
+  // connect(refresh_btn_, &Ui::TtSvgButton::clicked, [this]() {
+  //   // 只能一个个读取, 然后按照行逐一返回
+  //   // table 需要根据行, 获取地址, 获取后, 将数据写到对应行
+  //   if (holding_registers_table_->rowCount() > 1) {
+  //     modbus_master_->readHoldingData(
+  //         holding_registers_table_->getAddressValue(), 1);
+  //   }
+  // });
+
+  // 当对面没有数据时, 错误数据来源, 导致 index 越界
+  connect(refresh_btn_, &Ui::TtSvgButton::clicked, this,
+          &Window::ModbusWindow::getHoldingRegisterValue);
 
   connect(holding_registers_table_, &Ui::TtModbusTableWidget::valueConfirmed,
           [this](const int& address, const int& value) {
             qDebug() << "T: " << address << value;
-            modbus_master_->writeHoldingData(address, QVector<quint16>(value),
-                                             1);
+            modbus_master_->writeHoldingData(address,
+                                             QVector<quint16>(1, value), 1);
           });
 
   coilsWidgetLayout->addWidget(holding_registers_table_, 1);

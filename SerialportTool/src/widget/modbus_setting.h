@@ -31,6 +31,9 @@ class ModbusClientSetting : public QWidget {
 
   TtModbusProcotol::Type getModbusLinkType();
 
+ signals:
+  void autoRefreshStateChanged(bool enable);
+
  public slots:
   void setLinkType();
   void setSerialPortsName();
@@ -40,6 +43,7 @@ class ModbusClientSetting : public QWidget {
   void setSerialPortsStopBit();
 
   void setControlState(bool state);
+  quint32 getRefreshInterval();
 
  private:
   void init();

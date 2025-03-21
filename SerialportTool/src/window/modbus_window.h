@@ -1,6 +1,7 @@
 #ifndef WINDOW_MODBUS_WINDOW_H
 #define WINDOW_MODBUS_WINDOW_H
 
+#include <QTimer>
 #include <QWidget>
 
 #include "Def.h"
@@ -52,6 +53,8 @@ class ModbusWindow : public QWidget {
   // void sloveDataReceived(const QVector<quint16>& data);
   void sloveDataReceived(const int& addr, const QVector<quint16>& data);
 
+  void getHoldingRegisterValue();
+
  private:
   void init();
   void connectSignals();
@@ -92,6 +95,7 @@ class ModbusWindow : public QWidget {
   Ui::TtModbusTableWidget* holding_registers_table_;
 
   QJsonObject config_;
+  QTimer refresh_timer_;
 };
 
 }  // namespace Window

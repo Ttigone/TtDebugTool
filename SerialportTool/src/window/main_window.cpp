@@ -441,12 +441,7 @@ MainWindow::MainWindow(QWidget* parent)
 
 MainWindow::~MainWindow() {}
 
-void MainWindow::showSnackbar() {
-  // snack_bar_->setWindowFlags(snack_bar_->windowFlags() | Qt::WindowStaysOnTopHint);
-  // setAttribute(Qt::WA_TranslucentBackground);
-  // snack_bar_->addInstantMessage(QString("open serial port!"));
-  // snack_bar_->addMessage(QString("open serial port!"));
-}
+void MainWindow::initLanguageMenu() {}
 
 bool MainWindow::event(QEvent* event) {
   switch (event->type()) {

@@ -132,9 +132,10 @@ void TtSwitchButton::paintEvent(QPaintEvent* event) {
   QPainter painter(this);
   painter.setRenderHint(QPainter::Antialiasing);
 
-  // 绘制文本
+  bool isEnabled = this->isEnabled();
+
   if (!text_.isEmpty()) {
-    painter.setPen(Qt::black);
+    painter.setPen(isEnabled ? Qt::black : Qt::gray);
     painter.setFont(font());
     painter.drawText(
         textRect,
@@ -143,14 +144,18 @@ void TtSwitchButton::paintEvent(QPaintEvent* event) {
         text_);
   }
 
-  // 绘制开关背景
-  QColor bgColor = checked ? QColor("#4cd964") : QColor("#e5e5e5");
+  QColor bgColor;
+  if (isEnabled) {
+    bgColor = checked ? QColor("#4cd964") : QColor("#e5e5e5");
+  } else {
+    bgColor =
+        checked ? QColor("#4cd964").darker(120) : QColor("#e5e5e5").darker(120);
+  }
   painter.setBrush(bgColor);
   painter.setPen(Qt::NoPen);
   painter.drawRoundedRect(switchRect, height() / 2, height() / 2);
 
-  // 绘制滑块
-  QColor knobColor = QColor("#ffffff");
+  QColor knobColor = isEnabled ? QColor("#ffffff") : QColor("#f0f0f0");
   painter.setBrush(knobColor);
   qreal knobDiameter = switchRect.height() - 4;
   QRectF knobRect(switchRect.left() + m_knobPosition, switchRect.top() + 2,
@@ -159,8 +164,11 @@ void TtSwitchButton::paintEvent(QPaintEvent* event) {
 }
 
 void TtSwitchButton::mousePressEvent(QMouseEvent* event) {
+  if (!isEnabled()) {
+    QWidget::mousePressEvent(event);
+    return;
+  }
   if (event->button() == Qt::LeftButton) {
-    // 判断点击区域是否在开关区域内
     if (switchRect.contains(event->pos()) || textRect.contains(event->pos())) {
       setChecked(!checked);
     }

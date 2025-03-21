@@ -1,3 +1,13 @@
+/** QModbus 只能读取小于 10(DEX) 地址的保持寄存器
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ */
+
 #ifndef CORE_MODBUS_CLIENT_H
 #define CORE_MODBUS_CLIENT_H
 

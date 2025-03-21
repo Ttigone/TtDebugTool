@@ -548,41 +548,54 @@ void TtSvgButton::setEnableHoldToCheck(bool enable) {
   enable_hold_to_check_ = enable;
 }
 
+void TtSvgButton::setEnable(bool enabled) {
+  QWidget::setEnabled(enabled);
+  if (!enabled) {
+    QFile file(svg_path_);
+    if (file.open(QIODevice::ReadOnly)) {
+      QString svgContent = file.readAll();
+      file.close();
+      svgContent.replace(QRegularExpression("fill=\"[^\"]*\""),
+                         QString("fill=\"#808080\""));
+      disabled_svg_content_ = svgContent.toUtf8();
+    } else {
+      disabled_svg_content_.clear();
+    }
+  }
+  update();
+}
+
 void TtSvgButton::paintEvent(QPaintEvent* event) {
   Q_UNUSED(event);
 
   QPainter painter(this);
   painter.setRenderHint(QPainter::Antialiasing);
 
+  const bool isEnabled = this->isEnabled();
+
   // 绘制悬停背景
-  if (is_hovered_) {
+  if (isEnabled && is_hovered_) {
     painter.fillRect(rect(), hover_bg_color_);
-    // painter.fillRect(QRect(svg_size_.), hover_bg_color_);
   }
-  // 怀疑是 size 为 0
-  // painter.fillRect(rect(), QColor(12, 12, 12));
-
-  // int padding = 4;  // 边距
-  // QRect svgRect(QPoint(padding, (height() - svg_size_.height()) / 2),
-  //               svg_size_);
-  // svg_renderer_->render(&painter, svgRect);
-
-  // if (!text_.isEmpty()) {
-  //   painter.setPen(current_color_);
-  //   int textX = svgRect.right() + padding;
-  //   QRect textRect(textX, 0, width() - textX - padding, height());
-  //   painter.drawText(textRect, Qt::AlignVCenter | Qt::AlignLeft, text_);
-  // }
 
   // 绘制SVG
   QRect svgRect;
   svgRect.setSize(svg_size_);
   svgRect.moveCenter(rect().center());
-  svg_renderer_->render(&painter, svgRect);
+
+  if (isEnabled) {
+    svg_renderer_->render(&painter, svgRect);
+  } else {
+    if (!disabled_svg_content_.isEmpty()) {
+      QSvgRenderer tempRenderer(disabled_svg_content_);
+      if (tempRenderer.isValid()) {
+        tempRenderer.render(&painter, svgRect);
+      }
+    }
+  }
 }
 
 void TtSvgButton::enterEvent(QEnterEvent* event) {
-  // qDebug() << "enter";
   is_hovered_ = true;
   update();
   QWidget::enterEvent(event);
@@ -590,13 +603,14 @@ void TtSvgButton::enterEvent(QEnterEvent* event) {
 
 void TtSvgButton::leaveEvent(QEvent* event) {
   is_hovered_ = false;
-  // qDebug() << "leave";
   update();
   QWidget::leaveEvent(event);
 }
 
 void TtSvgButton::mousePressEvent(QMouseEvent* event) {
-  // qDebug() << "test";
+  if (!isEnabled()) {
+    return;
+  }
   if (event->button() == Qt::LeftButton) {
     is_pressed_ = true;
     if (enable_hold_to_check_) {
@@ -608,6 +622,9 @@ void TtSvgButton::mousePressEvent(QMouseEvent* event) {
 }
 
 void TtSvgButton::mouseReleaseEvent(QMouseEvent* event) {
+  if (!isEnabled()) {
+    return;
+  }
   if (event->button() == Qt::LeftButton && is_pressed_) {
     is_pressed_ = false;
     if (enable_hold_to_check_) {
@@ -633,6 +650,9 @@ QSize TtSvgButton::sizeHint() const {
 }
 
 void TtSvgButton::updateSvgContent() {
+  if (!isEnabled()) {
+    return;
+  }
   QFile file(svg_path_);
   if (!file.open(QIODevice::ReadOnly)) {
     return;

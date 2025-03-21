@@ -291,6 +291,8 @@ class Tt_EXPORT TtSvgButton : public QWidget {
 
   void setEnableHoldToCheck(bool enable);
 
+  void setEnable(bool enabled);
+
  signals:
   void clicked();
   void toggled(bool checked);
@@ -320,6 +322,7 @@ class Tt_EXPORT TtSvgButton : public QWidget {
   QColor normal_color_;
   QColor hover_color_;
   QColor hover_bg_color_;
+  QByteArray disabled_svg_content_;  // 缓存禁用状态的 SVG 内容
 
   bool is_hovered_;
 };

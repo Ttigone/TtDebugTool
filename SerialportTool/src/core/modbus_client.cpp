@@ -97,8 +97,10 @@ void ModbusMaster::readModbusData(const QModbusDataUnit::RegisterType& dataType,
     return;
     // return resultDatas;
   }
+  qDebug() << "2";
   // 数据单元都是以一长串地址发送
   QModbusDataUnit dataUnit(dataType, startAddr, size);
+  qDebug() << "1";
   // 发射读取请求
   QModbusReply* reply = modbusDevice->sendReadRequest(dataUnit, serverAddr);
   if (reply) {
@@ -161,7 +163,7 @@ bool ModbusMaster::writeModbusData(
 
   QModbusDataUnit dataUnit(dataType, startAddr, values.size());
   dataUnit.setValues(values);
-  qDebug() << dataUnit.startAddress() << dataUnit.values();
+  qDebug() << " 1: " << dataUnit.startAddress() << dataUnit.values();
 
   // QModbusReply* reply = modbusDevice->sendWriteRequest(dataUnit, serverAddr);
   // if (reply) {

@@ -70,6 +70,7 @@ void ModbusClientSetting::setSerialPortsName() {
     QString portName = (portInfo.portName() + "-" + portInfo.description());
     path_->addItem(portName, portInfo.portName());
   }
+  path_->body()->model()->sort(0);
 }
 
 void ModbusClientSetting::setSerialPortsBaudRate() {
@@ -116,6 +117,10 @@ void ModbusClientSetting::setControlState(bool state) {
   timeout_->setEnabled(state);
   auto_refresh_->setEnabled(state);
   refresh_interval_->setEnabled(state);
+}
+
+quint32 ModbusClientSetting::getRefreshInterval() {
+  return refresh_interval_->currentText().toULong();
 }
 
 void ModbusClientSetting::init() {
@@ -206,6 +211,9 @@ void ModbusClientSetting::init() {
   scroll->setWidget(scrollContent);
 
   main_layout_->addWidget(scroll);
+
+  connect(auto_refresh_, &Ui::TtSwitchButton::toggled, this,
+          &Widget::ModbusClientSetting::autoRefreshStateChanged);
 }
 
 }  // namespace Widget

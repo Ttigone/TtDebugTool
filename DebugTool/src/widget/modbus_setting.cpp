@@ -52,8 +52,12 @@ const QJsonObject& ModbusClientSetting::getModbusClientSetting() {
   return modbus_client_save_config_;
 }
 
-TtModbusProcotol::Type ModbusClientSetting::getModbusLinkType() {
+TtModbusProcotol::Type ModbusClientSetting::getModbusLinkType() const {
   return link_type_->currentData().value<TtModbusProcotol::Type>();
+}
+
+int ModbusClientSetting::getModbusDeviceId() const {
+  return device_id_->currentText().toInt();
 }
 
 void ModbusClientSetting::setLinkType() {
@@ -66,6 +70,7 @@ void ModbusClientSetting::setLinkType() {
 void ModbusClientSetting::setSerialPortsName() {
   const auto serialPortInfos = QSerialPortInfo::availablePorts();
   path_->body()->clear();
+
   for (const QSerialPortInfo& portInfo : serialPortInfos) {
     QString portName = (portInfo.portName() + "-" + portInfo.description());
     path_->addItem(portName, portInfo.portName());
@@ -89,6 +94,8 @@ void ModbusClientSetting::setSerialPortsDataBit() {
                      QSerialPort::DataBits::Data7);
   data_bit_->addItem(QString::number(QSerialPort::DataBits::Data8),
                      QSerialPort::DataBits::Data8);
+  data_bit_->body()->model()->sort(0, Qt::SortOrder::DescendingOrder);
+  data_bit_->setCurrentItem(0);
 }
 
 void ModbusClientSetting::setSerialPortsParityBit() {
@@ -214,6 +221,11 @@ void ModbusClientSetting::init() {
 
   connect(auto_refresh_, &Ui::TtSwitchButton::toggled, this,
           &Widget::ModbusClientSetting::autoRefreshStateChanged);
+
+  connect(
+      refresh_interval_->body(), &Ui::TtLineEdit::editingFinished, [this]() {
+        emit refreshIntervalChanged(refresh_interval_->currentText().toULong());
+      });
 }
 
 }  // namespace Widget

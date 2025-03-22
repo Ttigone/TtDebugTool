@@ -258,7 +258,7 @@ TtLabelComboBox::TtLabelComboBox(const QString& text, QWidget* parent)
 
 TtLabelComboBox::~TtLabelComboBox() {}
 
-QComboBox* TtLabelComboBox::body() {
+TtComboBox* TtLabelComboBox::body() {
   return combo_box_;
 }
 
@@ -321,17 +321,16 @@ TtLabelBtnComboBox::TtLabelBtnComboBox(const QString& text, QWidget* parent)
   layout->setContentsMargins(QMargins());
   layout->setSpacing(0);
   auto refresh_btn = new Ui::TtSvgButton(":/sys/refresh-normal.svg", this);
+  refresh_btn->setColors(Qt::black, Qt::blue);
   refresh_btn->setEnableHoldToCheck(true);
-  //refresh_btn->setObjectName("test");
 
-  layout->addWidget(part_);
-  layout->addWidget(refresh_btn);
+  layout->addWidget(part_, 1);
+  layout->addWidget(refresh_btn, 0);
 
   connect(part_, &TtLabelComboBox::currentIndexChanged, this,
           &TtLabelBtnComboBox::displayCurrentCOMx);
 
   connect(refresh_btn, &Ui::TtSvgButton::clicked, [this]() {
-    //qDebug() << "clicked";
     emit clicked();
   });
 }
@@ -340,11 +339,10 @@ TtLabelBtnComboBox::~TtLabelBtnComboBox() {}
 
 void TtLabelBtnComboBox::addItem(const QString& atext,
                                  const QVariant& auserData) {
-  // 只有 current, 才会截取显示
   part_->addItem(atext, auserData);
 }
 
-QComboBox* TtLabelBtnComboBox::body() {
+TtComboBox* TtLabelBtnComboBox::body() {
   return part_->body();
 }
 

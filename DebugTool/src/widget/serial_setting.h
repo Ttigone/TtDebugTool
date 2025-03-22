@@ -51,6 +51,9 @@ class SerialSetting : public QWidget {
   void setSerialPortsStopBit();
   void setSerialPortsFluidControl();
 
+  void setControlState(bool state);
+  quint32 getRefreshInterval();
+
  private:
   void init();
   void refreshSerialCOMx();
@@ -58,12 +61,12 @@ class SerialSetting : public QWidget {
 
   Ui::TtVerticalLayout* main_layout_;
 
-  Ui::TtLabelBtnComboBox* select_serial_port_;
-  Ui::TtLabelComboBox* select_baud_rate_;
-  Ui::TtLabelComboBox *select_data_bit_;
-  Ui::TtLabelComboBox *select_parity_bit_;
-  Ui::TtLabelComboBox *select_stop_bit_;
-  Ui::TtLabelComboBox *select_fluid_control_;
+  Ui::TtLabelBtnComboBox* serial_port_;
+  Ui::TtLabelComboBox* baud_rate_;
+  Ui::TtLabelComboBox* data_bit_;
+  Ui::TtLabelComboBox* parity_bit_;
+  Ui::TtLabelComboBox* stop_bit_;
+  Ui::TtLabelComboBox* flow_control_;
 
   Ui::TtLabelComboBox* framing_model_;
   Ui::TtLabelComboBox* framing_timeout_;
@@ -77,12 +80,6 @@ class SerialSetting : public QWidget {
   Ui::TtLabelComboBox* heartbeat_content_;
 
   bool has_old_settings;
-
-  QList<int64> list_baud_rate_;
-  QList<uint8> list_data_bits_;
-  QMap<QString, uint8> map_parity_;
-  QMap<QString, uint8> map_stop_bits_;
-  QMap<QString, uint8> map_flow_control_;
 
   QJsonObject serial_save_config_;
 };

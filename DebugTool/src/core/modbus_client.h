@@ -13,6 +13,7 @@
 
 #include <QModbusClient>
 #include <QObject>
+#include <QQueue>
 #include <QSerialPort>
 
 #include "Def.h"
@@ -55,36 +56,20 @@ class ModbusMaster : public QObject {
   bool isConnected();
   void toDisconnect();
 
-  // QVector<quint16> readModbusData(const QModbusDataUnit::RegisterType& dataType,
-  //                                 const int& startAddr, const quint16& size,
-  //                                 const int& serverAddr);
-  // bool writeModbusData(const QModbusDataUnit::RegisterType& dataType,
-  //                      const int& startAddr, const QVector<quint16>& values,
-  //                      const int& serverAddr);
-
   void readModbusData(const QModbusDataUnit::RegisterType& dataType,
                       const int& startAddr, const quint16& size,
                       const int& serverAddr);
   bool writeModbusData(const QModbusDataUnit::RegisterType& dataType,
                        const int& startAddr, const QVector<quint16>& values,
                        const int& serverAddr);
-  // 起始地址, 读取个数
-  // QVector<quint16> readCoilsData(const int& startAddr, const quint16& size) {
-  //   return readModbusData(QModbusDataUnit::Coils, startAddr, size,
-  //                         server_);  //读线圈
-  // }
-  // QVector<quint16> readHoldingData(const int& startAddr, const quint16& size) {
-  //   return readModbusData(QModbusDataUnit::HoldingRegisters, startAddr, size,
-  //                         server_);  //读保持寄存器
-  // }
-  // bool writeCoilsData(const int& startAddr, const QVector<quint16>& values) {
-  //   return writeModbusData(QModbusDataUnit::Coils, startAddr, values,
-  //                          server_);  //写线圈
-  // }
-  // bool writeHoldingData(const int& startAddr, const QVector<quint16>& values) {
-  //   return writeModbusData(QModbusDataUnit::HoldingRegisters, startAddr, values,
-  //                          server_);  //写保持寄存器
-  // }
+
+  void readCoilsData(const QVector<int>& addrs, const int& serverAddr) {
+    // readModbusData(QModbusDataUnit::Coils, startAddr, size,
+    //                serverAddr);
+    for (auto it = addrs.cbegin(); it != addrs.cend(); ++it) {
+      readModbusData(QModbusDataUnit::Coils, *it, 1, serverAddr);
+    }
+  }
 
   void readCoilsData(const int& startAddr, const quint16& size,
                      const int& serverAddr) {
@@ -93,37 +78,31 @@ class ModbusMaster : public QObject {
   }
 
   void readHoldingData(const QVector<int>& addrs, const int& serverAddr) {
-    // 直接传入一系列地址, 接收只能一个一个值接收, 因为 1 字节请求, 需要拆分
     for (auto it = addrs.cbegin(); it != addrs.cend(); ++it) {
       readModbusData(QModbusDataUnit::HoldingRegisters, *it, 1, serverAddr);
     }
-    // readModbusData(QModbusDataUnit::HoldingRegisters, startAddr, size,
-    //                serverAddr);  //读保持寄存器
   }
 
   void readHoldingData(const int& startAddr, const quint16& size,
                        const int& serverAddr) {
     readModbusData(QModbusDataUnit::HoldingRegisters, startAddr, size,
-                   serverAddr);  //读保持寄存器
+                   serverAddr);
   }
   void writeCoilsData(const int& startAddr, const QVector<quint16>& values,
                       const int& serverAddr) {
-    writeModbusData(QModbusDataUnit::Coils, startAddr, values,
-                    serverAddr);  //写线圈
+    writeModbusData(QModbusDataUnit::Coils, startAddr, values, serverAddr);
   }
   void writeHoldingData(const int& startAddr, const QVector<quint16>& values,
                         const int& serverAddr) {
     writeModbusData(QModbusDataUnit::HoldingRegisters, startAddr, values,
-                    serverAddr);  //写保持寄存器
+                    serverAddr);
   }
 
  signals:
   void dataReceived(const int& startAddr, const QVector<quint16>& data);
-  // void dataReceived(const QVector<quint16>& data);
   void errorOccurred(const QString& error);
 
  private slots:
-  // void errorOccurred(QModbusDevice::Error error);
   void stateChanged(QModbusDevice::State state);
 
  private:
@@ -133,6 +112,62 @@ class ModbusMaster : public QObject {
   void configUdpParam();
 
   QModbusClient* modbusDevice = nullptr;
+
+  QQueue<QModbusDataUnit> request_queue_;
+  QSet<QModbusReply*> active_replies_;  // 追踪活跃请求
+
+  bool is_processing_ = false;
+
+  void processNextRequest() {
+    if (request_queue_.isEmpty() || is_processing_) {
+      return;
+    }
+
+    if (modbusDevice->state() != QModbusDevice::ConnectedState) {
+      emit errorOccurred("Connection lost during processing");
+      request_queue_.clear();
+      return;
+    }
+
+    is_processing_ = true;
+    QModbusDataUnit unit = request_queue_.dequeue();
+
+    if (auto* reply = modbusDevice->sendReadRequest(unit, 1)) {
+      active_replies_.insert(reply);
+      connect(reply, &QModbusReply::finished, this, [this, reply, unit]() {
+        reply->deleteLater();
+        active_replies_.remove(reply);
+        is_processing_ = false;
+
+        // 错误处理
+        if (reply->error() != QModbusDevice::NoError) {
+          // 过滤连接关闭错误（此时应停止后续请求）
+          if (reply->error() == QModbusDevice::ConnectionError) {
+            request_queue_.clear();
+            emit errorOccurred("Connection closed by device");
+            return;
+          }
+
+          // 其他错误上报
+          emit errorOccurred(
+              QString("Request failed: %1").arg(reply->errorString()));
+        } else {
+          // 成功处理数据
+          const QModbusDataUnit result = reply->result();
+          if (result.isValid()) {
+            emit dataReceived(result.startAddress(), result.values());
+          }
+        }
+
+        // 处理下一个请求
+        QMetaObject::invokeMethod(this, &ModbusMaster::processNextRequest,
+                                  Qt::QueuedConnection);
+      });
+    } else {
+      is_processing_ = false;
+      emit errorOccurred("Failed to create request");
+    }
+  }
 };
 
 }  // namespace Core

@@ -23,44 +23,27 @@ SerialSetting::SerialSetting(QWidget* parent)
 SerialSetting::~SerialSetting() {}
 
 void SerialSetting::setOldSettings() {
-  select_serial_port_->setCurrentItem(1);
+  serial_port_->setCurrentItem(1);
 }
 
 Core::SerialPortConfiguration SerialSetting::getSerialPortConfiguration() {
   // 使用构造函数初始化
-  Core::SerialPortConfiguration cfg(
-      select_serial_port_->body()->itemText(
-          select_serial_port_->body()->currentIndex()),
-      static_cast<QSerialPort::BaudRate>(
-          select_baud_rate_->body()
-              ->itemData(select_baud_rate_->body()->currentIndex())
-              .toInt()),
-      static_cast<QSerialPort::DataBits>(
-          select_data_bit_->body()
-              ->itemData(select_data_bit_->body()->currentIndex())
-              .toInt()),
-      static_cast<QSerialPort::Parity>(
-          select_parity_bit_->body()
-              ->itemData(select_parity_bit_->body()->currentIndex())
-              .toInt()),
-      static_cast<QSerialPort::StopBits>(
-          select_stop_bit_->body()
-              ->itemData(select_stop_bit_->body()->currentIndex())
-              .toInt()),
-      static_cast<QSerialPort::FlowControl>(
-          select_fluid_control_->body()
-              ->itemData(select_fluid_control_->body()->currentIndex())
-              .toInt()));
-
+  Core::SerialPortConfiguration config(
+      serial_port_->currentData().value<QString>(),
+      baud_rate_->currentData().value<QSerialPort::BaudRate>(),
+      data_bit_->currentData().value<QSerialPort::DataBits>(),
+      parity_bit_->currentData().value<QSerialPort::Parity>(),
+      stop_bit_->currentData().value<QSerialPort::StopBits>(),
+      flow_control_->currentData().value<QSerialPort::FlowControl>());
   //qDebug() << cfg.com << cfg.baud_rate << cfg.data_bits << cfg.parity
   //         << cfg.stop_bits << cfg.flow_control;
-  return cfg;
+  return config;
 }
 
 Core::SerialPortConfiguration SerialSetting::defaultSerialPortConfiguration() {
   // 为每个 box 设置对应的 cfg 参数
   // 可删
-  DefaultSetting.com = matchingSerialCOMx(select_serial_port_->currentText());
+  DefaultSetting.com = matchingSerialCOMx(serial_port_->currentText());
   qDebug() << DefaultSetting.parity;
   // 串口名转换成对应的配置项
   if (DefaultSetting.com.isEmpty()) {
@@ -75,40 +58,40 @@ Core::SerialPortConfiguration SerialSetting::defaultSerialPortConfiguration() {
 }
 
 void SerialSetting::displayDefaultSetting() {
-  for (int i = 0; i < select_baud_rate_->count(); ++i) {
-    if (select_baud_rate_->itemText(i).contains(
+  for (int i = 0; i < baud_rate_->count(); ++i) {
+    if (baud_rate_->itemText(i).contains(
             QString::number(DefaultSetting.baud_rate))) {
-      select_baud_rate_->setCurrentItem(i);
+      baud_rate_->setCurrentItem(i);
       break;
     }
   }
-  for (int i = 0; i < select_data_bit_->count(); ++i) {
-    if (select_data_bit_->itemText(i).contains(
+  for (int i = 0; i < data_bit_->count(); ++i) {
+    if (data_bit_->itemText(i).contains(
             QString::number(DefaultSetting.data_bits))) {
-      select_data_bit_->setCurrentItem(i);
+      data_bit_->setCurrentItem(i);
       break;
     }
   }
-  for (int i = 0; i < select_parity_bit_->count(); ++i) {
+  for (int i = 0; i < parity_bit_->count(); ++i) {
     // bug
     // qDebug() << select_parity_bit_->itemText(i);
-    if (select_parity_bit_->itemText(i).contains(
+    if (parity_bit_->itemText(i).contains(
             QString::number(DefaultSetting.parity))) {
-      select_parity_bit_->setCurrentItem(i);
+      parity_bit_->setCurrentItem(i);
       break;
     }
   }
-  for (int i = 0; i < select_stop_bit_->count(); ++i) {
-    if (select_stop_bit_->itemText(i).contains(
+  for (int i = 0; i < stop_bit_->count(); ++i) {
+    if (stop_bit_->itemText(i).contains(
             QString::number(DefaultSetting.stop_bits))) {
-      select_stop_bit_->setCurrentItem(i);
+      stop_bit_->setCurrentItem(i);
       break;
     }
   }
-  for (int i = 0; i < select_fluid_control_->count(); ++i) {
-    if (select_fluid_control_->itemText(i).contains(
+  for (int i = 0; i < flow_control_->count(); ++i) {
+    if (flow_control_->itemText(i).contains(
             QString::number(DefaultSetting.flow_control))) {
-      select_fluid_control_->setCurrentItem(i);
+      flow_control_->setCurrentItem(i);
       break;
     }
   }
@@ -152,93 +135,113 @@ const QJsonObject& SerialSetting::getSerialSetting() {
 
 void SerialSetting::setSerialPortsName() {
   const auto serialPortInfos = QSerialPortInfo::availablePorts();
-  select_serial_port_->body()->clear();
+  serial_port_->body()->clear();
   for (const QSerialPortInfo& portInfo : serialPortInfos) {
     QString portName = (portInfo.portName() + "-" + portInfo.description());
-    select_serial_port_->addItem(portName);
+    serial_port_->addItem(portName, portInfo.portName());
   }
+  serial_port_->body()->model()->sort(0);
+
+  connect(
+      serial_port_->body(), &QComboBox::currentTextChanged,
+      [this](const QString& text) {
+        qDebug() << text;
+        qDebug() << serial_port_->body()->currentData().value<QString>();
+        // serial_port_->body()->setCurrentText(
+        //     serial_port_->body()->currentData().value<QString>() + "test");
+      });
+  serial_port_->setCurrentItem(0);
 }
 
 void SerialSetting::setSerialPortsBaudRate() {
   foreach (int64 baud_rate, QSerialPortInfo::standardBaudRates()) {
-    select_baud_rate_->addItem(QString::number(baud_rate), baud_rate);
+    baud_rate_->addItem(QString::number(baud_rate), baud_rate);
   }
 }
 
 void SerialSetting::setSerialPortsDataBit() {
-  list_data_bits_ << QSerialPort::Data5 << QSerialPort::Data6
-                  << QSerialPort::Data7 << QSerialPort::Data8;
-  for (auto& data_bit : list_data_bits_) {
-    select_data_bit_->addItem(QString::number(data_bit), data_bit);
-  }
+  data_bit_->addItem(QString::number(QSerialPort::DataBits::Data5),
+                     QSerialPort::DataBits::Data5);
+  data_bit_->addItem(QString::number(QSerialPort::DataBits::Data6),
+                     QSerialPort::DataBits::Data6);
+  data_bit_->addItem(QString::number(QSerialPort::DataBits::Data7),
+                     QSerialPort::DataBits::Data7);
+  data_bit_->addItem(QString::number(QSerialPort::DataBits::Data8),
+                     QSerialPort::DataBits::Data8);
+  data_bit_->body()->model()->sort(0, Qt::SortOrder::DescendingOrder);
+  data_bit_->setCurrentItem(0);
 }
 
 void SerialSetting::setSerialPortsParityBit() {
-  map_parity_[QObject::tr("无校验")] = QSerialPort::NoParity;
-  map_parity_[QObject::tr("偶校验")] = QSerialPort::EvenParity;
-  map_parity_[QObject::tr("奇校验")] = QSerialPort::OddParity;
-  map_parity_[QObject::tr("0 校验")] = QSerialPort::SpaceParity;
-  map_parity_[QObject::tr("1 校验")] = QSerialPort::MarkParity;
-  for (auto it = map_parity_.begin(); it != map_parity_.end(); ++it) {
-    select_parity_bit_->addItem(it.key(), it.value());
-  }
+  parity_bit_->addItem(tr("无校验"), QSerialPort::NoParity);
+  parity_bit_->addItem(tr("偶校验"), QSerialPort::EvenParity);
+  parity_bit_->addItem(tr("奇校验"), QSerialPort::OddParity);
+  parity_bit_->addItem(tr("0 校验"), QSerialPort::SpaceParity);
+  parity_bit_->addItem(tr("1 校验"), QSerialPort::MarkParity);
 }
 
 void SerialSetting::setSerialPortsStopBit() {
-  map_stop_bits_[QObject::tr("1 位")] = QSerialPort::OneStop;
-  map_stop_bits_[QObject::tr("1.5 位")] = QSerialPort::OneAndHalfStop;
-  map_stop_bits_[QObject::tr("2 位")] = QSerialPort::TwoStop;
-  for (auto it = map_stop_bits_.begin(); it != map_stop_bits_.end(); ++it) {
-    select_stop_bit_->addItem(it.key(), it.value());
-  }
+  stop_bit_->addItem(tr("1 位"), QSerialPort::OneStop);
+  stop_bit_->addItem(tr("1.5 位"), QSerialPort::OneAndHalfStop);
+  stop_bit_->addItem(tr("2 位"), QSerialPort::TwoStop);
 }
 
 void SerialSetting::setSerialPortsFluidControl() {
-  map_flow_control_[QObject::tr("None")] = QSerialPort::NoFlowControl;
-  map_flow_control_[QObject::tr("RTS/CTS")] = QSerialPort::HardwareControl;
-  map_flow_control_[QObject::tr("Xon/Xoff")] = QSerialPort::SoftwareControl;
-  for (auto it = map_flow_control_.begin(); it != map_flow_control_.end();
-       ++it) {
-    select_fluid_control_->addItem(it.key(), it.value());
-  }
+  flow_control_->addItem(tr("None"), QSerialPort::NoFlowControl);
+  flow_control_->addItem(tr("RTS/CTS"), QSerialPort::HardwareControl);
+  flow_control_->addItem(tr("Xon/Xoff"), QSerialPort::SoftwareControl);
+}
+
+void SerialSetting::setControlState(bool state) {
+  serial_port_->setEnabled(state);
+  baud_rate_->setEnabled(state);
+  data_bit_->setEnabled(state);
+  parity_bit_->setEnabled(state);
+  stop_bit_->setEnabled(state);
+  flow_control_->setEnabled(state);
+  framing_model_->setEnabled(state);
+  framing_timeout_->setEnabled(state);
+  framing_fixed_length_->setEnabled(state);
+  line_break_->setEnabled(state);
+  heartbeat_send_type_->setEnabled(state);
+  heartbeat_interval_->setEnabled(state);
+  heartbeat_content_->setEnabled(state);
+}
+
+quint32 SerialSetting::getRefreshInterval() {
+  // return refr
 }
 
 void SerialSetting::init() {
   main_layout_ = new Ui::TtVerticalLayout(this);
 
   QWidget* serialConfigWidget = new QWidget(this);
-  select_serial_port_ =
-      new Ui::TtLabelBtnComboBox(tr("串口:"), serialConfigWidget);
-  select_baud_rate_ =
-      new Ui::TtLabelComboBox(tr("波特率:"), serialConfigWidget);
-  select_data_bit_ = new Ui::TtLabelComboBox(tr("数据位:"), serialConfigWidget);
-  select_parity_bit_ =
-      new Ui::TtLabelComboBox(tr("校验位:"), serialConfigWidget);
-  select_stop_bit_ = new Ui::TtLabelComboBox(tr("停止位:"), serialConfigWidget);
-  select_fluid_control_ =
-      new Ui::TtLabelComboBox(tr("流控:"), serialConfigWidget);
+  serial_port_ = new Ui::TtLabelBtnComboBox(tr("串口:"), serialConfigWidget);
+  baud_rate_ = new Ui::TtLabelComboBox(tr("波特率:"), serialConfigWidget);
+  data_bit_ = new Ui::TtLabelComboBox(tr("数据位:"), serialConfigWidget);
+  parity_bit_ = new Ui::TtLabelComboBox(tr("校验位:"), serialConfigWidget);
+  stop_bit_ = new Ui::TtLabelComboBox(tr("停止位:"), serialConfigWidget);
+  flow_control_ = new Ui::TtLabelComboBox(tr("流控:"), serialConfigWidget);
 
   Ui::TtVerticalLayout* layout = new Ui::TtVerticalLayout(serialConfigWidget);
 
-  layout->addWidget(select_serial_port_);
-  layout->addWidget(select_baud_rate_);
-  layout->addWidget(select_data_bit_);
-  layout->addWidget(select_parity_bit_);
-  layout->addWidget(select_stop_bit_);
-  layout->addWidget(select_fluid_control_);
+  layout->addWidget(serial_port_);
+  layout->addWidget(baud_rate_);
+  layout->addWidget(data_bit_);
+  layout->addWidget(parity_bit_);
+  layout->addWidget(stop_bit_);
+  layout->addWidget(flow_control_);
 
-  connect(select_serial_port_, &Ui::TtLabelBtnComboBox::clicked,
+  connect(serial_port_, &Ui::TtLabelBtnComboBox::clicked,
           [this]() { setSerialPortsName(); });
 
-  // 初始 app 时, 随机地设置串口配置
-  // 选择可以选择全部, 但是显示的时候, 只显示 COMx
   setSerialPortsName();
   setSerialPortsBaudRate();
   setSerialPortsDataBit();
   setSerialPortsParityBit();
   setSerialPortsStopBit();
   setSerialPortsFluidControl();
-  displayDefaultSetting();
+  // displayDefaultSetting();
 
   QWidget* linkSettingWidget = new QWidget;
   QVBoxLayout* linkSettingWidgetLayout = new QVBoxLayout(linkSettingWidget);
@@ -350,7 +353,6 @@ void SerialSetting::init() {
   Ui::TtVerticalLayout* lascr = new Ui::TtVerticalLayout(scrollContent);
 
   lascr->addWidget(drawer1, 0, Qt::AlignTop);
-  //lascr->addWidget(sds, 0, Qt::AlignTop);
   lascr->addWidget(drawer2);
   lascr->addWidget(drawer3);
   lascr->addWidget(drawer4);
@@ -361,6 +363,7 @@ void SerialSetting::init() {
   scr->setWidgetResizable(true);
 
   main_layout_->addWidget(scr);
+  heartbeat_content_->body()->setCurrentText("TEST");
 }
 
 void SerialSetting::refreshSerialCOMx() {}

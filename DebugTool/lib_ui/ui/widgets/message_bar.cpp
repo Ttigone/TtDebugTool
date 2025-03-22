@@ -10,6 +10,8 @@
 
 #include "ui/TtTheme.h"
 
+#include <ui/control/TtIconButton.h>
+
 namespace Ui {
 
 void TtMessageBar::success(TtMessageBarType::PositionPolicy policy,
@@ -253,7 +255,8 @@ TtMessageBar::TtMessageBar(TtMessageBarType::PositionPolicy policy,
   // 关闭按钮
   // d->_closeButton =
   //     new TtIconButton(TtIconType::Xmark, 17, d->_closeButtonWidth, 30, this);
-  d->_closeButton = new QPushButton(this);
+  d->_closeButton = new TtIconButton(QPixmap(), this);
+  // d->_closeButton = new QPushButton(this);
   switch (d->_messageMode) {
     case TtMessageBarType::Success: {
       // d->_closeButton->setLightHoverColor(QColor(0xE6, 0xFC, 0xE3));

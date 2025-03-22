@@ -16,17 +16,13 @@ ModbusMaster::~ModbusMaster() {
 void ModbusMaster::setupConfiguration(const ModbusMasterConfiguration& config) {
   qDebug() << config.com << config.baud_rate << config.parity
            << config.data_bits << config.stop_bits;
-  // 重复打开关闭
   if (modbusDevice) {
-    qDebug() << "dele ag";
     modbusDevice->disconnectDevice();
     delete modbusDevice;
     modbusDevice = nullptr;
   }
   if (config.type == TtModbusProcotol::RTU ||
       config.type == TtModbusProcotol::RTU_ASCLL) {
-    qDebug() << "R";
-    qDebug() << config.com;
     modbusDevice = new QModbusRtuSerialClient(this);
     modbusDevice->setConnectionParameter(QModbusDevice::SerialPortNameParameter,
                                          config.com);
@@ -70,79 +66,119 @@ bool ModbusMaster::isConnected() {
 void ModbusMaster::toDisconnect() {
   if (modbusDevice) {
     modbusDevice->disconnectDevice();
+    // 终止所有未完成请求
+    for (QModbusReply* reply : active_replies_) {
+      reply->deleteLater();
+    }
+    active_replies_.clear();
+    request_queue_.clear();
+    is_processing_ = false;
   }
 }
 
-/*
- *@brief:  读modbus数据(同步不阻塞界面)
- *注:modbus采用的是异步通信，QModbusReply默认也是通过finished信号异步处理，但这种异步方式在传递数据时不太友好(除了读取的数据外，
- *还需要记录读请求的数据类型、起始地址、服务器地址等)。所以这里通过QEventLoop实现一个同步但不阻塞界面的处理，方便对读取的数据进行处理。
- *@date:   2024.03.09
- *@param:  dataType:读的数据类型，分四类(线圈、离散输入(只读)、输入寄存器(只读)、保持寄存器)
- *@param:  startAddr:起始地址   size:数据块大小  serverAddr:服务器地址
- *@return: QVector<quint16>:数据块，出错返回空数组
- */
-// QVector<quint16> ModbusMaster::readModbusData
 void ModbusMaster::readModbusData(const QModbusDataUnit::RegisterType& dataType,
                                   const int& startAddr, const quint16& size,
                                   const int& serverAddr) {
-  // 返回的数据
   QVector<quint16> resultDatas;
   //读数据时，没连接则尝试重连
   if (modbusDevice->state() != QModbusDevice::ConnectedState) {
-    // 链接设备
-    modbusDevice->connectDevice();
-    // emit dataReceived(startAddr, resultDatas);
+    // modbusDevice->connectDevice();
     emit errorOccurred("Device not connected");
     return;
-    // return resultDatas;
   }
-  qDebug() << "2";
+  // qDebug() << "2";
   // 数据单元都是以一长串地址发送
   QModbusDataUnit dataUnit(dataType, startAddr, size);
-  qDebug() << "1";
+  // qDebug() << "1";
   // 发射读取请求
-  QModbusReply* reply = modbusDevice->sendReadRequest(dataUnit, serverAddr);
-  if (reply) {
-    if (!reply->isFinished()) {
-      // 等待完成
-      QEventLoop eventLoop;
-      connect(reply, &QModbusReply::finished, &eventLoop, &QEventLoop::quit);
-      eventLoop.exec();
-    }
-    //出错提示
-    if (reply->error() != QModbusDevice::NoError) {
-      if (reply->error() == QModbusDevice::ProtocolError) {
-        emit errorOccurred(
-            QString("readModbusData error:%1(exception code = %2)")
-                .arg(reply->errorString())
-                .arg(reply->rawResult().exceptionCode(), -1, 16));
-        // qDebug() << QString("readModbusData error:%1(exception code = %2)")
-        //                 .arg(reply->errorString())
-        //                 .arg(reply->rawResult().exceptionCode(), -1, 16);
-      } else {
-        // timeout
-        emit errorOccurred(
-            QString("readModbusData error:%1").arg(reply->errorString()));
-        // qDebug()
-        //     << QString("readModbusData error:%1").arg(reply->errorString());
-      }
-    } else {
-      //处理应答
-      const QModbusDataUnit unit = reply->result();
-      if (unit.isValid()) {
-        resultDatas = unit.values();
-      }
-    }
-    reply->deleteLater();
-  }
-  // emit dataReceived(resultDatas);
-  if (size == 1) {
-    emit dataReceived(startAddr, resultDatas);
-  } else {
-    // emit dataReceived(resultDatas);
-  }
+  // QModbusReply* reply = modbusDevice->sendReadRequest(dataUnit, serverAddr);
+  // if (reply) {
+  //   if (!reply->isFinished()) {
+  //     // 等待完成
+  //     QEventLoop eventLoop;
+  //     connect(reply, &QModbusReply::finished, &eventLoop, &QEventLoop::quit);
+  //     eventLoop.exec();
+  //   }
+  //   //出错提示
+  //   if (reply->error() != QModbusDevice::NoError) {
+  //     if (reply->error() == QModbusDevice::ProtocolError) {
+  //       emit errorOccurred(
+  //           QString("readModbusData error:%1(exception code = %2)")
+  //               .arg(reply->errorString())
+  //               .arg(reply->rawResult().exceptionCode(), -1, 16));
+  //       // qDebug() << QString("readModbusData error:%1(exception code = %2)")
+  //       //                 .arg(reply->errorString())
+  //       //                 .arg(reply->rawResult().exceptionCode(), -1, 16);
+  //     } else {
+  //       // timeout
+  //       emit errorOccurred(
+  //           QString("readModbusData error:%1").arg(reply->errorString()));
+  //       // qDebug()
+  //       //     << QString("readModbusData error:%1").arg(reply->errorString());
+  //     }
+  //   } else {
+  //     //处理应答
+  //     const QModbusDataUnit unit = reply->result();
+  //     if (unit.isValid()) {
+  //       resultDatas = unit.values();
+  //     }
+  //   }
+  //   reply->deleteLater();
+  // }
+  // // emit dataReceived(resultDatas);
+  // if (size == 1) {
+  //   emit dataReceived(startAddr, resultDatas);
+  // } else {
+  //   // emit dataReceived(resultDatas);
+  // }
   // return resultDatas;
+
+  // -----
+
+  // if (auto* reply = modbusDevice->sendReadRequest(dataUnit, serverAddr)) {
+  //   if (!reply->isFinished()) {
+  //     connect(reply, &QModbusReply::finished, this, [this, reply]() {
+  //       if (reply->error() == QModbusDevice::NoError) {
+  //         //处理应答
+  //         const QModbusDataUnit unit = reply->result();
+  //         if (unit.isValid()) {
+  //           // 数据
+  //           for (qsizetype i = 0, total = unit.valueCount(); i < total; ++i) {
+  //             qDebug() << unit.startAddress() << unit.value(i);
+  //           }
+  //         }
+  //       } else if (reply->error() == QModbusDevice::ProtocolError) {
+  //         qDebug() << QString("readModbusData error:%1(exception code = %2)")
+  //                         .arg(reply->errorString())
+  //                         .arg(reply->rawResult().exceptionCode(), -1, 16);
+  //         // 信号的问题 ?? 非
+  //         // emit errorOccurred(
+  //         //     QString("readModbusData error:%1(exception code = %2)")
+  //         //         .arg(reply->errorString())
+  //         //         .arg(reply->rawResult().exceptionCode(), -1, 16));
+  //       } else {
+  //         // 此处
+  //         // emit errorOccurred(
+  //         //     QString("readModbusData error:%1").arg(reply->errorString()));
+  //         qDebug()
+  //             << QString("readModbusData error:%1").arg(reply->errorString());
+  //       }
+  //       reply->deleteLater();
+  //     });
+  //   } else {
+  //     delete reply;  // broadcast replies return immediately
+  //   }
+  // } else {
+  //   emit errorOccurred(tr("Read error: %1").arg(modbusDevice->errorString()));
+  // }
+
+  // 构造请求单元并加入队列
+  // QModbusDataUnit dataUnit(dataType, startAddr, size);
+  request_queue_.enqueue(dataUnit);
+  // m_serverAddr = serverAddr; // 更新服务器地址
+
+  // 触发队列处理
+  processNextRequest();
 }
 
 /*

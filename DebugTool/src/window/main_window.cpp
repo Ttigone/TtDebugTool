@@ -92,7 +92,7 @@ static inline void emulateLeaveEvent(QWidget* widget) {
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent), central_widget_(new QWidget(this)) {
 
-  qDebug() << "MainWindow constructor thread:" << QThread::currentThread();
+  // qDebug() << "MainWindow constructor thread:" << QThread::currentThread();
 
   // statusBar()->addWidget(new Ui::TtSvgButton());
   window_agent_ = new QWK::WidgetWindowAgent(this);
@@ -437,11 +437,117 @@ MainWindow::MainWindow(QWidget* parent)
           &Ui::TabManager::switchToCurrentIndex);
 
   connectSignals();
+
+  initLanguageMenu();
 }
 
 MainWindow::~MainWindow() {}
 
-void MainWindow::initLanguageMenu() {}
+void MainWindow::initLanguageMenu() {
+  // 指定 .ts 文件路径，搜索获取 .ts 文件列表
+  QDir languageDir("F:/MyProject/DebugTool/DebugTool/res/language/");
+  QStringList tsFileList =
+      languageDir.entryList(QStringList("*.ts"), QDir::Files);
+  QStringList tsFilePathList;
+  for (const QString& tsFile : tsFileList) {
+    // 绝对路径
+    tsFilePathList.append(languageDir.filePath(tsFile));
+  }
+
+  // 为每个TS文件单独调用lrelease
+  for (const QString& tsFile : tsFileList) {
+    QString tsFilePath = languageDir.absoluteFilePath(tsFile);
+    QString qmFilePath = tsFilePath;
+    qmFilePath.replace(QRegularExpression("\\.ts$"), ".qm");
+
+    QStringList args;
+    args << tsFilePath << "-qm" << qmFilePath;
+
+    QProcess* process = new QProcess(this);
+
+    // qDebug() << args;
+
+    process->start("F:/MyProject/DebugTool/DebugTool/res/lrelease/lrelease.exe",
+                   args);
+
+    // 连接信号
+    // connect(process, &QProcess::readyReadStandardOutput, [process]() {
+    // qDebug() << "lrelease output:" << process->readAllStandardOutput();
+    // });
+
+    // connect(process, &QProcess::readyReadStandardError, [process]() {
+    // qDebug() << "lrelease error:" << process->readAllStandardError();
+    // });
+
+    connect(process,
+            QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this,
+            [this, process, tsFile, tsFileList]() {
+              if (process->exitStatus() == QProcess::NormalExit &&
+                  process->exitCode() == 0) {
+                // qDebug() << "Successfully processed:" << tsFile;
+                // 检查是否所有文件都处理完毕
+                static int processedCount = 0;
+                if (++processedCount >= tsFileList.size()) {
+                  compileTsFilesFinished();
+                  processedCount = 0;  // 重置计数器
+                }
+              }
+              process->deleteLater();
+            });
+  }
+
+  // QStringList args = QStringList() << "-untranslated" << tsFilePathList;
+  // qDebug() << tsFilePathList;
+  // // 调用 lrelease.exe 编译 .ts 文件列表
+  // QProcess* process = new QProcess(this);
+  // process->start("F:/MyProject/DebugTool/DebugTool/res/lrelease/lrelease.exe",
+  //                tsFilePathList);
+  // process->start("F:/MyProject/DebugTool/DebugTool/res/lrelease/lrelease.exe",
+  //                args);
+  // // 连接编译完成信号。必须等待 .qm 文件编译完成后，才能搜索 .qm 文件动态生成语言菜单
+  // connect(process,
+  //         QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this,
+  //         [this, process]() {
+  //           if (process->exitStatus() == QProcess::NormalExit &&
+  //               process->exitCode() == 0) {
+  //             qDebug() << "y";
+  //             compileTsFilesFinished();
+  //           }
+  //           process->deleteLater();
+  //         });
+  // connect(process, &QProcess::readyReadStandardOutput, [process]() {
+  //   qDebug() << "lrelease output:" << process->readAllStandardOutput();
+  // });
+
+  // connect(process, &QProcess::readyReadStandardError, [process]() {
+  //   qDebug() << "lrelease error:" << process->readAllStandardError();
+  // });
+}
+
+void MainWindow::compileTsFilesFinished() {
+  qDebug() << "TEST";
+  QMenuBar* menuBar =
+      qobject_cast<Ui::WindowBar*>(window_agent_->titleBar())->menuBar();
+  QMenu* languageMenu = menuBar->addMenu(tr("语言"));
+  // 搜索获取 .qm 文件列表 qmFiles
+  QDir languageDir("F:/MyProject/DebugTool/DebugTool/res/language/");
+  if (!languageDir.exists()) {
+    qWarning() << "Language directory not exists!";
+    return;
+  }
+
+  QStringList qmFiles = languageDir.entryList(QStringList("*.qm"), QDir::Files);
+  // 动态生成语言菜单
+  for (const QString& qmFile : qmFiles) {
+    QString languageName = extractLanguageName(qmFile);  // 解析语言名称
+    QAction* action = new QAction(languageName, this);
+    action->setCheckable(true);
+    languageMenu->addAction(action);
+    // 用Lambda表达式为语言菜单动态添加槽函数
+    connect(action, &QAction::triggered, this,
+            [this, qmFile]() { changeLanguage(qmFile); });
+  }
+}
 
 bool MainWindow::event(QEvent* event) {
   switch (event->type()) {
@@ -1077,6 +1183,33 @@ void MainWindow::addDifferentConfiguration(TtFunctionalCategory::Category type,
   }
   buttonGroup->addButton(uuid, button);
 
+}
+
+QString MainWindow::extractLanguageName(const QString& qmFile) {
+  QMap<QString, QString> mapLanguage = {{"_zh_CN", tr("简体中文")},
+                                        {"_en", tr("英文")},
+                                        {"_fr", tr("法语")},
+                                        {"_de", tr("德语")},
+                                        {"_ja", tr("日语")}};
+  for (auto it = mapLanguage.begin(); it != mapLanguage.end(); ++it) {
+    if (qmFile.contains(it.key())) {
+      return it.value();
+    }
+  }
+  return qmFile;
+}
+
+void MainWindow::changeLanguage(const QString& qmFile) {
+  if (translator_) {
+    qApp->removeTranslator(translator_);
+    delete translator_;
+  }
+  // qm 文件是空的
+  translator_ = new QTranslator(this);
+  if (translator_->load("F:/MyProject/DebugTool/DebugTool/res/language/" +
+                        qmFile)) {
+    qDebug() << qApp->installTranslator(translator_);
+  }
 }
 
 }  // namespace Window

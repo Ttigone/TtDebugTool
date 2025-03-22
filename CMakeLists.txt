@@ -1,14 +1,14 @@
-set(project_langs C CXX)
+set(Project_Langs C CXX)
 
 cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 
-project(SerialportTool
-    LANGUAGES ${project_langs}
+project(DebugTool
+    LANGUAGES ${Project_Langs}
     DESCRIPTION "Serial port debugging tool"
     HOMEPAGE_URL "none"
 )
 
-get_filename_component(third_party "SerialportTool/3rdparty" REALPATH)
+get_filename_component(third_party "DebugTool/3rdparty" REALPATH)
 
 # include(cmake/version.cmake)
 
@@ -27,4 +27,4 @@ include(cmake/external/qt/package.cmake)
 
 
 add_subdirectory(cmake)
-add_subdirectory(SerialportTool)
+add_subdirectory(DebugTool)

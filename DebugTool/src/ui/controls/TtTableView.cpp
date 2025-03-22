@@ -587,7 +587,7 @@ QVector<int> TtModbusTableWidget::getAddressValue() {
   for (auto it = values.cbegin(); it != values.cend(); ++it) {
     results.append(it->toInt());
   }
-  qDebug() << "get address: " << results;
+  // qDebug() << "get address: " << results;
   return results;
 }
 

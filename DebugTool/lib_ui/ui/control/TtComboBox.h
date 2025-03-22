@@ -31,7 +31,7 @@ class Tt_EXPORT TtLabelComboBox : public QWidget {
   ~TtLabelComboBox();
 
  public:
-  QComboBox* body();
+  TtComboBox* body();
   void addItem(const QString& atext, const QVariant& auserData = QVariant());
 
   QVariant currentData(int role = Qt::UserRole);
@@ -60,7 +60,7 @@ class Tt_EXPORT TtLabelBtnComboBox : public QWidget {
 
   void addItem(const QString& atext, const QVariant& auserData = QVariant());
 
-  QComboBox* body();
+  TtComboBox* body();
   QVariant currentData(int role = Qt::UserRole);
   void setCurrentItem(qint8 index);
   QString itemText(int index);

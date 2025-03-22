@@ -57,6 +57,9 @@ class MainWindow : public QMainWindow {
  signals:
   void themeChanged();
 
+ private slots:
+  void compileTsFilesFinished();
+
  protected:
   bool event(QEvent* event) override;
 
@@ -68,6 +71,9 @@ class MainWindow : public QMainWindow {
   void registerTabWidget();
   void addDifferentConfiguration(TtFunctionalCategory::Category type,
                                  const QString& title, const QString& uuid);
+
+  QString extractLanguageName(const QString& qmFile);
+  void changeLanguage(const QString& qmFile);
 
   // void createDockWindows();
 
@@ -104,6 +110,8 @@ class MainWindow : public QMainWindow {
   Ui::PopWidget* communication_connection_widget;
 
   Ui::WidgetGroup* buttonGroup;
+
+  QTranslator* translator_ = nullptr;
 };
 
 }  // namespace Window

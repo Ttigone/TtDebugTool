@@ -31,8 +31,6 @@ SerialWindow::SerialWindow(QWidget* parent)
       serial_port_(new Core::SerialPortWorker),
       serial_setting_(new Widget::SerialSetting) {
 
-  // qDebug() << "SerialPortWorker constructor thread:"
-  //          << QThread::currentThread();
 
   // 放在线程中执行
   serial_port_->moveToThread(worker_thread_);
@@ -416,6 +414,7 @@ void SerialWindow::init() {
                                 Qt::QueuedConnection);
       // serial_port_->closeSerialPort();
       serial_port_opened = false;
+      serial_setting_->setControlState(true);
     } else {
       // 获取配置后通过 invokeMethod 调用
       Core::SerialPortConfiguration cfg =
@@ -429,6 +428,7 @@ void SerialWindow::init() {
       // serial_port_->openSerialPort(
       //     serial_setting_->getSerialPortConfiguration());
       serial_port_opened = true;
+      serial_setting_->setControlState(false);
     }
   });
 

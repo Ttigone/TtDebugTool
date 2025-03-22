@@ -1,6 +1,7 @@
 #ifndef WIDGET_MODBUS_SETTING_H
 #define WIDGET_MODBUS_SETTING_H
 
+#include <QStyledItemDelegate>
 #include <QWidget>
 #include "Def.h"
 
@@ -29,10 +30,12 @@ class ModbusClientSetting : public QWidget {
   Core::ModbusMasterConfiguration getModbusClientConfiguration();
   const QJsonObject& getModbusClientSetting();
 
-  TtModbusProcotol::Type getModbusLinkType();
+  TtModbusProcotol::Type getModbusLinkType() const;
+  int getModbusDeviceId() const;
 
  signals:
   void autoRefreshStateChanged(bool enable);
+  void refreshIntervalChanged(quint32 interval);
 
  public slots:
   void setLinkType();
@@ -64,15 +67,6 @@ class ModbusClientSetting : public QWidget {
   Ui::TtLabelLineEdit* timeout_;
   Ui::TtSwitchButton* auto_refresh_;
   Ui::TtLabelLineEdit* refresh_interval_;
-
-  Ui::TtLabelLineEdit* topic_;
-  Ui::TtLabelLineEdit* load_;
-  Ui::TtLabelComboBox* qos_;
-  Ui::TtCheckBox* retain_;
-
-  QMap<QString, uint8> map_parity_;
-  QMap<QString, uint8> map_stop_bits_;
-  QMap<QString, uint8> map_flow_control_;
 
   QJsonObject modbus_client_save_config_;
 };

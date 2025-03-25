@@ -36,6 +36,7 @@ class ModbusClientSetting : public QWidget {
  signals:
   void autoRefreshStateChanged(bool enable);
   void refreshIntervalChanged(quint32 interval);
+  void graphNumsChanged(quint16 nums);
 
  public slots:
   void setLinkType();
@@ -67,6 +68,8 @@ class ModbusClientSetting : public QWidget {
   Ui::TtLabelLineEdit* timeout_;
   Ui::TtSwitchButton* auto_refresh_;
   Ui::TtLabelLineEdit* refresh_interval_;
+
+  Ui::TtLabelLineEdit* graph_capacity_;
 
   QJsonObject modbus_client_save_config_;
 };

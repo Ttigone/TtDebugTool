@@ -257,6 +257,8 @@ TtLabelLineEdit::TtLabelLineEdit(Qt::AlignmentFlag flag, const QString& text,
       layout->addWidget(line_edit_, 2);
       break;
   }
+  connect(line_edit_, &TtLineEdit::textChanged, this,
+          &TtLabelLineEdit::currentTextChanged);
 }
 
 TtLabelLineEdit::TtLabelLineEdit(const QString& text, QWidget* parent)

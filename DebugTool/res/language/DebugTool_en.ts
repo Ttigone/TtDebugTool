@@ -116,43 +116,43 @@
 <context>
     <name>Ui::TtModbusTableWidget</name>
     <message>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="834"/>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="1059"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="885"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="1250"/>
         <source>名称</source>
         <translation>name</translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="834"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="885"/>
         <source>值</source>
         <translation>value</translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="834"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="885"/>
         <source>描述</source>
         <translation>Description</translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="840"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="891"/>
         <source>地址(HEX)</source>
         <translation>Address (HEX)</translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="840"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="891"/>
         <source>地址(DEX)</source>
         <translation>Address (DEX)</translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="1088"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="1279"/>
         <source>TEXT</source>
         <translation>TEXT</translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="1088"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="1279"/>
         <source>HEX</source>
         <translation>HEX</translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="1103"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="1294"/>
         <source>内容</source>
         <translation>content</translation>
     </message>
@@ -268,129 +268,139 @@
 <context>
     <name>Widget::ModbusClientSetting</name>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="60"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="64"/>
         <source>RTU</source>
         <translation>RTU</translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="61"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="65"/>
         <source>RTU-ASCll</source>
         <translation>RTU-ASCll</translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="62"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="66"/>
         <source>TCP</source>
         <translation>TCP</translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="63"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="67"/>
         <source>UDP</source>
         <translation>UDP</translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="98"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="102"/>
         <source>无校验</source>
         <translation>no-check</translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="99"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="103"/>
         <source>偶校验</source>
         <translation>Even check</translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="100"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="104"/>
         <source>奇校验</source>
         <translation>Odd check</translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="101"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="105"/>
         <source>0 校验</source>
         <translation>0 check</translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="102"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="106"/>
         <source>1 校验</source>
         <translation>1-check</translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="106"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="110"/>
         <source>1 位</source>
         <translation>one-bit</translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="107"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="111"/>
         <source>1.5 位</source>
         <translation>1.5 bit</translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="108"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="112"/>
         <source>2 位</source>
         <translation>two-bit</translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="135"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="139"/>
         <source>连接类型:</source>
         <translation>Connection type:</translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="137"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="141"/>
         <source>路径:</source>
         <translation>Path:</translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="138"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="142"/>
         <source>波特率:</source>
         <translation>Baud rate:</translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="139"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="143"/>
         <source>数据位:</source>
         <translation>Data bit:</translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="140"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="144"/>
         <source>校验位:</source>
         <translation>Check bit:</translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="141"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="145"/>
         <source>停止位:</source>
         <translation>Stop bit:</translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="143"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="147"/>
         <source>主机:</source>
         <translation>Host:</translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="144"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="148"/>
         <source>端口:</source>
         <translation>Port:</translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="146"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="150"/>
         <source>设备 ID:</source>
         <translation>Device ID:</translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="147"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="151"/>
         <source>超时时间</source>
         <translation>Timeout period</translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="148"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="152"/>
         <source>自动刷新</source>
         <translation>Auto refresh</translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="150"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="154"/>
         <source>刷新间隔</source>
         <translation>Refresh interval</translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="167"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="171"/>
         <source>连接设置</source>
         <translation>Connection setting</translation>
+    </message>
+    <message>
+        <location filename="../../src/widget/modbus_setting.cpp" line="204"/>
+        <source>容量:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/widget/modbus_setting.cpp" line="211"/>
+        <source>图表</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1294,61 +1304,61 @@
 <context>
     <name>Window::ModbusWindow</name>
     <message>
-        <location filename="../../src/window/modbus_window.cpp" line="91"/>
+        <location filename="../../src/window/modbus_window.cpp" line="179"/>
         <source>未命名的 Modbus 主机</source>
         <translation>Unnamed Modbus host</translation>
     </message>
     <message>
-        <location filename="../../src/window/modbus_window.cpp" line="93"/>
+        <location filename="../../src/window/modbus_window.cpp" line="181"/>
         <source>未命名的 Modbus 设备模拟服务</source>
         <translation>Unnamed Modbus host</translation>
     </message>
     <message>
-        <location filename="../../src/window/modbus_window.cpp" line="140"/>
+        <location filename="../../src/window/modbus_window.cpp" line="227"/>
         <source>名称不能为空！</source>
         <translation>The name cannot be empty!</translation>
     </message>
     <message>
-        <location filename="../../src/window/modbus_window.cpp" line="187"/>
+        <location filename="../../src/window/modbus_window.cpp" line="274"/>
         <source>线圈</source>
         <translation>coil</translation>
     </message>
     <message>
-        <location filename="../../src/window/modbus_window.cpp" line="188"/>
+        <location filename="../../src/window/modbus_window.cpp" line="275"/>
         <source>离散输入</source>
         <translation>Discrete input</translation>
     </message>
     <message>
-        <location filename="../../src/window/modbus_window.cpp" line="189"/>
+        <location filename="../../src/window/modbus_window.cpp" line="276"/>
         <source>保持寄存器</source>
         <translation>Hold register</translation>
     </message>
     <message>
-        <location filename="../../src/window/modbus_window.cpp" line="190"/>
+        <location filename="../../src/window/modbus_window.cpp" line="277"/>
         <source>输入寄存器</source>
         <translation>Input register</translation>
     </message>
     <message>
-        <location filename="../../src/window/modbus_window.cpp" line="307"/>
-        <location filename="../../src/window/modbus_window.cpp" line="336"/>
-        <location filename="../../src/window/modbus_window.cpp" line="365"/>
-        <location filename="../../src/window/modbus_window.cpp" line="426"/>
+        <location filename="../../src/window/modbus_window.cpp" line="418"/>
+        <location filename="../../src/window/modbus_window.cpp" line="465"/>
+        <location filename="../../src/window/modbus_window.cpp" line="496"/>
+        <location filename="../../src/window/modbus_window.cpp" line="556"/>
         <source>起始地址</source>
         <translation>Origin address</translation>
     </message>
     <message>
-        <location filename="../../src/window/modbus_window.cpp" line="309"/>
-        <location filename="../../src/window/modbus_window.cpp" line="338"/>
-        <location filename="../../src/window/modbus_window.cpp" line="367"/>
-        <location filename="../../src/window/modbus_window.cpp" line="428"/>
+        <location filename="../../src/window/modbus_window.cpp" line="420"/>
+        <location filename="../../src/window/modbus_window.cpp" line="467"/>
+        <location filename="../../src/window/modbus_window.cpp" line="498"/>
+        <location filename="../../src/window/modbus_window.cpp" line="558"/>
         <source>数量</source>
         <translation>quantity</translation>
     </message>
     <message>
-        <location filename="../../src/window/modbus_window.cpp" line="311"/>
-        <location filename="../../src/window/modbus_window.cpp" line="340"/>
-        <location filename="../../src/window/modbus_window.cpp" line="369"/>
-        <location filename="../../src/window/modbus_window.cpp" line="430"/>
+        <location filename="../../src/window/modbus_window.cpp" line="422"/>
+        <location filename="../../src/window/modbus_window.cpp" line="469"/>
+        <location filename="../../src/window/modbus_window.cpp" line="500"/>
+        <location filename="../../src/window/modbus_window.cpp" line="560"/>
         <source>添加</source>
         <translation>append</translation>
     </message>

@@ -68,4 +68,14 @@ enum Type { RTU, RTU_ASCLL, TCP, UDP };
 Q_ENUM_CREATE(Type)
 Q_END_ENUM_CREATE(TtModbusProcotol)
 
+Q_BEGIN_ENUM_CREATE_SRC(TtModbusRegisterType)
+enum Type {
+  Coils,
+  HoldingRegisters,
+  DiscreteInputs,
+  InputRegisters,
+};
+Q_ENUM_CREATE(Type)
+Q_END_ENUM_CREATE(TtModbusRegisterType)
+
 #endif  // GLOBAL_DEF_H

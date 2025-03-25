@@ -63,9 +63,14 @@ class ModbusMaster : public QObject {
                        const int& startAddr, const QVector<quint16>& values,
                        const int& serverAddr);
 
+  void readDiscreteInputsData(const QVector<int>& addrs,
+                              const int& serverAddr) {
+    for (auto it = addrs.cbegin(); it != addrs.cend(); ++it) {
+      readModbusData(QModbusDataUnit::DiscreteInputs, *it, 1, serverAddr);
+    }
+  }
+
   void readCoilsData(const QVector<int>& addrs, const int& serverAddr) {
-    // readModbusData(QModbusDataUnit::Coils, startAddr, size,
-    //                serverAddr);
     for (auto it = addrs.cbegin(); it != addrs.cend(); ++it) {
       readModbusData(QModbusDataUnit::Coils, *it, 1, serverAddr);
     }
@@ -73,8 +78,7 @@ class ModbusMaster : public QObject {
 
   void readCoilsData(const int& startAddr, const quint16& size,
                      const int& serverAddr) {
-    readModbusData(QModbusDataUnit::Coils, startAddr, size,
-                   serverAddr);  //读线圈
+    readModbusData(QModbusDataUnit::Coils, startAddr, size, serverAddr);
   }
 
   void readHoldingData(const QVector<int>& addrs, const int& serverAddr) {
@@ -88,6 +92,14 @@ class ModbusMaster : public QObject {
     readModbusData(QModbusDataUnit::HoldingRegisters, startAddr, size,
                    serverAddr);
   }
+
+  void readInputRegistersData(const QVector<int>& addrs,
+                              const int& serverAddr) {
+    for (auto it = addrs.cbegin(); it != addrs.cend(); ++it) {
+      readModbusData(QModbusDataUnit::InputRegisters, *it, 1, serverAddr);
+    }
+  }
+
   void writeCoilsData(const int& startAddr, const QVector<quint16>& values,
                       const int& serverAddr) {
     writeModbusData(QModbusDataUnit::Coils, startAddr, values, serverAddr);
@@ -99,7 +111,8 @@ class ModbusMaster : public QObject {
   }
 
  signals:
-  void dataReceived(const int& startAddr, const QVector<quint16>& data);
+  // void dataReceived(const int& startAddr, const QVector<quint16>& data);
+  void dataReceived(const QModbusDataUnit& dataUnit);
   void errorOccurred(const QString& error);
 
  private slots:
@@ -155,10 +168,12 @@ class ModbusMaster : public QObject {
           // 成功处理数据
           const QModbusDataUnit result = reply->result();
           if (result.isValid()) {
-            emit dataReceived(result.startAddress(), result.values());
+            // emit dataReceived(result.startAddress(), result.values());
+            emit dataReceived(result);
           }
         }
 
+        // 是否会导致 请求过慢? 不能精确 100 ms
         // 处理下一个请求
         QMetaObject::invokeMethod(this, &ModbusMaster::processNextRequest,
                                   Qt::QueuedConnection);

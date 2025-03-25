@@ -63,6 +63,7 @@ class Tt_EXPORT TtLabelLineEdit : public QWidget {
 
  signals:
   void currentIndexChanged(int index);
+  void currentTextChanged(const QString& text);
 
  private:
   TtLineEdit* line_edit_;

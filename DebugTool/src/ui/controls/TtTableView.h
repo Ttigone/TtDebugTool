@@ -1,6 +1,6 @@
 #include <QTableWidget>
 
-#include "ui/Def.h"
+#include "Def.h"
 
 class QSpinBox;
 
@@ -166,7 +166,8 @@ class TtTableWidget : public QTableWidget {
 class TtModbusTableWidget : public QTableWidget {
   Q_OBJECT
  public:
-  explicit TtModbusTableWidget(QWidget* parent = nullptr);
+  explicit TtModbusTableWidget(TtModbusRegisterType::Type type,
+                               QWidget* parent = nullptr);
   ~TtModbusTableWidget();
 
   void setRowValue(int row, int col, const QString& data);
@@ -181,7 +182,8 @@ class TtModbusTableWidget : public QTableWidget {
   void setCellWidget(int row, int column, QWidget* widget);
 
  signals:
-  void valueConfirmed(int addr, int value);  // 值被确认保存
+  void valueConfirmed(const int& addr, const int& value);  // 值被确认保存
+  void requestShowGraph(TtModbusRegisterType::Type type, const int& addr);
 
  public slots:
   void addRow();
@@ -190,6 +192,7 @@ class TtModbusTableWidget : public QTableWidget {
   void onValueChanged();
   void onConfirmClicked();
   void onCancelClicked();
+  void onSwitchButtonToggle(bool toggled);
 
  private:
   QVector<QString> getRowValue(int col);
@@ -199,6 +202,7 @@ class TtModbusTableWidget : public QTableWidget {
     TtLineEdit* address = nullptr;
     TtLineEdit* addressName = nullptr;
     TtLineEdit* value = nullptr;
+    TtSwitchButton* valueButton = nullptr;
     QPushButton* editButton = nullptr;     // 新增
     QPushButton* confirmButton = nullptr;  // 新增
     QPushButton* cancelButton = nullptr;   // 新增
@@ -220,14 +224,37 @@ class TtModbusTableWidget : public QTableWidget {
 
   // 控件管理
   TtCheckBox* createCheckButton();
+  TtSwitchButton* createSwitchButton();
   TtComboBox* createTypeComboBox(const QStringList& strs);
   TtSvgButton* createRefreshButton();
   QWidget* createCellWrapper(QWidget* content);
 
-  int findRowIndex(QWidget* context) const {
-    for (int row = 1; row < rowCount(); ++row) {
-      if (cellWidget(row, 5) == context->parentWidget()) {
-        return row;
+  int findRowIndex(QWidget* context, bool deep = false) const {
+    if (!context) {
+      return -1;
+    }
+    QWidget* parent = context->parentWidget();
+    if (!parent) {
+      return -1;
+    }
+
+    if (!deep) {
+      for (int row = 1; row < rowCount(); ++row) {
+        if (cellWidget(row, 5) == context->parentWidget()) {
+          return row;
+        }
+      }
+    } else {
+      QWidget* grandparent = parent->parentWidget();
+      qDebug() << "de";
+      if (!grandparent) {
+        return -1;
+      }
+      for (int row = 1; row < rowCount(); ++row) {
+        if (cellWidget(row, 5) == grandparent) {
+          qDebug() << "21";
+          return row;
+        }
       }
     }
     return -1;
@@ -261,28 +288,7 @@ class TtModbusTableWidget : public QTableWidget {
     return createCellWrapper(btn);
   }
 
-  QWidget* createGraphAndDeleteButton() {
-    QWidget* buttonGroup = new QWidget;
-    QHBoxLayout* layout = new QHBoxLayout(buttonGroup);
-    auto graphBtn = new QPushButton(QIcon(":/sys/graph-up.svg"), "");
-    auto deleteBtn = new QPushButton(QIcon(":/sys/trash.svg"), "");
-    deleteBtn->setFlat(true);
-    connect(deleteBtn, &QPushButton::clicked, this, [this] {
-      if (auto* btn = qobject_cast<QPushButton*>(sender())) {
-        int row = findRowIndex(btn);
-        if (row > 0) {
-          // 回收控件
-          recycleRow(rowsData_[row - 1]);
-          // 移除行
-          removeRow(row);
-          rowsData_.remove(row - 1);
-        }
-      }
-    });
-    layout->addWidget(graphBtn);
-    layout->addWidget(deleteBtn);
-    return createCellWrapper(buttonGroup);
-  }
+  QWidget* createGraphAndDeleteButton();
 
   QWidget* createDeleteButton() {
     auto* btn = new QPushButton(QIcon(":/sys/trash.svg"), "");
@@ -351,6 +357,8 @@ class TtModbusTableWidget : public QTableWidget {
   QJsonObject record_;
   int rows_;
   int cols_;
+
+  TtModbusRegisterType::Type type_;
 };
 
 }  // namespace Ui

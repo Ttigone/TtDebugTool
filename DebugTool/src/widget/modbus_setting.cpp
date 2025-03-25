@@ -198,6 +198,18 @@ void ModbusClientSetting::init() {
           });
   link_type_->setCurrentItem(0);
 
+  QWidget* graphSettingWidget = new QWidget(this);
+  Ui::TtVerticalLayout* graphSettingWidgetLayout =
+      new Ui::TtVerticalLayout(graphSettingWidget);
+  graph_capacity_ = new Ui::TtLabelLineEdit(tr("容量:"), graphSettingWidget);
+  connect(graph_capacity_, &Ui::TtLabelLineEdit::currentTextChanged,
+          [this](const QString& text) {
+            qDebug() << "nums: " << text.toUShort();
+            emit graphNumsChanged(text.toUShort());
+          });
+  graphSettingWidgetLayout->addWidget(graph_capacity_);
+  Ui::Drawer* drawer2 = new Ui::Drawer(tr("图表"), graphSettingWidget);
+
   setLinkType();
   setSerialPortsName();
   setSerialPortsBaudRate();
@@ -213,6 +225,7 @@ void ModbusClientSetting::init() {
   Ui::TtVerticalLayout* scrollContentLayout =
       new Ui::TtVerticalLayout(scrollContent);
   scrollContentLayout->addWidget(drawer1, 0, Qt::AlignTop);
+  scrollContentLayout->addWidget(drawer2, 0);
   scrollContentLayout->addStretch();
 
   scroll->setWidget(scrollContent);

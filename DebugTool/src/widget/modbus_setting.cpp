@@ -28,7 +28,8 @@ ModbusClientSetting::getModbusClientConfiguration() {
       data_bit_->currentData().value<QSerialPort::DataBits>(),
       parity_bit_->currentData().value<QSerialPort::Parity>(),
       stop_bit_->currentData().value<QSerialPort::StopBits>(),
-      device_id_->currentText());
+      device_id_->currentText(), host_->currentText(),
+      port_->currentText().toInt());
 }
 
 const QJsonObject& ModbusClientSetting::getModbusClientSetting() {
@@ -64,7 +65,6 @@ void ModbusClientSetting::setLinkType() {
   link_type_->addItem(tr("RTU"), TtModbusProcotol::RTU);
   link_type_->addItem(tr("RTU-ASCll"), TtModbusProcotol::RTU_ASCLL);
   link_type_->addItem(tr("TCP"), TtModbusProcotol::TCP);
-  link_type_->addItem(tr("UDP"), TtModbusProcotol::UDP);
 }
 
 void ModbusClientSetting::setSerialPortsName() {
@@ -115,7 +115,6 @@ void ModbusClientSetting::setSerialPortsStopBit() {
 void ModbusClientSetting::setControlState(bool state) {
   link_type_->setEnabled(state);
   path_->setEnabled(state);
-  port_->setEnabled(state);
   baud_->setEnabled(state);
   data_bit_->setEnabled(state);
   parity_bit_->setEnabled(state);
@@ -124,6 +123,8 @@ void ModbusClientSetting::setControlState(bool state) {
   timeout_->setEnabled(state);
   auto_refresh_->setEnabled(state);
   refresh_interval_->setEnabled(state);
+  host_->setEnabled(state);
+  port_->setEnabled(state);
 }
 
 quint32 ModbusClientSetting::getRefreshInterval() {

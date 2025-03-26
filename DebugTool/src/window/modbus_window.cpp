@@ -76,18 +76,12 @@ void ModbusWindow::sloveDataReceived(const QModbusDataUnit& dataUnit) {
 
   // 小于 100 ms
   // 修复发送的逻辑
-  // qDebug() << addr << data;
-  // holding_registers_table_->setValue(addr, data);
-  // updatePlot(data[0]);
-  // 接收数据
-  // switch
   auto type = dataUnit.registerType();
   switch (type) {
     case QModbusDataUnit::Coils: {
       coil_table_->setValue(dataUnit.startAddress(), dataUnit.values());
       updatePlot(TtModbusRegisterType::Coils, dataUnit.startAddress(),
                  dataUnit.values().at(0));
-      // qDebug() << "Coils" << dataUnit.values();
 
       break;
     }
@@ -106,6 +100,7 @@ void ModbusWindow::sloveDataReceived(const QModbusDataUnit& dataUnit) {
       break;
     }
     case QModbusDataUnit::InputRegisters: {
+      qDebug() << "input";
       input_registers_table_->setValue(dataUnit.startAddress(),
                                        dataUnit.values());
       updatePlot(TtModbusRegisterType::InputRegisters, dataUnit.startAddress(),
@@ -130,7 +125,6 @@ void ModbusWindow::timerRefreshValue() {
 }
 
 void ModbusWindow::getSpecificValue() {
-  // if ()
 }
 
 void ModbusWindow::getHoldingRegisterValue() {
@@ -157,7 +151,7 @@ void ModbusWindow::getDiscreteInputsValue() {
   if (!modbus_master_->isConnected()) {
     return;
   }
-  if (coil_table_->rowCount() > 1) {
+  if (discrete_inputs_table_->rowCount() > 1) {
     auto values = discrete_inputs_table_->getAddressValue();
     modbus_master_->readDiscreteInputsData(values, 1);
   }
@@ -167,7 +161,7 @@ void ModbusWindow::getInputRegistersValue() {
   if (!modbus_master_->isConnected()) {
     return;
   }
-  if (holding_registers_table_->rowCount() > 1) {
+  if (input_registers_table_->rowCount() > 1) {
     auto values = input_registers_table_->getAddressValue();
     modbus_master_->readInputRegistersData(values, 1);
   }
@@ -426,6 +420,9 @@ QWidget* ModbusWindow::createCoilWidget() {
       new Ui::TtModbusTableWidget(TtModbusRegisterType::Coils, coilsWidget);
   coil_table_->setObjectName("Coil");
 
+  coilsWidgetLayout->addWidget(coil_table_, 1);
+  coilsWidgetLayout->addWidget(bottomWidget, 0, Qt::AlignBottom);
+
   // 写入
   connect(coil_table_, &Ui::TtModbusTableWidget::valueConfirmed,
           [this](const int& address, const int& value) {
@@ -450,8 +447,6 @@ QWidget* ModbusWindow::createCoilWidget() {
   connect(plusButton, &QPushButton::clicked, this,
           [this]() { coil_table_->addRow(); });
 
-  coilsWidgetLayout->addWidget(coil_table_, 1);
-  coilsWidgetLayout->addWidget(bottomWidget, 0, Qt::AlignBottom);
 
   return coilsWidget;
 }
@@ -459,7 +454,7 @@ QWidget* ModbusWindow::createCoilWidget() {
 QWidget* ModbusWindow::createDiscreteInputsWidget() {
 
   QWidget* discreteInputsWidget = new QWidget;
-  Ui::TtVerticalLayout* coilsWidgetLayout =
+  Ui::TtVerticalLayout* discreteInputsWidgetLayout =
       new Ui::TtVerticalLayout(discreteInputsWidget);
   QWidget* bottomWidget = new QWidget;
   Ui::TtHorizontalLayout* bottomWidgetLayout =
@@ -479,11 +474,29 @@ QWidget* ModbusWindow::createDiscreteInputsWidget() {
       TtModbusRegisterType::DiscreteInputs, discreteInputsWidget);
   discrete_inputs_table_->setObjectName("DiscreteInputs");
 
-  coilsWidgetLayout->addWidget(discrete_inputs_table_, 1);
-  coilsWidgetLayout->addWidget(bottomWidget, 0, Qt::AlignBottom);
+  discreteInputsWidgetLayout->addWidget(discrete_inputs_table_, 1);
+  discreteInputsWidgetLayout->addWidget(bottomWidget, 0, Qt::AlignBottom);
+
+  connect(discrete_inputs_table_, &Ui::TtModbusTableWidget::valueConfirmed,
+          [this](const int& address, const int& value) {
+            modbus_master_->writeDiscreteInputsData(
+                address, QVector<quint16>(1, value),
+                modbus_client_setting_->getModbusDeviceId());
+          });
+
+  connect(
+      discrete_inputs_table_, &Ui::TtModbusTableWidget::requestShowGraph,
+      [this](TtModbusRegisterType::Type type, const int& addr, bool enable) {
+        if (!enable) {
+          customPlot->removeGraphs(type, addr);
+        } else {
+          customPlot->addGraphs(type, addr);
+        }
+      });
 
   connect(plusButton, &QPushButton::clicked, this,
           [this]() { discrete_inputs_table_->addRow(); });
+
   return discreteInputsWidget;
 }
 
@@ -540,6 +553,16 @@ QWidget* ModbusWindow::createHoldingRegisterWidget() {
                 modbus_client_setting_->getModbusDeviceId());
           });
 
+  connect(
+      holding_registers_table_, &Ui::TtModbusTableWidget::requestShowGraph,
+      [this](TtModbusRegisterType::Type type, const int& addr, bool enable) {
+        if (!enable) {
+          customPlot->removeGraphs(type, addr);
+        } else {
+          customPlot->addGraphs(type, addr);
+        }
+      });
+
   coilsWidgetLayout->addWidget(holding_registers_table_, 1);
   coilsWidgetLayout->addWidget(bottomWidget, 0, Qt::AlignBottom);
 
@@ -575,10 +598,21 @@ QWidget* ModbusWindow::createInputRegisterWidget() {
 
   connect(input_registers_table_, &Ui::TtModbusTableWidget::valueConfirmed,
           [this](const int& address, const int& value) {
-            modbus_master_->writeHoldingData(
+            modbus_master_->writeInputRegistersData(
                 address, QVector<quint16>(1, value),
                 modbus_client_setting_->getModbusDeviceId());
           });
+
+  connect(
+      input_registers_table_, &Ui::TtModbusTableWidget::requestShowGraph,
+      [this](TtModbusRegisterType::Type type, const int& addr, bool enable) {
+        if (!enable) {
+          customPlot->removeGraphs(type, addr);
+        } else {
+          customPlot->addGraphs(type, addr);
+        }
+      });
+
   connect(plusButton, &QPushButton::clicked, this,
           [this]() { input_registers_table_->addRow(); });
 

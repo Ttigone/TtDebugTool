@@ -372,38 +372,29 @@ MainWindow::MainWindow(QWidget* parent)
                 stack_->setCurrentIndex(0);
               }
             });
-    // 新增的弹出框
     connect(addLinkBtn, &QPushButton::clicked, [this, controller]() {
-      // qDebug() << "add new tab";
-      // FunctionSelectionWindow* test2 = new FunctionSelectionWindow();
-      SimulateFunctionSelectionWindow* test2 =
+      SimulateFunctionSelectionWindow* simulate =
           new SimulateFunctionSelectionWindow();
-      tabWidget_->addNewTab(test2, tr("创建模拟器"));
-      // 连接信号槽
-      QObject::connect(test2, &SimulateFunctionSelectionWindow::switchRequested,
+      tabWidget_->addNewTab(simulate, tr("创建模拟器"));
+      QObject::connect(simulate,
+                       &SimulateFunctionSelectionWindow::switchRequested,
                        [this](TtProtocolRole::Role role) {
-                         // 处理不同的 id
                          tabWidget_->handleButtonClicked(
                              tabWidget_->currentIndex(), role);
                        });
-      // 切换到当前新增 tab
-      tabWidget_->setCurrentWidget(test2);
+      tabWidget_->setCurrentWidget(simulate);
     });
-    // 新增的弹出框
     connect(addBtn, &Ui::TtSvgButton::clicked, [this, controller]() {
-      // qDebug() << "add new tab";
-      SimulateFunctionSelectionWindow* test2 =
+      SimulateFunctionSelectionWindow* simulate =
           new SimulateFunctionSelectionWindow();
-      tabWidget_->addNewTab(test2, tr("创建模拟器"));
-      // 连接信号槽
-      QObject::connect(test2, &SimulateFunctionSelectionWindow::switchRequested,
+      tabWidget_->addNewTab(simulate, tr("创建模拟器"));
+      QObject::connect(simulate,
+                       &SimulateFunctionSelectionWindow::switchRequested,
                        [this](TtProtocolRole::Role role) {
-                         // 处理不同的 id
                          tabWidget_->handleButtonClicked(
                              tabWidget_->currentIndex(), role);
                        });
-      // 切换到当前新增 tab
-      tabWidget_->setCurrentWidget(test2);
+      tabWidget_->setCurrentWidget(simulate);
     });
 
     test->addPairedWidget(2, mockList);
@@ -869,52 +860,49 @@ void MainWindow::setLeftBar() {
   left_bar_ = new QWidget(this);
   left_bar_logic_ = new Ui::TtWidgetGroup(this);
   left_bar_logic_->setExclusive(true);
-  communication_connection =
+  communication_connection_ =
       new Ui::TtSvgButton(":/sys/communicating-junctions.svg", left_bar_);
-  communication_connection->setColors(Qt::black, Qt::blue);
-  communication_connection->setEnableHoldToCheck(false);
+  communication_connection_->setColors(Qt::black, Qt::blue);
+  communication_connection_->setEnableHoldToCheck(false);
 
-  communication_instruction =
+  communication_instruction_ =
       new Ui::TtSvgButton(":/sys/Instruction-configuration.svg", left_bar_);
-  communication_instruction->setColors(Qt::black, Qt::blue);
-  communication_instruction->setEnableHoldToCheck(false);
+  communication_instruction_->setColors(Qt::black, Qt::blue);
+  communication_instruction_->setEnableHoldToCheck(false);
 
-  realistic_simulation =
+  realistic_simulation_ =
       new Ui::TtSvgButton(":/sys/real-time-simulation.svg", left_bar_);
-  realistic_simulation->setColors(Qt::black, Qt::blue);
-  realistic_simulation->setEnableHoldToCheck(false);
+  realistic_simulation_->setColors(Qt::black, Qt::blue);
+  realistic_simulation_->setEnableHoldToCheck(false);
 
-  // communication_connection->setStyleSheet("padding: 5px 10px;");
-  // communication_instruction->setStyleSheet("padding: 5px 10px;");
+  setting_ = new Ui::TtSvgButton(":/sys/setting.svg", left_bar_);
+  setting_->setColors(Qt::black, Qt::blue);
+  setting_->setEnableHoldToCheck(true);
 
-  left_bar_logic_->addWidget(communication_connection);
-  left_bar_logic_->addWidget(communication_instruction);
-  left_bar_logic_->addWidget(realistic_simulation);
+  // communication_connection_->setStyleSheet("padding: 5px 10px;");
+  // communication_instruction_->setStyleSheet("padding: 5px 10px;");
+
+  left_bar_logic_->addWidget(communication_connection_);
+  left_bar_logic_->addWidget(communication_instruction_);
+  left_bar_logic_->addWidget(realistic_simulation_);
 
   Ui::TtVerticalLayout* left_bar_layout = new Ui::TtVerticalLayout(left_bar_);
 
-  // 添加按钮
   left_bar_layout->addSpacerItem(new QSpacerItem(0, 10));
-  left_bar_layout->addWidget(communication_connection, 0, Qt::AlignTop);
+  left_bar_layout->addWidget(communication_connection_, 0, Qt::AlignTop);
   left_bar_layout->addSpacerItem(new QSpacerItem(0, 20));
-  left_bar_layout->addWidget(communication_instruction, 0, Qt::AlignTop);
+  left_bar_layout->addWidget(communication_instruction_, 0, Qt::AlignTop);
   left_bar_layout->addSpacerItem(new QSpacerItem(0, 20));
-  left_bar_layout->addWidget(realistic_simulation, 0, Qt::AlignTop);
+  left_bar_layout->addWidget(realistic_simulation_, 0, Qt::AlignTop);
   left_bar_layout->addStretch();
+  left_bar_layout->addWidget(setting_, 0, Qt::AlignBottom);
+  left_bar_layout->addSpacerItem(new QSpacerItem(0, 20));
 
   left_bar_->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
   left_bar_->setMinimumWidth(40);
 }
 
 void MainWindow::connectSignals() {
-  //  Ui::SnackBarController::instance()->showMessage("这是一个测试消息", 2000);
-  //});
-  // 处理点击 close Pop 时, 按钮恢复, 是否需要切换到新的 tab
-  //connect(communication_connection_widget, &Ui::PopWidget::isClosed, [this]() {
-  //  communication_connection->setState(true);
-  //  qDebug() << "also close";
-  //});
-
   connect(history_link_list_, &Ui::SessionManager::uuidsChanged, buttonGroup,
           &Ui::WidgetGroup::updateUuid);
   connect(history_link_list_, &Ui::SessionManager::uuidsChanged, tabWidget_,
@@ -925,12 +913,25 @@ void MainWindow::connectSignals() {
   connect(history_mock_list_, &Ui::SessionManager::uuidsChanged, tabWidget_,
           &Ui::TabManager::removeUuidWidget);
 
-  // 点击按钮信号连接
   QObject::connect(function_select_, &FunctionSelectionWindow::switchRequested,
                    [this](TtProtocolRole::Role role) {
                      tabWidget_->handleButtonClicked(tabWidget_->currentIndex(),
                                                      role);
                    });
+  connect(setting_, &Ui::TtSvgButton::clicked, this,
+          [this]() { qDebug() << "open setting"; });
+
+  connect(tabWidget_, &Ui::TabManager::requestNewTab, this, [this]() {
+    qDebug() << "new";
+    AllFunctionSelectionWindow* all = new AllFunctionSelectionWindow();
+    tabWidget_->addNewTab(all, tr("选择功能"));
+    QObject::connect(all, &AllFunctionSelectionWindow::switchRequested,
+                     [this](TtProtocolRole::Role role) {
+                       tabWidget_->handleButtonClicked(
+                           tabWidget_->currentIndex(), role);
+                     });
+    tabWidget_->setCurrentWidget(all);
+  });
 }
 
 void MainWindow::registerTabWidget() {

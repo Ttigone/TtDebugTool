@@ -80,6 +80,8 @@ set(PROJECT_SOURCES
     ${src_loc}/ui/controls/TtTableView.h ${src_loc}/ui/controls/TtTableView.cpp
     ${src_loc}/ui/controls/TtModbusPlot.h ${src_loc}/ui/controls/TtModbusPlot.cpp
     ${src_loc}/ui/controls/TtDownloadDialog.h ${src_loc}/ui/controls/TtDownloadDialog.cpp
+    ${src_loc}/ui/controls/TtSerialLexer.h ${src_loc}/ui/controls/TtSerialLexer.cpp
+    ${src_loc}/ui/controls/TtQCPItemRichText.h ${src_loc}/ui/controls/TtQCPItemRichText.cpp
 )
 
 # Apply the macro
@@ -153,7 +155,6 @@ elseif(MSVC)
 endif()
 
 
-
 endif()
 
 
@@ -172,10 +173,12 @@ add_subdirectory(lib_ui)
 include_directories(src)
 include_directories(${third_party})
 
-# list(APPEND CMAKE_PREFIX_PATH "{third_party}/qtmqtt/lib/cmake")
+if(MINGW)
+    list(APPEND CMAKE_PREFIX_PATH "{third_party}/qtmqtt_mingw64/lib/cmake")
+    find_package(Qt6Mqtt REQUIRED)
+    target_link_directories(${PROJECT_NAME} PRIVATE "${third_party}/qtmqtt_mingw64/lib")
+endif()
 
-# find_package(Qt6Mqtt REQUIRED)
-link_directories(${third_party}/qtmqtt/lib)
 
 find_package(Qt6 REQUIRED COMPONENTS OpenGL)
 find_package(OpenGL REQUIRED)
@@ -192,7 +195,7 @@ PRIVATE
   QsLog
   qt-easy-logger
   # qcustomplot
-  ${third_party}/qtmqtt/lib/libQt6Mqtt.a
+  ${third_party}/qtmqtt_mingw64/lib/libQt6Mqtt.a
   # 使用的是系统的 opengl函数
   # -lopengl32 -lglu32
   Qt6::OpenGL          # Qt OpenGL 模块

@@ -136,6 +136,7 @@ class TabManager : public QTabWidget {
 
  signals:
   void newTabRequested();  // 新建标签信号
+  void requestNewTab();
 
  public slots:
   // 处理 widget1 中按钮点击事件
@@ -150,37 +151,9 @@ class TabManager : public QTabWidget {
   void setupCustomTabButton(int index);
   void updateTabStyle(int index);
 
-  void setupCornerButton() {
-    auto* addButton = new QToolButton(this);
-    addButton->setIcon(QIcon(":/sys/plus-circle.svg"));
-    addButton->setToolTip(tr("New Tab"));
-
-    // connect(addButton, &QToolButton::clicked, this,
-    //         [this]() { addTab(new QWidget, "New Tab"); });
-
-    // 设置按钮样式
-    addButton->setStyleSheet(R"(
-        QToolButton {
-            border: none;
-            padding: 2px;
-            background: transparent;
-        }
-        QToolButton:hover {
-            background: rgba(0, 0, 0, 0.1);
-        }
-        QToolButton:pressed {
-            background: rgba(0, 0, 0, 0.15);
-        }
-    )");
-
-    setCornerWidget(addButton, Qt::TopRightCorner);
-
-    // connect(addButton, &QToolButton::clicked,
-    //         this, &CustomTabWidget::handleAddTabRequest);
-  }
+  void setupCornerButton();
 
   int getTabIndexFromButton(QWidget* button) const {
-    // 通过遍历找到按钮对应的标签页索引
     QTabBar* bar = tabBar();
     for (int i = 0; i < bar->count(); ++i) {
       if (bar->tabButton(i, QTabBar::RightSide) == button) {

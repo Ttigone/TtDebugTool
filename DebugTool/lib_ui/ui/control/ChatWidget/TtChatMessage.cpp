@@ -20,6 +20,7 @@ TtChatMessage::TtChatMessage(const QString& id, QObject* parent)
 
 TtChatMessage::~TtChatMessage() {
   // 清理资源（如图片缓存等）
+  // qDebug() << "clear";
 }
 
 // 基础属性实现

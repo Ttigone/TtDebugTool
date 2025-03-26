@@ -94,9 +94,10 @@ class MainWindow : public QMainWindow {
 
   QVector<QVector<QWidget*>> stacked_;
 
-  Ui::TtSvgButton* communication_connection;
-  Ui::TtSvgButton* communication_instruction;
-  Ui::TtSvgButton* realistic_simulation;
+  Ui::TtSvgButton* communication_connection_;
+  Ui::TtSvgButton* communication_instruction_;
+  Ui::TtSvgButton* realistic_simulation_;
+  Ui::TtSvgButton* setting_;
   int i = 0;
 
   // tab 页面

@@ -1,11 +1,11 @@
-#ifndef TTMODBUSPLOT_H
-#define TTMODBUSPLOT_H
+#ifndef UI_CONTROLS_TTMODBUSPLOT_H
+#define UI_CONTROLS_TTMODBUSPLOT_H
 
+#include "TtQCPItemRichText.h"
 #include "qcustomplot/qcustomplot.h"
 
 #include "Def.h"
 
-// y 方向的图标
 class AxisTag : public QObject {
   Q_OBJECT
  public:
@@ -69,9 +69,8 @@ class ModbusPlot : public QCustomPlot {
   double m_startTime = 0.0;   // 记录第一个数据点的时间
 
   QCPItemStraightLine* m_vLine;  // 垂直指示线
-  QCPItemText* m_coordLabel;     // 坐标标签
-
-  // QMap<QPair<TtModbusRegisterType::Type, int>, QPointer<QCPGraph>> data_graph_;
+  // QCPItemText* m_coordLabel;     // 坐标标签
+  TtQCPItemRichText* m_coordLabel;  // 坐标标签
 
   quint16 points_nums_ = 100;
 
@@ -85,4 +84,4 @@ class ModbusPlot : public QCustomPlot {
   QList<QColor> m_colorPalette;               // 颜色轮转列表
 };
 
-#endif  // TTMODBUSPLOT_H
+#endif  // UI_CONTROLS_TTMODBUSPLOT_H

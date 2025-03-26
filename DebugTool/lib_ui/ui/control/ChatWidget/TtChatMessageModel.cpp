@@ -450,6 +450,7 @@ void TtChatMessageModel::prependMessages(
 }
 
 void TtChatMessageModel::removeMessages(int first, int last) {
+  // 移出消息, 当前没有调用 message 的析构
   if (first > last || first < 0 || last >= rowCount())
     return;
 
@@ -459,13 +460,10 @@ void TtChatMessageModel::removeMessages(int first, int last) {
     QString id = data(idx, MessageIdRole).toString();  // 当前消息ID
     TtChatMessage* msg = m_messageMap.take(id);        // 移除消息
     m_blocks.last().messages.removeAll(msg);           // 移除消息
-    //if (msg) {
-    //  //delete msg;
-    //  msg->deleteLater();
-    //  //msg = nullptr;
-    //}
+    if (msg) {
+      msg->deleteLater();
+    }
   }
-  // 更新块结构...
   endRemoveRows();
 }
 

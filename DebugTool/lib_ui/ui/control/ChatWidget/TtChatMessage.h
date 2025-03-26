@@ -49,24 +49,20 @@ class Tt_EXPORT TtChatMessage : public QObject {
   explicit TtChatMessage(const QString& id, QObject* parent = nullptr);
   ~TtChatMessage();
 
-  // 基础属性访问器
   QString content() const;
   QDateTime timestamp() const;
   bool isOutgoing() const;
   MessageType type() const;
   QString messageId() const;
 
-  // 选择状态
   int selectionStart() const;
   int selectionEnd() const;
   QString selectedText() const;
 
-  // 样式访问器
   QColor bubbleColor() const;
   QColor textColor() const;
   QFont font() const;
 
-  // 消息状态
   MessageStatus status() const;
 
  public Q_SLOTS:
@@ -96,28 +92,22 @@ class Tt_EXPORT TtChatMessage : public QObject {
   void statusChanged();
 
  private:
-  // 唯一标识
   QString m_id;
 
-  // 基础属性
   QString m_content;
   QDateTime m_timestamp;
   bool m_outgoing = false;
   MessageType m_type = TextMessage;
 
-  // 选择状态
   int m_selectionStart = -1;
   int m_selectionEnd = -1;
 
-  // 样式配置
   QColor m_bubbleColor;
   QColor m_textColor;
   QFont m_font;
 
-  // 消息状态
   MessageStatus m_status = Sent;
 
-  // 其他扩展属性...
 };
 
 }  // namespace Ui

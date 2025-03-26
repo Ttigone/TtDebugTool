@@ -27,6 +27,7 @@
 // }
 
 void CreateDumpFile(EXCEPTION_POINTERS* exceptionInfo) {
+  qDebug() << "create";
   HANDLE hFile = CreateFileW(L"dumpfile.dmp", GENERIC_WRITE, 0, NULL,
                              CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
   if (hFile != INVALID_HANDLE_VALUE) {

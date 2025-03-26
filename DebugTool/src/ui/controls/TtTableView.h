@@ -247,13 +247,11 @@ class TtModbusTableWidget : public QTableWidget {
       }
     } else {
       QWidget* grandparent = parent->parentWidget();
-      qDebug() << "de";
       if (!grandparent) {
         return -1;
       }
       for (int row = 1; row < rowCount(); ++row) {
         if (cellWidget(row, 5) == grandparent) {
-          qDebug() << "21";
           return row;
         }
       }

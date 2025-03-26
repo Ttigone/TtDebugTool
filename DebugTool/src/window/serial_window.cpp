@@ -1,7 +1,5 @@
 #include "window/serial_window.h"
 
-#include <QTableView>
-
 #include <ui/control/ChatWidget/TtChatMessage.h>
 #include <ui/control/ChatWidget/TtChatMessageModel.h>
 #include <ui/control/ChatWidget/TtChatView.h>
@@ -13,12 +11,14 @@
 #include <ui/widgets/collapsible_panel.h>
 #include <ui/widgets/labels.h>
 #include <ui/widgets/message_bar.h>
+#include <ui/widgets/widget_group.h>
 
 #include <lib/qtmaterialcheckable.h>
 #include <qtmaterialflatbutton.h>
 #include <qtmaterialradiobutton.h>
 #include <qtmaterialsnackbar.h>
 #include <qtmaterialtabs.h>
+#include <ui/controls/TtSerialLexer.h>
 
 #include "ui/controls/TtTableView.h"
 #include "widget/serial_setting.h"
@@ -30,8 +30,6 @@ SerialWindow::SerialWindow(QWidget* parent)
       worker_thread_(new QThread(this)),
       serial_port_(new Core::SerialPortWorker),
       serial_setting_(new Widget::SerialSetting) {
-
-
   // 放在线程中执行
   serial_port_->moveToThread(worker_thread_);
 
@@ -45,7 +43,7 @@ SerialWindow::SerialWindow(QWidget* parent)
   //                           Qt::QueuedConnection);  // 触发初始化
 
   connect(serial_port_, &Core::SerialPortWorker::dataReceived, this,
-          &SerialWindow::onDataReceived);
+          &SerialWindow::dataReceived);
 
   connect(serial_port_, &Core::SerialPortWorker::errorOccurred, this,
           &SerialWindow::showErrorMessage);
@@ -132,14 +130,30 @@ void SerialWindow::switchToDisplayMode() {
   stack_->setCurrentWidget(original_widget_);
 }
 
+void SerialWindow::saveLog() {
+  // saveBtn->connect(saveBtn, &QPushButton::clicked, [this]() {
+  //   QString fileName = QFileDialog::getSaveFileName(this, tr("保存日志"),
+  //                                                   QDir::homePath() + "/serial_log.txt",
+  //                                                   tr("文本文件 (*.txt)"));
+  //   if (!fileName.isEmpty()) {
+  //     QFile file(fileName);
+  //     if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+  //       QTextStream stream(&file);
+  //       stream << terminal_->text();
+  //       file.close();
+  //     }
+  //   }
+  // });
+}
+
 void SerialWindow::showErrorMessage(const QString& text) {
   Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""), text, 1500, this);
   on_off_btn_->setChecked(false);
   serial_port_opened = false;
+  serial_setting_->setControlState(true);
 }
 
-void SerialWindow::onDataReceived(const QByteArray& data) {
-  // qDebug() << "Received data:" << data;
+void SerialWindow::dataReceived(const QByteArray& data) {
   recv_byte_count += data.size();
   auto tmp = new Ui::TtChatMessage();
   tmp->setContent(data);
@@ -148,6 +162,15 @@ void SerialWindow::onDataReceived(const QByteArray& data) {
   QList<Ui::TtChatMessage*> list;
   list.append(tmp);
   message_model_->appendMessages(list);
+
+  // 获取当前时间并格式化消息
+  QDateTime now = QDateTime::currentDateTime();
+  QString timestamp = now.toString("[yyyy-MM-dd hh:mm:ss]");
+  QString formattedMessage = timestamp + " [Receive] " + data + "\n";
+
+  // 添加到终端
+  terminal_->append(formattedMessage);
+
   recv_byte->setText(QString("接收字节数: %1 B").arg(recv_byte_count));
   message_view_->scrollToBottom();
 }
@@ -174,12 +197,11 @@ void SerialWindow::init() {
   title_ = new Ui::TtNormalLabel(tr("未命名串口连接"));
   // 编辑命名按钮
   // modify_title_btn_ = new Ui::TtImageButton(":/sys/edit_name.svg", this);
-  modify_title_btn_ = new Ui::TtSvgButton(":/sys/edit_name.svg", this);
+  modify_title_btn_ = new Ui::TtSvgButton(":/sys/edit.svg", this);
   modify_title_btn_->setSvgSize(18, 18);
 
   // 创建原始界面
   original_widget_ = new QWidget(this);
-  // original_widget_->setStyleSheet("background-color : Coral");
   Ui::TtHorizontalLayout* tmpl = new Ui::TtHorizontalLayout(original_widget_);
   tmpl->addSpacerItem(new QSpacerItem(10, 10));
   tmpl->addWidget(title_, 0, Qt::AlignLeft);
@@ -199,13 +221,10 @@ void SerialWindow::init() {
 
   // 使用堆叠布局
   stack_ = new QStackedWidget(this);
-  // stack_->setFixedHeight(40);
   stack_->setMaximumHeight(40);
-  // stack_->resize(40);
   stack_->addWidget(original_widget_);
   stack_->addWidget(edit_widget_);
 
-  // 优化后的信号连接（仅需2个连接点）
   connect(modify_title_btn_, &Ui::TtSvgButton::clicked, this,
           &SerialWindow::switchToEditMode);
 
@@ -214,9 +233,7 @@ void SerialWindow::init() {
 
   Ui::TtHorizontalLayout* tmpAll = new Ui::TtHorizontalLayout;
 
-  // 保存 lambda 表达式
   auto handleSave = [this]() {
-    //qDebug() << "失去";
     if (!title_edit_->text().isEmpty()) {
       switchToDisplayMode();
     } else {
@@ -242,11 +259,9 @@ void SerialWindow::init() {
   tmpl2->addWidget(on_off_btn_, 0, Qt::AlignRight);
   tmpl2->addSpacerItem(new QSpacerItem(10, 10));
 
-  //tmpAll->addLayout(tmpl);
   tmpAll->addLayout(tmpP1);
   tmpAll->addLayout(tmpl2);
 
-  //main_layout_->addLayout(tmpl);
   main_layout_->addLayout(tmpAll);
 
   // 左右分隔器
@@ -259,16 +274,37 @@ void SerialWindow::init() {
   chose_function_layout->setSpacing(5);
   chose_function->setLayout(chose_function_layout);
 
+  // 切换
+  QWidget* twoBtnForGroup = new QWidget(chose_function);
+  QHBoxLayout* layouttest = new QHBoxLayout(twoBtnForGroup);
+  Ui::TtSvgButton* leftBtn =
+      new Ui::TtSvgButton(":/sys/chat.svg", twoBtnForGroup);
+  leftBtn->setSvgSize(18, 18);
+  leftBtn->setColors(Qt::black, Qt::blue);
+  Ui::TtSvgButton* rightBtn =
+      new Ui::TtSvgButton(":/sys/terminal.svg", twoBtnForGroup);
+  rightBtn->setSvgSize(18, 18);
+  rightBtn->setColors(Qt::black, Qt::blue);
+  layouttest->addWidget(leftBtn);
+  layouttest->addWidget(rightBtn);
+  // 互斥
+  Ui::TtWidgetGroup* test_ = new Ui::TtWidgetGroup(this);
+  test_->addWidget(leftBtn);
+  test_->addWidget(rightBtn);
+  test_->setExclusive(true);
+
+  chose_function_layout->addWidget(twoBtnForGroup);
   chose_function_layout->addStretch();
   Ui::TtSvgButton* clear_history =
       new Ui::TtSvgButton(":/sys/trash.svg", chose_function);
   clear_history->setSvgSize(18, 18);
 
   //// 选择 text/hex
-  //chose_function_layout->addWidget(bgr);
   QButtonGroup* bgr = new QButtonGroup(this);
   QPushButton* button1 = new QPushButton("TEXT");
   QPushButton* button2 = new QPushButton("HEX");
+  button1->setFlat(true);
+  button2->setFlat(true);
   bgr->addButton(button1);
   bgr->addButton(button2);
   chose_function_layout->addWidget(button1);
@@ -277,25 +313,56 @@ void SerialWindow::init() {
   // 清除历史按钮
   chose_function_layout->addWidget(clear_history);
 
-  // 中间的弹簧
-
-  // 上下分隔器
   QSplitter* VSplitter = new QSplitter;
   VSplitter->setOrientation(Qt::Vertical);
   VSplitter->setContentsMargins(QMargins());
   // VSplitter->setSizes();
 
   // 上方选择功能以及信息框
-  QWidget* cont = new QWidget;
-  Ui::TtVerticalLayout* cont_layout = new Ui::TtVerticalLayout(cont);
+  QWidget* contentWidget = new QWidget;
+  Ui::TtVerticalLayout* contentWidgetLayout =
+      new Ui::TtVerticalLayout(contentWidget);
 
-  message_view_ = new Ui::TtChatView(cont);
+  QStackedWidget* messageStackedView = new QStackedWidget(contentWidget);
+
+  message_view_ = new Ui::TtChatView(messageStackedView);
   message_view_->setResizeMode(QListView::Adjust);
   message_view_->setUniformItemSizes(false);  // 允许每个项具有不同的大小
   message_view_->setMouseTracking(true);
   message_view_->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
-  cont_layout->addWidget(chose_function);
-  cont_layout->addWidget(message_view_);
+  messageStackedView->addWidget(message_view_);
+
+  terminal_ = new QsciScintilla(messageStackedView);
+  terminal_->setReadOnly(true);
+  terminal_->setMarginMarkerMask(0, 0);
+  // 显示边界栏
+  // terminal_->setMarginType(0, QsciScintilla::NumberMargin);
+  // terminal_->setMarginWidth(0, 0);  // 设置行号栏宽度
+  for (int i = 0; i < 5; i++) {  // QsciScintilla 默认有 5 个边界栏
+    terminal_->setMarginWidth(i, 0);
+  }
+
+  terminal_->setWrapMode(QsciScintilla::WrapWord);
+  terminal_->setWrapVisualFlags(QsciScintilla::WrapFlagInMargin,
+                                QsciScintilla::WrapFlagInMargin, 0);
+  terminal_->setFrameStyle(QFrame::NoFrame);
+
+  // // 创建自定义 Lexer
+  SerialLexer* lexer = new SerialLexer(terminal_);
+  terminal_->setLexer(lexer);
+  // // 设置字体
+
+  // 将 lexer 设置为编辑器的 lexer
+  messageStackedView->addWidget(terminal_);
+
+  contentWidgetLayout->addWidget(chose_function);
+  contentWidgetLayout->addWidget(messageStackedView);
+
+  connect(test_, &Ui::TtWidgetGroup::widgetClicked, this,
+          [this, messageStackedView](const int& idx) {
+            // qDebug() << idx;
+            messageStackedView->setCurrentIndex(idx);
+          });
 
   base::DetectRunningTime runtime;
 
@@ -392,7 +459,7 @@ void SerialWindow::init() {
   bottomAllLayout->addWidget(tabs_and_count);
   bottomAllLayout->addWidget(la_w);
 
-  VSplitter->addWidget(cont);
+  VSplitter->addWidget(contentWidget);
   VSplitter->addWidget(bottomAll);
 
   // 左右分区
@@ -432,8 +499,10 @@ void SerialWindow::init() {
     }
   });
 
-  connect(clear_history, &Ui::TtSvgButton::clicked,
-          [this]() { message_model_->clearModelData(); });
+  connect(clear_history, &Ui::TtSvgButton::clicked, [this]() {
+    message_model_->clearModelData();
+    terminal_->clear();
+  });
 
   connect(sendBtn, &QtMaterialFlatButton::clicked, [this]() {
     if (!serial_port_opened) {
@@ -450,6 +519,15 @@ void SerialWindow::init() {
     QList<Ui::TtChatMessage*> list;
     list.append(tmp);
     message_model_->appendMessages(list);
+
+    // 获取当前时间并格式化消息
+    QDateTime now = QDateTime::currentDateTime();
+    QString timestamp = now.toString("[yyyy-MM-dd hh:mm:ss]");
+    QString formattedMessage = timestamp + " [SEND] " + data + "\n";
+
+    // 添加到终端
+    terminal_->append(formattedMessage);
+
     // 串口发送
     QMetaObject::invokeMethod(serial_port_, "sendData", Qt::QueuedConnection,
                               Q_ARG(QString, data));
@@ -457,7 +535,7 @@ void SerialWindow::init() {
     message_view_->scrollToBottom();
   });
 
-  qDebug() << "Create SerialWindow: " << runtime.elapseMilliseconds();
+  // qDebug() << "Create SerialWindow: " << runtime.elapseMilliseconds();
 }
 
 void SerialWindow::setSerialSetting() {

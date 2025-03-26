@@ -46,17 +46,6 @@ AxisTag::~AxisTag() {
     mArrow->parentPlot()->removeItem(mArrow);
   if (mLabel)
     mLabel->parentPlot()->removeItem(mLabel);
-
-  // 析构有问题
-  // 不需要手动 removeItem，QCP 会自动管理 parent 为 plot 的对象
-  // mDummyTracer->setParent(nullptr);  // 断开与 plot 的父子关系
-  // mDummyTracer->deleteLater();
-
-  // mArrow->setParent(nullptr);
-  // mArrow->deleteLater();
-
-  // mLabel->setParent(nullptr);
-  // mLabel->deleteLater();
 }
 
 void AxisTag::setPen(const QPen& pen) {
@@ -79,17 +68,15 @@ void AxisTag::updatePosition(double value) {
 
 ModbusPlot::ModbusPlot(QWidget* parent) : QCustomPlot(parent) {
   setupPlot();
+  this->setOpenGl(true);
+  qDebug() << "opengle=" << this->openGl();
+
+  setAntialiasedElements(QCP::aeAll);
 }
 
 ModbusPlot::~ModbusPlot() {}
 
 void ModbusPlot::setupPlot() {
-  // 创建图表和数据容器
-
-  // m_dataGraph1 =
-  //     this->addGraph(this->xAxis, this->axisRect()->axis(QCPAxis::atRight, 1));
-  // m_dataGraph1->setPen(QPen(QColor(0, 180, 60)));
-
   QCPAxis* rightAxis = axisRect()->addAxis(QCPAxis::atRight);
   rightAxis->setPadding(60);
   rightAxis->setVisible(true);
@@ -97,11 +84,6 @@ void ModbusPlot::setupPlot() {
   rightAxis->setTickLabels(false);   // 隐藏刻度标签
   rightAxis->setBasePen(Qt::NoPen);  // 隐藏轴线
 
-  // // 右侧垂直标签 附着值
-  // tag_ = new AxisTag(m_dataGraph->valueAxis());
-  // tag_->setPen(m_dataGraph->pen());
-
-  // 允许用户交互
   this->setInteraction(QCP::iRangeDrag, false);
   this->setInteraction(QCP::iRangeZoom, false);
 
@@ -155,9 +137,9 @@ void ModbusPlot::setupPlot() {
   m_vLine->setVisible(false);
 
   // 创建坐标标签
-  m_coordLabel = new QCPItemText(this);
+  // m_coordLabel = new QCPItemText(this);
+  m_coordLabel = new TtQCPItemRichText(this);
   m_coordLabel->setPositionAlignment(Qt::AlignLeft | Qt::AlignBottom);
-  // m_coordLabel->position->setType(QCPItemPosition::ptAxisRectRatio);
   m_coordLabel->position->setType(QCPItemPosition::ptViewportRatio);
   m_coordLabel->position->setCoords(1.0, 0.0);  // 右上角
   m_coordLabel->setTextAlignment(Qt::AlignRight);
@@ -171,18 +153,18 @@ void ModbusPlot::setupPlot() {
 
 void ModbusPlot::addData(TtModbusRegisterType::Type type, const int& addr,
                          double value) {
+
+  auto key = qMakePair(static_cast<int>(type), addr);
+
+  if (!m_curves.contains(key)) {
+    return;
+  }
+
   if (!m_firstDataReceived) {
     // 当首次收到数据时执行
     this->yAxis->setTicks(true);
     this->yAxis->setTickLabels(true);
     m_firstDataReceived = true;
-  }
-
-  auto key = qMakePair(static_cast<int>(type), addr);
-
-  if (!m_curves.contains(key)) {
-    qWarning() << "Curve not found for type" << type << "addr" << addr;
-    return;
   }
 
   CurveData& curve = m_curves[key];
@@ -195,7 +177,6 @@ void ModbusPlot::addData(TtModbusRegisterType::Type type, const int& addr,
   // 计算相对于起始时间的偏移
   double relativeTime = timestamp - m_startTime;
 
-  // 点个数 计算当前鼠标点索引, idx 可能为负数
   if (curve.timeData.size() > points_nums_) {
     curve.timeData.removeFirst();
     curve.valueData.removeFirst();
@@ -356,6 +337,33 @@ void ModbusPlot::clearData() {
   this->replot();
 }
 
+// void ModbusPlot::mouseMoveEvent(QMouseEvent* event) {
+//   QCustomPlot::mouseMoveEvent(event);
+
+//   // 显示/隐藏组件
+//   const bool show = this->rect().contains(event->pos());
+//   m_vLine->setVisible(show);
+//   m_coordLabel->setVisible(show);
+
+//   if (show) {
+//     // 获取鼠标坐标
+//     double x = this->xAxis->pixelToCoord(event->pos().x());
+//     double y = this->yAxis->pixelToCoord(event->pos().y());
+
+//     // 更新竖线位置
+//     m_vLine->point1->setCoords(x, this->yAxis->range().lower);
+//     m_vLine->point2->setCoords(x, this->yAxis->range().upper);
+
+//     // 更新标签内容
+//     m_coordLabel->setText(
+//         QString("X: %1\nY: %2").arg(x, 0, 'f', 1).arg(y, 0, 'f', 2));
+//   } else {
+//     m_coordLabel->setVisible(false);
+//   }
+
+//   updateTracerPosition(event);
+// }
+
 void ModbusPlot::mouseMoveEvent(QMouseEvent* event) {
   QCustomPlot::mouseMoveEvent(event);
 
@@ -367,19 +375,130 @@ void ModbusPlot::mouseMoveEvent(QMouseEvent* event) {
   if (show) {
     // 获取鼠标坐标
     double x = this->xAxis->pixelToCoord(event->pos().x());
-    double y = this->yAxis->pixelToCoord(event->pos().y());
+    // double y = this->yAxis->pixelToCoord(event->pos().y());
 
     // 更新竖线位置
     m_vLine->point1->setCoords(x, this->yAxis->range().lower);
     m_vLine->point2->setCoords(x, this->yAxis->range().upper);
 
+    updateTracerPosition(event);
     // 更新标签内容
-    m_coordLabel->setText(
-        QString("X: %1\nY: %2").arg(x, 0, 'f', 1).arg(y, 0, 'f', 2));
+    // m_coordLabel->setText(
+    //     QString("X: %1\nY: %2").arg(x, 0, 'f', 1).arg(y, 0, 'f', 2));
+  } else {
+    m_coordLabel->setVisible(false);
   }
-
-  updateTracerPosition(event);
 }
+
+// void ModbusPlot::updateTracerPosition(QMouseEvent* event) {
+//   if (m_curves.isEmpty()) {
+//     m_tracer->setVisible(false);
+//     m_tracerLabel->setVisible(false);
+//     return;
+//   }
+
+//   // 当前鼠标坐标值
+//   double mouseX = this->xAxis->pixelToCoord(event->pos().x());
+
+//   // 鼠标移出 x 轴外
+//   if (mouseX < this->xAxis->range().lower ||
+//       mouseX > this->xAxis->range().upper) {
+//     m_tracer->setVisible(false);
+//     m_tracerLabel->setVisible(false);
+//     return;
+//   }
+
+//   QMap<double, QPair<QCPGraph*, QCPGraphData>> nearestPoints;
+
+//   qDebug() << "=== 鼠标位置调试 ===";
+//   qDebug() << "鼠标X坐标（像素）:" << event->pos().x();
+//   qDebug() << "转换后X值:" << mouseX;
+
+//   // 遍历每一个图像
+//   for (auto it = m_curves.begin(); it != m_curves.end(); ++it) {
+//     //
+//     const auto& curve = it.value();
+//     if (!curve.graph || curve.timeData.isEmpty()) {
+//       continue;
+//     }
+
+//     // 获取时间 x 轴
+//     auto times = curve.timeData;
+
+//     auto it_lower = std::lower_bound(times.begin(), times.end(), mouseX);
+//     int idx = it_lower - times.begin();
+//     // 处理边界情况
+//     if (idx == 0) {
+//       // 鼠标在第一个点左侧或刚好在第一个点
+//     } else if (idx == times.size()) {
+//       // 鼠标在最后一个点右侧，取最后一个点
+//       idx = times.size() - 1;
+//     } else {
+//       // 比较左右两个点，选择更近的
+//       double distLeft = mouseX - times[idx - 1];
+//       double distRight = times[idx] - mouseX;
+//       if (distLeft < distRight)
+//         idx--;
+//     }
+
+//     // 最终安全限制
+//     idx = qBound(0, idx, times.size() - 1);
+
+//     qDebug() << "计算后索引:" << idx;
+//     if (idx >= 0 && idx < times.size() && idx < curve.valueData.size()) {
+//       double distance = fabs(mouseX - times[idx]);
+//       qDebug() << "有效数据点:" << times[idx] << curve.valueData[idx];
+
+//       QCPGraphData dataPoint(times[idx], curve.valueData.value(idx));
+//       nearestPoints.insert(distance, qMakePair(curve.graph, dataPoint));
+//     }
+//   }
+
+//   // 更新跟踪器和标签
+//   if (!nearestPoints.isEmpty()) {
+//     auto closest = nearestPoints.first();
+//     QCPGraph* activeGraph = closest.first;
+//     QCPGraphData data = closest.second;
+
+//     // 设置跟踪器
+//     m_tracer->setGraph(activeGraph);
+//     m_tracer->setGraphKey(data.key);
+//     m_tracer->setVisible(true);
+
+//     // 设置标签内容
+//     QDateTime dt =
+//         QDateTime::fromMSecsSinceEpoch((m_startTime + data.key) * 1000);
+//     QString text = QString("%1\n值: %2")
+//                        .arg(dt.toString("HH:mm:ss"))
+//                        .arg(data.value, 0, 'f', 2);
+//     m_tracerLabel->setText(text);
+
+//     qDebug() << dt;
+
+//     // 动态定位标签
+//     QPoint cursorPos = event->pos();
+//     QRect viewport = this->viewport();
+//     QFontMetrics fm(m_tracerLabel->font());
+//     int textWidth = fm.horizontalAdvance(text) + 20;
+
+//     // qDebug() <<
+
+//     if (cursorPos.x() + textWidth > viewport.right()) {
+//       m_tracerLabel->position->setPixelPosition(
+//           QPointF(viewport.right() - textWidth, cursorPos.y() - 20));
+//     } else {
+//       m_tracerLabel->position->setPixelPosition(
+//           QPointF(cursorPos.x() + 15, cursorPos.y() - 20));
+//     }
+
+//     m_tracerLabel->setVisible(true);
+//   } else {
+//     m_tracer->setVisible(false);
+//     m_tracerLabel->setVisible(false);
+//   }
+
+//   replot();
+// }
 
 void ModbusPlot::updateTracerPosition(QMouseEvent* event) {
   if (m_curves.isEmpty()) {
@@ -399,11 +518,18 @@ void ModbusPlot::updateTracerPosition(QMouseEvent* event) {
     return;
   }
 
-  QMap<double, QPair<QCPGraph*, QCPGraphData>> nearestPoints;
+  // 图像距离当前鼠标坐标值的最近点, 遍历每一张图, 性能消耗高
+  // QMap<double, QPair<QCPGraph*, QCPGraphData>> nearestPoints;
 
   qDebug() << "=== 鼠标位置调试 ===";
   qDebug() << "鼠标X坐标（像素）:" << event->pos().x();
   qDebug() << "转换后X值:" << mouseX;
+
+  QDateTime time =
+      QDateTime::fromMSecsSinceEpoch((m_startTime + mouseX) * 1000);
+  QStringList tooltipLines;
+  tooltipLines.append(
+      QString("<b>时间: %1</b>").arg(time.toString("HH:mm:ss")));
 
   // 遍历每一个图像
   for (auto it = m_curves.begin(); it != m_curves.end(); ++it) {
@@ -413,136 +539,114 @@ void ModbusPlot::updateTracerPosition(QMouseEvent* event) {
       continue;
     }
 
-    // 获取时间 x 轴
-    auto times = curve.timeData;
+    const auto& times = curve.timeData;
 
     auto it_lower = std::lower_bound(times.begin(), times.end(), mouseX);
+    // 索引
     int idx = it_lower - times.begin();
-    // 处理边界情况
-    if (idx == 0) {
-      // 鼠标在第一个点左侧或刚好在第一个点
-    } else if (idx == times.size()) {
-      // 鼠标在最后一个点右侧，取最后一个点
-      idx = times.size() - 1;
-    } else {
-      // 比较左右两个点，选择更近的
-      double distLeft = mouseX - times[idx - 1];
-      double distRight = times[idx] - mouseX;
-      if (distLeft < distRight)
-        idx--;
+
+    // // 处理边界情况
+    // if (idx == 0) {
+    //   // 鼠标在第一个点左侧或刚好在第一个点
+    // } else if (idx == times.size()) {
+    //   // 鼠标在最后一个点右侧，取最后一个点
+    //   idx = times.size() - 1;
+    // } else {
+    //   // 比较左右两个点，选择更近的
+    //   double distLeft = mouseX - times[idx - 1];
+    //   double distRight = times[idx] - mouseX;
+    //   if (distLeft < distRight)
+    //     idx--;
+    // }
+
+    qDebug() << "idx: " << idx;
+    if (idx > 0 && (idx == times.size()) ||
+        mouseX - times[idx - 1] < times[idx] - mouseX) {
+      --idx;
     }
+    qDebug() << "TEST";
 
-    // 最终安全限制
-    idx = qBound(0, idx, times.size() - 1);
-
-    qDebug() << "计算后索引:" << idx;
-    if (idx >= 0 && idx < times.size() && idx < curve.valueData.size()) {
-      double distance = fabs(mouseX - times[idx]);
-      qDebug() << "有效数据点:" << times[idx] << curve.valueData[idx];
-
-      QCPGraphData dataPoint(times[idx], curve.valueData.value(idx));
-      nearestPoints.insert(distance, qMakePair(curve.graph, dataPoint));
+    if (idx >= 0 && idx < curve.valueData.size()) {
+      QColor color = curve.graph->pen().color();
+      QString name = curve.graph->name();
+      double value = curve.valueData[idx];
+      tooltipLines.append(QString("<span style='color:%1;'>%2: %3</span>")
+                              .arg(color.name())
+                              .arg(name)
+                              .arg(value, 0, 'f', 2));
     }
+    qDebug() << "TEST2";
+
+    // // 最终安全限制
+    // idx = qBound(0, idx, times.size() - 1);
+
+    // qDebug() << "计算后索引:" << idx;
+    // if (idx >= 0 && idx < times.size() && idx < curve.valueData.size()) {
+    //   double distance = fabs(mouseX - times[idx]);
+    //   qDebug() << "有效数据点:" << times[idx] << curve.valueData[idx];
+
+    //   QCPGraphData dataPoint(times[idx], curve.valueData.value(idx));
+    //   // nearestPoints.insert(distance, qMakePair(curve.graph, dataPoint));
+    // }
   }
 
-  // 更新跟踪器和标签
-  if (!nearestPoints.isEmpty()) {
-    auto closest = nearestPoints.first();
-    QCPGraph* activeGraph = closest.first;
-    QCPGraphData data = closest.second;
-
-    // 设置跟踪器
-    m_tracer->setGraph(activeGraph);
-    m_tracer->setGraphKey(data.key);
-    m_tracer->setVisible(true);
-
-    // 设置标签内容
-    QDateTime dt =
-        QDateTime::fromMSecsSinceEpoch((m_startTime + data.key) * 1000);
-    QString text = QString("%1\n值: %2")
-                       .arg(dt.toString("HH:mm:ss"))
-                       .arg(data.value, 0, 'f', 2);
-    m_tracerLabel->setText(text);
-
-    qDebug() << dt;
-
-    // 动态定位标签
-    QPoint cursorPos = event->pos();
-    QRect viewport = this->viewport();
-    QFontMetrics fm(m_tracerLabel->font());
-    int textWidth = fm.horizontalAdvance(text) + 20;
-
-    // qDebug() <<
-
-    if (cursorPos.x() + textWidth > viewport.right()) {
-      m_tracerLabel->position->setPixelPosition(
-          QPointF(viewport.right() - textWidth, cursorPos.y() - 20));
-    } else {
-      m_tracerLabel->position->setPixelPosition(
-          QPointF(cursorPos.x() + 15, cursorPos.y() - 20));
-    }
-
-    m_tracerLabel->setVisible(true);
+  if (tooltipLines.size() > 1) {
+    m_coordLabel->setText(tooltipLines.join("<br>"));
+    // 计算标签位置
+    QPoint pos = event->pos() + QPoint(15, -20);
+    QFontMetrics fm(m_coordLabel->font());
+    int textWidth =
+        fm.horizontalAdvance(tooltipLines.join("")) / 2;  // 近似宽度
+    if (pos.x() + textWidth > width())
+      pos.setX(event->pos().x() - textWidth - 30);
+    m_coordLabel->position->setPixelPosition(pos);
+    m_coordLabel->setVisible(true);
   } else {
-    m_tracer->setVisible(false);
-    m_tracerLabel->setVisible(false);
+    m_coordLabel->setVisible(false);
   }
+
+  // // 更新跟踪器和标签
+  // if (!nearestPoints.isEmpty()) {
+  //   auto closest = nearestPoints.first();
+  //   QCPGraph* activeGraph = closest.first;
+  //   QCPGraphData data = closest.second;
+
+  //   // 设置跟踪器
+  //   m_tracer->setGraph(activeGraph);
+  //   m_tracer->setGraphKey(data.key);
+  //   m_tracer->setVisible(true);
+
+  //   // 设置标签内容
+  //   QDateTime dt =
+  //       QDateTime::fromMSecsSinceEpoch((m_startTime + data.key) * 1000);
+  //   QString text = QString("%1\n值: %2")
+  //                      .arg(dt.toString("HH:mm:ss"))
+  //                      .arg(data.value, 0, 'f', 2);
+  //   m_tracerLabel->setText(text);
+
+  //   qDebug() << dt;
+
+  //   // 动态定位标签
+  //   QPoint cursorPos = event->pos();
+  //   QRect viewport = this->viewport();
+  //   QFontMetrics fm(m_tracerLabel->font());
+  //   int textWidth = fm.horizontalAdvance(text) + 20;
+
+  //   // qDebug() <<
+
+  //   if (cursorPos.x() + textWidth > viewport.right()) {
+  //     m_tracerLabel->position->setPixelPosition(
+  //         QPointF(viewport.right() - textWidth, cursorPos.y() - 20));
+  //   } else {
+  //     m_tracerLabel->position->setPixelPosition(
+  //         QPointF(cursorPos.x() + 15, cursorPos.y() - 20));
+  //   }
+
+  //   m_tracerLabel->setVisible(true);
+  // } else {
+  //   m_tracer->setVisible(false);
+  //   m_tracerLabel->setVisible(false);
+  // }
 
   replot();
 }
-
-// // 获取鼠标位置对应的X坐标
-// double mouseX = this->xAxis->pixelToCoord(event->pos().x());
-
-// // 找到最近的数据点
-// int closestIndex = 0;
-// double closestDistance = std::numeric_limits<double>::max();
-
-// for (int i = 0; i < m_timeData.size(); ++i) {
-//   double distance = qAbs(m_timeData[i] - mouseX);
-//   if (distance < closestDistance) {
-//     closestDistance = distance;
-//     closestIndex = i;
-//   }
-// }
-
-// // 如果找到足够近的点，显示跟踪器和标签
-// if (closestIndex >= 0 && closestIndex < m_timeData.size()) {
-//   double dataX = m_timeData[closestIndex];
-//   double dataY = m_valueData[closestIndex];
-
-//   // 设置跟踪器位置
-//   m_tracer->setGraphKey(dataX);
-//   m_tracer->setVisible(true);
-
-//   QDateTime baseTime = QDateTime::fromMSecsSinceEpoch(m_startTime * 1000);
-//   QDateTime actualTime = baseTime.addSecs(static_cast<qint64>(dataX));
-//   QString timeStr = actualTime.toString("yyyy-MM-dd hh:mm:ss");
-
-//   // 更新标签
-//   m_tracerLabel->setText(
-//       QString("时间: %1\n值: %2").arg(timeStr).arg(dataY, 0, 'f', 2));
-
-//   // 动态计算标签位置（关键修改）
-//   QFontMetrics fm(m_tracerLabel->font());
-//   int textWidth = fm.horizontalAdvance(m_tracerLabel->text());
-//   int viewportRight = this->viewport().width();
-
-//   // 判断是否需要左侧显示
-//   if (event->pos().x() + textWidth + 20 > viewportRight) {
-//     m_tracerLabel->setPositionAlignment(Qt::AlignRight | Qt::AlignTop);
-//     m_tracerLabel->position->setCoords(event->pos().x() - 10,
-//                                        event->pos().y() - 10);
-//   } else {
-//     m_tracerLabel->setPositionAlignment(Qt::AlignLeft | Qt::AlignTop);
-//     m_tracerLabel->position->setCoords(event->pos().x() + 10,
-//                                        event->pos().y() - 10);
-//   }
-//   m_tracerLabel->setVisible(true);
-
-//   this->replot();
-// } else {
-//   // 如果没有足够近的点，隐藏跟踪器和标签
-//   m_tracer->setVisible(false);
-//   m_tracerLabel->setVisible(false);
-// }

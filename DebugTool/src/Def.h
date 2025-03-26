@@ -64,7 +64,7 @@ Q_ENUM_CREATE(Version)
 Q_END_ENUM_CREATE(TtMqttProcotol)
 
 Q_BEGIN_ENUM_CREATE_SRC(TtModbusProcotol)
-enum Type { RTU, RTU_ASCLL, TCP, UDP };
+enum Type { RTU, RTU_ASCLL, TCP };
 Q_ENUM_CREATE(Type)
 Q_END_ENUM_CREATE(TtModbusProcotol)
 

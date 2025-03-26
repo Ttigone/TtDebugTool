@@ -69,7 +69,7 @@ class SerialWindow : public QWidget, public Ui::TabManager::ISerializable {
 
  private slots:
   void showErrorMessage(const QString& text);
-  void onDataReceived(const QByteArray& data);
+  void dataReceived(const QByteArray& data);
 
   void switchToEditMode();
   void switchToDisplayMode();
@@ -78,6 +78,8 @@ class SerialWindow : public QWidget, public Ui::TabManager::ISerializable {
   void init();
   void setSerialSetting();
   void connectSignals();
+
+  void saveLog();
 
   Ui::TtVerticalLayout* main_layout_;
 
@@ -93,8 +95,9 @@ class SerialWindow : public QWidget, public Ui::TabManager::ISerializable {
 
   // 消息展示框
   Ui::TtChatView* message_view_;
-  // 数据
   Ui::TtChatMessageModel* message_model_;
+
+  QsciScintilla* terminal_;
 
   bool serial_port_opened{false};
   QThread* worker_thread_{nullptr};

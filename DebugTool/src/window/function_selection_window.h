@@ -22,30 +22,12 @@ class FunctionSelectionWindow : public QWidget {
   ~FunctionSelectionWindow();
 
  signals:
-  void toSerial();
-  void toTcp();
-  void toUdp();
-  void toBlueTeeth();
-  void toModubus();
-  void toMQTT();
-
- signals:
-  ///
-  /// @brief switchRequested
-  /// @param targetWidgetId
-  /// 切换到对应的 界面
   void switchRequested(TtProtocolRole::Role role);
 
  private:
-  ///
-  /// @brief init
-  /// 初始化函数
   void init();
 
-  // 标志
   Ui::TtElidedLabel* label_;
-
-  // 功能窗口布局
   QGridLayout *function_layout_;
 };
 
@@ -56,31 +38,31 @@ class SimulateFunctionSelectionWindow : public QWidget {
   ~SimulateFunctionSelectionWindow();
 
  signals:
-  void toTcp();
-  void toUdp();
-  void toModubus();
-  void toMQTT();
-
- signals:
-  ///
-  /// @brief switchRequested
-  /// @param targetWidgetId
-  /// 切换到对应的 界面
   void switchRequested(TtProtocolRole::Role role);
 
  private:
-  ///
-  /// @brief init
-  /// 初始化函数
   void init();
 
-  // 标志
   Ui::TtElidedLabel* label_;
-
-  // 功能窗口布局
   QGridLayout* function_layout_;
 };
 
 } // namespace Window
+
+class AllFunctionSelectionWindow : public QWidget {
+  Q_OBJECT
+ public:
+  explicit AllFunctionSelectionWindow(QWidget* parent = nullptr);
+  ~AllFunctionSelectionWindow();
+
+ signals:
+  void switchRequested(TtProtocolRole::Role role);
+
+ private:
+  void init();
+
+  Ui::TtElidedLabel* label_;
+  QGridLayout* function_layout_;
+};
 
 #endif  // FUNCTION_SELECTION_WINDOW_H

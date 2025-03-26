@@ -21,5 +21,8 @@
         <file>plus.svg</file>
         <file>graph-up.svg</file>
         <file>edit.svg</file>
+        <file>setting.svg</file>
+        <file>chat.svg</file>
+        <file>terminal.svg</file>
     </qresource>
 </RCC>

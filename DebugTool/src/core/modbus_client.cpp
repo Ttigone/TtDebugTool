@@ -35,11 +35,11 @@ void ModbusMaster::setupConfiguration(const ModbusMasterConfiguration& config) {
     modbusDevice->setConnectionParameter(QModbusDevice::SerialStopBitsParameter,
                                          config.stop_bits);
   } else if (config.type == TtModbusProcotol::TCP) {
-
-    qDebug() << "T";
     modbusDevice = new QModbusTcpClient(this);
-  } else if (config.type == TtModbusProcotol::UDP) {
-    qDebug() << "U";
+    modbusDevice->setConnectionParameter(QModbusDevice::NetworkAddressParameter,
+                                         config.address);
+    modbusDevice->setConnectionParameter(QModbusDevice::NetworkPortParameter,
+                                         config.port);
   }
 }
 

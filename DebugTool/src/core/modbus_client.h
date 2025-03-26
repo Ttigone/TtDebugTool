@@ -29,19 +29,25 @@ struct ModbusMasterConfiguration {
   QSerialPort::StopBits stop_bits;  // 停止位
   QString device_id;                // 设备 id
 
+  QString address;
+  int port;
+
   ModbusMasterConfiguration(TtModbusProcotol::Type type, const QString& com,
                             QSerialPort::BaudRate baudRate,
                             QSerialPort::DataBits dataBits,
                             QSerialPort::Parity parity,
                             QSerialPort::StopBits stopBits,
-                            const QString& deviceId)
+                            const QString& deviceId, const QString& address,
+                            const int& port)
       : type(type),
         com(com),
         baud_rate(baudRate),
         data_bits(dataBits),
         parity(parity),
         stop_bits(stopBits),
-        device_id(deviceId) {}
+        device_id(deviceId),
+        address(address),
+        port(port) {}
 };
 
 class ModbusMaster : public QObject {
@@ -63,12 +69,6 @@ class ModbusMaster : public QObject {
                        const int& startAddr, const QVector<quint16>& values,
                        const int& serverAddr);
 
-  void readDiscreteInputsData(const QVector<int>& addrs,
-                              const int& serverAddr) {
-    for (auto it = addrs.cbegin(); it != addrs.cend(); ++it) {
-      readModbusData(QModbusDataUnit::DiscreteInputs, *it, 1, serverAddr);
-    }
-  }
 
   void readCoilsData(const QVector<int>& addrs, const int& serverAddr) {
     for (auto it = addrs.cbegin(); it != addrs.cend(); ++it) {
@@ -79,6 +79,13 @@ class ModbusMaster : public QObject {
   void readCoilsData(const int& startAddr, const quint16& size,
                      const int& serverAddr) {
     readModbusData(QModbusDataUnit::Coils, startAddr, size, serverAddr);
+  }
+
+  void readDiscreteInputsData(const QVector<int>& addrs,
+                              const int& serverAddr) {
+    for (auto it = addrs.cbegin(); it != addrs.cend(); ++it) {
+      readModbusData(QModbusDataUnit::DiscreteInputs, *it, 1, serverAddr);
+    }
   }
 
   void readHoldingData(const QVector<int>& addrs, const int& serverAddr) {
@@ -104,9 +111,24 @@ class ModbusMaster : public QObject {
                       const int& serverAddr) {
     writeModbusData(QModbusDataUnit::Coils, startAddr, values, serverAddr);
   }
+
+  void writeDiscreteInputsData(const int& startAddr,
+                               const QVector<quint16>& values,
+                               const int& serverAddr) {
+    writeModbusData(QModbusDataUnit::DiscreteInputs, startAddr, values,
+                    serverAddr);
+  }
+
   void writeHoldingData(const int& startAddr, const QVector<quint16>& values,
                         const int& serverAddr) {
     writeModbusData(QModbusDataUnit::HoldingRegisters, startAddr, values,
+                    serverAddr);
+  }
+
+  void writeInputRegistersData(const int& startAddr,
+                               const QVector<quint16>& values,
+                               const int& serverAddr) {
+    writeModbusData(QModbusDataUnit::InputRegisters, startAddr, values,
                     serverAddr);
   }
 

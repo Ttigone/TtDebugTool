@@ -437,6 +437,29 @@ void TabManager::updateTabStyle(int index) {
   tabBar()->setStyleSheet(style);
 }
 
+void TabManager::setupCornerButton() {
+  addButton = new QToolButton(this);
+  addButton->setIcon(QIcon(":/sys/plus-circle.svg"));
+  addButton->setToolTip(tr("New Tab"));
+  addButton->setStyleSheet(R"(
+        QToolButton {
+            border: none;
+            padding: 2px;
+            background: transparent;
+        }
+        QToolButton:hover {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        QToolButton:pressed {
+            background: rgba(0, 0, 0, 0.15);
+        }
+    )");
+
+  setCornerWidget(addButton, Qt::TopRightCorner);
+
+  connect(addButton, &QPushButton::clicked, this, &TabManager::requestNewTab);
+}
+
 QWidget* TabManager::createDefaultWidget(int tabIndex) {
   // 新建 widget
   QWidget* widget = new QWidget(this);

@@ -10,20 +10,42 @@
 
 #if (WIN32)
 #include <Windows.h>
+#include <dbghelp.h>
 // 异常捕获函数
-LONG ApplicationCrashHandler(EXCEPTION_POINTERS* pException) {
+// LONG ApplicationCrashHandler(EXCEPTION_POINTERS* pException) {
 
-  EXCEPTION_RECORD* record = pException->ExceptionRecord;
-  QString errCode(QString::number(record->ExceptionCode, 16));
-  // (uint*)record->ExceptionAddress, errMod;
-  QString crashMsg =
-      QString("抱歉，软件发生了崩溃，请重启。错误代码：%1，错误地址：%2")
-          .arg(errCode);
-  // .arg(errAdr);
-  qDebug() << crashMsg;
+//   EXCEPTION_RECORD* record = pException->ExceptionRecord;
+//   QString errCode(QString::number(record->ExceptionCode, 16));
+//   // (uint*)record->ExceptionAddress, errMod;
+//   QString crashMsg =
+//       QString("抱歉，软件发生了崩溃，请重启。错误代码：%1，错误地址：%2")
+//           .arg(errCode);
+//   // .arg(errAdr);
+//   qDebug() << crashMsg;
 
-  return EXCEPTION_EXECUTE_HANDLER;
+//   return EXCEPTION_EXECUTE_HANDLER;
+// }
+
+void CreateDumpFile(EXCEPTION_POINTERS* exceptionInfo) {
+  HANDLE hFile = CreateFileW(L"dumpfile.dmp", GENERIC_WRITE, 0, NULL,
+                             CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+  if (hFile != INVALID_HANDLE_VALUE) {
+    MINIDUMP_EXCEPTION_INFORMATION mdei;
+    mdei.ThreadId = GetCurrentThreadId();
+    mdei.ExceptionPointers = exceptionInfo;
+    mdei.ClientPointers = FALSE;
+
+    MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), hFile,
+                      MiniDumpWithFullMemory, &mdei, NULL, NULL);
+    CloseHandle(hFile);
+  }
 }
+
+LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS* exceptionInfo) {
+  CreateDumpFile(exceptionInfo);
+  return EXCEPTION_EXECUTE_HANDLER;  // 继续执行默认的崩溃处理
+}
+
 #endif
 
 int main(int argc, char* argv[]) {
@@ -88,11 +110,12 @@ int main(int argc, char* argv[]) {
 
 #if (WIN32)
   //注冊异常捕获函数
-  SetUnhandledExceptionFilter(
-      (LPTOP_LEVEL_EXCEPTION_FILTER)ApplicationCrashHandler);
+  // SetUnhandledExceptionFilter(
+  // (LPTOP_LEVEL_EXCEPTION_FILTER)ApplicationCrashHandler);
+  SetUnhandledExceptionFilter((LPTOP_LEVEL_EXCEPTION_FILTER)ExceptionHandler);
 #endif
 
-  // qInstallMessageHandler(h::Logger::messageHandler);  // 启用功能
+  qInstallMessageHandler(h::Logger::messageHandler);  // 启用功能
 
   Window::MainWindow w;
   w.show();

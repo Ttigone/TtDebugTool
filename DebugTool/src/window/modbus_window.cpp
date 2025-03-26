@@ -396,7 +396,7 @@ void ModbusWindow::updatePlot(TtModbusRegisterType::Type type, const int& addr,
     // qDebug() << addr << value;
 
     // 接收到数据, 会添加图表
-    customPlot->addGraphs(type, addr);
+    // customPlot->addGraphs(type, addr);
     customPlot->addData(type, addr, value);
     customPlot->setAutoScaleY(true);
     customPlot->setShowTooltip(true);
@@ -435,11 +435,17 @@ QWidget* ModbusWindow::createCoilWidget() {
                 modbus_client_setting_->getModbusDeviceId());
           });
 
-  connect(coil_table_, &Ui::TtModbusTableWidget::requestShowGraph,
-          [this](TtModbusRegisterType::Type type, const int& addr) {
-            qDebug() << "show grah";
-            customPlot->removeGraphs(type, addr);
-          });
+  connect(
+      coil_table_, &Ui::TtModbusTableWidget::requestShowGraph,
+      [this](TtModbusRegisterType::Type type, const int& addr, bool enable) {
+        // qDebug() << "show grah";
+        if (!enable) {
+          // 清空后, 仍然有残留 plot
+          customPlot->removeGraphs(type, addr);
+        } else {
+          customPlot->addGraphs(type, addr);
+        }
+      });
 
   connect(plusButton, &QPushButton::clicked, this,
           [this]() { coil_table_->addRow(); });

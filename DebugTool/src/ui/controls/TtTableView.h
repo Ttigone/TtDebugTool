@@ -183,7 +183,8 @@ class TtModbusTableWidget : public QTableWidget {
 
  signals:
   void valueConfirmed(const int& addr, const int& value);  // 值被确认保存
-  void requestShowGraph(TtModbusRegisterType::Type type, const int& addr);
+  void requestShowGraph(TtModbusRegisterType::Type type, const int& addr,
+                        bool enabled);
 
  public slots:
   void addRow();

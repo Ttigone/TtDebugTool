@@ -79,6 +79,7 @@ set(PROJECT_SOURCES
     ${src_loc}/ui/controls/TtModbusDelegate.h ${src_loc}/ui/controls/TtModbusDelegate.cpp
     ${src_loc}/ui/controls/TtTableView.h ${src_loc}/ui/controls/TtTableView.cpp
     ${src_loc}/ui/controls/TtModbusPlot.h ${src_loc}/ui/controls/TtModbusPlot.cpp
+    ${src_loc}/ui/controls/TtDownloadDialog.h ${src_loc}/ui/controls/TtDownloadDialog.cpp
 )
 
 # Apply the macro
@@ -131,6 +132,29 @@ endif ()
 
 
 add_definitions(-DQCUSTOMPLOT_USE_OPENGL)
+
+if(WIN32)
+
+if(MINGW)
+    # 添加调试信息
+    set(CMAKE_BUILD_TYPE Debug) # 确保构建类型为 Debug
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g") # 添加调试标志
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+        -lDbgHelp
+        -lWininet
+    )
+elseif(MSVC)
+    add_compile_options(/Zi)
+    add_link_options(/DEBUG)
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+        dbghelp
+        wininet
+    )
+endif()
+
+
+
+endif()
 
 
 # 添加编译选项

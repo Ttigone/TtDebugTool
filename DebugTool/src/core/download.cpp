@@ -13,7 +13,15 @@ Downloader::Downloader(QObject* parent) : QObject(parent) {
 
 Downloader::~Downloader() {}
 
-void Downloader::download(const QUrl& url, const QString& file) {}
+void Downloader::download(const QUrl& url, const QString& file) {
+  save_file_ = file;
+  QNetworkRequest request(url);
+  QNetworkReply* reply = manager_->get(request);
+  connect(reply, &QNetworkReply::downloadProgress, this,
+          &Downloader::downloadProgress);
+  emit available(false);
+  emit running(true);
+}
 
 void Downloader::onDownloadFinished(QNetworkReply* reply) {
   if (reply->error() != QNetworkReply::NoError) {
@@ -26,6 +34,11 @@ void Downloader::onDownloadFinished(QNetworkReply* reply) {
   emit running(false);
 }
 
-void Downloader::saveToDisk(QNetworkReply*) {}
+void Downloader::saveToDisk(QNetworkReply* reply) {
+  QFile f(save_file_);
+  f.open(QIODevice::WriteOnly | QIODevice::Truncate);
+  f.write(reply->readAll());
+  f.close();
+}
 
 }  // namespace Core

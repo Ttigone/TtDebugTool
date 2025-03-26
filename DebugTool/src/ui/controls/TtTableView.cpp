@@ -1140,33 +1140,30 @@ QWidget* TtModbusTableWidget::createCellWrapper(QWidget* content) {
 QWidget* TtModbusTableWidget::createGraphAndDeleteButton() {
   QWidget* buttonGroup = new QWidget;
   QHBoxLayout* layout = new QHBoxLayout(buttonGroup);
-  auto graphBtn = new QPushButton(QIcon(":/sys/graph-up.svg"), "");
-  graphBtn->setFlat(true);
-  connect(graphBtn, &QPushButton::clicked, this, [this] {
-    if (auto* btn = qobject_cast<QPushButton*>(sender())) {
+  auto graphBtn = new TtSvgButton(":/sys/graph-up.svg", buttonGroup);
+  graphBtn->setSvgSize(18, 18);
+  graphBtn->setColors(Qt::black, Qt::blue);
+  connect(graphBtn, &TtSvgButton::toggled, this, [this](bool toggle) {
+    if (auto* btn = qobject_cast<TtSvgButton*>(sender())) {
       int row = findRowIndex(btn, true);
       if (row > 0) {
-        TtLineEdit* edit = qobject_cast<TtLineEdit*>(cellWidget(row - 1, 1));
+        TtLineEdit* edit = rowsData_[row - 1].address;
         if (edit) {
-          emit requestShowGraph(type_, edit->text().toInt());
+          emit requestShowGraph(type_, edit->text().toInt(), toggle);
         }
       }
     }
   });
 
-  auto deleteBtn = new QPushButton(QIcon(":/sys/trash.svg"), "");
-  deleteBtn->setFlat(true);
-  connect(deleteBtn, &QPushButton::clicked, this, [this] {
-    if (auto* btn = qobject_cast<QPushButton*>(sender())) {
-      qDebug() << sender();
-      qDebug() << sender()->parent();
+  auto deleteBtn = new TtSvgButton(":/sys/trash.svg", buttonGroup);
+  deleteBtn->setColors(Qt::black, Qt::blue);
+  deleteBtn->setEnableHoldToCheck(true);
+  deleteBtn->setSvgSize(18, 18);
+  connect(deleteBtn, &TtSvgButton::clicked, this, [this] {
+    if (auto* btn = qobject_cast<TtSvgButton*>(sender())) {
       int row = findRowIndex(btn, true);
-      // qDebug() << row;
       if (row > 0) {
-        qDebug() << "delete";
-        // 回收控件
         recycleRow(rowsData_[row - 1]);
-        // 移除行
         removeRow(row);
         rowsData_.remove(row - 1);
       }

@@ -40,12 +40,12 @@ AxisTag::AxisTag(QCPAxis* parentAxis) : QObject(parentAxis), mAxis(parentAxis) {
 }
 
 AxisTag::~AxisTag() {
-  // if (mDummyTracer)
-  //   mDummyTracer->parentPlot()->removeItem(mDummyTracer);
-  // if (mArrow)
-  //   mArrow->parentPlot()->removeItem(mArrow);
-  // if (mLabel)
-  //   mLabel->parentPlot()->removeItem(mLabel);
+  if (mDummyTracer)
+    mDummyTracer->parentPlot()->removeItem(mDummyTracer);
+  if (mArrow)
+    mArrow->parentPlot()->removeItem(mArrow);
+  if (mLabel)
+    mLabel->parentPlot()->removeItem(mLabel);
 
   // 析构有问题
   // 不需要手动 removeItem，QCP 会自动管理 parent 为 plot 的对象

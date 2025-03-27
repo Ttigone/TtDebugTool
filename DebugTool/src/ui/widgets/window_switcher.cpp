@@ -18,8 +18,25 @@ QMap<TtProtocolRole::Role, int> TabManager::type_map_ = {
     {TtProtocolRole::ModbusServer, 0}, {TtProtocolRole::BlueTeeth, 0},
 };
 
+QMap<TtProtocolRole::Role, QString> TabManager::type_icon_map_ = {
+    {TtProtocolRole::Serial, ":/sys/unlink.svg"},
+    {TtProtocolRole::TcpClient, ":/sys/netport.svg"},
+    {TtProtocolRole::TcpServer, ":/sys/netport.svg"},
+    {TtProtocolRole::UdpClient, ":/sys/netport.svg"},
+    {TtProtocolRole::UdpServer, ":/sys/netport.svg"},
+    {TtProtocolRole::MqttClient, ":/sys/mqtt.svg"},
+    {TtProtocolRole::MqttBroker, ":/sys/mqtt.svg"},
+    {TtProtocolRole::ModbusClient, ":/sys/modbus-seeklogo.svg"},
+    {TtProtocolRole::ModbusServer, ":/sys/modbus-seeklogo.svg"},
+    {TtProtocolRole::BlueTeeth, ":/sys/bluetooth-contact.svg"},
+};
+
 uint16_t TabManager::SpecialTypeNums(TtProtocolRole::Role role) {
   return type_map_[role];
+}
+
+QString TabManager::SpecialTypeIcon(TtProtocolRole::Role role) {
+  return type_icon_map_[role];
 }
 
 TabManager::TabManager(QWidget* defaultWidget, QWidget* parent)
@@ -72,7 +89,6 @@ TabManager::~TabManager() {
 };
 
 void TabManager::addNewTab(const QString& title) {
-  // 创建默认的 widget1
   // 总数量
   int tabIndex = count();
   QWidget* defaultWidget = createDefaultWidget(tabIndex);
@@ -83,7 +99,6 @@ void TabManager::addNewTab(const QString& title) {
 }
 
 void TabManager::addNewTab(QWidget* defaultWidget) {
-  // 创建默认的 widget1
   // int tabIndex = count();
   // QWidget* defaultWidget = createDefaultWidget(tabIndex);
   QIcon icon(":/sys/unlink.svg");
@@ -94,10 +109,17 @@ void TabManager::addNewTab(QWidget* defaultWidget) {
 void TabManager::addNewTab(QWidget* defaultWidget, const QString& title) {
   // 创建默认的 widget1
   int tabIndex = count();
-  qDebug() << "tabINdex: " << tabIndex;
   // QWidget* defaultWidget = createDefaultWidget(tabIndex);
   // 添加的 tab 是一直在最后面的
   QIcon icon(":/sys/unlink.svg");
+  addTab(defaultWidget, icon, title);
+  setupCustomTabButton(tabIndex);
+  // updateTabStyle(tabIndex);
+}
+
+void TabManager::addNewTab(QWidget* defaultWidget, const QIcon& icon,
+                           const QString& title) {
+  int tabIndex = count();
   addTab(defaultWidget, icon, title);
   setupCustomTabButton(tabIndex);
   // updateTabStyle(tabIndex);
@@ -148,8 +170,9 @@ void TabManager::switchToWidget(int tabIndex, TtProtocolRole::Role role) {
   // 设置 tab 的文本
   setTabText(tabIndex, widgetTitles[role]);
   // 向 tabIndex 所有的 tab 界面设置界面 newWidget, title 为对应索引值
-  insertTab(tabIndex, newWidget, widgetTitles[role]);
-
+  // 设置图标
+  insertTab(tabIndex, newWidget, QIcon(SpecialTypeIcon(role)),
+            widgetTitles[role]);
   setupCustomTabButton(tabIndex);
   // updateTabStyle(tabIndex);
 

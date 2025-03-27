@@ -24,5 +24,10 @@
         <file>setting.svg</file>
         <file>chat.svg</file>
         <file>terminal.svg</file>
+        <file>cloud-arrow-down.svg</file>
+        <file>settings.svg</file>
+        <file>netport.svg</file>
+        <file>mqtt.svg</file>
+        <file>modbus-seeklogo.svg</file>
     </qresource>
 </RCC>

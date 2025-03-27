@@ -28,6 +28,8 @@ class ModbusClientSetting : public QWidget {
   ~ModbusClientSetting();
 
   Core::ModbusMasterConfiguration getModbusClientConfiguration();
+
+  void setModbusClientSetting(const QJsonObject& obj);
   const QJsonObject& getModbusClientSetting();
 
   TtModbusProcotol::Type getModbusLinkType() const;

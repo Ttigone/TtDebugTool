@@ -72,6 +72,7 @@ set(PROJECT_SOURCES
     ${src_loc}/ui/widgets/session_manager.h ${src_loc}/ui/widgets/session_manager.cpp
     # ${src_loc}/ui/widgets/data_presentation_widget.h ${src_loc}/ui/widgets/data_presentation_widget.cpp
     ${src_loc}/ui/widgets/subscripition_manager.h ${src_loc}/ui/widgets/subscripition_manager.cpp
+    ${src_loc}/ui/widgets/setting_widget.h ${src_loc}/ui/widgets/setting_widget.cpp
 
 
     ${src_loc}/ui/controls/TtQCustomPlot.h ${src_loc}/ui/controls/TtQCustomPlot.cpp

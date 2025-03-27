@@ -24,7 +24,7 @@ class Downloader : public QObject {
   void errorOccurred(const QString& error);
   void available(bool);
   void running(bool);
-  void downloadProgress(qint64, qint64);
+  void downloadProgress(qint64 bytesReceived, qint64 bytesTotal);
 
  private:
   void saveToDisk(QNetworkReply*);

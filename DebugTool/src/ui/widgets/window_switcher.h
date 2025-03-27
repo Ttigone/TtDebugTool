@@ -105,6 +105,7 @@ class TabManager : public QTabWidget {
   using WidgetFactory = std::function<QWidget*()>;
 
   static uint16_t SpecialTypeNums(TtProtocolRole::Role role);
+  static QString SpecialTypeIcon(TtProtocolRole::Role role);
 
   explicit TabManager(QWidget* defalue_widget, QWidget* parent = nullptr);
   ~TabManager() override;
@@ -112,6 +113,8 @@ class TabManager : public QTabWidget {
   void addNewTab(const QString& title = "");
   void addNewTab(QWidget* defaultWidget);
   void addNewTab(QWidget* defaultWidget, const QString& title);
+  void addNewTab(QWidget* defaultWidget, const QIcon& icon,
+                 const QString& title);
 
   // 注册 Widget 工厂函数
   void registerWidget(TtProtocolRole::Role role, const WidgetFactory& factory,
@@ -201,6 +204,7 @@ class TabManager : public QTabWidget {
   QMap<QString, QWidget*> widgetInstances;    // Widget 实例
 
   static QMap<TtProtocolRole::Role, int> type_map_;
+  static QMap<TtProtocolRole::Role, QString> type_icon_map_;
 };
 
 /*

@@ -7,7 +7,6 @@ namespace Ui {
 class TtLabelLineEdit;
 class TtSvgButton;
 class TtTextButton;
-}  // namespace Ui
 
 class DownloadDialog : public QDialog {
   Q_OBJECT
@@ -28,9 +27,11 @@ class DownloadDialog : public QDialog {
 
   Ui::TtLabelLineEdit* url_;
   Ui::TtLabelLineEdit* save_as_;
-  Ui::TtSvgButton* save_as_btn_;
+  Ui::TtTextButton* save_as_btn_;
   Ui::TtTextButton* ok_btn_;
   Ui::TtTextButton* cancle_btn_;
 };
+
+}  // namespace Ui
 
 #endif  // UI_CONTROLS_TTDOWNLOADDIALOG_H

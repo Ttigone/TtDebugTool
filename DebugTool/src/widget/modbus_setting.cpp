@@ -32,6 +32,11 @@ ModbusClientSetting::getModbusClientConfiguration() {
       port_->currentText().toInt());
 }
 
+void ModbusClientSetting::setModbusClientSetting(const QJsonObject& obj) {
+  host_->setText("127.0.0.1");
+  port_->setText("502");
+}
+
 const QJsonObject& ModbusClientSetting::getModbusClientSetting() {
   auto config = getModbusClientConfiguration();
   QJsonObject linkSetting;

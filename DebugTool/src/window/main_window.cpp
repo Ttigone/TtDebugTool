@@ -48,6 +48,7 @@
 #include <ui/widgets/widget_group.h>
 #include "window/instruction_window.h"
 
+#include "ui/widgets/setting_widget.h"
 
 namespace Window {
 
@@ -918,8 +919,14 @@ void MainWindow::connectSignals() {
                      tabWidget_->handleButtonClicked(tabWidget_->currentIndex(),
                                                      role);
                    });
-  connect(setting_, &Ui::TtSvgButton::clicked, this,
-          [this]() { qDebug() << "open setting"; });
+  connect(setting_, &Ui::TtSvgButton::clicked, this, [this]() {
+    if (!setting_widget_) {
+      setting_widget_ = new Ui::SettingWidget;
+    }
+    tabWidget_->addNewTab(setting_widget_, QIcon(":/sys/settings.svg"),
+                          tr("设置"));
+    tabWidget_->setCurrentWidget(setting_widget_);
+  });
 
   connect(tabWidget_, &Ui::TabManager::requestNewTab, this, [this]() {
     qDebug() << "new";

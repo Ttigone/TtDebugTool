@@ -27,7 +27,9 @@ namespace Window {
 
 ModbusWindow::ModbusWindow(TtProtocolType::ProtocolRole role, QWidget* parent)
     : QWidget(parent), customPlot(new ModbusPlot) {
+  base::DetectRunningTime runtime;
   init();
+  qDebug() << runtime.elapseMilliseconds();
   connectSignals();
   modbus_master_ = new Core::ModbusMaster();
   connect(modbus_master_, &Core::ModbusMaster::errorOccurred, this,

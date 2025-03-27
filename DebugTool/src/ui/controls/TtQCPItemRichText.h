@@ -11,12 +11,15 @@ class TtQCPItemRichText : public QCPItemText {
   TtQCPItemRichText(QCustomPlot* parentPlot);
   ~TtQCPItemRichText();
 
+  QTextDocument& document() { return doc; }
+
   void setText(const QString& text);
 
  protected:
   virtual void draw(QCPPainter* painter);
 
   QTextDocument doc;
+  QMutex m_mutex;
 };
 
 #endif  // UI_CONTROLS_TTQCPITEMRICHTEXT_H

@@ -23,6 +23,7 @@ class TtSvgButton;
 class TtWidgetGroup;
 class SessionManager;
 class TabManager;
+class SettingWidget;
 }  // namespace Ui
 
 namespace Core {
@@ -32,8 +33,7 @@ class SerialPortWorker;
 class QtMaterialSnackbar;
 
 namespace Widget {
-class SerialSetting;
-class SerialOperation;
+// class SettingWidget;
 }  // namespace Widget
 
 namespace Window {
@@ -98,7 +98,8 @@ class MainWindow : public QMainWindow {
   Ui::TtSvgButton* communication_instruction_;
   Ui::TtSvgButton* realistic_simulation_;
   Ui::TtSvgButton* setting_;
-  int i = 0;
+
+  Ui::SettingWidget* setting_widget_ = nullptr;
 
   // tab 页面
   Ui::TabManager* tabWidget_;

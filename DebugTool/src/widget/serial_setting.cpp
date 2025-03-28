@@ -3,6 +3,7 @@
 #include "core/serial_port.h"
 
 #include <ui/control/TtComboBox.h>
+#include <ui/control/TtLineEdit.h>
 #include <ui/layout/horizontal_layout.h>
 #include <ui/layout/vertical_layout.h>
 #include <ui/widgets/collapsible_panel.h>
@@ -47,9 +48,7 @@ Core::SerialPortConfiguration SerialSetting::defaultSerialPortConfiguration() {
   qDebug() << DefaultSetting.parity;
   // 串口名转换成对应的配置项
   if (DefaultSetting.com.isEmpty()) {
-    // 显示错误
   }
-  // TODO baud 有问题
   qDebug() << DefaultSetting.com << DefaultSetting.baud_rate
            << DefaultSetting.data_bits << DefaultSetting.parity
            << DefaultSetting.stop_bits << DefaultSetting.flow_control;
@@ -249,7 +248,16 @@ void SerialSetting::init() {
   linkSettingWidgetLayout->setContentsMargins(QMargins());
   linkSettingWidgetLayout->addWidget(serialConfigWidget);
   linkSettingWidget->adjustSize();  // 确保大小正确
-  Ui::Drawer* drawer1 = new Ui::Drawer(tr("连接设置"), linkSettingWidget);
+  Ui::Drawer* drawerLinkSetting =
+      new Ui::Drawer(tr("连接设置"), linkSettingWidget);
+
+  QWidget* scriptWidget = new QWidget;
+  Ui::TtVerticalLayout* scriptWidgetLayout =
+      new Ui::TtVerticalLayout(scriptWidget);
+  script_ = new Ui::TtLabelLineEdit(tr("脚本"), scriptWidget);
+  scriptWidgetLayout->addWidget(script_);
+
+  Ui::Drawer* drawerScript = new Ui::Drawer(tr("脚本设置"), scriptWidget);
 
   QWidget* framingWidget = new QWidget;
   Ui::TtVerticalLayout* framingWidgetLayout =
@@ -265,10 +273,10 @@ void SerialSetting::init() {
   framingWidgetLayout->addWidget(framing_timeout_);
   framingWidgetLayout->addWidget(framing_fixed_length_);
 
-  Ui::Drawer* drawer2 = new Ui::Drawer(tr("分帧"), framingWidget);
+  Ui::Drawer* drawerFraming = new Ui::Drawer(tr("分帧"), framingWidget);
 
   connect(framing_model_, &Ui::TtLabelComboBox::currentIndexChanged,
-          [this, drawer2](int index) {
+          [this, drawerFraming](int index) {
             switch (index) {
               case 0: {
                 framing_timeout_->setVisible(false);
@@ -287,8 +295,8 @@ void SerialSetting::init() {
               }
             }
             const auto event =
-                new QResizeEvent(drawer2->size(), drawer2->size());
-            QCoreApplication::postEvent(drawer2, event);
+                new QResizeEvent(drawerFraming->size(), drawerFraming->size());
+            QCoreApplication::postEvent(drawerFraming, event);
           });
   framing_model_->setCurrentItem(0);
   framing_timeout_->setVisible(false);
@@ -298,7 +306,7 @@ void SerialSetting::init() {
   line_break_->addItem("\\r");
   line_break_->addItem("\\n");
   line_break_->addItem("\\r\\n");
-  Ui::Drawer* drawer3 = new Ui::Drawer(tr("换行"), line_break_);
+  Ui::Drawer* drawerLineBreak = new Ui::Drawer(tr("换行"), line_break_);
 
   QWidget* heartbeatWidget = new QWidget;
   Ui::TtVerticalLayout* heartbeatWidgetLayout =
@@ -313,10 +321,10 @@ void SerialSetting::init() {
   heartbeatWidgetLayout->addWidget(heartbeat_send_type_);
   heartbeatWidgetLayout->addWidget(heartbeat_interval_);
   heartbeatWidgetLayout->addWidget(heartbeat_content_);
-  Ui::Drawer* drawer4 = new Ui::Drawer(tr("心跳"), heartbeatWidget);
+  Ui::Drawer* drawerHeartBeat = new Ui::Drawer(tr("心跳"), heartbeatWidget);
 
   connect(heartbeat_send_type_, &Ui::TtLabelComboBox::currentIndexChanged,
-          [this, heartbeatWidget, drawer4](int index) {
+          [this, heartbeatWidget, drawerHeartBeat](int index) {
             switch (index) {
               case 0: {
                 heartbeat_interval_->setVisible(false);
@@ -334,9 +342,9 @@ void SerialSetting::init() {
                 break;
               }
             }
-            const auto event =
-                new QResizeEvent(drawer4->size(), drawer4->size());
-            QCoreApplication::postEvent(drawer4, event);
+            const auto event = new QResizeEvent(drawerHeartBeat->size(),
+                                                drawerHeartBeat->size());
+            QCoreApplication::postEvent(drawerHeartBeat, event);
           });
   heartbeat_send_type_->setCurrentItem(0);
   heartbeat_interval_->setVisible(false);
@@ -352,10 +360,10 @@ void SerialSetting::init() {
 
   Ui::TtVerticalLayout* lascr = new Ui::TtVerticalLayout(scrollContent);
 
-  lascr->addWidget(drawer1, 0, Qt::AlignTop);
-  lascr->addWidget(drawer2);
-  lascr->addWidget(drawer3);
-  lascr->addWidget(drawer4);
+  lascr->addWidget(drawerLinkSetting, 0, Qt::AlignTop);
+  lascr->addWidget(drawerScript);
+  lascr->addWidget(drawerLineBreak);
+  lascr->addWidget(drawerHeartBeat);
   lascr->addStretch();
   scrollContent->setLayout(lascr);
 

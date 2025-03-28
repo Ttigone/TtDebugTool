@@ -649,87 +649,87 @@
 <context>
     <name>Widget::SerialSetting</name>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="176"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="175"/>
         <source>无校验</source>
         <translation>no-check</translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="177"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="176"/>
         <source>偶校验</source>
         <translation>Even check</translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="178"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="177"/>
         <source>奇校验</source>
         <translation>Odd check</translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="179"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="178"/>
         <source>0 校验</source>
         <translation>0 check</translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="180"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="179"/>
         <source>1 校验</source>
         <translation>1-check</translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="184"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="183"/>
         <source>1 位</source>
         <translation>one-bit</translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="185"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="184"/>
         <source>1.5 位</source>
         <translation>1.5 bit</translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="186"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="185"/>
         <source>2 位</source>
         <translation>two-bit</translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="190"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="189"/>
         <source>None</source>
         <translation>None</translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="191"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="190"/>
         <source>RTS/CTS</source>
         <translation>RTS/CTS</translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="192"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="191"/>
         <source>Xon/Xoff</source>
         <translation>Xon/Xoff</translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="219"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="218"/>
         <source>串口:</source>
         <translation>Serial Port:</translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="220"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="219"/>
         <source>波特率:</source>
         <translation>Baud rate:</translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="221"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="220"/>
         <source>数据位:</source>
         <translation>Data bit:</translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="222"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="221"/>
         <source>校验位:</source>
         <translation>Check bit:</translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="223"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="222"/>
         <source>停止位:</source>
         <translation>Stop bit:</translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="224"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="223"/>
         <source>流控:</source>
         <translation>Flow Control:</translation>
     </message>
@@ -739,78 +739,88 @@
         <translation>Connection setting</translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="258"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="257"/>
+        <source>脚本</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/widget/serial_setting.cpp" line="260"/>
+        <source>脚本设置</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/widget/serial_setting.cpp" line="266"/>
         <source>模式: </source>
         <translation>Mode: </translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="259"/>
-        <location filename="../../src/widget/serial_setting.cpp" line="308"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="267"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="316"/>
         <source>无</source>
         <translation>none</translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="260"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="268"/>
         <source>超时时间</source>
         <translation>Timeout period</translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="261"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="269"/>
         <source>固定长度</source>
         <translation>Fixed length</translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="262"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="270"/>
         <source>时间: </source>
         <translation>Time: </translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="263"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="271"/>
         <source>长度: </source>
         <translation>Length: </translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="268"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="276"/>
         <source>分帧</source>
         <translation>framing</translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="297"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="305"/>
         <source>换行符: </source>
         <translation>Line break: </translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="301"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="309"/>
         <source>换行</source>
         <translation>Line feed</translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="307"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="315"/>
         <source>类型: </source>
         <translation>Type: </translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="309"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="317"/>
         <source>文本</source>
         <translation>text</translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="310"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="318"/>
         <source>HEX</source>
         <translation>HEX</translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="311"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="319"/>
         <source>间隔: </source>
         <translation>Interval: </translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="312"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="320"/>
         <source>内容: </source>
         <translation>Content: </translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="316"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="324"/>
         <source>心跳</source>
         <translation>heartbeat</translation>
     </message>
@@ -1522,37 +1532,37 @@
 <context>
     <name>Window::SerialWindow</name>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="198"/>
+        <location filename="../../src/window/serial_window.cpp" line="201"/>
         <source>未命名串口连接</source>
         <translation>Unnamed serial port connection</translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="241"/>
+        <location filename="../../src/window/serial_window.cpp" line="244"/>
         <source>名称不能为空！</source>
         <translation>The name cannot be empty!</translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="383"/>
+        <location filename="../../src/window/serial_window.cpp" line="385"/>
         <source>手动</source>
         <translation>Manual operation</translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="384"/>
+        <location filename="../../src/window/serial_window.cpp" line="386"/>
         <source>片段</source>
         <translation>fragment</translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="393"/>
+        <location filename="../../src/window/serial_window.cpp" line="395"/>
         <source>发送字节数: 0 B</source>
         <translation>Number of sent bytes: 0 B</translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="395"/>
+        <location filename="../../src/window/serial_window.cpp" line="397"/>
         <source>接收字节数: 0 B</source>
         <translation>Number of sent bytes: 0 B</translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="508"/>
+        <location filename="../../src/window/serial_window.cpp" line="544"/>
         <source>串口未打开</source>
         <translation>Serial port not open</translation>
     </message>

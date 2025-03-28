@@ -4,6 +4,7 @@
 #include <QQueue>
 #include <QSerialPort>
 #include <QSerialPortInfo>
+#include <QTimer>
 
 namespace Core {
 
@@ -55,7 +56,10 @@ class SerialPortWorker : public QObject {
  private:
   void init();
 
-  QSerialPort* serial_{nullptr};
+  QSerialPort* serial_ = nullptr;
+  QByteArray receive_buffer_;
+  QTimer* receive_timer_;
+
   QQueue<QByteArray> send_queue_;  // 队列
   QMutex send_mutex_;              // 互斥锁
 };

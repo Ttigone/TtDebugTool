@@ -118,13 +118,13 @@ class SerialLexer : public QsciLexerCustom {
         QStringRef arrow(&line, pos, 2);
         if (arrow == "<<") {
           isSend = true;
-          qDebug() << "发送1";
+          // qDebug() << "发送1";
           // 设置箭头样式
           startStyling(lineStart + pos);
           setStyling(2, SEND_STYLE);
           pos += 2;
         } else if (arrow == ">>") {
-          qDebug() << "接收2";
+          // qDebug() << "接收2";
           isSend = false;
           // 设置箭头样式
           startStyling(lineStart + pos);

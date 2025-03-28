@@ -21,36 +21,9 @@ class Tt_EXPORT TtWidgetGroup : public QObject {
   TtWidgetGroup(QObject* parent);
   ~TtWidgetGroup();
 
-  void addWidget(QWidget* widget) {
-    if (!widget || widgets_.contains(widget))
-      return;
+  void addWidget(QWidget* widget);
 
-    widgets_.append(widget);
-    connect(widget, &QObject::destroyed, this,
-            &TtWidgetGroup::handleWidgetDestroyed);
-
-    //// 处理QAbstractButton的点击信号
-    //if (auto btn = qobject_cast<QAbstractButton*>(widget)) {
-    //  connect(btn, &QAbstractButton::toggled, this,
-    //          [this, btn](bool checked) { handleWidgetToggled(btn, checked); });
-    //} else {
-    //  // 为其他Widget安装事件过滤器
-    //  widget->installEventFilter(this);
-    //}
-    widget->installEventFilter(this);
-  }
-
-  void removeWidget(QWidget* widget) {
-    if (!widget || !widgets_.contains(widget))
-      return;
-
-    widgets_.removeOne(widget);
-    disconnect(widget, 0, this, 0);
-    widget->removeEventFilter(this);
-
-    if (checked_widget_ == widget)
-      checked_widget_ = nullptr;
-  }
+  void removeWidget(QWidget* widget);
 
   QList<QWidget*> widgets() const { return widgets_; }
 
@@ -58,6 +31,13 @@ class Tt_EXPORT TtWidgetGroup : public QObject {
   bool isExclusive() const { return exclusive_; }
 
   QWidget* checkedWidget() const { return checked_widget_; }
+
+  void setCheckedIndex(int index) {
+    if (index >= 0 && index < widgets_.size()) {
+      QWidget* widget = widgets_.at(index);
+      updateWidgetState(widget, true);
+    }
+  }
 
  signals:
   // 某个 widget 点击

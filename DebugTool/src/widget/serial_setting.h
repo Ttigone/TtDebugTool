@@ -4,6 +4,8 @@
 #include "core/serial_port.h"
 
 namespace Ui {
+
+class TtLabelLineEdit;
 class TtLabelComboBox;
 class TtLabelBtnComboBox;
 class TtVerticalLayout;
@@ -67,6 +69,8 @@ class SerialSetting : public QWidget {
   Ui::TtLabelComboBox* parity_bit_;
   Ui::TtLabelComboBox* stop_bit_;
   Ui::TtLabelComboBox* flow_control_;
+
+  Ui::TtLabelLineEdit* script_;
 
   Ui::TtLabelComboBox* framing_model_;
   Ui::TtLabelComboBox* framing_timeout_;

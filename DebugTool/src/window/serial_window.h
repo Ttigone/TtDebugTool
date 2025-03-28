@@ -19,9 +19,12 @@
 
 #include <Qsci/qsciscintilla.h>
 
+#include "qtmaterialflatbutton.h"
 #include "ui/widgets/window_switcher.h"
 
 namespace Ui {
+
+class TtMaskWidget;
 class TtNormalLabel;
 class CommonButton;
 class TtImageButton;
@@ -33,6 +36,8 @@ class TtLineEdit;
 class TtChatView;
 class TtChatMessageModel;
 class TtTableWidget;
+
+class TtLuaInputBox;
 }  // namespace Ui
 
 namespace Widget {
@@ -84,14 +89,14 @@ class SerialWindow : public QWidget, public Ui::TabManager::ISerializable {
   Ui::TtVerticalLayout* main_layout_;
 
   QString title;
-  Ui::TtNormalLabel* title_;             // 名称
-  // Ui::TtImageButton* modify_title_btn_;  // 修改连接名称
-  Ui::TtSvgButton* modify_title_btn_;  // 修改连接名称
-  // Ui::TtImageButton* save_btn_;          // 保存连接记录
-  Ui::TtSvgButton* save_btn_;    // 保存连接记录
-  Ui::TtSvgButton* on_off_btn_;  // 开启 or 关闭
+  Ui::TtNormalLabel* title_;
+  Ui::TtSvgButton* modify_title_btn_;
+  Ui::TtSvgButton* save_btn_;
+  Ui::TtSvgButton* on_off_btn_;
 
   // 纯文本 / 16进制切换 / 删除历史消失
+
+  Ui::TtSvgButton* clear_history_;
 
   // 消息展示框
   Ui::TtChatView* message_view_;
@@ -99,29 +104,30 @@ class SerialWindow : public QWidget, public Ui::TabManager::ISerializable {
 
   QsciScintilla* terminal_;
 
-  bool serial_port_opened{false};
-  QThread* worker_thread_{nullptr};
+  bool serial_port_opened = false;
+  QThread* worker_thread_ = nullptr;
   Core::SerialPortWorker* serial_port_;
 
   Widget::SerialSetting* serial_setting_;
-
-  //Ui::TtLabelComboBox* framingModel;
 
   Ui::TtNormalLabel *send_byte;
   Ui::TtNormalLabel *recv_byte;
   quint64 send_byte_count = 0;
   quint64 recv_byte_count = 0;
 
-  // 使用开源编辑组件 QScintilla
   QsciScintilla* editor;
 
-  QWidget* original_widget_{nullptr};
-  QWidget* edit_widget_{nullptr};
-  // QLineEdit* title_edit_ = nullptr;
-  Ui::TtLineEdit* title_edit_{nullptr};
-  QStackedWidget* stack_{nullptr};
+  QWidget* original_widget_ = nullptr;
+  QWidget* edit_widget_ = nullptr;
+  Ui::TtLineEdit* title_edit_ = nullptr;
+  QStackedWidget* stack_ = nullptr;
+
+  QtMaterialFlatButton* sendBtn;
 
   Ui::TtTableWidget* instruction_table_;
+
+  Ui::TtLuaInputBox* lua_code_;
+  Ui::TtMaskWidget* mask_widget_;
 
   SerialSaveConfig cfg_;
 };

@@ -6,11 +6,11 @@
 
 namespace Ui {
 
-class LuaInputBox : public QWidget {
+class TtLuaInputBox : public QWidget {
   Q_OBJECT
  public:
-  explicit LuaInputBox(QWidget* parent = nullptr);
-  ~LuaInputBox();
+  explicit TtLuaInputBox(QWidget* parent = nullptr);
+  ~TtLuaInputBox();
 
  signals:
 

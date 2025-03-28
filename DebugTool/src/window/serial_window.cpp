@@ -4,6 +4,7 @@
 #include <ui/control/ChatWidget/TtChatMessageModel.h>
 #include <ui/control/ChatWidget/TtChatView.h>
 #include <ui/control/TtLineEdit.h>
+#include <ui/control/TtMaskWidget.h>
 #include <ui/control/TtRadioButton.h>
 #include <ui/layout/horizontal_layout.h>
 #include <ui/layout/vertical_layout.h>
@@ -20,6 +21,7 @@
 #include <qtmaterialtabs.h>
 #include <ui/controls/TtSerialLexer.h>
 
+#include "ui/controls/TtLuaInputBox.h"
 #include "ui/controls/TtTableView.h"
 #include "widget/serial_setting.h"
 
@@ -30,6 +32,7 @@ SerialWindow::SerialWindow(QWidget* parent)
       worker_thread_(new QThread(this)),
       serial_port_(new Core::SerialPortWorker),
       serial_setting_(new Widget::SerialSetting) {
+
   init();
   connectSignals();
 
@@ -166,7 +169,7 @@ void SerialWindow::dataReceived(const QByteArray& data) {
 
   // 获取当前时间并格式化消息
   QDateTime now = QDateTime::currentDateTime();
-  QString timestamp = now.toString("[yyyy-MM-dd hh:mm:ss.ZZZ]");
+  QString timestamp = now.toString("[yyyy-MM-dd hh:mm:ss.zzz]");
   QString formattedMessage = timestamp + " >> " + data + "\n";
 
   // 添加到终端
@@ -279,11 +282,11 @@ void SerialWindow::init() {
   QWidget* twoBtnForGroup = new QWidget(chose_function);
   QHBoxLayout* layouttest = new QHBoxLayout(twoBtnForGroup);
   Ui::TtSvgButton* leftBtn =
-      new Ui::TtSvgButton(":/sys/chat.svg", twoBtnForGroup);
+      new Ui::TtSvgButton(":/sys/terminal.svg", twoBtnForGroup);
   leftBtn->setSvgSize(18, 18);
   leftBtn->setColors(Qt::black, Qt::blue);
   Ui::TtSvgButton* rightBtn =
-      new Ui::TtSvgButton(":/sys/terminal.svg", twoBtnForGroup);
+      new Ui::TtSvgButton(":/sys/chat.svg", twoBtnForGroup);
   rightBtn->setSvgSize(18, 18);
   rightBtn->setColors(Qt::black, Qt::blue);
   layouttest->addWidget(leftBtn);
@@ -296,9 +299,8 @@ void SerialWindow::init() {
 
   chose_function_layout->addWidget(twoBtnForGroup);
   chose_function_layout->addStretch();
-  Ui::TtSvgButton* clear_history =
-      new Ui::TtSvgButton(":/sys/trash.svg", chose_function);
-  clear_history->setSvgSize(18, 18);
+  clear_history_ = new Ui::TtSvgButton(":/sys/trash.svg", chose_function);
+  clear_history_->setSvgSize(18, 18);
 
   //// 选择 text/hex
   QButtonGroup* bgr = new QButtonGroup(this);
@@ -310,7 +312,7 @@ void SerialWindow::init() {
   chose_function_layout->addWidget(hexBtn);
 
   // 清除历史按钮
-  chose_function_layout->addWidget(clear_history);
+  chose_function_layout->addWidget(clear_history_);
 
   QSplitter* VSplitter = new QSplitter;
   VSplitter->setOrientation(Qt::Vertical);
@@ -434,7 +436,7 @@ void SerialWindow::init() {
   choseText->setText("TEXT");
   choseHex->setText("HEX");
 
-  QtMaterialFlatButton* sendBtn = new QtMaterialFlatButton(bottomBtnWidget);
+  sendBtn = new QtMaterialFlatButton(bottomBtnWidget);
   sendBtn->setIcon(QIcon(":/sys/send.svg"));
   bottomBtnWidgetLayout->addWidget(choseText);
   bottomBtnWidgetLayout->addWidget(choseHex);
@@ -451,9 +453,13 @@ void SerialWindow::init() {
   layout->setCurrentIndex(0);
 
   connect(m_tabs, &QtMaterialTabs::currentChanged, [this, layout](int index) {
-    //qDebug() << index;
     layout->setCurrentIndex(index);
   });
+
+  // 显示, 并输入 lua 脚本
+  lua_code_ = new Ui::TtLuaInputBox(this);
+  mask_widget_ = new Ui::TtMaskWidget(this);
+  // mask_widget_->show(lua_code_);
 
   bottomAllLayout->addWidget(tabs_and_count);
   bottomAllLayout->addWidget(la_w);
@@ -467,6 +473,35 @@ void SerialWindow::init() {
 
   // 主界面是左右分隔
   main_layout_->addWidget(mainSplitter);
+
+  // qDebug() << "Create SerialWindow: " << runtime.elapseMilliseconds();
+}
+
+void SerialWindow::setSerialSetting() {
+  serial_setting_->setSerialPortsName();
+  serial_setting_->setSerialPortsBaudRate();
+  serial_setting_->setSerialPortsDataBit();
+  serial_setting_->setSerialPortsParityBit();
+  serial_setting_->setSerialPortsStopBit();
+  serial_setting_->setSerialPortsFluidControl();
+
+  serial_setting_->displayDefaultSetting();
+}
+
+void SerialWindow::connectSignals() {
+  connect(save_btn_, &Ui::TtSvgButton::clicked, [this]() {
+    cfg_.obj.insert("WindowTitle", title_->text());
+    cfg_.obj.insert("SerialSetting", serial_setting_->getSerialSetting());
+    cfg_.obj.insert("InstructionTable", instruction_table_->getTableRecord());
+    // Ui::TtMessageBar::success(
+    //     TtMessageBarType::Top, "警告",
+    //     // "输入框不能为空，请填写完整信息。", 3000, this);
+    //     "输入框不能为空，请填写完整信息。", 3000, this);
+    emit requestSaveConfig();
+    //qDebug() << cfg_.obj;
+    // 配置文件保存到文件中
+    // 当前的 tabWidget 匹配对应的 QJsonObject
+  });
 
   connect(on_off_btn_, &Ui::TtSvgButton::clicked, [this]() {
     // // 检查是否处于打开状态
@@ -498,7 +533,8 @@ void SerialWindow::init() {
     }
   });
 
-  connect(clear_history, &Ui::TtSvgButton::clicked, [this]() {
+  connect(clear_history_, &Ui::TtSvgButton::clicked, [this]() {
+    mask_widget_->show(lua_code_);
     message_model_->clearModelData();
     terminal_->clear();
   });
@@ -521,7 +557,7 @@ void SerialWindow::init() {
 
     // 获取当前时间并格式化消息
     QDateTime now = QDateTime::currentDateTime();
-    QString timestamp = now.toString("[yyyy-MM-dd hh:mm:ss.ZZZ]");
+    QString timestamp = now.toString("[yyyy-MM-dd hh:mm:ss.zzz]");
     QString formattedMessage = timestamp + " << " + data + "\n";
 
     // 添加到终端
@@ -532,35 +568,6 @@ void SerialWindow::init() {
                               Q_ARG(QString, data));
     send_byte->setText(QString("发送字节数: %1 B").arg(send_byte_count));
     message_view_->scrollToBottom();
-  });
-
-  // qDebug() << "Create SerialWindow: " << runtime.elapseMilliseconds();
-}
-
-void SerialWindow::setSerialSetting() {
-  serial_setting_->setSerialPortsName();
-  serial_setting_->setSerialPortsBaudRate();
-  serial_setting_->setSerialPortsDataBit();
-  serial_setting_->setSerialPortsParityBit();
-  serial_setting_->setSerialPortsStopBit();
-  serial_setting_->setSerialPortsFluidControl();
-
-  serial_setting_->displayDefaultSetting();
-}
-
-void SerialWindow::connectSignals() {
-  connect(save_btn_, &Ui::TtSvgButton::clicked, [this]() {
-    cfg_.obj.insert("WindowTitle", title_->text());
-    cfg_.obj.insert("SerialSetting", serial_setting_->getSerialSetting());
-    cfg_.obj.insert("InstructionTable", instruction_table_->getTableRecord());
-    // Ui::TtMessageBar::success(
-    //     TtMessageBarType::Top, "警告",
-    //     // "输入框不能为空，请填写完整信息。", 3000, this);
-    //     "输入框不能为空，请填写完整信息。", 3000, this);
-    emit requestSaveConfig();
-    //qDebug() << cfg_.obj;
-    // 配置文件保存到文件中
-    // 当前的 tabWidget 匹配对应的 QJsonObject
   });
 }
 

@@ -3,14 +3,38 @@
 namespace Core {
 
 SerialPortWorker::SerialPortWorker(QObject* parent)
-    : QObject(parent), serial_(new QSerialPort(this)) {
+    // : QObject(parent), serial_(new QSerialPort(this)) {
+    : QObject(parent), serial_(new QSerialPort) {
   // : QObject(parent) {
-  // serial_ = new QSerialPort(this);
+  serial_->setParent(this);
   qRegisterMetaType<SerialPortConfiguration>(
       "SerialPortConfiguration");  // 注册类型
 
-  init();
-  // 发送错误通过errorOccurred信号报告
+  // 延迟初始化定时器
+  QTimer::singleShot(0, this, [this]() {
+    receive_timer_ = new QTimer(this);  // 在工作线程创建定时器
+    receive_timer_->setInterval(50);
+    receive_timer_->setSingleShot(true);
+    connect(receive_timer_, &QTimer::timeout, this, [this]() {
+      if (!receive_buffer_.isEmpty()) {
+        emit dataReceived(receive_buffer_);
+        receive_buffer_.clear();
+      }
+    });
+  });
+
+  // qDebug() << QThread::currentThread();
+
+  // receive_timer_.setInterval(50);
+  // receive_timer_.setSingleShot(true);
+  // connect(&receive_timer_, &QTimer::timeout, this, [this]() {
+  //   if (!receive_buffer_.isEmpty()) {
+  //     qDebug() << receive_buffer_;
+  //     emit dataReceived(receive_buffer_);
+  //     receive_buffer_.clear();
+  //   }
+  // });
+
   connect(serial_, &QSerialPort::errorOccurred,
           [this](QSerialPort::SerialPortError error) {
             if (error != QSerialPort::NoError) {
@@ -21,6 +45,9 @@ SerialPortWorker::SerialPortWorker(QObject* parent)
 
 SerialPortWorker::~SerialPortWorker() {
   // qDebug() << "开始析构 SerialPortWorker" << QThread::currentThread();
+  if (receive_timer_ && receive_timer_->isActive()) {
+    receive_timer_->stop();
+  }
 
   if (serial_ && serial_->isOpen()) {
     // qDebug() << "关闭串口";
@@ -44,23 +71,6 @@ bool SerialPortWorker::isOpened() {
   }
   return false;
 }
-
-// void SerialPortWorker::initSerialPort() {
-//   if (!serial_) {
-//     qDebug() << "QSerialPort created in thread:" << QThread::currentThread();
-//     // 在工作线程中创建，父对象为 this（属于工作线程）
-//     serial_ = new QSerialPort(this);
-//     qDebug() << "serial_: " << serial_;
-//     connect(serial_, &QSerialPort::errorOccurred,
-//             [this](QSerialPort::SerialPortError error) {
-//               if (error != QSerialPort::NoError) {
-//                 emit errorOccurred(serial_->errorString());
-//               }
-//             });
-//   } else {
-//     qDebug() << "QSerialPort created in thread:" << QThread::currentThread();
-//   }
-// }
 
 void SerialPortWorker::sendData(const QString& send_string) {
   // 发送是非阻塞的
@@ -100,11 +110,14 @@ void SerialPortWorker::sendData(const QString& send_string) {
 }
 
 void SerialPortWorker::readData() {
+  qDebug() << QThread::currentThread();
   // 事件驱动接收
   if (serial_ && serial_->isOpen()) {
     QByteArray data = serial_->readAll();
     if (!data.isEmpty()) {
-      emit dataReceived(data);
+      receive_buffer_.append(data);
+      receive_timer_->start();
+      // emit dataReceived(data);
     }
   }
   // qint64 bytesAvailable = serial_->bytesAvailable();
@@ -162,28 +175,6 @@ void SerialPortWorker::closeSerialPort() {
     serial_->close();
     emit serialPortStatusChanged(false);  // 发射串口已开启的信号
   }
-}
-
-void SerialPortWorker::init() {
-  // foreach(int64 baud, QSerialPortInfo::standardBaudRates()) {
-  //   list_baud_rate_.append(baud);
-  // }
-
-  // list_data_bits_ << QSerialPort::Data5 << QSerialPort::Data6 << QSerialPort::Data7 << QSerialPort::Data8;
-
-  // map_parity_[QObject::tr("无校验")] = QSerialPort::NoParity;
-  // map_parity_[QObject::tr("偶校验")] = QSerialPort::EvenParity;
-  // map_parity_[QObject::tr("奇校验")] = QSerialPort::OddParity;
-  // map_parity_[QObject::tr("0 校验")] = QSerialPort::SpaceParity;
-  // map_parity_[QObject::tr("1 校验")] = QSerialPort::MarkParity;
-
-  // map_stop_bits_[QObject::tr("1 位")] = QSerialPort::OneStop;
-  // map_stop_bits_[QObject::tr("1.5 位")] = QSerialPort::OneAndHalfStop;
-  // map_stop_bits_[QObject::tr("2 位")] = QSerialPort::TwoStop;
-
-  // map_flow_control_[QObject::tr("None")] = QSerialPort::NoFlowControl;
-  // map_flow_control_[QObject::tr("RTS/CTS")] = QSerialPort::HardwareControl;
-  // map_flow_control_[QObject::tr("Xon/Xoff")] = QSerialPort::SoftwareControl;
 }
 
 }  // namespace Core

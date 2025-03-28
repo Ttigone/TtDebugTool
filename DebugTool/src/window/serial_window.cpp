@@ -166,7 +166,7 @@ void SerialWindow::dataReceived(const QByteArray& data) {
 
   // 获取当前时间并格式化消息
   QDateTime now = QDateTime::currentDateTime();
-  QString timestamp = now.toString("[yyyy-MM-dd hh:mm:ss]");
+  QString timestamp = now.toString("[yyyy-MM-dd hh:mm:ss.ZZZ]");
   QString formattedMessage = timestamp + " >> " + data + "\n";
 
   // 添加到终端
@@ -521,7 +521,7 @@ void SerialWindow::init() {
 
     // 获取当前时间并格式化消息
     QDateTime now = QDateTime::currentDateTime();
-    QString timestamp = now.toString("[yyyy-MM-dd hh:mm:ss]");
+    QString timestamp = now.toString("[yyyy-MM-dd hh:mm:ss.ZZZ]");
     QString formattedMessage = timestamp + " << " + data + "\n";
 
     // 添加到终端

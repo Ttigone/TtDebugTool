@@ -30,6 +30,9 @@ SerialWindow::SerialWindow(QWidget* parent)
       worker_thread_(new QThread(this)),
       serial_port_(new Core::SerialPortWorker),
       serial_setting_(new Widget::SerialSetting) {
+  init();
+  connectSignals();
+
   // 放在线程中执行
   serial_port_->moveToThread(worker_thread_);
 
@@ -48,8 +51,6 @@ SerialWindow::SerialWindow(QWidget* parent)
   connect(serial_port_, &Core::SerialPortWorker::errorOccurred, this,
           &SerialWindow::showErrorMessage);
 
-  init();
-  connectSignals();
 
   worker_thread_->start();
 }
@@ -166,7 +167,7 @@ void SerialWindow::dataReceived(const QByteArray& data) {
   // 获取当前时间并格式化消息
   QDateTime now = QDateTime::currentDateTime();
   QString timestamp = now.toString("[yyyy-MM-dd hh:mm:ss]");
-  QString formattedMessage = timestamp + " [Receive] " + data + "\n";
+  QString formattedMessage = timestamp + " >> " + data + "\n";
 
   // 添加到终端
   terminal_->append(formattedMessage);
@@ -301,14 +302,12 @@ void SerialWindow::init() {
 
   //// 选择 text/hex
   QButtonGroup* bgr = new QButtonGroup(this);
-  QPushButton* button1 = new QPushButton("TEXT");
-  QPushButton* button2 = new QPushButton("HEX");
-  button1->setFlat(true);
-  button2->setFlat(true);
-  bgr->addButton(button1);
-  bgr->addButton(button2);
-  chose_function_layout->addWidget(button1);
-  chose_function_layout->addWidget(button2);
+  Ui::TtTextButton* textBtn = new Ui::TtTextButton("TEXT");
+  Ui::TtTextButton* hexBtn = new Ui::TtTextButton("HEX");
+  bgr->addButton(textBtn);
+  bgr->addButton(hexBtn);
+  chose_function_layout->addWidget(textBtn);
+  chose_function_layout->addWidget(hexBtn);
 
   // 清除历史按钮
   chose_function_layout->addWidget(clear_history);
@@ -523,7 +522,7 @@ void SerialWindow::init() {
     // 获取当前时间并格式化消息
     QDateTime now = QDateTime::currentDateTime();
     QString timestamp = now.toString("[yyyy-MM-dd hh:mm:ss]");
-    QString formattedMessage = timestamp + " [SEND] " + data + "\n";
+    QString formattedMessage = timestamp + " << " + data + "\n";
 
     // 添加到终端
     terminal_->append(formattedMessage);

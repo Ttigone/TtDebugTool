@@ -4,6 +4,8 @@
 #include <Qsci/qscilexercustom.h>
 #include <Qsci/qsciscintilla.h>
 
+#include <QStringRef>
+
 class SerialLexer : public QsciLexerCustom {
  public:
   SerialLexer(QObject* parent = nullptr) : QsciLexerCustom(parent) {
@@ -56,14 +58,26 @@ class SerialLexer : public QsciLexerCustom {
         setStyling(tsEnd + 1 - pos, TIMESTAMP_STYLE);
         pos = tsEnd + 1;
       }
-      // 处理标签部分 [SEND] 或 [RECV]
-      int tagEnd = line.indexOf(']', pos);
-      bool isSend = line.contains("[SEND]");
-      if (tagEnd != -1) {
-        int tagStyle = isSend ? SEND_STYLE : RECV_STYLE;
-        setStyling(tagEnd + 1 - pos, tagStyle);
-        pos = tagEnd + 1;
+      int arrowStart = -1;
+      bool isSend = false;
+
+      // 2. 跳过时间戳后的空格
+      while (pos < line.length() && line[pos].isSpace()) {
+        pos++;
       }
+
+      // 3. 检查<<或>>标签
+      if (pos + 1 < line.length()) {
+        QString arrow = line.mid(pos, 2);
+        if (arrow == "<<") {
+          isSend = true;
+          arrowStart = pos;
+        } else if (arrow == ">>") {
+          isSend = false;
+          arrowStart = pos;
+        }
+      }
+
       // 正文
       if (pos < line.length()) {
         int messageStyle = isSend ? SEND_MESSAGE_STYLE : RECV_MESSAGE_STYLE;

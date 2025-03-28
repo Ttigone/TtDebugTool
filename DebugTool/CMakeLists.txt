@@ -83,6 +83,8 @@ set(PROJECT_SOURCES
     ${src_loc}/ui/controls/TtDownloadDialog.h ${src_loc}/ui/controls/TtDownloadDialog.cpp
     ${src_loc}/ui/controls/TtSerialLexer.h ${src_loc}/ui/controls/TtSerialLexer.cpp
     ${src_loc}/ui/controls/TtQCPItemRichText.h ${src_loc}/ui/controls/TtQCPItemRichText.cpp
+    ${src_loc}/ui/controls/TtQCPItemRichText.h ${src_loc}/ui/controls/TtQCPItemRichText.cpp
+    ${src_loc}/ui/controls/TtLuaInputBox.h ${src_loc}/ui/controls/TtLuaInputBox.cpp
 )
 
 # Apply the macro
@@ -202,6 +204,7 @@ PRIVATE
   Qt6::OpenGL          # Qt OpenGL 模块
   OpenGL::GL           # 系统OpenGL
   OpenGL::GLU          # 系统GLU（可选
+  lua5.4.7
 )
 # 查看链接的库
 get_target_property(LINK_LIBS ${PROJECT_NAME} LINK_LIBRARIES)

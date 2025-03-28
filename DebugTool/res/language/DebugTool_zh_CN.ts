@@ -1518,37 +1518,37 @@
 <context>
     <name>Window::SerialWindow</name>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="197"/>
+        <location filename="../../src/window/serial_window.cpp" line="198"/>
         <source>未命名串口连接</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="240"/>
+        <location filename="../../src/window/serial_window.cpp" line="241"/>
         <source>名称不能为空！</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="384"/>
+        <location filename="../../src/window/serial_window.cpp" line="383"/>
         <source>手动</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="385"/>
+        <location filename="../../src/window/serial_window.cpp" line="384"/>
         <source>片段</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="394"/>
+        <location filename="../../src/window/serial_window.cpp" line="393"/>
         <source>发送字节数: 0 B</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="396"/>
+        <location filename="../../src/window/serial_window.cpp" line="395"/>
         <source>接收字节数: 0 B</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="509"/>
+        <location filename="../../src/window/serial_window.cpp" line="508"/>
         <source>串口未打开</source>
         <translation type="unfinished"></translation>
     </message>

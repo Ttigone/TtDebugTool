@@ -18,6 +18,7 @@ class TtLineEditPrivate : public QObject {
   explicit TtLineEditPrivate(QObject* parent = nullptr);
   ~TtLineEditPrivate();
   Q_INVOKABLE void onWMWindowClickedEvent(QVariantMap data);
+  int calculateTargetWidth() const;
 
  public slots:
   void onThemeChanged(TtThemeType::ThemeMode themeMode);
@@ -27,6 +28,7 @@ class TtLineEditPrivate : public QObject {
   TtThemeType::ThemeMode theme_mode_;
   // ElaEvent* _focusEvent{nullptr};
   qreal text_spacing_{0.5};
+  QPropertyAnimation* pMarkAnimation = nullptr;  // 保存动画指针
 };
 
 }  // namespace Ui

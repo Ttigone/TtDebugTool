@@ -110,11 +110,20 @@ void TtComboBoxStyle::drawControl(ControlElement element,
           }
         }
         // 文字绘制
+        // 文本框 左右内边距 10
+        QRect textRect(option->rect.x() + 10, option->rect.y(),
+                       option->rect.width() - 10, option->rect.height());
+
+        QString elideText(painter->fontMetrics().elidedText(
+            vopt->text, Qt::ElideRight, textRect.width()));
+
         painter->setPen(Ui::TtThemeColor(theme_mode_, BasicText));
-        painter->drawText(
-            QRect(option->rect.x() + 10, option->rect.y(),
-                  option->rect.width() - 10, option->rect.height()),
-            Qt::AlignVCenter, vopt->text);
+        // painter->drawText(
+        //     QRect(option->rect.x() + 10, option->rect.y(),
+        //           option->rect.width() - 10, option->rect.height()),
+        //     Qt::AlignVCenter, vopt->text);
+        painter->drawText(textRect, Qt::AlignVCenter | Qt::AlignLeft,
+                          elideText);
         painter->restore();
       }
       return;
@@ -171,11 +180,17 @@ void TtComboBoxStyle::drawComplexControl(ComplexControl control,
         //                                 QStyle::SC_ComboBoxEditField, widget);
         QRect textRect = subControlRect(QStyle::CC_ComboBox, copt,
                                         QStyle::SC_ComboBoxEditField, widget);
+
+        QString elideText = painter->fontMetrics().elidedText(
+            copt->currentText, Qt::ElideRight, textRect.width());
+
         painter->setPen(isEnabled
                             ? Ui::TtThemeColor(theme_mode_, BasicText)
                             : Ui::TtThemeColor(theme_mode_, BasicTextDisable));
+        // painter->drawText(textRect, Qt::AlignVCenter | Qt::AlignLeft,
+        //                   copt->currentText);
         painter->drawText(textRect, Qt::AlignVCenter | Qt::AlignLeft,
-                          copt->currentText);
+                          elideText);
         //展开指示器绘制
         painter->setPen(Qt::NoPen);
         painter->setBrush(Ui::TtThemeColor(theme_mode_, PrimaryNormal));
@@ -298,22 +313,22 @@ QSize TtComboBoxStyle::sizeFromContents(ContentsType type,
       return itemSize;
     }
     case QStyle::CT_ComboBox: {
+      const QStyleOptionComboBox* cb =
+          qstyleoption_cast<const QStyleOptionComboBox*>(option);
       QSize comboBoxSize =
           QProxyStyle::sizeFromContents(type, option, size, widget);
-      comboBoxSize.setWidth(comboBoxSize.width() + 26);
-      // comboBoxSize.setHeight(comboBoxSize.height() + 10);
-      // 边距
-      comboBoxSize += QSize(2 * shadow_border_width_, 2 * shadow_border_width_);
-      // comboBoxSize += QSize(2 * shadow_border_width_, 0);
-
+      // comboBoxSize.setWidth(comboBoxSize.width() + 26);
+      // comboBoxSize += QSize(2 * shadow_border_width_, 2 * shadow_border_width_);
       // 根据字体大小动态调整宽度
       if (option) {
         QFontMetrics fm(option->fontMetrics);
-        comboBoxSize.setWidth(
-            fm.horizontalAdvance(
-                static_cast<const QStyleOptionComboBox*>(option)->currentText) +
-            // 2 * combo_margin_ + 30);  // 30为图标区域固定宽度
-            2 * combo_margin_ + 20);  // 30为图标区域固定宽度
+        int textWidth = fm.horizontalAdvance(cb->currentText);
+
+        comboBoxSize.setWidth(qMax(textWidth + 30, 50));
+        // comboBoxSize.setWidth(
+        //     fm.horizontalAdvance(
+        //         static_cast<const QStyleOptionComboBox*>(option)->currentText) +
+        //     2 * combo_margin_ + 20);  // 20为图标区域固定宽度
       }
       return comboBoxSize;
     }

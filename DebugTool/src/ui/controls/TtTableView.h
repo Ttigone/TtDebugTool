@@ -1,5 +1,6 @@
 #include <QTableWidget>
 
+#include <ui/control/TtLineEdit.h>
 #include "Def.h"
 
 class QSpinBox;
@@ -24,6 +25,10 @@ class TtTableWidget : public QTableWidget {
   QJsonObject getTableRecord();
 
   void setCellWidget(int row, int column, QWidget* widget);
+
+ signals:
+  void sendRowMsg(const QString& msg);
+  void sendRowsMsg(const QVector<QString>& msg);
 
  private slots:
   void onAddRowButtonClicked();
@@ -56,10 +61,30 @@ class TtTableWidget : public QTableWidget {
   QSpinBox* createDelaySpin();
   QWidget* createCellWrapper(QWidget* content);
 
-  int findRowIndex(QWidget* context) const {
-    for (int row = 1; row < rowCount(); ++row) {
-      if (cellWidget(row, 5) == context->parentWidget()) {
-        return row;
+  int findRowIndex(QWidget* context, const int& col, bool deep = false) const {
+    if (!context) {
+      return -1;
+    }
+    QWidget* parent = context->parentWidget();
+    if (!parent) {
+      return -1;
+    }
+
+    if (!deep) {
+      for (int row = 1; row < rowCount(); ++row) {
+        if (cellWidget(row, col) == parent) {
+          return row;
+        }
+      }
+    } else {
+      QWidget* grandparent = parent->parentWidget();
+      if (!grandparent) {
+        return -1;
+      }
+      for (int row = 1; row < rowCount(); ++row) {
+        if (cellWidget(row, col) == grandparent) {
+          return row;
+        }
       }
     }
     return -1;
@@ -80,55 +105,10 @@ class TtTableWidget : public QTableWidget {
     return container;
   }
 
-  QWidget* createAddButton() {
-    auto* btn = new QPushButton(QIcon(":/sys/plus-circle.svg"), "");
-    btn->setFlat(true);
-    connect(btn, &QPushButton::clicked, this,
-            [this] { onAddRowButtonClicked(); });
-    return createCellWrapper(btn);
-  }
-  QWidget* createSendButton() {
-    auto* btn = new QPushButton(QIcon(":/sys/send.svg"), "");
-    btn->setFlat(true);
-    connect(btn, &QPushButton::clicked, this, [this]() {});
-    return createCellWrapper(btn);
-  }
-
-  QWidget* createDeleteButton() {
-    auto* btn = new QPushButton(QIcon(":/sys/trash.svg"), "");
-    btn->setFlat(true);
-    connect(btn, &QPushButton::clicked, this, [this] {
-      if (auto* btn = qobject_cast<QPushButton*>(sender())) {
-        int row = findRowIndex(btn);
-        if (row > 0) {
-          // 回收控件
-          recycleRow(rowsData_[row - 1]);
-          // 移除行
-          removeRow(row);
-          rowsData_.remove(row - 1);
-        }
-      }
-    });
-    return createCellWrapper(btn);
-  }
-
-  QWidget* createRowSendButton() {
-    auto* btn = new QPushButton(QIcon(":/sys/send.svg"), "");
-    btn->setFlat(true);
-    connect(btn, &QPushButton::clicked, this, [this] {
-      if (auto* btn = qobject_cast<QPushButton*>(sender())) {
-        int row = findRowIndex(btn);
-        if (row > 0) {
-          // 回收控件
-          recycleRow(rowsData_[row - 1]);
-          // 移除行
-          removeRow(row);
-          rowsData_.remove(row - 1);
-        }
-      }
-    });
-    return createCellWrapper(btn);
-  }
+  QWidget* createAddButton();
+  QWidget* createSendButton();
+  QWidget* createDeleteButton();
+  QWidget* createRowSendButton();
 
   class HeaderWidget : public QWidget {
    public:

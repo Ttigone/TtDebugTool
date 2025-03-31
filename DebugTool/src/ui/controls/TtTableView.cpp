@@ -244,9 +244,9 @@ void TtTableWidget::initHeader() {
 void TtTableWidget::setupRow(int row) {
   TableRow data;
   data.enableBtn = createSwitchButton();
-  data.nameEdit = new TtLineEdit(tr("名称"), this);
+  data.nameEdit = new TtLineEdit(this);
   data.typeCombo = createTypeComboBox();
-  data.contentEdit = new TtLineEdit(tr("内容"), this);
+  data.contentEdit = new TtLineEdit(this);
   data.delaySpin = createDelaySpin();
 
   auto makeCell = [this](QWidget* content) {
@@ -255,8 +255,8 @@ void TtTableWidget::setupRow(int row) {
 
   setCellWidget(row, 0, makeCell(data.enableBtn));
   setCellWidget(row, 1, makeCell(data.nameEdit));
-  // setCellWidget(row, 2, makeCell(data.typeCombo));
-  setCellWidget(row, 2, makeCell(new QComboBox(this)));
+  setCellWidget(row, 2, makeCell(data.typeCombo));
+  // setCellWidget(row, 2, makeCell(new QComboBox(this)));
   setCellWidget(row, 3, makeCell(data.contentEdit));
   setCellWidget(row, 4, makeCell(data.delaySpin));
   setCellWidget(row, 5, createDeleteButton());
@@ -315,6 +315,53 @@ QWidget* TtTableWidget::createCellWrapper(QWidget* content) {
   Ui::TtVerticalLayout* layout = new Ui::TtVerticalLayout(wrapper);
   layout->addWidget(content);
   return wrapper;
+}
+
+QWidget* TtTableWidget::createAddButton() {
+  auto* btn = new QPushButton(QIcon(":/sys/plus-circle.svg"), "");
+  btn->setFlat(true);
+  connect(btn, &QPushButton::clicked, this,
+          [this] { onAddRowButtonClicked(); });
+  return createCellWrapper(btn);
+}
+
+QWidget* TtTableWidget::createSendButton() {
+  auto* btn = new QPushButton(QIcon(":/sys/send.svg"), "");
+  btn->setFlat(true);
+  connect(btn, &QPushButton::clicked, this, [this]() {});
+  return createCellWrapper(btn);
+}
+
+QWidget* TtTableWidget::createDeleteButton() {
+  auto* btn = new QPushButton(QIcon(":/sys/trash.svg"), "");
+  btn->setFlat(true);
+  connect(btn, &QPushButton::clicked, this, [this] {
+    if (auto* btn = qobject_cast<QPushButton*>(sender())) {
+      int row = findRowIndex(btn, 5);
+      if (row > 0) {
+        // 回收控件
+        recycleRow(rowsData_[row - 1]);
+        // 移除行
+        removeRow(row);
+        rowsData_.remove(row - 1);
+      }
+    }
+  });
+  return createCellWrapper(btn);
+}
+
+QWidget* TtTableWidget::createRowSendButton() {
+  auto* btn = new QPushButton(QIcon(":/sys/send.svg"), "");
+  btn->setFlat(true);
+  connect(btn, &QPushButton::clicked, this, [this] {
+    if (auto* btn = qobject_cast<QPushButton*>(sender())) {
+      int row = findRowIndex(btn, 6);
+      if (row > 0) {
+        emit sendRowMsg(rowsData_[row - 1].contentEdit->text());
+      }
+    }
+  });
+  return createCellWrapper(btn);
 }
 
 QWidget* TtTableWidget::createHeaderWidget(const QString& text,
@@ -493,7 +540,7 @@ QWidget* TtTableWidget::createSeventhColumnWidget() {
   return container;
 }
 
-inline void TtTableWidget::HeaderWidget::paintEvent(QPaintEvent* event) {
+void TtTableWidget::HeaderWidget::paintEvent(QPaintEvent* event) {
   QWidget::paintEvent(event);
 
   if (paint_) {

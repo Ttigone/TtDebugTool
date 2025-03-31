@@ -11,6 +11,8 @@
 #if (WIN32)
 #include <Windows.h>
 #include <dbghelp.h>
+#include <QSettings>
+#include <QTranslator>
 // 异常捕获函数
 // LONG ApplicationCrashHandler(EXCEPTION_POINTERS* pException) {
 
@@ -60,6 +62,25 @@ int main(int argc, char* argv[]) {
   auto fid =
       QFontDatabase::addApplicationFont(":/font/fontawesome-webfont.ttf");
   qDebug() << "TEST: " << QFontDatabase::applicationFontFamilies(fid);
+
+  // 语言切换
+  // 读取命令行参数中的语言设置
+  QString language;
+  QStringList args = QApplication::arguments();
+  int langIndex = args.indexOf("--lang");
+  if (langIndex != -1 && langIndex + 1 < args.size()) {
+    language = args.at(langIndex + 1);
+  } else {
+    // 从配置文件读取默认语言
+    QSettings settings("MyCompany", "MyApp");
+    language = settings.value("Language", "en_US").toString();
+  }
+
+  // 加载对应的翻译文件
+  QTranslator translator;
+  if (translator.load(":/translations/" + language + ".qm")) {
+    app.installTranslator(&translator);
+  }
 
   // 设置全局字体
   QFont font(":/font/roboto/Roboto-Black.ttf", 10);  // 微软雅黑，10号字体

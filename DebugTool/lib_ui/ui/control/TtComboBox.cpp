@@ -11,6 +11,8 @@
 #include <QListView>
 #include <QMouseEvent>
 
+#include <ui/layout/horizontal_layout.h>
+
 namespace Ui {
 
 Q_PROPERTY_CREATE_Q_CPP(TtComboBox, int, BorderRadius)
@@ -304,10 +306,11 @@ TtLabelBtnComboBox::TtLabelBtnComboBox(Qt::AlignmentFlag flag,
   QHBoxLayout* layout = new QHBoxLayout(this);
   part_ = new TtLabelComboBox(flag, text, this);
   auto refresh_btn = new Ui::TtSvgButton(":/sys/refresh-normal.svg", this);
+  refresh_btn->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   refresh_btn->setEnableHoldToCheck(true);
 
   layout->addWidget(part_);
-  layout->addWidget(refresh_btn);
+  layout->addWidget(refresh_btn, 1);
   connect(refresh_btn, &Ui::TtSvgButton::clicked, [this]() {
     qDebug() << "clicked";
     emit clicked();
@@ -317,15 +320,14 @@ TtLabelBtnComboBox::TtLabelBtnComboBox(Qt::AlignmentFlag flag,
 TtLabelBtnComboBox::TtLabelBtnComboBox(const QString& text, QWidget* parent)
     : QWidget(parent) {
   part_ = new TtLabelComboBox(text, this);
-  QHBoxLayout* layout = new QHBoxLayout(this);
-  layout->setContentsMargins(QMargins());
-  layout->setSpacing(0);
+  TtHorizontalLayout* layout = new TtHorizontalLayout(this);
   auto refresh_btn = new Ui::TtSvgButton(":/sys/refresh-normal.svg", this);
+  refresh_btn->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   refresh_btn->setColors(Qt::black, Qt::blue);
   refresh_btn->setEnableHoldToCheck(true);
 
-  layout->addWidget(part_, 1);
-  layout->addWidget(refresh_btn, 0);
+  layout->addWidget(part_);
+  layout->addWidget(refresh_btn, 1);
 
   connect(part_, &TtLabelComboBox::currentIndexChanged, this,
           &TtLabelBtnComboBox::displayCurrentCOMx);

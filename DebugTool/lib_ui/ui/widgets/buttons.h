@@ -255,25 +255,23 @@ class Tt_EXPORT RichTextButton : public QWidget {
   void updateButtonColor();
   void startHoverAnimation(const QColor& startColor, const QColor& endColor);
 
-  QImage image_;         // 图标
-  QLabel* title_;        // 标题
-  // QLabel* description_;  // 描述
-  TtElidedLabel* description_;  // 描述
-  QSize icon_size_;             // 图标大小
-
+  QImage image_;
+  QLabel* title_;
+  TtElidedLabel* description_;
+  QSize icon_size_;
   QColor normal_color_;
   QColor hover_color_;
   QColor pressed_color_;
   QColor current_color_;  // 当前颜色（用于动画）
 
   bool is_pressed_;
-  QPropertyAnimation* color_animation_;  // 颜色动画
+  QPropertyAnimation* color_animation_;
 };
 
 class Tt_EXPORT TtSvgButton : public QWidget {
   Q_OBJECT
-  Q_PROPERTY(QSize svgSize READ svgSize WRITE setSvgSize)   // 新增属性
-  Q_PROPERTY(bool checked READ isChecked WRITE setChecked)  // 新增属性
+  Q_PROPERTY(QSize svgSize READ svgSize WRITE setSvgSize)
+  Q_PROPERTY(bool checked READ isChecked WRITE setChecked)
  public:
   explicit TtSvgButton(QWidget* parent = nullptr);
   TtSvgButton(const QString& svgPath, QWidget* parent = nullptr);
@@ -368,6 +366,9 @@ class Tt_EXPORT TtSpecialDeleteButton : public QWidget {
 
 class Tt_EXPORT TtTextButton : public QPushButton {
   Q_OBJECT
+  Q_PROPERTY(QColor checkedColor READ checkedColor WRITE setCheckedColor)
+  Q_PROPERTY(bool checked READ isChecked WRITE setChecked)  // 新增属性
+
  public:
   explicit TtTextButton(QWidget* parent = nullptr);
   explicit TtTextButton(const QString& text, QWidget* parent = nullptr);
@@ -375,7 +376,24 @@ class Tt_EXPORT TtTextButton : public QPushButton {
                         QWidget* parent = nullptr);
   ~TtTextButton();
 
+  // 设置/获取选中状态
+  void setChecked(bool checked);
+  bool isChecked() const { return is_checked_; }
+
+  // 设置/获取选中时的文字颜色
+  void setCheckedColor(const QColor& color);
+  QColor checkedColor() const { return checked_color_; }
+
+ signals:
+  void toggled(bool checked);
+
+ protected:
+  void updateStyle();  // 更新样式
+
  private:
+  bool is_checked_ = false;
+  QColor checked_color_ = Qt::blue;  // 默认选中颜色
+  QColor default_color_;             // 初始文字颜色
 };
 
 }  // namespace Ui

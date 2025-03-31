@@ -33,6 +33,7 @@ void SettingWidget::downloadProgress(qint64 bytesReveived, qint64 bytesTotal) {
     return;
   }
 
+  // 获取变量
   /* 函数入栈 */
   lua_getglobal(L, "add");
 

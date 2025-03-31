@@ -767,23 +767,53 @@ void TtSpecialDeleteButton::mouseReleaseEvent(QMouseEvent* event) {
 }
 
 TtTextButton::TtTextButton(QWidget* parent) : QPushButton(parent) {
-  setStyleSheet("background-color: transparent");
+  default_color_ = palette().color(QPalette::ButtonText);
+  setStyleSheet("background-color: transparent; border: none");
 }
 
 TtTextButton::TtTextButton(const QString& text, QWidget* parent)
     : Ui::TtTextButton(parent) {
   setText(text);
+  // default_color_ = palette().color(QPalette::ButtonText);
+  // setStyleSheet("background-color: transparent; border: none;");
 }
 
 TtTextButton::TtTextButton(const QColor& color, const QString& text,
                            QWidget* parent)
-    : Ui::TtTextButton(parent) {
-  QPalette palette = this->palette();
-  palette.setColor(QPalette::ButtonText, color);
-  setPalette(palette);
-  setText(text);
+    : Ui::TtTextButton(text, parent) {
+  // QPalette palette = this->palette();
+  // palette.setColor(QPalette::ButtonText, color);
+  // setPalette(palette);
 }
 
 TtTextButton::~TtTextButton() {}
+
+void TtTextButton::setChecked(bool checked) {
+  if (is_checked_ != checked) {
+    is_checked_ = checked;
+    updateStyle();
+    emit toggled(is_checked_);
+  }
+}
+
+void TtTextButton::setCheckedColor(const QColor& color) {
+  checked_color_ = color;
+  updateStyle();
+}
+
+void TtTextButton::updateStyle() {
+  QString style;
+  if (is_checked_) {
+    style =
+        QString(
+            "color: %1; border: 2px solid %1; background-color: transparent;")
+            .arg(checked_color_.name());
+  } else {
+    style = QString("color: %1; border: none; background-color: transparent;")
+                .arg(default_color_.name());
+  }
+  // qDebug() << style;
+  setStyleSheet(style);
+}
 
 }  // namespace Ui

@@ -145,7 +145,7 @@ void SerialSetting::setSerialPortsName() {
       serial_port_->body(), &QComboBox::currentTextChanged,
       [this](const QString& text) {
         // qDebug() << text;
-        qDebug() << serial_port_->body()->currentData().value<QString>();
+        // qDebug() << serial_port_->body()->currentData().value<QString>();
         // serial_port_->body()->setCurrentText(
         //     serial_port_->body()->currentData().value<QString>() + "test");
       });

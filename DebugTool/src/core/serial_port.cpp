@@ -110,7 +110,6 @@ void SerialPortWorker::sendData(const QString& send_string) {
 }
 
 void SerialPortWorker::readData() {
-  qDebug() << QThread::currentThread();
   // 事件驱动接收
   if (serial_ && serial_->isOpen()) {
     QByteArray data = serial_->readAll();

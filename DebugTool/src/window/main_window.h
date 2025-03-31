@@ -75,6 +75,9 @@ class MainWindow : public QMainWindow {
   QString extractLanguageName(const QString& qmFile);
   void changeLanguage(const QString& qmFile);
 
+  void saveLanguageSetting(const QString& language);
+  void restartApplication();
+
   // void createDockWindows();
 
   Theme currentTheme{};
@@ -114,6 +117,8 @@ class MainWindow : public QMainWindow {
   Ui::WidgetGroup* buttonGroup;
 
   QTranslator* translator_ = nullptr;
+
+  QString savedLanguage_;
 };
 
 }  // namespace Window

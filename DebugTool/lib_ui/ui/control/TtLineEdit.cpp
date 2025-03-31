@@ -105,6 +105,7 @@ void TtLineEdit::focusInEvent(QFocusEvent* event) {
     // 启动动画，并在动画结束后自动删除动画对象
     markAnimation->start(QAbstractAnimation::DeleteWhenStopped);
   }
+
   // 调用基类的焦点获得事件处理函数
   QLineEdit::focusInEvent(event);
 }
@@ -164,6 +165,23 @@ void TtLineEdit::paintEvent(QPaintEvent* event) {
 
 void TtLineEdit::contextMenuEvent(QContextMenuEvent* event) {}
 
+void TtLineEdit::resizeEvent(QResizeEvent* event) {
+  QLineEdit::resizeEvent(event);
+  Q_D(TtLineEdit);
+  if (hasFocus()) {
+    int newTargetWidth = width() / 2 - d->pBorderRadius_ / 2;
+    if (d->pMarkAnimation &&
+        d->pMarkAnimation->state() == QAbstractAnimation::Running) {
+      // 如果动画正在运行，更新结束值
+      d->pMarkAnimation->setEndValue(newTargetWidth);
+    } else {
+      // 否则直接更新宽度并重绘
+      d->pExpandMarkWidth_ = newTargetWidth;
+      update();
+    }
+  }
+}
+
 TtLineEditPrivate::TtLineEditPrivate(QObject* parent) : QObject(parent) {}
 
 TtLineEditPrivate::~TtLineEditPrivate() {
@@ -188,6 +206,10 @@ void TtLineEditPrivate::onWMWindowClickedEvent(QVariantMap data) {
   //     q->clearFocus();
   //   }
   // }
+}
+
+int TtLineEditPrivate::calculateTargetWidth() const {
+  return q_ptr->width() / 2 - pBorderRadius_ / 2;
 }
 
 void TtLineEditPrivate::onThemeChanged(TtThemeType::ThemeMode themeMode) {

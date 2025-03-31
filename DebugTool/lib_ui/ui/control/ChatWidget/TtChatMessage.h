@@ -38,6 +38,9 @@ class Tt_EXPORT TtChatMessage : public QObject {
   Q_PROPERTY(
       MessageStatus status READ status WRITE setStatus NOTIFY statusChanged)
 
+  Q_PROPERTY(
+      QByteArray rawData READ rawData WRITE setRawData NOTIFY rawDataChanged)
+
  public:
   enum MessageType { TextMessage, ImageMessage, FileMessage, SystemMessage };
   Q_ENUM(MessageType)
@@ -65,6 +68,28 @@ class Tt_EXPORT TtChatMessage : public QObject {
 
   MessageStatus status() const;
 
+  QByteArray rawData() const { return m_rawData; }
+  void setRawData(const QByteArray& data) {
+    if (m_rawData != data) {
+      m_rawData = data;
+      setContent(QString::fromUtf8(data));
+      emit rawDataChanged();
+    }
+  }
+
+  QString contentAsText() const { return QString::fromUtf8(m_rawData); }
+  QString contentAsHex() const { return m_rawData.toHex(' ').toUpper(); }
+
+ signals:
+  void contentChanged();
+  void timestampChanged();
+  void outgoingChanged();
+  void selectionChanged();
+  void bubbleStyleChanged();
+  void fontChanged();
+  void statusChanged();
+  void rawDataChanged();
+
  public Q_SLOTS:
   void setContent(const QString& content);
   void setTimestamp(const QDateTime& timestamp);
@@ -81,15 +106,6 @@ class Tt_EXPORT TtChatMessage : public QObject {
   // 序列化/反序列化
   QVariantMap toVariantMap() const;
   void fromVariantMap(const QVariantMap& data);
-
- Q_SIGNALS:
-  void contentChanged();
-  void timestampChanged();
-  void outgoingChanged();
-  void selectionChanged();
-  void bubbleStyleChanged();
-  void fontChanged();
-  void statusChanged();
 
  private:
   QString m_id;
@@ -108,6 +124,7 @@ class Tt_EXPORT TtChatMessage : public QObject {
 
   MessageStatus m_status = Sent;
 
+  QByteArray m_rawData;
 };
 
 }  // namespace Ui

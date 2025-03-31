@@ -73,18 +73,24 @@ class SerialWindow : public QWidget, public Ui::TabManager::ISerializable {
   bool restoreState(const QByteArray& state) override;
 
  private slots:
+  void sendMessageToPort();
+  void sendMessageToPort(const QString& data);
+
   void showErrorMessage(const QString& text);
   void dataReceived(const QByteArray& data);
 
   void switchToEditMode();
   void switchToDisplayMode();
 
+  void setDisplayHex(bool hexMode);
+
  private:
   void init();
   void setSerialSetting();
   void connectSignals();
-
   void saveLog();
+  // void generateDisplayText();
+  void refreshTerminalDisplay();
 
   Ui::TtVerticalLayout* main_layout_;
 
@@ -94,11 +100,7 @@ class SerialWindow : public QWidget, public Ui::TabManager::ISerializable {
   Ui::TtSvgButton* save_btn_;
   Ui::TtSvgButton* on_off_btn_;
 
-  // 纯文本 / 16进制切换 / 删除历史消失
-
   Ui::TtSvgButton* clear_history_;
-
-  // 消息展示框
   Ui::TtChatView* message_view_;
   Ui::TtChatMessageModel* message_model_;
 
@@ -127,7 +129,9 @@ class SerialWindow : public QWidget, public Ui::TabManager::ISerializable {
   Ui::TtTableWidget* instruction_table_;
 
   Ui::TtLuaInputBox* lua_code_;
-  Ui::TtMaskWidget* mask_widget_;
+  // Ui::TtMaskWidget* mask_widget_;
+
+  bool display_hex_;
 
   SerialSaveConfig cfg_;
 };

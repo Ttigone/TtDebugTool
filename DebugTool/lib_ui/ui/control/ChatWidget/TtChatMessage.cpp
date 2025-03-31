@@ -32,7 +32,6 @@ QDateTime TtChatMessage::timestamp() const {
 }
 bool TtChatMessage::isOutgoing() const {
   return m_outgoing;
-  // return true;
 }
 
 TtChatMessage::MessageType TtChatMessage::type() const {
@@ -82,7 +81,6 @@ void TtChatMessage::setSelection(int start, int end) {
 }
 
 void TtChatMessage::clearSelection() {
-  //qDebug() << "message clear select";
   setSelectionStart(-1);
   setSelectionEnd(-1);
 }

@@ -24,15 +24,16 @@ class Tt_EXPORT TtLineEdit : public QLineEdit {
   // void setDefaultText(const QString& text);
 
  signals:
-  Q_SIGNAL void focusIn(QString text);
-  Q_SIGNAL void focusOut(QString text);
-  Q_SIGNAL void wmFocusOut(QString text);
+  void focusIn(const QString& text);
+  void focusOut(const QString& text);
+  void wmFocusOut(const QString& text);
 
  protected:
   void focusInEvent(QFocusEvent* event) override;
   void focusOutEvent(QFocusEvent* event) override;
   void paintEvent(QPaintEvent* event) override;
   void contextMenuEvent(QContextMenuEvent* event) override;
+  void resizeEvent(QResizeEvent* event) override;
 
  private:
   // /// @brief 文本输入变化回调

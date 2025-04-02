@@ -154,26 +154,26 @@ void SerialWindow::saveLog() {
 }
 
 void SerialWindow::refreshTerminalDisplay() {
-  terminal_->setUpdatesEnabled(false);
-  QString fullContent;
+  // terminal_->setUpdatesEnabled(false);
+  // QString fullContent;
 
-  // 遍历模型生成内容
-  for (int i = 0; i < message_model_->rowCount(); ++i) {
-    QModelIndex idx = message_model_->index(i);
+  // // 遍历模型生成内容
+  // for (int i = 0; i < message_model_->rowCount(); ++i) {
+  //   QModelIndex idx = message_model_->index(i);
 
-    Ui::TtChatMessage* msg = qobject_cast<Ui::TtChatMessage*>(
-        idx.data(Ui::TtChatMessageModel::MessageObjectRole).value<QObject*>());
+  //   Ui::TtChatMessage* msg = qobject_cast<Ui::TtChatMessage*>(
+  //       idx.data(Ui::TtChatMessageModel::MessageObjectRole).value<QObject*>());
 
-    QString line = msg->timestamp().toString("[yyyy-MM-dd hh:mm:ss.zzz] ");
-    line += (msg->isOutgoing() ? "<< " : ">> ");
-    line += display_hex_ ? msg->contentAsHex() : msg->contentAsText();
-    line += "\n";
-    fullContent += line;
-  }
-  qDebug() << fullContent;
+  //   QString line = msg->timestamp().toString("[yyyy-MM-dd hh:mm:ss.zzz] ");
+  //   line += (msg->isOutgoing() ? "<< " : ">> ");
+  //   line += display_hex_ ? msg->contentAsHex() : msg->contentAsText();
+  //   line += "\n";
+  //   fullContent += line;
+  // }
+  // qDebug() << fullContent;
 
-  terminal_->setText(fullContent);
-  terminal_->setUpdatesEnabled(true);
+  // terminal_->setText(fullContent);
+  // terminal_->setUpdatesEnabled(true);
 }
 
 // void SerialWindow::generateDisplayText() {
@@ -222,7 +222,8 @@ void SerialWindow::dataReceived(const QByteArray& data) {
   QString formattedMessage = timestamp + " >> " + data + "\n";
 
   // 添加到终端
-  terminal_->append(formattedMessage);
+  // terminal_->append(formattedMessage);
+  terminal_->appendPlainText(formattedMessage);
 
   recv_byte->setText(QString("接收字节数: %1 B").arg(recv_byte_count));
   message_view_->scrollToBottom();
@@ -245,19 +246,21 @@ bool SerialWindow::restoreState(const QByteArray& state) {
 }
 
 void SerialWindow::sendMessageToPort() {
-  if (!serial_port_opened) {
-    Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""), tr("串口未打开"),
-                            1500, this);
-    return;
-  }
+  // if (!serial_port_opened) {
+  //   Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""), tr("串口未打开"),
+  //                           1500, this);
+  //   return;
+  // }
   QString data = editor->text();
   send_byte_count += data.size();
   // 获取当前时间并格式化消息
   QDateTime now = QDateTime::currentDateTime();
   QString timestamp = now.toString("[yyyy-MM-dd hh:mm:ss.zzz]");
-  QString formattedMessage = timestamp + " << " + data + "\n";
+  QString formattedMessage = timestamp + " << " + "\n" + data + "\n";
   // 添加到终端
-  terminal_->append(formattedMessage);
+  qDebug() << formattedMessage;
+  // terminal_->append(formattedMessage);
+  terminal_->appendPlainText(formattedMessage);
 
   auto tmp = new Ui::TtChatMessage();
   tmp->setContent(data);
@@ -269,11 +272,11 @@ void SerialWindow::sendMessageToPort() {
   list.append(tmp);
   message_model_->appendMessages(list);
 
-  // 串口发送
-  QMetaObject::invokeMethod(serial_port_, "sendData", Qt::QueuedConnection,
-                            Q_ARG(QString, data));
-  send_byte->setText(QString("发送字节数: %1 B").arg(send_byte_count));
-  message_view_->scrollToBottom();
+  // // 串口发送
+  // QMetaObject::invokeMethod(serial_port_, "sendData", Qt::QueuedConnection,
+  //                           Q_ARG(QString, data));
+  // send_byte->setText(QString("发送字节数: %1 B").arg(send_byte_count));
+  // message_view_->scrollToBottom();
 }
 
 void SerialWindow::sendMessageToPort(const QString& data) {
@@ -282,14 +285,14 @@ void SerialWindow::sendMessageToPort(const QString& data) {
                             1500, this);
     return;
   }
-  editor->text();
   send_byte_count += data.size();
   // 获取当前时间并格式化消息
   QDateTime now = QDateTime::currentDateTime();
   QString timestamp = now.toString("[yyyy-MM-dd hh:mm:ss.zzz]");
   QString formattedMessage = timestamp + " << " + data + "\n";
   // 添加到终端
-  terminal_->append(formattedMessage);
+  // terminal_->append(formattedMessage);
+  terminal_->appendPlainText(formattedMessage);
 
   auto tmp = new Ui::TtChatMessage();
   tmp->setContent(data);
@@ -448,28 +451,12 @@ void SerialWindow::init() {
 
   QStackedWidget* messageStackedView = new QStackedWidget(contentWidget);
 
-  terminal_ = new QsciScintilla(messageStackedView);
+  // terminal_ = new QsciScintilla(messageStackedView);
+  terminal_ = new QPlainTextEdit(this);
   terminal_->setReadOnly(true);
-  terminal_->setMarginMarkerMask(0, 0);
-  for (int i = 0; i < 5; i++) {  // QsciScintilla 默认有 5 个边界栏
-    terminal_->setMarginWidth(i, 0);
-  }
-
-  // terminal_->setWrapMode(QsciScintilla::WrapWord);
-  terminal_->setWrapMode(QsciScintilla::WrapCharacter);
-  // 启用双缓冲
-  terminal_->SendScintilla(QsciScintilla::SCI_SETBUFFEREDDRAW, 1);
-  terminal_->SendScintilla(QsciScintilla::SCI_SETTWOPHASEDRAW, 1);
-
-  // 设置技术性能提示
-  // terminal_->SendScintilla(SCI_SETLAYOUTCACHE, SC_CACHE_PAGE);
-
-  terminal_->setWrapVisualFlags(QsciScintilla::WrapFlagInMargin,
-                                QsciScintilla::WrapFlagInMargin, 0);
   terminal_->setFrameStyle(QFrame::NoFrame);
 
-  SerialLexer* lexer = new SerialLexer(terminal_);
-  terminal_->setLexer(lexer);
+  SerialHighlighter* lexer = new SerialHighlighter(terminal_->document());
 
   messageStackedView->addWidget(terminal_);
 
@@ -676,45 +663,14 @@ void SerialWindow::connectSignals() {
   });
 
   connect(clear_history_, &Ui::TtSvgButton::clicked, [this]() {
-    // mask_widget_->show(lua_code_);
-    lua_code_->show();
     message_model_->clearModelData();
     terminal_->clear();
   });
 
-  // connect(sendBtn, &QtMaterialFlatButton::clicked, [this]() {
-  //   if (!serial_port_opened) {
-  //     Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""), tr("串口未打开"),
-  //                             1500, this);
-  //     return;
-  //   }
-  //   QString data = editor->text();
-  //   send_byte_count += data.size();
-  //   // 获取当前时间并格式化消息
-  //   QDateTime now = QDateTime::currentDateTime();
-  //   QString timestamp = now.toString("[yyyy-MM-dd hh:mm:ss.zzz]");
-  //   QString formattedMessage = timestamp + " << " + data + "\n";
-  //   // 添加到终端
-  //   terminal_->append(formattedMessage);
-
-  //   auto tmp = new Ui::TtChatMessage();
-  //   tmp->setContent(data);
-  //   tmp->setRawData(data.toUtf8());
-  //   tmp->setTimestamp(now);
-  //   tmp->setOutgoing(true);
-  //   tmp->setBubbleColor(QColor("#DCF8C6"));
-  //   QList<Ui::TtChatMessage*> list;
-  //   list.append(tmp);
-  //   message_model_->appendMessages(list);
-
-  //   // 串口发送
-  //   QMetaObject::invokeMethod(serial_port_, "sendData", Qt::QueuedConnection,
-  //                             Q_ARG(QString, data));
-  //   send_byte->setText(QString("发送字节数: %1 B").arg(send_byte_count));
-  //   message_view_->scrollToBottom();
-  // });
-  // connect(sendBtn, &QtMaterialFlatButton::clicked, this,
-  //         &SerialWindow::sendMessageToPort);
+  connect(sendBtn, &QtMaterialFlatButton::clicked, this,
+          qOverload<>(&SerialWindow::sendMessageToPort));
+  connect(serial_setting_, &Widget::SerialSetting::showScriptSetting,
+          [this]() { lua_code_->show(); });
 }
 
 }  // namespace Window

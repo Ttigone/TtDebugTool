@@ -104,7 +104,7 @@ class SerialWindow : public QWidget, public Ui::TabManager::ISerializable {
   Ui::TtChatView* message_view_;
   Ui::TtChatMessageModel* message_model_;
 
-  QsciScintilla* terminal_;
+  QPlainTextEdit* terminal_;
 
   bool serial_port_opened = false;
   QThread* worker_thread_ = nullptr;
@@ -129,7 +129,6 @@ class SerialWindow : public QWidget, public Ui::TabManager::ISerializable {
   Ui::TtTableWidget* instruction_table_;
 
   Ui::TtLuaInputBox* lua_code_;
-  // Ui::TtMaskWidget* mask_widget_;
 
   bool display_hex_;
 

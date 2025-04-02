@@ -6,6 +6,7 @@
 #include <ui/control/TtLineEdit.h>
 #include <ui/layout/horizontal_layout.h>
 #include <ui/layout/vertical_layout.h>
+#include <ui/widgets/buttons.h>
 #include <ui/widgets/collapsible_panel.h>
 
 namespace Widget {
@@ -254,10 +255,14 @@ void SerialSetting::init() {
   QWidget* scriptWidget = new QWidget;
   Ui::TtVerticalLayout* scriptWidgetLayout =
       new Ui::TtVerticalLayout(scriptWidget);
-  script_ = new Ui::TtLabelLineEdit(tr("脚本"), scriptWidget);
+  // script_ = new Ui::TtLabelLineEdit(tr("脚本"), scriptWidget);
+  Ui::TtTextButton* script_ = new Ui::TtTextButton("脚本", scriptWidget);
+  script_->setCheckedColor(Qt::cyan);
   scriptWidgetLayout->addWidget(script_);
-
   Ui::Drawer* drawerScript = new Ui::Drawer(tr("脚本设置"), scriptWidget);
+
+  connect(script_, &Ui::TtTextButton::clicked, this,
+          &SerialSetting::showScriptSetting);
 
   QWidget* framingWidget = new QWidget;
   Ui::TtVerticalLayout* framingWidgetLayout =

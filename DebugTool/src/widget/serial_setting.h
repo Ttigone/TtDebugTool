@@ -24,26 +24,15 @@ class SerialSetting : public QWidget {
   SerialSetting(QWidget *parent = nullptr);
   ~SerialSetting();
 
-  ///
-  /// @brief setOldSettings
-  /// 配置为以前旧的配置项
   void setOldSettings();
-
-  ///
-  /// @brief getSerialPortConfiguration 获取当前配置
-  /// @return
-  ///
   Core::SerialPortConfiguration getSerialPortConfiguration();
-
-  ///
-  /// @brief defaultSerialPortConfiguration 默认配置, 在初始化的时候使用
-  /// @return
-  ///
   Core::SerialPortConfiguration defaultSerialPortConfiguration();
 
   void displayDefaultSetting();
-
   const QJsonObject& getSerialSetting();
+
+ signals:
+  void showScriptSetting();
 
  public slots:
   void setSerialPortsName();

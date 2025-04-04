@@ -20,6 +20,7 @@ SerialSetting::SerialSetting(QWidget* parent)
     : QWidget(parent)
 {
   init();
+  connnectSignals();
 }
 
 SerialSetting::~SerialSetting() {}
@@ -73,8 +74,6 @@ void SerialSetting::displayDefaultSetting() {
     }
   }
   for (int i = 0; i < parity_bit_->count(); ++i) {
-    // bug
-    // qDebug() << select_parity_bit_->itemText(i);
     if (parity_bit_->itemText(i).contains(
             QString::number(DefaultSetting.parity))) {
       parity_bit_->setCurrentItem(i);
@@ -121,10 +120,8 @@ const QJsonObject& SerialSetting::getSerialSetting() {
 
   QJsonObject heartbeat;
   heartbeat.insert("Type", QJsonValue(heartbeat_send_type_->body()->currentText()));
-  heartbeat.insert("Interval",
-                 QJsonValue(heartbeat_interval_->body()->currentText()));
-  heartbeat.insert("Content",
-                 QJsonValue(heartbeat_content_->body()->currentText()));
+  heartbeat.insert("Interval", QJsonValue(heartbeat_interval_->body()->text()));
+  heartbeat.insert("Content", QJsonValue(heartbeat_content_->body()->text()));
   serial_save_config_.insert("Heartbeat", QJsonValue(heartbeat));
 
 
@@ -203,6 +200,8 @@ void SerialSetting::setControlState(bool state) {
   framing_timeout_->setEnabled(state);
   framing_fixed_length_->setEnabled(state);
   line_break_->setEnabled(state);
+  send_package_interval_->setEnabled(state);
+  send_package_max_size_->setEnabled(state);
   heartbeat_send_type_->setEnabled(state);
   heartbeat_interval_->setEnabled(state);
   heartbeat_content_->setEnabled(state);
@@ -222,6 +221,12 @@ void SerialSetting::init() {
   parity_bit_ = new Ui::TtLabelComboBox(tr("校验位:"), serialConfigWidget);
   stop_bit_ = new Ui::TtLabelComboBox(tr("停止位:"), serialConfigWidget);
   flow_control_ = new Ui::TtLabelComboBox(tr("流控:"), serialConfigWidget);
+  send_package_interval_ =
+      new Ui::TtLabelLineEdit(tr("发送包间隔:"), serialConfigWidget);
+  send_package_interval_->setText(0);
+  send_package_max_size_ =
+      new Ui::TtLabelLineEdit(tr("发送包最大尺寸:"), serialConfigWidget);
+  send_package_max_size_->setText(0);
 
   Ui::TtVerticalLayout* layout = new Ui::TtVerticalLayout(serialConfigWidget);
 
@@ -231,6 +236,8 @@ void SerialSetting::init() {
   layout->addWidget(parity_bit_);
   layout->addWidget(stop_bit_);
   layout->addWidget(flow_control_);
+  layout->addWidget(send_package_interval_);
+  layout->addWidget(send_package_max_size_);
 
   connect(serial_port_, &Ui::TtLabelBtnComboBox::clicked,
           [this]() { setSerialPortsName(); });
@@ -321,8 +328,8 @@ void SerialSetting::init() {
   heartbeat_send_type_->addItem(tr("无"));
   heartbeat_send_type_->addItem(tr("文本"));
   heartbeat_send_type_->addItem(tr("HEX"));
-  heartbeat_interval_ = new Ui::TtLabelComboBox(tr("间隔: "));
-  heartbeat_content_ = new Ui::TtLabelComboBox(tr("内容: "));
+  heartbeat_interval_ = new Ui::TtLabelLineEdit(tr("间隔: "));
+  heartbeat_content_ = new Ui::TtLabelLineEdit(tr("内容: "));
   heartbeatWidgetLayout->addWidget(heartbeat_send_type_);
   heartbeatWidgetLayout->addWidget(heartbeat_interval_);
   heartbeatWidgetLayout->addWidget(heartbeat_content_);
@@ -376,14 +383,32 @@ void SerialSetting::init() {
   scr->setWidgetResizable(true);
 
   main_layout_->addWidget(scr);
-  heartbeat_content_->body()->setCurrentText("TEST");
+
+  connect(
+      heartbeat_content_, &Ui::TtLabelLineEdit::currentTextChanged, this,
+      [this](const QString& text) {
+        if (heartbeat_send_type_->body()->currentIndex() == 1) {
+          emit heartbeatContentChanged(heartbeat_content_->currentText());
+        } else if (heartbeat_send_type_->body()->currentIndex() == 1) {  // HEX
+          emit heartbeatContentChanged(
+              heartbeat_content_->currentText().toUtf8().toHex(' ').toUpper());
+        }
+      });
+  connect(heartbeat_interval_, &Ui::TtLabelLineEdit::currentTextToUInt32, this,
+          &SerialSetting::heartbeatInterval);
+}
+
+void SerialSetting::connnectSignals() {
+  connect(send_package_interval_, &Ui::TtLabelLineEdit::currentTextToUInt32,
+          this, &SerialSetting::sendPackageIntervalChanged);
+  connect(send_package_max_size_, &Ui::TtLabelLineEdit::currentTextToUInt32,
+          this, &SerialSetting::sendPackageMaxSizeChanged);
 }
 
 void SerialSetting::refreshSerialCOMx() {}
 
 QString SerialSetting::matchingSerialCOMx(const QString& name) {
 
-  // qDebug() << "pipie: " << name;
   qDebug() << name.size();
   const auto serialPortInfos = QSerialPortInfo::availablePorts();
   for (const QSerialPortInfo& portInfo : serialPortInfos) {

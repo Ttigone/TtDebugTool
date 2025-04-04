@@ -10,6 +10,7 @@
 #include <QPlainTextEdit>
 #include <QPropertyAnimation>
 #include <QPushButton>
+#include <QQueue>
 #include <QStackedWidget>
 #include <QStyledItemDelegate>
 #include <QTableView>
@@ -75,21 +76,19 @@ class SerialWindow : public QWidget, public Ui::TabManager::ISerializable {
  private slots:
   void sendMessageToPort();
   void sendMessageToPort(const QString& data);
-
+  void sendMessageToPort(const QString& data, const int& times);
   void showErrorMessage(const QString& text);
   void dataReceived(const QByteArray& data);
-
   void switchToEditMode();
   void switchToDisplayMode();
-
   void setDisplayHex(bool hexMode);
+  void setHeartbeartContent();
 
  private:
   void init();
   void setSerialSetting();
   void connectSignals();
   void saveLog();
-  // void generateDisplayText();
   void refreshTerminalDisplay();
 
   Ui::TtVerticalLayout* main_layout_;
@@ -123,16 +122,19 @@ class SerialWindow : public QWidget, public Ui::TabManager::ISerializable {
   QWidget* edit_widget_ = nullptr;
   Ui::TtLineEdit* title_edit_ = nullptr;
   QStackedWidget* stack_ = nullptr;
-
   QtMaterialFlatButton* sendBtn;
-
   Ui::TtTableWidget* instruction_table_;
-
   Ui::TtLuaInputBox* lua_code_;
-
   bool display_hex_;
-
   SerialSaveConfig cfg_;
+
+  uint16_t package_size_;
+  QQueue<QString> msg_queue_;
+  QTimer* send_package_timer_;
+
+  QTimer* heartbeat_timer_;
+  QString heartbeat_;
+  uint32_t heartbeat_interval_;
 };
 
 }  // namespace Window

@@ -28,7 +28,7 @@ class TtTableWidget : public QTableWidget {
 
  signals:
   void sendRowMsg(const QString& msg);
-  void sendRowsMsg(const QVector<QString>& msg);
+  void sendRowsMsg(const QVector<QPair<QString, int>>& msg);
 
  private slots:
   void onAddRowButtonClicked();

@@ -13,7 +13,7 @@ TtLuaInputBox::TtLuaInputBox(QWidget* parent) : QDialog(parent) {
 }
 
 TtLuaInputBox::~TtLuaInputBox() {
-  qDebug() << "delete inpubot";
+  // qDebug() << "delete inpubot";
 }
 
 void TtLuaInputBox::init() {

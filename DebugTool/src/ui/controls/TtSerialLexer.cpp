@@ -13,59 +13,70 @@ SerialHighlighter::SerialHighlighter(QTextDocument* parent)
   HighlightRule rule;
 
   // 规则1：时间戳 [yyyy-MM-dd hh:mm:ss.zzz]
+  // rule.pattern =
+  //     QRegularExpression(R"(\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}\])");
+  // 规则1：时间戳 [yyyy-MM-dd hh:mm:ss.zzz]
   rule.pattern =
       QRegularExpression(R"(\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}\])");
   rule.format = m_timestampFormat;
   m_rules.append(rule);
 
-  // 规则2：发送箭头 <<
-  rule.pattern = QRegularExpression(R"(<<)");
-  rule.format = m_sendArrowFormat;
-  m_rules.append(rule);
+  // 规则2：发送箭头行 [时间戳] <<
+  HighlightRule arrowRule;
+  arrowRule.pattern = QRegularExpression(
+      R"(^\s*\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}\]\s*<<\s*$)");
+  arrowRule.format = m_sendArrowFormat;
+  arrowRule.state = SendMessageState;  // 关键：设置状态
+  m_rules.append(arrowRule);
 
-  // 规则3：接收箭头 >>
-  rule.pattern = QRegularExpression(R"(>>)");
-  rule.format = m_recvArrowFormat;
-  m_rules.append(rule);
+  // 接收箭头行（精确匹配 [时间戳] >>）
+  arrowRule.pattern = QRegularExpression(
+      R"(^\s*\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}\]\s*>>\s*$)");
+  arrowRule.format = m_recvArrowFormat;
+  arrowRule.state = RecvMessageState;  // 关键：设置状态
+  m_rules.append(arrowRule);
 
-  // 多行消息处理规则
-  rule.pattern = QRegularExpression(R"(^[^\[\]]+$)");
-  rule.format = m_sendMsgFormat;
-  rule.state = SendMessageState;
-  m_rules.append(rule);
+  HighlightRule msgRule;
+  msgRule.pattern = QRegularExpression(R"([^\n]+)");  // 匹配非换行内容
+  msgRule.format = QTextCharFormat();                 // 临时占位符
+  msgRule.state = -1;
+  m_rules.append(msgRule);  // 注意：需要调整规则顺序
 }
 
 void SerialHighlighter::highlightBlock(const QString& text) {
-  // 处理多行状态
-  int previousState = previousBlockState();
+  // 处理多行状态继承
+  const int previousState = previousBlockState();
 
-  // 处理延续消息
+  // 情况1：当前是消息内容行
   if (previousState == SendMessageState || previousState == RecvMessageState) {
-    QTextCharFormat format =
+    // 根据前一行状态设置颜色
+    const QTextCharFormat format =
         (previousState == SendMessageState) ? m_sendMsgFormat : m_recvMsgFormat;
     setFormat(0, text.length(), format);
-    setCurrentBlockState(previousState);
+    setCurrentBlockState(previousState);  // 保持状态延续
     return;
   }
 
-  // 应用普通规则
+  // 情况2：处理新消息头（箭头行）
   foreach (const HighlightRule& rule, m_rules) {
-    QRegularExpressionMatchIterator it = rule.pattern.globalMatch(text);
-    while (it.hasNext()) {
-      QRegularExpressionMatch match = it.next();
-      setFormat(match.capturedStart(), match.capturedLength(), rule.format);
-
-      if (rule.state != -1) {
-        setCurrentBlockState(rule.state);
-      }
+    QRegularExpressionMatch match = rule.pattern.match(text);
+    if (match.hasMatch()) {
+      // 匹配到箭头行时设置格式和状态
+      setFormat(0, text.length(), rule.format);
+      setCurrentBlockState(rule.state);
+      return;
     }
   }
 
-  // 特殊处理消息行（必须最后处理）
-  QRegularExpression messageStart(R"(^\s*<<|>>)");
-  if (!messageStart.match(text).hasMatch() &&
-      previousBlockState() != SendMessageState &&
-      previousBlockState() != RecvMessageState) {
-    setCurrentBlockState(NoneState);
+  // 情况3：普通文本行（如空行）
+  setCurrentBlockState(NoneState);
+
+  if (previousBlockState() == SendMessageState) {  // 修改为previousBlockState()
+    setFormat(0, text.length(), m_sendMsgFormat);
+    setCurrentBlockState(SendMessageState);
+  } else if (previousBlockState() ==
+             RecvMessageState) {  // 修改为previousBlockState()
+    setFormat(0, text.length(), m_recvMsgFormat);
+    setCurrentBlockState(RecvMessageState);
   }
 }

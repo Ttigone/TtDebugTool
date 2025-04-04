@@ -33,6 +33,10 @@ class SerialSetting : public QWidget {
 
  signals:
   void showScriptSetting();
+  void sendPackageMaxSizeChanged(uint16_t size);
+  void sendPackageIntervalChanged(uint16_t interval);
+  void heartbeatInterval(uint32_t interval);
+  void heartbeatContentChanged(QString content);
 
  public slots:
   void setSerialPortsName();
@@ -47,6 +51,7 @@ class SerialSetting : public QWidget {
 
  private:
   void init();
+  void connnectSignals();
   void refreshSerialCOMx();
   QString matchingSerialCOMx(const QString& name);
 
@@ -58,6 +63,8 @@ class SerialSetting : public QWidget {
   Ui::TtLabelComboBox* parity_bit_;
   Ui::TtLabelComboBox* stop_bit_;
   Ui::TtLabelComboBox* flow_control_;
+  Ui::TtLabelLineEdit* send_package_interval_;
+  Ui::TtLabelLineEdit* send_package_max_size_;
 
   Ui::TtLabelLineEdit* script_;
 
@@ -69,8 +76,8 @@ class SerialSetting : public QWidget {
   Ui::TtLabelComboBox* line_break_;
 
   Ui::TtLabelComboBox* heartbeat_send_type_;
-  Ui::TtLabelComboBox* heartbeat_interval_;
-  Ui::TtLabelComboBox* heartbeat_content_;
+  Ui::TtLabelLineEdit* heartbeat_interval_;
+  Ui::TtLabelLineEdit* heartbeat_content_;
 
   bool has_old_settings;
 

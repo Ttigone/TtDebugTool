@@ -44,6 +44,7 @@ set(PROJECT_SOURCES
     ${src_loc}/core/modbus_client.h ${src_loc}/core/modbus_client.cpp
     ${src_loc}/core/modbus_server.h ${src_loc}/core/modbus_server.cpp
     ${src_loc}/core/download.h ${src_loc}/core/download.cpp
+    ${src_loc}/core/lua_kernel.h ${src_loc}/core/lua_kernel.cpp
 
     ${src_loc}/window/main_window.h ${src_loc}/window/main_window.cpp
     ${src_loc}/window/left_bar.h ${src_loc}/window/left_bar.cpp

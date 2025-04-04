@@ -244,6 +244,7 @@ void TtTableWidget::initHeader() {
 void TtTableWidget::setupRow(int row) {
   TableRow data;
   data.enableBtn = createSwitchButton();
+  data.enableBtn->setChecked(true);
   data.nameEdit = new TtLineEdit(this);
   data.typeCombo = createTypeComboBox();
   data.contentEdit = new TtLineEdit(this);
@@ -256,7 +257,6 @@ void TtTableWidget::setupRow(int row) {
   setCellWidget(row, 0, makeCell(data.enableBtn));
   setCellWidget(row, 1, makeCell(data.nameEdit));
   setCellWidget(row, 2, makeCell(data.typeCombo));
-  // setCellWidget(row, 2, makeCell(new QComboBox(this)));
   setCellWidget(row, 3, makeCell(data.contentEdit));
   setCellWidget(row, 4, makeCell(data.delaySpin));
   setCellWidget(row, 5, createDeleteButton());
@@ -328,7 +328,19 @@ QWidget* TtTableWidget::createAddButton() {
 QWidget* TtTableWidget::createSendButton() {
   auto* btn = new QPushButton(QIcon(":/sys/send.svg"), "");
   btn->setFlat(true);
-  connect(btn, &QPushButton::clicked, this, [this]() {});
+  // 群发
+  connect(btn, &QPushButton::clicked, this, [this]() {
+    qDebug() << "clicked";
+    QVector<QPair<QString, int>> msg;
+    for (int i = 1; i < rowCount(); ++i) {
+      if (rowsData_.at(i - 1).enableBtn->isChecked()) {
+        // 还有延时部分
+        msg.append(qMakePair(rowsData_.at(i - 1).contentEdit->text(),
+                             rowsData_.at(i - 1).delaySpin->text().toInt()));
+      }
+    }
+    emit sendRowsMsg(msg);
+  });
   return createCellWrapper(btn);
 }
 

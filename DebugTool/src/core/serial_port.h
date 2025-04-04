@@ -43,7 +43,6 @@ class SerialPortWorker : public QObject {
   void serialPortStatusChanged(bool isOpen);
 
  public slots:
-  // void initSerialPort();
   void openSerialPort(SerialPortConfiguration cfg);
   void closeSerialPort();
   void sendData(const QString& send_string);

@@ -281,6 +281,12 @@ TtLabelLineEdit::TtLabelLineEdit(Qt::AlignmentFlag flag, const QString& text,
   }
   connect(line_edit_, &TtLineEdit::textChanged, this,
           &TtLabelLineEdit::currentTextChanged);
+
+  connect(line_edit_, &TtLineEdit::textChanged, this,
+          [this](const QString& text) {
+            // qDebug() << text.toULongLong();
+            emit currentTextToUInt32(text.toULongLong());
+          });
 }
 
 TtLabelLineEdit::TtLabelLineEdit(const QString& text, QWidget* parent)

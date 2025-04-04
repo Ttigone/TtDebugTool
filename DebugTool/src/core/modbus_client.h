@@ -187,10 +187,21 @@ class ModbusMaster : public QObject {
           emit errorOccurred(
               QString("Request failed: %1").arg(reply->errorString()));
         } else {
-          // 成功处理数据
+          // 处理后的数据单元
           const QModbusDataUnit result = reply->result();
+          // 原始二进制数据
+          const QModbusResponse rawResult = reply->rawResult();
+          // 原始 PDU 数据 - 低级接口
+          // 功能码 + 寄存器值
+          // qDebug() << "功能码:" << rawResult.functionCode();   // 输出 3
+          // qDebug() << "PDU数据:" << rawResult.data().toHex();  // 输出 "020045"
+          // rawResult.functionCode() + rawResult.data().toHex();
+          // // 手动解析 PDU 数据
+          // QByteArray data = rawResult.data();
+          // int byteCount = data.at(0);  // 应该是 2
+          // qDebug() << "数据字节数:" << byteCount;
+
           if (result.isValid()) {
-            // emit dataReceived(result.startAddress(), result.values());
             emit dataReceived(result);
           }
         }

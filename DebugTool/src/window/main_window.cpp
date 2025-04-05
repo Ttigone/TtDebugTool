@@ -955,8 +955,7 @@ void MainWindow::registerTabWidget() {
         //qDebug() << "Create SerialWindow: " << runtime.elapseMilliseconds();
         connect(
             serial, &Window::SerialWindow::requestSaveConfig, [this, serial]() {
-
-              // 获取当前窗口的独特值, 是否已经保存到 listwidget,
+              // 获取当前窗口的独特值(uuid), 是否已经保存到 listwidget,
               addDifferentConfiguration(TtFunctionalCategory::Communication,
                                         serial->getTitle(),
                                         tabWidget_->getCurrentWidgetUUid());

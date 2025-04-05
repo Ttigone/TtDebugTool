@@ -4,7 +4,6 @@
 #include <QPlainTextEdit>
 #include <QProgressBar>
 
-#include "lua-5.4.7/src/lua.hpp"
 
 namespace Core {
 class Downloader;
@@ -32,7 +31,6 @@ class SettingWidget : public QWidget {
 
   TtVerticalLayout* layout_;
 
-  lua_State* lua_state_;
   Core::Downloader* downloader_;
 
   DownloadDialog* dialog_;

@@ -58,8 +58,8 @@ void WidgetGroup::handleButtonClicked() {
   }
   // 设置新选中按钮
   clickedButton->setChecked(true);
-  // m_currentIndex = index;
   current_uuid_ = getUUid;
+  // 当前需要切换到对应的 uuid 界面
   emit currentIndexChanged(getUUid);
 
 }

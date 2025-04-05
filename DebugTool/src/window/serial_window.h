@@ -47,6 +47,7 @@ class SerialSetting;
 
 namespace Core {
 class SerialPortWorker;
+class LuaKernel;
 };
 
 namespace Window {
@@ -124,7 +125,6 @@ class SerialWindow : public QWidget, public Ui::TabManager::ISerializable {
   QStackedWidget* stack_ = nullptr;
   QtMaterialFlatButton* sendBtn;
   Ui::TtTableWidget* instruction_table_;
-  Ui::TtLuaInputBox* lua_code_;
   bool display_hex_;
   SerialSaveConfig cfg_;
 
@@ -135,6 +135,9 @@ class SerialWindow : public QWidget, public Ui::TabManager::ISerializable {
   QTimer* heartbeat_timer_;
   QString heartbeat_;
   uint32_t heartbeat_interval_;
+
+  Ui::TtLuaInputBox* lua_code_;
+  Core::LuaKernel* lua_actuator_;
 };
 
 }  // namespace Window

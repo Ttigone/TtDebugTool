@@ -14,6 +14,7 @@
 #include <ui/widgets/message_bar.h>
 #include <ui/widgets/widget_group.h>
 
+#include <core/lua_kernel.h>
 #include <lib/qtmaterialcheckable.h>
 #include <qtmaterialflatbutton.h>
 #include <qtmaterialradiobutton.h>
@@ -244,6 +245,13 @@ void SerialWindow::showErrorMessage(const QString& text) {
 }
 
 void SerialWindow::dataReceived(const QByteArray& data) {
+  // 需要经过脚本处理
+  lua_actuator_->doLuaCode(lua_code_->getLuaCode().toStdString().c_str(),
+                           data.toInt());
+
+  // 指定某些函数名
+  // 假如是一个值, 对这个值进行处理
+
   recv_byte_count += data.size();
   auto tmp = new Ui::TtChatMessage();
   tmp->setContent(data);
@@ -671,8 +679,7 @@ void SerialWindow::init() {
 
   // 显示, 并输入 lua 脚本
   lua_code_ = new Ui::TtLuaInputBox(this);
-  // mask_widget_ = new Ui::TtMaskWidget(this);
-  // mask_widget_->show(lua_code_);
+  lua_actuator_ = new Core::LuaKernel;
 
   bottomAllLayout->addWidget(tabs_and_count);
   bottomAllLayout->addWidget(la_w);

@@ -20,7 +20,6 @@ TtLuaInputBox::~TtLuaInputBox() {
 }
 
 QString TtLuaInputBox::getLuaCode() {
-  // return edit_lua_code_->text();
   return edit_lua_code_->text();
 }
 
@@ -28,12 +27,6 @@ void TtLuaInputBox::init() {
   // 显示的编辑组件
   edit_lua_code_ = new QsciScintilla;
   edit_lua_code_->setMarginType(0, QsciScintilla::NumberMargin);
-
-  // QFont font("Consolas", 10);
-  // font.setFixedPitch(true);  // 确保使用等宽字体
-  // edit_lua_code_->setFont(font);
-  // edit_lua_code_->setMarginsFont(font);
-  // edit_lua_code_->setMarginWidth(0, "9999");
 
   QsciLexerLua* luaLexer = new QsciLexerLua(edit_lua_code_);
   // 设置关键字颜色等
@@ -60,33 +53,23 @@ void TtLuaInputBox::init() {
   layout->setSpacing(0);
 
   QListWidget* addFunctionList = new QListWidget;
-  QListWidgetItem* item = new QListWidgetItem();
-  // QPushButton* button = new QPushButton("Click Me");
+  addFunctionList->setFixedWidth(200);
 
+  QListWidgetItem* item = new QListWidgetItem(addFunctionList);
+  item->setSizeHint(QSize(200, 30));
   // 显示获取值并改变函数
-  FancyButton* getValueButton = new FancyButton("Click Me");
+  FancyButton* getValueButton = new FancyButton(
+      tr("操作串口数据值"), ":/sys/code-square.svg", addFunctionList);
+  addFunctionList->setItemWidget(item, getValueButton);
   connect(getValueButton, &QPushButton::clicked, this, [this] {
     // 获取函数文本
-    // edit_lua_code_->append("");
     QString functionTemplate =
         "function getValue(value)\n"
         "    return value + 1\n"
         "end\n";
 
-    // 在当前光标位置插入函数模板
-    if (edit_lua_code_) {
-      int line, index;
-      edit_lua_code_->getCursorPosition(&line, &index);
-      edit_lua_code_->insertAt(functionTemplate, line, index);
-
-      // 可选：将光标移动到函数体内部
-      edit_lua_code_->setCursorPosition(line + 1, 4);
-    }
+    appendCodeToEnd(edit_lua_code_, functionTemplate);
   });
-
-  item->setSizeHint(getValueButton->sizeHint());
-  addFunctionList->addItem(item);
-  addFunctionList->setItemWidget(item, getValueButton);
 
   // QHBoxLayout* buttonLayout = new QHBoxLayout();
   // buttonLayout->addStretch();
@@ -224,6 +207,49 @@ void TtLuaInputBox::enhanceCompletion(QsciScintilla* edit_lua_code_) {
   edit_lua_code_->setCallTipsBackgroundColor(QColor("#FFF8DC"));  // 米色背景
   edit_lua_code_->setCallTipsForegroundColor(QColor("#000000"));  // 黑色文本
   edit_lua_code_->setCallTipsHighlightColor(QColor("#0000FF"));  // 蓝色高亮
+}
+
+void TtLuaInputBox::updateLineNumberWidth() {
+  // 获取当前行数
+  int lines = edit_lua_code_->lines();
+
+  // 计算所需的数字位数
+  int digits = 1;
+  int max = 10;
+  while (lines >= max) {
+    max *= 10;
+    ++digits;
+  }
+
+  // 计算像素宽度
+  QFontMetrics metrics(edit_lua_code_->font());
+  int digitWidth = metrics.horizontalAdvance("9");  // 通常9是最宽的数字
+  int pixelWidth = digitWidth * (digits + 1) + 10;  // 额外加一些空间
+
+  edit_lua_code_->setMarginWidth(0, pixelWidth);
+}
+
+void TtLuaInputBox::appendCodeToEnd(QsciScintilla* editor,
+                                    const QString& code) {
+  // 获取当前文档的最后一行
+  int lastLine = editor->lines() - 1;
+
+  // 确定最后一行的长度(如果需要在最后添加新行)
+  int lastLineLength = editor->lineLength(lastLine);
+  bool needNewLine = lastLineLength > 0 &&
+                     editor->text(lastLine).at(lastLineLength - 1) != '\n';
+
+  // 构建要插入的文本，根据需要添加换行符
+  QString textToInsert = (needNewLine ? "\n" : "") + code;
+
+  // 移动到最后一行末尾
+  editor->setCursorPosition(lastLine, lastLineLength);
+
+  // 插入代码
+  editor->insert(textToInsert);
+
+  // 滚动到插入位置
+  editor->ensureCursorVisible();
 }
 
 }  // namespace Ui

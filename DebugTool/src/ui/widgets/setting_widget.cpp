@@ -14,7 +14,7 @@ SettingWidget::SettingWidget(QWidget* parent) : QWidget(parent) {
 }
 
 SettingWidget::~SettingWidget() {
-  qDebug() << "delete SettingWidget";
+  // qDebug() << "delete SettingWidget";
 }
 
 void SettingWidget::downloadProgress(qint64 bytesReveived, qint64 bytesTotal) {
@@ -24,14 +24,14 @@ void SettingWidget::downloadProgress(qint64 bytesReveived, qint64 bytesTotal) {
 }
 
 void SettingWidget::init() {
-  QWidget* basicWidget = new QWidget(this);
-  layout_ = new TtVerticalLayout(basicWidget);
+  // QWidget* basicWidget = new QWidget(this);
+  layout_ = new TtVerticalLayout(this);
 
   progress_bar_ = new QProgressBar;
   downloader_ = new Core::Downloader;
   // dialog_ = new DownloadDialog(basicWidget);
 
-  download_btn_ = new TtSvgButton(":/sys/cloud-arrow-down.svg", basicWidget);
+  download_btn_ = new TtSvgButton(":/sys/cloud-arrow-down.svg", this);
 
   edit = new QPlainTextEdit;
 

@@ -222,6 +222,14 @@
     </message>
 </context>
 <context>
+    <name>Ui::TtLuaInputBox</name>
+    <message>
+        <location filename="../../src/ui/controls/TtLuaInputBox.cpp" line="62"/>
+        <source>操作串口数据值</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>Ui::TtModbusTableWidget</name>
     <message>
         <location filename="../../src/ui/controls/TtTableView.cpp" line="944"/>

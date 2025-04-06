@@ -29,5 +29,7 @@
         <file>netport.svg</file>
         <file>mqtt.svg</file>
         <file>modbus-seeklogo.svg</file>
+        <file>code-square.svg</file>
+        <file>command.svg</file>
     </qresource>
 </RCC>

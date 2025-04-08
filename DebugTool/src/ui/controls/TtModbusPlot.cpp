@@ -632,3 +632,287 @@ void ModbusPlot::updateTracerPosition(QMouseEvent* event) {
   }
   replot();
 }
+
+SerialPlot::SerialPlot(QWidget* parent) : QCustomPlot(parent) {
+  setupPlot();
+  this->setOpenGl(true);
+  qDebug() << "opengle=" << this->openGl();
+
+  setAntialiasedElements(QCP::aeAll);
+}
+
+SerialPlot::~SerialPlot() {}
+
+void SerialPlot::addData(int type, const int& addr, double value) {
+  auto key = qMakePair(static_cast<int>(type), addr);
+
+  if (!m_curves.contains(key)) {
+    return;
+  }
+
+  if (!m_firstDataReceived) {
+    // 当首次收到数据时执行
+    this->yAxis->setTicks(true);
+    this->yAxis->setTickLabels(true);
+    m_firstDataReceived = true;
+  }
+
+  CurveData& curve = m_curves[key];
+
+  // 添加时间戳(秒)
+  double timestamp = QDateTime::currentDateTime().toMSecsSinceEpoch() / 1000.0;
+  if (curve.timeData.isEmpty()) {
+    m_startTime = timestamp;  // 共用同一个起始时间
+  }
+  // 计算相对于起始时间的偏移
+  double relativeTime = timestamp - m_startTime;
+
+  if (curve.timeData.size() > points_nums_) {
+    curve.timeData.removeFirst();
+    curve.valueData.removeFirst();
+  }
+
+  curve.timeData.append(relativeTime);
+  curve.valueData.append(value);
+  curve.graph->addData(relativeTime, value);
+
+  if (curve.tag) {
+    double lastValue = curve.valueData.last();
+    curve.tag->updatePosition(lastValue);
+    curve.tag->setText(QString::number(lastValue, 'f', 2));
+  }
+  // 自动缩放
+  if (m_autoScaleY) {
+    double yMin = std::numeric_limits<double>::max();
+    double yMax = std::numeric_limits<double>::lowest();
+    bool hasData = false;
+
+    for (auto& c : m_curves) {
+      if (!c.valueData.isEmpty()) {
+        auto [minIt, maxIt] =
+            std::minmax_element(c.valueData.begin(), c.valueData.end());
+        yMin = qMin(yMin, *minIt);  // 所有图像中的最小 y
+        yMax = qMax(yMax, *maxIt);
+        hasData = true;
+      }
+    }
+    if (hasData) {
+      if (yMin >= yMax) {
+        double center = yMin;                           // 当yMin == yMax时
+        double margin = qMax(qAbs(center) * 0.2, 0.5);  // 20%或最小0.5单位
+        yMin = center - margin;
+        yMax = center + margin;
+      } else {
+        // 常规边距计算
+        double margin = (yMax - yMin) * 0.1;
+        yMin -= margin;
+        yMax += margin;
+      }
+      qDebug() << yMin << yMax;
+      yAxis->setRange(yMin, yMax);
+    }
+  }
+
+  // 自动缩放X轴
+  if (true) {
+    double xMin = std::numeric_limits<double>::max();
+    double xMax = std::numeric_limits<double>::lowest();
+
+    // 遍历所有曲线获取时间范围
+    for (auto& c : m_curves) {
+      if (!c.timeData.isEmpty()) {
+        xMin = qMin(xMin, c.timeData.first());
+        xMax = qMax(xMax, c.timeData.last());
+      }
+    }
+
+    if (xMin < xMax) {
+      // 留10%边距或固定延伸
+      double margin = (xMax - xMin) * 0.1;
+      xAxis->setRange(xMin - margin, xMax + margin);
+    } else if (xMin == xMax) {
+      // 处理单点情况
+      xAxis->setRange(xMin - 1.0, xMax + 1.0);
+    }
+  }
+  replot();
+}
+
+void SerialPlot::clearData() {
+  m_startTime = 0.0;
+  for (auto& curve : m_curves) {
+    curve.timeData.clear();
+    curve.valueData.clear();
+    // curve.graph.data();
+  }
+  this->replot();
+}
+
+void SerialPlot::addGraphs(int type, const int& addr) {
+  auto key = qMakePair(type, addr);
+  if (!m_curves.contains(key)) {
+    // 新曲线
+    CurveData newCurve;
+    static const QList<QColor> defaultColors = {
+        Qt::blue, Qt::red, Qt::green, Qt::cyan, Qt::magenta, Qt::yellow};
+
+    QColor color = defaultColors.at(m_curves.size() % defaultColors.size());
+
+    // 创建图形
+    newCurve.graph = this->addGraph();
+    newCurve.graph->setPen(QPen(color, 2));
+    newCurve.graph->setName(QString("%1@%2").arg(type).arg(addr));
+
+    // 创建右侧标签
+    QCPAxis* valueAxis = this->yAxis;  // 共享Y轴或为每个曲线创建右轴
+    newCurve.tag = new AxisTag(valueAxis);
+    newCurve.tag->setPen(newCurve.graph->pen());
+
+    m_tracer->setGraph(newCurve.graph);
+
+    m_curves.insert(key, newCurve);
+  }
+}
+
+void SerialPlot::removeGraphs(int type, const int& addr) {
+  auto key = qMakePair(type, addr);
+  if (m_curves.contains(key)) {
+    // qDebug() << "remove";
+    auto& curve = m_curves[key];
+
+    // 移除图形
+    if (curve.graph) {
+      this->removeGraph(curve.graph);
+      curve.graph.clear();
+    }
+
+    // 删除标签
+    if (curve.tag) {
+      delete curve.tag;
+      curve.tag = nullptr;
+    }
+
+    m_curves.remove(key);
+    replot();
+  }
+}
+
+void SerialPlot::setGraphsPointCapacity(quint16 nums) {
+  if (nums > 0 && nums != points_nums_) {
+    points_nums_ = nums;
+    for (auto& curve : m_curves) {
+      while (curve.timeData.size() > points_nums_) {
+        curve.timeData.removeFirst();
+        curve.valueData.removeFirst();
+        if (!curve.graph->data()->isEmpty()) {
+          auto dataMap = curve.graph->data();
+          dataMap->remove(dataMap->constBegin()->key);  // 使用迭代器安全删除
+        }
+      }
+    }
+    replot();
+  }
+}
+
+void SerialPlot::mouseMoveEvent(QMouseEvent* event) {
+  QCustomPlot::mouseMoveEvent(event);
+
+  // 显示/隐藏组件
+  const bool show = this->rect().contains(event->pos());
+  m_vLine->setVisible(show);
+  m_coordLabel->setVisible(show);
+
+  if (show) {
+    // 获取鼠标坐标
+    double x = this->xAxis->pixelToCoord(event->pos().x());
+    // double y = this->yAxis->pixelToCoord(event->pos().y());
+
+    // 更新竖线位置
+    m_vLine->point1->setCoords(x, this->yAxis->range().lower);
+    m_vLine->point2->setCoords(x, this->yAxis->range().upper);
+
+    updateTracerPosition(event);
+    // 更新标签内容
+    // m_coordLabel->setText(
+    //     QString("X: %1\nY: %2").arg(x, 0, 'f', 1).arg(y, 0, 'f', 2));
+  } else {
+    m_coordLabel->setVisible(false);
+  }
+}
+
+void SerialPlot::setupPlot() {
+  QCPAxis* rightAxis = axisRect()->addAxis(QCPAxis::atRight);
+  rightAxis->setPadding(60);
+  rightAxis->setVisible(true);
+  rightAxis->setTicks(false);        // 隐藏刻度线
+  rightAxis->setTickLabels(false);   // 隐藏刻度标签
+  rightAxis->setBasePen(Qt::NoPen);  // 隐藏轴线
+
+  this->setInteraction(QCP::iRangeDrag, false);
+  this->setInteraction(QCP::iRangeZoom, false);
+
+  // 配置横轴显示格式（禁用科学计数法）
+  QSharedPointer<QCPAxisTickerFixed> fixedTicker(new QCPAxisTickerFixed);
+  fixedTicker->setTickStep(1.0);  // 主刻度间隔1秒
+  fixedTicker->setScaleStrategy(QCPAxisTickerFixed::ssMultiples);
+  this->xAxis->setTicker(fixedTicker);
+  this->xAxis->setNumberPrecision(0);  // 显示整数秒
+
+#if 0
+  this->xAxis->setVisible(false);          // 完全隐藏坐标轴
+  this->xAxis->setTicks(false);            // 隐藏刻度线
+  this->xAxis->setTickLabels(false);       // 隐藏刻度标签
+  this->xAxis->grid()->setVisible(false);  // 隐藏网格线（如果存在）
+  this->xAxis->setLabel("");               // 清空轴标签
+#else
+  // 保留空间但隐藏可视元素
+  // this->xAxis->setBasePen(Qt::NoPen);     // 隐藏轴线
+  this->xAxis->setTicks(false);       // 隐藏刻度线
+  this->xAxis->setTickLabels(false);  // 隐藏刻度标签
+  // this->xAxis->setLabel("");          // 清空轴标签文本
+#endif
+  this->yAxis->setTickLabels(false);  // 隐藏刻度标签
+
+  // this->yAxis->setLabel("");
+
+  // 创建跟踪器（用于鼠标悬停时显示坐标）
+  m_tracer = new QCPItemTracer(this);
+  // m_tracer->setGraph(m_dataGraph);
+  m_tracer->setInterpolating(true);
+  m_tracer->setStyle(QCPItemTracer::tsCircle);
+  m_tracer->setPen(QPen(Qt::red));
+  m_tracer->setBrush(QBrush(Qt::red));
+  m_tracer->setSize(7);
+  m_tracer->setVisible(false);
+
+  // 创建跟踪器标签（显示坐标值）
+  m_tracerLabel = new QCPItemText(this);
+  m_tracerLabel->setPositionAlignment(Qt::AlignLeft | Qt::AlignTop);
+  m_tracerLabel->position->setType(QCPItemPosition::ptAbsolute);
+  // m_tracerLabel->position->setType(QCPItemPosition::ptPlotCoords);
+  m_tracerLabel->setPadding(QMargins(5, 5, 5, 5));
+  m_tracerLabel->setBrush(QBrush(QColor(255, 255, 255, 200)));
+  m_tracerLabel->setPen(QPen(Qt::black));
+  m_tracerLabel->setVisible(false);
+
+  // 创建垂直指示线
+  m_vLine = new QCPItemStraightLine(this);
+  m_vLine->setPen(QPen(Qt::gray, 1, Qt::DashLine));
+  m_vLine->setVisible(false);
+
+  // 创建坐标标签
+  // m_coordLabel = new QCPItemText(this);
+  m_coordLabel = new TtQCPItemRichText(this);
+  m_coordLabel->setPositionAlignment(Qt::AlignLeft | Qt::AlignBottom);
+  m_coordLabel->position->setType(QCPItemPosition::ptViewportRatio);
+  m_coordLabel->position->setCoords(1.0, 0.0);  // 右上角
+  m_coordLabel->setTextAlignment(Qt::AlignRight);
+  m_coordLabel->setBrush(QBrush(Qt::white));
+  m_coordLabel->setPadding(QMargins(5, 5, 5, 5));
+  m_coordLabel->setVisible(false);
+
+  // 启用鼠标跟踪
+  this->setMouseTracking(true);
+}
+
+void SerialPlot::updateTracerPosition(QMouseEvent* event) {}

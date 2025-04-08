@@ -203,21 +203,21 @@ void MqttWindow::init() {
       new Ui::TtVerticalLayout(sendSetting);
 
   Ui::TtHorizontalLayout* propertyLayout = new Ui::TtHorizontalLayout();
-  fomat_ = new Ui::TtComboBox;
+  fomat_ = new Ui::TtComboBox(sendSetting);
   fomat_->addItem("JSON");
   fomat_->addItem("Base64");
   fomat_->addItem("Hex");
   fomat_->addItem("Plaintext");
-  qos_ = new Ui::TtComboBox;
+  qos_ = new Ui::TtComboBox(sendSetting);
   qos_->addItem("0 (At most once)", 0);
   qos_->addItem("1 (At least once)", 1);
   qos_->addItem("2 (Exactly once)", 2);
   retain_ = new Ui::TtRadioButton("Retain");
   meta_btn_ = new Ui::TtTextButton("Meta");
-  propertyLayout->addWidget(fomat_, 0, Qt::AlignLeft);
-  propertyLayout->addWidget(qos_, 0, Qt::AlignLeft);
-  propertyLayout->addWidget(retain_, 0, Qt::AlignLeft);
-  propertyLayout->addWidget(meta_btn_, 0, Qt::AlignLeft);
+  propertyLayout->addWidget(fomat_, 1);
+  propertyLayout->addWidget(qos_, 1);
+  propertyLayout->addWidget(retain_);
+  propertyLayout->addWidget(meta_btn_);
   propertyLayout->addStretch();
 
   send_topic_ = new Ui::TtLineEdit(sendSetting);

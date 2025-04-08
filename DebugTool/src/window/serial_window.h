@@ -23,6 +23,8 @@
 #include "qtmaterialflatbutton.h"
 #include "ui/widgets/window_switcher.h"
 
+class SerialPlot;
+
 namespace Ui {
 
 class TtMaskWidget;
@@ -138,6 +140,9 @@ class SerialWindow : public QWidget, public Ui::TabManager::ISerializable {
 
   Ui::TtLuaInputBox* lua_code_;
   Core::LuaKernel* lua_actuator_;
+
+  // Ui::TtQCustomPlot* serial_plot_;
+  SerialPlot* serial_plot_;
 };
 
 }  // namespace Window

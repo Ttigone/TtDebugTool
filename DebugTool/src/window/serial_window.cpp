@@ -6,6 +6,7 @@
 #include <ui/control/TtLineEdit.h>
 #include <ui/control/TtMaskWidget.h>
 #include <ui/control/TtRadioButton.h>
+#include <ui/controls/TtModbusPlot.h>
 #include <ui/layout/horizontal_layout.h>
 #include <ui/layout/vertical_layout.h>
 #include <ui/widgets/buttons.h>
@@ -20,6 +21,7 @@
 #include <qtmaterialradiobutton.h>
 #include <qtmaterialsnackbar.h>
 #include <qtmaterialtabs.h>
+#include <ui/controls/TtQCustomPlot.h>
 #include <ui/controls/TtSerialLexer.h>
 
 #include "ui/controls/TtLuaInputBox.h"
@@ -161,30 +163,6 @@ void SerialWindow::saveLog() {
   // });
 }
 
-// void SerialWindow::refreshTerminalDisplay() {
-//   terminal_->clear();
-//   terminal_->setUpdatesEnabled(false);
-//   QString fullContent;
-
-//   // 遍历模型生成内容
-//   for (int i = 0; i < message_model_->rowCount(); ++i) {
-//     QModelIndex idx = message_model_->index(i);
-
-//     Ui::TtChatMessage* msg = qobject_cast<Ui::TtChatMessage*>(
-//         idx.data(Ui::TtChatMessageModel::MessageObjectRole).value<QObject*>());
-
-//     QString line = msg->timestamp().toString("[yyyy-MM-dd hh:mm:ss.zzz] ");
-//     line += (msg->isOutgoing() ? "<< " : ">> ");
-//     line += "\n";
-//     line += display_hex_ ? msg->contentAsHex() : msg->contentAsText();
-//     line += "\n";
-//     fullContent += line;
-//   }
-
-//   terminal_->setPlainText(fullContent);
-
-//   terminal_->setUpdatesEnabled(true);
-// }
 void SerialWindow::refreshTerminalDisplay() {
   terminal_->clear();
   terminal_->setUpdatesEnabled(false);
@@ -213,27 +191,6 @@ void SerialWindow::refreshTerminalDisplay() {
   terminal_->setUpdatesEnabled(true);
 }
 
-// void SerialWindow::generateDisplayText() {
-//   QString content;
-
-//   // for (const auto &msg : messageHistory) {
-//   //   // 1. 时间戳
-//   //   content += msg.timestamp.toString("[yyyy-MM-dd hh:mm:ss] ");
-
-//   //   // 2. 方向箭头（<< 或 >>）
-//   //   content += (msg.isSend ? "<< " : ">> ");
-
-//   //   // 3. 数据内容（Hex或Text）
-//   //   if (displayHex) {
-//   //     content += msg.rawData.toHex(' ').toUpper();  // 如 "1A 2B 3C"
-//   //   } else {
-//   //     content += QString::fromLatin1(msg.rawData);  // 原始文本
-//   //   }
-
-//   //   content += "\n";
-//   // }
-//   // return content;
-// }
 
 void SerialWindow::showErrorMessage(const QString& text) {
   Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""), text, 1500, this);
@@ -246,12 +203,24 @@ void SerialWindow::showErrorMessage(const QString& text) {
 
 void SerialWindow::dataReceived(const QByteArray& data) {
   // 需要经过脚本处理
+  // 第三个参数是传出参数
+  double solveData;
   lua_actuator_->doLuaCode(lua_code_->getLuaCode().toStdString().c_str(),
-                           data.toInt());
+                           data.toInt(), &solveData);
+  // 写入到 plot 中.
+  // QVector<double> x;
+  // QVector<double> y;
+  // x.append(solveData);
+  // y.append(solveData);
+  // serial_plot_->addData()
+  // serial_plot_->addGraphsData(x, y);
+  // serial_plot_->refreshGraphs();
+  // serial_plot_->
+  serial_plot_->addGraphs(1, 1);
+  serial_plot_->addData(1, 1, solveData);
 
   // 指定某些函数名
   // 假如是一个值, 对这个值进行处理
-
   recv_byte_count += data.size();
   auto tmp = new Ui::TtChatMessage();
   tmp->setContent(data);
@@ -495,23 +464,31 @@ void SerialWindow::init() {
   // 切换
   QWidget* twoBtnForGroup = new QWidget(chose_function);
   QHBoxLayout* layouttest = new QHBoxLayout(twoBtnForGroup);
-  Ui::TtSvgButton* leftBtn =
+  Ui::TtSvgButton* terminalButton =
       new Ui::TtSvgButton(":/sys/terminal.svg", twoBtnForGroup);
-  leftBtn->setSvgSize(18, 18);
-  leftBtn->setColors(Qt::black, Qt::blue);
+  terminalButton->setSvgSize(18, 18);
+  terminalButton->setColors(Qt::black, Qt::blue);
   // leftBtn->setEnableHoldToCheck(true);
-  Ui::TtSvgButton* rightBtn =
+  Ui::TtSvgButton* chatButton =
       new Ui::TtSvgButton(":/sys/chat.svg", twoBtnForGroup);
-  rightBtn->setSvgSize(18, 18);
-  rightBtn->setColors(Qt::black, Qt::blue);
+  chatButton->setSvgSize(18, 18);
+  chatButton->setColors(Qt::black, Qt::blue);
   // rightBtn->setEnableHoldToCheck(true);
-  layouttest->addWidget(leftBtn);
-  layouttest->addWidget(rightBtn);
+
+  Ui::TtSvgButton* graphBtn =
+      new Ui::TtSvgButton(":/sys/graph-up.svg", twoBtnForGroup);
+  graphBtn->setSvgSize(18, 18);
+  graphBtn->setColors(Qt::black, Qt::blue);
+
+  layouttest->addWidget(terminalButton);
+  layouttest->addWidget(chatButton);
+  layouttest->addWidget(graphBtn);
   // 互斥
   Ui::TtWidgetGroup* test_ = new Ui::TtWidgetGroup(this);
   test_->setHoldingChecked(true);
-  test_->addWidget(leftBtn);
-  test_->addWidget(rightBtn);
+  test_->addWidget(terminalButton);
+  test_->addWidget(chatButton);
+  test_->addWidget(graphBtn);
   test_->setExclusive(true);
   test_->setCheckedIndex(0);
   chose_function_layout->addWidget(twoBtnForGroup);
@@ -565,6 +542,25 @@ void SerialWindow::init() {
   message_view_->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
   messageStackedView->addWidget(message_view_);
 
+  // 添加图表
+  QWidget* graphWidget = new QWidget;
+  Ui::TtHorizontalLayout* graphWidgetLayout =
+      new Ui::TtHorizontalLayout(graphWidget);
+  serial_plot_ = new SerialPlot;
+  graphWidgetLayout->addWidget(serial_plot_);
+
+  QListWidget* serialDataList = new QListWidget(graphWidget);
+  serialDataList->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  serialDataList->setFixedWidth(50);
+  graphWidgetLayout->addWidget(serialDataList);
+
+  QListWidgetItem* item = new QListWidgetItem(serialDataList);
+  item->setSizeHint(QSize(50, 30));
+  Ui::FancyButton* getValueButton = new Ui::FancyButton(
+      tr("写入数据之后"), ":/sys/code-square.svg", serialDataList);
+  serialDataList->setItemWidget(item, getValueButton);
+
+  messageStackedView->addWidget(graphWidget);
 
   contentWidgetLayout->addWidget(chose_function);
   contentWidgetLayout->addWidget(messageStackedView);

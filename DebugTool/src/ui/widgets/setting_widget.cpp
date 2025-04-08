@@ -27,6 +27,31 @@ void SettingWidget::init() {
   // QWidget* basicWidget = new QWidget(this);
   layout_ = new TtVerticalLayout(this);
 
+  // QLabel info;
+  // info.setText();
+  QTextBrowser* infoBroswer = new QTextBrowser;
+  infoBroswer->setOpenExternalLinks(true);
+  infoBroswer->setOpenLinks(true);
+  // 设置HTML内容
+  infoBroswer->setHtml(R"(
+        <h1>TtDebugTool</h1>
+        <p>这是一个调试工具，支持：</p>
+        <ul>
+            <li><b>串口</b>: <a href="#section1">跳转到章节1</a></li>
+            <li><b>ModbusRtu/ModbusTcp</b>: <a href="https://www.qt.io">访问Qt官网</a></li>
+            <li><b>Tcp 调试</b>: <span style="color:red; font-size:14pt;">彩色文本</span></li>
+            <li><b>Udp 调试</b>: <img src="qrc:/images/logo.png" width="50" height="50"/></li>
+            <li><b>Mqtt 调试</b>: <a href="https://www.qt.io">访问Qt官网</a></li>
+        </ul>
+        
+        <a name="section1"></a>
+        <h2>章节1</h2>
+        <p>这是章节1的内容，可以通过内部链接跳转到这里。</p>
+        <p>返回 <a href="#">顶部</a></p>
+    )");
+
+  layout_->addWidget(infoBroswer);
+
   progress_bar_ = new QProgressBar;
   downloader_ = new Core::Downloader;
   // dialog_ = new DownloadDialog(basicWidget);
@@ -34,6 +59,10 @@ void SettingWidget::init() {
   download_btn_ = new TtSvgButton(":/sys/cloud-arrow-down.svg", this);
 
   edit = new QPlainTextEdit;
+
+  layout_->addWidget(download_btn_);
+  layout_->addWidget(progress_bar_);
+  layout_->addWidget(edit);
 
   connect(download_btn_, &TtSvgButton::clicked, this, [this]() {
     dialog_ = new DownloadDialog(this);
@@ -43,9 +72,6 @@ void SettingWidget::init() {
     dialog_->deleteLater();
   });
 
-  layout_->addWidget(download_btn_);
-  layout_->addWidget(progress_bar_);
-  layout_->addWidget(edit);
 
   connect(downloader_, &Core::Downloader::errorOccurred, this,
           [this](const QString& error) { qDebug() << error; });

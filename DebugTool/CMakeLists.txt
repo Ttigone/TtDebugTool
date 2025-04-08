@@ -66,6 +66,7 @@ set(PROJECT_SOURCES
     ${src_loc}/widget/mqtt_meta_setting_widget.h ${src_loc}/widget/mqtt_meta_setting_widget.cpp
 
     ${src_loc}/storage/setting_manager.h ${src_loc}/storage/setting_manager.cpp
+    ${src_loc}/storage/csv_handler.h ${src_loc}/storage/csv_handler.cpp
 
     ${src_loc}/ui/widgets/text_widget.h ${src_loc}/ui/widgets/text_widget.cpp
     ${src_loc}/ui/widgets/pop_widget.h ${src_loc}/ui/widgets/pop_widget.cpp

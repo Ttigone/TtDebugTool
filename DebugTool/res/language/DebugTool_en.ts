@@ -224,8 +224,8 @@
 <context>
     <name>Ui::TtLuaInputBox</name>
     <message>
-        <location filename="../../src/ui/controls/TtLuaInputBox.cpp" line="62"/>
-        <source>操作串口数据值</source>
+        <location filename="../../src/ui/controls/TtLuaInputBox.cpp" line="63"/>
+        <source>写入数据之后</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1543,39 +1543,44 @@
 <context>
     <name>Window::SerialWindow</name>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="416"/>
+        <location filename="../../src/window/serial_window.cpp" line="385"/>
         <source>未命名串口连接</source>
         <translation>Unnamed serial port connection</translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="458"/>
+        <location filename="../../src/window/serial_window.cpp" line="427"/>
         <source>名称不能为空！</source>
         <translation>The name cannot be empty!</translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="594"/>
+        <location filename="../../src/window/serial_window.cpp" line="560"/>
+        <source>写入数据之后</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/window/serial_window.cpp" line="590"/>
         <source>手动</source>
         <translation>Manual operation</translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="595"/>
+        <location filename="../../src/window/serial_window.cpp" line="591"/>
         <source>片段</source>
         <translation>fragment</translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="604"/>
+        <location filename="../../src/window/serial_window.cpp" line="600"/>
         <source>发送字节数: 0 B</source>
         <translation>Number of sent bytes: 0 B</translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="606"/>
+        <location filename="../../src/window/serial_window.cpp" line="602"/>
         <source>接收字节数: 0 B</source>
         <translation>Number of sent bytes: 0 B</translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="308"/>
-        <location filename="../../src/window/serial_window.cpp" line="384"/>
-        <location filename="../../src/window/serial_window.cpp" line="785"/>
+        <location filename="../../src/window/serial_window.cpp" line="277"/>
+        <location filename="../../src/window/serial_window.cpp" line="353"/>
+        <location filename="../../src/window/serial_window.cpp" line="781"/>
         <source>串口未打开</source>
         <translation>Serial port not open</translation>
     </message>

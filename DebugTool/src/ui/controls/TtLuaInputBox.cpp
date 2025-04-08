@@ -53,13 +53,14 @@ void TtLuaInputBox::init() {
   layout->setSpacing(0);
 
   QListWidget* addFunctionList = new QListWidget;
+  addFunctionList->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   addFunctionList->setFixedWidth(200);
 
   QListWidgetItem* item = new QListWidgetItem(addFunctionList);
   item->setSizeHint(QSize(200, 30));
   // 显示获取值并改变函数
   FancyButton* getValueButton = new FancyButton(
-      tr("操作串口数据值"), ":/sys/code-square.svg", addFunctionList);
+      tr("写入数据之后"), ":/sys/code-square.svg", addFunctionList);
   addFunctionList->setItemWidget(item, getValueButton);
   connect(getValueButton, &QPushButton::clicked, this, [this] {
     // 获取函数文本

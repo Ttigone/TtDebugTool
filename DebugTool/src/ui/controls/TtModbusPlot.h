@@ -98,6 +98,8 @@ class SerialPlot : public QCustomPlot {
   void setAutoScaleY(bool autoScale) { m_autoScaleY = autoScale; }
   void clearData();
 
+  void saveWaveFormData();
+
  public slots:
   void addGraphs(int type, const int& addr);
   void removeGraphs(int type, const int& addr);

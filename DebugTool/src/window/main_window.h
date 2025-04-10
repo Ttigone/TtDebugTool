@@ -1,9 +1,10 @@
 #ifndef WINDOW_MAIN_WINDOW_H
 #define WINDOW_MAIN_WINDOW_H
 
+#include <QFileDialog>
+#include <QListWidget>
 #include <QMainWindow>
 #include <QObject>
-#include <QListWidget>
 
 #include <ui/control/buttonbox/TtButtonBox.h>
 #include <ui/layout/horizontal_layout.h>
@@ -59,6 +60,9 @@ class MainWindow : public QMainWindow {
 
  private slots:
   void compileTsFilesFinished();
+
+ private slots:
+  void saveCsvFile();
 
  protected:
   bool event(QEvent* event) override;

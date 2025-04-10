@@ -54,6 +54,49 @@ class LuaKernel;
 
 namespace Window {
 
+class TtColorButton : public QWidget {
+  Q_OBJECT
+  Q_PROPERTY(bool checked READ isChecked WRITE setChecked)
+ public:
+  explicit TtColorButton(QWidget* parent = nullptr);
+  explicit TtColorButton(const QColor& color, const QString& text,
+                         QWidget* parent = nullptr);
+  ~TtColorButton();
+
+  void setColors(const QColor& color);
+  void setText(const QString& text);
+  void setHoverBackgroundColor(const QColor& color);
+
+  bool isChecked() const;
+  void setChecked(bool checked);
+  void setEnableHoldToCheck(bool enable);
+  void setEnable(bool enabled);
+
+ signals:
+  void clicked();
+  void toggled(bool checked);
+
+ protected:
+  void paintEvent(QPaintEvent* event) override;
+  void enterEvent(QEnterEvent* event) override;
+  void leaveEvent(QEvent* event) override;
+  void mousePressEvent(QMouseEvent* event) override;
+  void mouseReleaseEvent(QMouseEvent* event) override;
+  QSize sizeHint() const override;
+
+ private:
+  bool is_pressed_;
+  QSize color_size_;
+  bool is_checked_;
+  bool enable_hold_to_check_;
+
+  QString text_;
+  QColor current_color_;
+  QColor normal_color_;
+
+  bool is_hovered_;
+};
+
 struct SerialSaveConfig {
   QJsonObject obj;
 };
@@ -65,8 +108,9 @@ class SerialWindow : public QWidget, public Ui::TabManager::ISerializable {
   ~SerialWindow();
 
   QString getTitle();
-
   QJsonObject getConfiguration() const;
+
+  void saveWaveFormData();
 
  signals:
   void requestSaveConfig();

@@ -396,131 +396,44 @@ class Tt_EXPORT TtTextButton : public QPushButton {
   QColor default_color_;             // 初始文字颜色
 };
 
-class Tt_EXPORT FancyButton : public QPushButton {
-  Q_OBJECT
- public:
-  explicit FancyButton(const QString& text, const QString& iconPath = "",
-                       QWidget* parent = nullptr)
-      : QPushButton(text, parent),  // 关键修改：显式设置文本
-        m_iconPath(iconPath),
-        m_hovered(false),
-        m_pressed(false) {
-    // 禁用默认边框
-    setStyleSheet("border: none;");
-    setCursor(Qt::PointingHandCursor);
-    setMouseTracking(true);
+// class Tt_EXPORT FancyButton : public QPushButton {
+//   Q_OBJECT
 
-    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    setMinimumSize(50, 30);
-  }
+//  public:
+//   explicit FancyButton(const QString& text, const QString& iconPath = "",
+//                        QWidget* parent = nullptr);
 
- protected:
-  // void paintEvent(QPaintEvent* event) override {
-  //   QPainter painter(this);
-  //   painter.setRenderHint(QPainter::Antialiasing);
+//  protected:
+//   void paintEvent(QPaintEvent* event) override;
 
-  //   // 绘制背景
-  //   QColor bgColor = Qt::white;
-  //   if (m_pressed) {
-  //     bgColor = QColor(186, 231, 255);
-  //   } else if (m_hovered) {
-  //     bgColor = QColor(229, 229, 229);
-  //   }
-  //   painter.setBrush(bgColor);
-  //   painter.setPen(Qt::NoPen);
-  //   painter.drawRoundedRect(rect(), 5, 5);
+//   void enterEvent(QEnterEvent* event) override {
+//     m_hovered = true;
+//     update();
+//     QPushButton::enterEvent(event);
+//   }
+//   void leaveEvent(QEvent* event) override {
+//     m_hovered = false;
+//     update();
+//     QPushButton::leaveEvent(event);
+//   }
 
-  //   // 绘制图标
-  //   if (!m_iconPath.isEmpty()) {
-  //     QPixmap pixmap(m_iconPath);
-  //     if (!pixmap.isNull()) {  // 确保图标有效
-  //       pixmap = pixmap.scaled(20, 20, Qt::KeepAspectRatio,
-  //                              Qt::SmoothTransformation);
-  //       painter.drawPixmap(10, (height() - 20) / 2, pixmap);
-  //     }
-  //   }
+//   void mousePressEvent(QMouseEvent* event) override {
+//     m_pressed = true;
+//     update();
+//     QPushButton::mousePressEvent(event);
+//   }
 
-  //   // 绘制文本（使用 QPushButton 的 text() 方法）
-  //   painter.setPen(QColor("#333333"));
-  //   QFontMetrics fm(font());
-  //   QString elidedText =
-  //       fm.elidedText(text(), Qt::ElideRight, width() - 48);  // 避免溢出
-  //   QRect textRect(38, 0, width() - 48, height());
-  //   painter.drawText(textRect, Qt::AlignLeft | Qt::AlignVCenter, elidedText);
-  // }
-  void paintEvent(QPaintEvent* event) override {
-    QPainter painter(this);
-    painter.setRenderHint(QPainter::Antialiasing);
+//   void mouseReleaseEvent(QMouseEvent* event) override {
+//     m_pressed = false;
+//     update();
+//     QPushButton::mouseReleaseEvent(event);
+//   }
 
-    // 绘制背景
-    QColor bgColor = Qt::white;
-    if (m_pressed)
-      bgColor = QColor(186, 231, 255);
-    else if (m_hovered)
-      bgColor = QColor(229, 229, 229);
-    painter.setBrush(bgColor);
-    painter.setPen(Qt::NoPen);
-    painter.drawRoundedRect(rect(), 3, 3);  // 缩小圆角半径
-
-    // 动态布局：根据宽度决定显示图标或文本
-    const bool showIcon = !m_iconPath.isEmpty();
-    const bool showText = (width() > 60);  // 宽度足够时才显示文本
-
-    // 绘制图标
-    if (showIcon) {
-      QPixmap pixmap(m_iconPath);
-      if (!pixmap.isNull()) {
-        const int iconSize = (showText) ? 20 : 16;  // 狭窄时缩小图标
-        pixmap = pixmap.scaled(iconSize, iconSize, Qt::KeepAspectRatio,
-                               Qt::SmoothTransformation);
-        painter.drawPixmap(5, (height() - iconSize) / 2,
-                           pixmap);  // 左对齐，边距 5px
-      }
-    }
-
-    // 绘制文本（仅在宽度足够时显示）
-    if (showText) {
-      painter.setPen(QColor("#333333"));
-      QFontMetrics fm(font());
-      const int textLeft = showIcon ? 30 : 5;  // 图标占用 25px (20图标+5边距)
-      const int availableWidth = width() - textLeft - 5;  // 右边距 5px
-      QString elidedText =
-          fm.elidedText(text(), Qt::ElideRight, availableWidth);
-      painter.drawText(QRect(textLeft, 0, availableWidth, height()),
-                       Qt::AlignLeft | Qt::AlignVCenter, elidedText);
-    }
-  }
-
-  // 其他事件函数保持不变...
-  void enterEvent(QEnterEvent* event) override {
-    m_hovered = true;
-    update();
-    QPushButton::enterEvent(event);
-  }
-
-  void leaveEvent(QEvent* event) override {
-    m_hovered = false;
-    update();
-    QPushButton::leaveEvent(event);
-  }
-
-  void mousePressEvent(QMouseEvent* event) override {
-    m_pressed = true;
-    update();
-    QPushButton::mousePressEvent(event);
-  }
-
-  void mouseReleaseEvent(QMouseEvent* event) override {
-    m_pressed = false;
-    update();
-    QPushButton::mouseReleaseEvent(event);
-  }
-
- private:
-  QString m_iconPath;
-  bool m_hovered;
-  bool m_pressed;
-};
+//  private:
+//   QString m_iconPath;
+//   bool m_hovered;
+//   bool m_pressed;
+// };
 
 }  // namespace Ui
 

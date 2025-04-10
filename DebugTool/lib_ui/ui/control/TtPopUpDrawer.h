@@ -96,7 +96,7 @@ class TtPopUpDrawerStateMachine : public QStateMachine {
 
   // 透明度
   void setOpacity(qreal opacity);
-  inline qreal opacity() const;
+  qreal opacity() const;
 
   bool isInClosedState() const;
 

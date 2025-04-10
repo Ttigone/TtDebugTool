@@ -59,28 +59,28 @@ void TtLuaInputBox::init() {
   QListWidgetItem* item = new QListWidgetItem(addFunctionList);
   item->setSizeHint(QSize(200, 30));
   // 显示获取值并改变函数
-  FancyButton* getValueButton = new FancyButton(
-      tr("写入数据之后"), ":/sys/code-square.svg", addFunctionList);
-  addFunctionList->setItemWidget(item, getValueButton);
-  connect(getValueButton, &QPushButton::clicked, this, [this] {
-    // 获取函数文本
-    QString functionTemplate =
-        "function getValue(value)\n"
-        "    return value + 1\n"
-        "end\n";
+  // FancyButton* getValueButton = new FancyButton(
+  //     tr("写入数据之后"), ":/sys/code-square.svg", addFunctionList);
+  // addFunctionList->setItemWidget(item, getValueButton);
+  // connect(getValueButton, &QPushButton::clicked, this, [this] {
+  //   // 获取函数文本
+  //   QString functionTemplate =
+  //       "function getValue(value)\n"
+  //       "    return value + 1\n"
+  //       "end\n";
 
-    appendCodeToEnd(edit_lua_code_, functionTemplate);
-  });
+  //   appendCodeToEnd(edit_lua_code_, functionTemplate);
+  // });
 
   // QHBoxLayout* buttonLayout = new QHBoxLayout();
   // buttonLayout->addStretch();
   // buttonLayout->addWidget(canclebutton, 0, Qt::AlignRight);
   // buttonLayout->addWidget(savebutton, 0, Qt::AlignRight);
 
-  layout->addWidget(edit_lua_code_, 0, 0, 2, 1);
-  layout->addWidget(addFunctionList, 0, 1, 2, 1);
+  // layout->addWidget(edit_lua_code_, 0, 0, 2, 1);
+  // layout->addWidget(addFunctionList, 0, 1, 2, 1);
 
-  setLayout(layout);
+  // setLayout(layout);
 
   // WidgetGroup* buttonGroup = new WidgetGroup(this);
 
@@ -101,9 +101,9 @@ void TtLuaInputBox::init() {
   //           edit_lua_code_->setText(lua_code_.value(index));
   //         });
 
-  // 连接到适当的信号
-  connect(edit_lua_code_, &QsciScintilla::textChanged, this,
-          &TtLuaInputBox::updateLineNumberWidth);
+  // // 连接到适当的信号
+  // connect(edit_lua_code_, &QsciScintilla::textChanged, this,
+  //         &TtLuaInputBox::updateLineNumberWidth);
 }
 
 void TtLuaInputBox::addLuaApis(QsciAPIs* apis) {

@@ -2,7 +2,7 @@ set(Project_Langs C CXX)
 
 cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 
-project(DebugTool
+project(TtDebugTool
     LANGUAGES ${Project_Langs}
     DESCRIPTION "Serial port debugging tool"
     HOMEPAGE_URL "none"

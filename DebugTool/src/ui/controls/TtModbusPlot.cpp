@@ -1,5 +1,7 @@
 #include "TtModbusPlot.h"
 
+#include <ui/widgets/message_bar.h>
+
 AxisTag::AxisTag(QCPAxis* parentAxis) : QObject(parentAxis), mAxis(parentAxis) {
   mDummyTracer = new QCPItemTracer(mAxis->parentPlot());
   mDummyTracer->setVisible(false);
@@ -674,6 +676,7 @@ void SerialPlot::addData(int type, const int& addr, double value) {
 
   curve.timeData.append(relativeTime);
   curve.valueData.append(value);
+  // 相对时间作为 key 值
   curve.graph->addData(relativeTime, value);
 
   if (curve.tag) {
@@ -708,7 +711,7 @@ void SerialPlot::addData(int type, const int& addr, double value) {
         yMin -= margin;
         yMax += margin;
       }
-      qDebug() << yMin << yMax;
+      // qDebug() << yMin << yMax;
       yAxis->setRange(yMin, yMax);
     }
   }
@@ -718,21 +721,37 @@ void SerialPlot::addData(int type, const int& addr, double value) {
     double xMin = std::numeric_limits<double>::max();
     double xMax = std::numeric_limits<double>::lowest();
 
-    // 遍历所有曲线获取时间范围
+    // // 遍历所有曲线获取时间范围
+    // for (auto& c : m_curves) {
+    //   if (!c.timeData.isEmpty()) {
+    //     xMin = qMin(xMin, c.timeData.first());
+    //     xMax = qMax(xMax, c.timeData.last());
+    //   }
+    // }
+    // for (auto& c : m_curves) {
+    // if (c.graph && c.graph.data()->size() > 0) {}
+    // }
     for (auto& c : m_curves) {
-      if (!c.timeData.isEmpty()) {
-        xMin = qMin(xMin, c.timeData.first());
-        xMax = qMax(xMax, c.timeData.last());
+      if (c.graph && c.graph->data()->size() > 0) {  // 直接使用图形数据
+        auto data = c.graph->data();
+        xMin = qMin(xMin, data->begin()->key);
+        xMax = qMax(xMax, (data->end() - 1)->key);
       }
     }
 
+    // 控制左右边距
+    // if (xMin < xMax) {
+    //   // 留10%边距或固定延伸
+    //   double margin = (xMax - xMin) * 0.1;
+    //   xAxis->setRange(xMin - margin, xMax + margin);
+    // } else if (xMin == xMax) {
+    //   // 处理单点情况
+    //   xAxis->setRange(xMin - 1.0, xMax + 1.0);
+    // }
     if (xMin < xMax) {
-      // 留10%边距或固定延伸
-      double margin = (xMax - xMin) * 0.1;
-      xAxis->setRange(xMin - margin, xMax + margin);
+      xAxis->setRange(xMin, xMax);  // 无额外边距
     } else if (xMin == xMax) {
-      // 处理单点情况
-      xAxis->setRange(xMin - 1.0, xMax + 1.0);
+      xAxis->setRange(xMin - 0.1, xMax + 0.1);
     }
   }
   replot();
@@ -746,6 +765,79 @@ void SerialPlot::clearData() {
     // curve.graph.data();
   }
   this->replot();
+}
+
+void SerialPlot::saveWaveFormData() {
+  QString dirpath = QFileDialog::getSaveFileName(
+      this, QStringLiteral("保存波形数据"),
+      qApp->applicationDirPath() + "/plot.csv", QString(tr("*.csv")));
+
+  if (!dirpath.isEmpty()) {
+    QFile file(dirpath);
+    // 方式：Append为追加，WriteOnly，ReadOnly
+    if (!file.open(QIODevice::WriteOnly)) {
+      Ui::TtMessageBar::warning(TtMessageBarType::Top, tr("提示"),
+                                tr("无法创建文件!"), 1500);
+    } else {
+      QTextStream stream(&file);
+      {
+        // 添加标题栏
+        {
+          if (this->graphCount() > 0) {
+            stream << (tr("time(s),"));
+            int iGraphIndex = 0;
+            for (iGraphIndex = 0; iGraphIndex < this->graphCount() - 1;
+                 iGraphIndex++) {
+              // 添加每个图表的名字(通道的名字)
+              stream << (this->graph(iGraphIndex)->name() + ",");
+            }
+            // 添加换行符
+            stream << (this->graph(iGraphIndex)->name() + "\n");
+          }
+        }
+      }
+      if (this->graphCount() > 0) {
+        // 遍历数据
+        for (int iGraphData = 0; iGraphData < this->graph(0)->dataCount();
+             iGraphData++) {
+          // 添加时间轴
+          qDebug() << QString::number(
+              (this->graph(0)->data()->at(iGraphData)->key), 'f', 6);
+
+          stream << (QString::number(
+                         (this->graph(0)->data()->at(iGraphData)->key), 'f',
+                         6) +
+                     ",");
+          // 遍历曲线
+          int iGraphIndex = 0;
+          for (iGraphIndex = 0; iGraphIndex < this->graphCount() - 1;
+               iGraphIndex++) {
+            // 添加数据
+            stream << (QString::number((this->graph(iGraphIndex)
+                                            ->data()
+                                            ->at(iGraphData)
+                                            ->value),
+                                       'f', 6) +
+                       ",");
+          }
+          stream
+              << (QString::number(
+                      (this->graph(iGraphIndex)->data()->at(iGraphData)->value),
+                      'f', 6) +
+                  "\n");
+        }
+      }
+      // refreshAction = eRefreshNone;
+      file.close();
+      return;
+    }
+    // refreshAction = eRefreshNone;
+  } else {
+  }
+
+  // // 使用前面定义的函数保存CSV
+  // exportTableWidgetToCsv(filePath, tableWidget);
+  // QMessageBox::information(this, "保存成功", "CSV 文件已成功保存。");
 }
 
 void SerialPlot::addGraphs(int type, const int& addr) {
@@ -842,7 +934,9 @@ void SerialPlot::mouseMoveEvent(QMouseEvent* event) {
 
 void SerialPlot::setupPlot() {
   QCPAxis* rightAxis = axisRect()->addAxis(QCPAxis::atRight);
-  rightAxis->setPadding(60);
+  // 设置右边距
+  // rightAxis->setPadding(60);
+  rightAxis->setPadding(0);
   rightAxis->setVisible(true);
   rightAxis->setTicks(false);        // 隐藏刻度线
   rightAxis->setTickLabels(false);   // 隐藏刻度标签
@@ -882,7 +976,7 @@ void SerialPlot::setupPlot() {
   m_tracer->setStyle(QCPItemTracer::tsCircle);
   m_tracer->setPen(QPen(Qt::red));
   m_tracer->setBrush(QBrush(Qt::red));
-  m_tracer->setSize(7);
+  m_tracer->setSize(8);
   m_tracer->setVisible(false);
 
   // 创建跟踪器标签（显示坐标值）
@@ -913,6 +1007,236 @@ void SerialPlot::setupPlot() {
 
   // 启用鼠标跟踪
   this->setMouseTracking(true);
+
+  axisRect()->setAutoMargins(QCP::msNone);
+  axisRect()->setMargins(QMargins(0, 0, 0, 0));
+  xAxis->setPadding(0);
+  yAxis->setPadding(0);
 }
 
-void SerialPlot::updateTracerPosition(QMouseEvent* event) {}
+// void SerialPlot::updateTracerPosition(QMouseEvent* event) {
+//   if (m_curves.isEmpty()) {
+//     m_tracer->setVisible(false);
+//     m_tracerLabel->setVisible(false);
+//     return;
+//   }
+
+//   // 当前鼠标坐标值
+//   double mouseX = this->xAxis->pixelToCoord(event->pos().x());
+
+//   // 鼠标移出 x 轴外
+//   if (mouseX < this->xAxis->range().lower ||
+//       mouseX > this->xAxis->range().upper) {
+//     m_tracer->setVisible(false);
+//     m_tracerLabel->setVisible(false);
+//     return;
+//   }
+
+//   // 图像距离当前鼠标坐标值的最近点, 遍历每一张图, 性能消耗高
+//   // QMap<double, QPair<QCPGraph*, QCPGraphData>> nearestPoints;
+
+//   // qDebug() << "=== 鼠标位置调试 ===";
+//   // qDebug() << "鼠标X坐标（像素）:" << event->pos().x();
+//   // qDebug() << "转换后X值:" << mouseX;
+
+//   QDateTime time =
+//       QDateTime::fromMSecsSinceEpoch((m_startTime + mouseX) * 1000);
+//   QStringList tooltipLines;
+//   tooltipLines.append(
+//       QString("<b>时间: %1</b>").arg(time.toString("HH:mm:ss")));
+
+//   // 遍历每一个图像
+//   for (auto it = m_curves.begin(); it != m_curves.end(); ++it) {
+//     //
+//     const auto& curve = it.value();
+//     if (!curve.graph || curve.timeData.isEmpty()) {
+//       continue;
+//     }
+
+//     const auto& times = curve.timeData;
+//     const auto& values = curve.valueData;
+
+//     // 添加数据一致性检查
+//     if (times.size() != values.size()) {
+//       qWarning() << "Data inconsistency in curve" << curve.graph->name();
+//       continue;
+//     }
+
+//     auto it_lower = std::lower_bound(times.begin(), times.end(), mouseX);
+//     // 索引
+//     int idx = it_lower - times.begin();
+
+//     if (idx > 0) {
+//       if (idx == times.size() ||
+//           mouseX - times[idx - 1] < times[idx] - mouseX) {
+//         --idx;
+//       }
+//     }
+
+//     if (idx >= 0 && idx < times.size() && idx < values.size()) {
+//       QColor color = curve.graph->pen().color();
+//       QString name = curve.graph->name();
+//       double value = values[idx];
+//       tooltipLines.append(QString("<span style='color:%1;'>%2: %3</span>")
+//                               .arg(color.name())
+//                               .arg(name)
+//                               .arg(value, 0, 'f', 2));
+//     }
+//   }
+
+//   if (tooltipLines.size() > 1) {
+//     m_coordLabel->setText(tooltipLines.join("<br>"));
+
+//     TtQCPItemRichText* richLabel =
+//         qobject_cast<TtQCPItemRichText*>(m_coordLabel);
+//     const QTextDocument& doc = richLabel->document();
+//     qreal textWidth = doc.idealWidth() + 10;  // 增加10px边距
+//     qreal textHeight = doc.size().height() + 10;
+
+//     // 获取鼠标位置和视口边界
+//     QPoint mousePos = event->pos();
+//     QRect viewportRect = viewport();
+
+//     // 初始位置：鼠标右下方15像素
+//     QPoint pos = mousePos + QPoint(15, 5);
+
+//     // 水平边界检测
+//     if (pos.x() + textWidth > viewportRect.right()) {
+//       // 切换到左侧显示
+//       pos.setX(mousePos.x() - textWidth - 15);
+//     }
+
+//     // 垂直边界检测
+//     if (pos.y() + textHeight > viewportRect.bottom()) {
+//       // 切换到上方显示
+//       pos.setY(mousePos.y() - textHeight - 15);
+//     }
+
+//     // 应用最终位置
+//     m_coordLabel->position->setPixelPosition(pos);
+//     m_coordLabel->setVisible(true);
+//   } else {
+//     m_coordLabel->setVisible(false);
+//   }
+//   replot();
+// }
+
+void SerialPlot::updateTracerPosition(QMouseEvent* event) {
+  if (m_curves.isEmpty()) {
+    m_tracer->setVisible(false);
+    m_tracerLabel->setVisible(false);
+    return;
+  }
+
+  // 当前鼠标坐标值
+  double mouseX = this->xAxis->pixelToCoord(event->pos().x());
+
+  // 鼠标移出 x 轴外
+  if (mouseX < this->xAxis->range().lower ||
+      mouseX > this->xAxis->range().upper) {
+    m_tracer->setVisible(false);
+    m_tracerLabel->setVisible(false);
+    return;
+  }
+
+  // 图像距离当前鼠标坐标值的最近点, 遍历每一张图, 性能消耗高
+  // QMap<double, QPair<QCPGraph*, QCPGraphData>> nearestPoints;
+
+  // qDebug() << "=== 鼠标位置调试 ===";
+  // qDebug() << "鼠标X坐标（像素）:" << event->pos().x();
+  // qDebug() << "转换后X值:" << mouseX;
+
+  QDateTime time =
+      QDateTime::fromMSecsSinceEpoch((m_startTime + mouseX) * 1000);
+  QStringList tooltipLines;
+  tooltipLines.append(
+      QString("<b>时间: %1</b>").arg(time.toString("HH:mm:ss")));
+
+  bool tracerSet = false;
+
+  // 遍历每一个图像
+  for (auto it = m_curves.begin(); it != m_curves.end(); ++it) {
+    //
+    const auto& curve = it.value();
+    if (!curve.graph || curve.timeData.isEmpty()) {
+      continue;
+    }
+
+    const auto& times = curve.timeData;
+    const auto& values = curve.valueData;
+
+    // 添加数据一致性检查
+    if (times.size() != values.size()) {
+      qWarning() << "Data inconsistency in curve" << curve.graph->name();
+      continue;
+    }
+
+    auto it_lower = std::lower_bound(times.begin(), times.end(), mouseX);
+    // 索引
+    int idx = it_lower - times.begin();
+
+    if (idx > 0) {
+      if (idx == times.size() ||
+          mouseX - times[idx - 1] < times[idx] - mouseX) {
+        --idx;
+      }
+    }
+
+    if (idx >= 0 && idx < times.size() && idx < values.size()) {
+      // 设置跟踪器到当前的曲线和位置
+      if (!tracerSet) {
+        m_tracer->setGraph(curve.graph);
+        m_tracer->setGraphKey(times[idx]);
+        m_tracer->setVisible(true);
+        tracerSet = true;
+      }
+      QColor color = curve.graph->pen().color();
+      QString name = curve.graph->name();
+      double value = values[idx];
+      tooltipLines.append(QString("<span style='color:%1;'>%2: %3</span>")
+                              .arg(color.name())
+                              .arg(name)
+                              .arg(value, 0, 'f', 2));
+    }
+  }
+
+  if (tooltipLines.size() > 1) {
+    m_coordLabel->setText(tooltipLines.join("<br>"));
+
+    TtQCPItemRichText* richLabel =
+        qobject_cast<TtQCPItemRichText*>(m_coordLabel);
+    const QTextDocument& doc = richLabel->document();
+    qreal textWidth = doc.idealWidth() + 10;  // 增加10px边距
+    qreal textHeight = doc.size().height() + 10;
+
+    // 获取鼠标位置和视口边界
+    QPoint mousePos = event->pos();
+    QRect viewportRect = viewport();
+
+    // 初始位置：鼠标右下方15像素
+    QPoint pos = mousePos + QPoint(15, 5);
+
+    // 水平边界检测
+    if (pos.x() + textWidth > viewportRect.right()) {
+      // 切换到左侧显示
+      pos.setX(mousePos.x() - textWidth - 15);
+    }
+
+    // 垂直边界检测
+    if (pos.y() + textHeight > viewportRect.bottom()) {
+      // 切换到上方显示
+      pos.setY(mousePos.y() - textHeight - 15);
+    }
+
+    // 应用最终位置
+    m_coordLabel->position->setPixelPosition(pos);
+    m_coordLabel->setVisible(true);
+  } else {
+    m_coordLabel->setVisible(false);
+  }
+
+  if (!tracerSet) {
+    m_tracer->setVisible(false);  // 没有找到点时隐藏
+  }
+  replot();
+}

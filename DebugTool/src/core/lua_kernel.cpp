@@ -12,12 +12,15 @@ LuaKernel::LuaKernel() {
 
 LuaKernel::~LuaKernel() {}
 
-void LuaKernel::doLuaCode(const char* code, int data, double* result) {
-  qDebug() << "code: " << code;
-  qDebug() << "data: " << data;
-
+void LuaKernel::doLuaCode(const QString& code, int data, double& result) {
+  if (code.isEmpty()) {
+    // 不做处理, 直接返回
+    result = data;
+    return;
+  }
+  auto cstrCode = code.toStdString().c_str();
   lua_State* L = this->lua_state_;
-  if (luaL_dostring(L, code)) /* 从字符串中加载LUA脚本 */
+  if (luaL_dostring(L, cstrCode)) /* 从字符串中加载LUA脚本 */
   {
     qDebug() << "LUA脚本有误！" << lua_tostring(L, -1);
     lua_pop(L, 1);
@@ -47,7 +50,7 @@ void LuaKernel::doLuaCode(const char* code, int data, double* result) {
      * -1表示最后一个返回值，因为lua的函数可以返回多个值的。
      */
   // auto sum = lua_tonumber(L, -1);
-  *result = lua_tonumber(L, -1);
+  result = lua_tonumber(L, -1);
   // qDebug() << sum;
 
   /* 出栈一个数据。此时栈中存的是 getValue 函数的执行结果，所以需要出栈 */

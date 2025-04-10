@@ -113,7 +113,7 @@ MainWindow::MainWindow(QWidget* parent)
   //setAttribute(Qt::WA_DontCreateNativeAncestors);
   // 拖拽右边时, 会出现宽度影响高度的情况
 
-  setWindowTitle(tr("TtSerialPort"));
+  setWindowTitle(tr("TtDebugTool"));
 
   loadStyleSheet(Theme::Dark);
 
@@ -500,6 +500,17 @@ void MainWindow::compileTsFilesFinished() {
   }
 }
 
+void MainWindow::saveCsvFile() {
+  // 弹出一个串口, 选择你要保存的 csv 文件.
+  // 当前的界面的 csv
+  auto widget =
+      qobject_cast<Window::SerialWindow*>(tabWidget_->currentWidget());
+  if (widget) {
+    // qDebug() << widget->getTitle();
+    widget->saveWaveFormData();
+  }
+}
+
 bool MainWindow::event(QEvent* event) {
   switch (event->type()) {
     case QEvent::WindowActivate: {
@@ -539,8 +550,14 @@ void MainWindow::installWindowAgent() {
 
     // Virtual menu
     auto file = new QMenu(tr("File(&F)"), menuBar);
-    file->addAction(new QAction(tr("New(&N)"), menuBar));
-    file->addAction(new QAction(tr("Open(&O)"), menuBar));
+    file->addAction(new QAction(tr("New"), menuBar));
+    file->addAction(new QAction(tr("Open"), menuBar));
+    file->addSeparator();
+    auto saveToCsv = new QAction(tr("Save To CSV"), menuBar);
+    file->addAction(saveToCsv);
+    connect(saveToCsv, &QAction::triggered, this, [this] { saveCsvFile(); });
+
+    file->addAction(new QAction(tr("Save To Sqlite"), menuBar));
     file->addSeparator();
 
     auto edit = new QMenu(tr("Edit(&E)"), menuBar);
@@ -803,17 +820,17 @@ void MainWindow::loadStyleSheet(Theme theme) {
 #endif
 
   // now you can set the generated stylesheet
-  //     if (!styleSheet().isEmpty() && theme == currentTheme)
-  //         return;
-  //     currentTheme = theme;
+  // if (!styleSheet().isEmpty() && theme == currentTheme)
+  //   return;
+  // currentTheme = theme;
 
-  //     if (QFile qss(theme == Dark ? QStringLiteral(":/dark-style.qss")
-  //                                 : QStringLiteral(":/light-style.qss"));
-  //         qss.open(QIODevice::ReadOnly | QIODevice::Text)) {
-  //         setStyleSheet(QString::fromUtf8(qss.readAll()));
-  // Q_EMIT themeChanged();
-  // emit themeChanged();
-  //     }
+  // if (QFile qss(theme == Dark ? QStringLiteral(":/dark-style.qss")
+  //                             : QStringLiteral(":/light-style.qss"));
+  QFile qss(":/theme/dark-style.qss");
+  qss.open(QIODevice::ReadOnly | QIODevice::Text);
+  setStyleSheet(QString::fromUtf8(qss.readAll()));
+  Q_EMIT themeChanged();
+  emit themeChanged();
 }
 
 void MainWindow::setLeftBar() {

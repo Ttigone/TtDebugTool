@@ -30,6 +30,133 @@
 
 namespace Window {
 
+TtColorButton::TtColorButton(QWidget* parent)
+    : QWidget(parent),
+      is_pressed_(false),
+      color_size_(16, 16),  // 默认颜色块大小
+      is_checked_(false),
+      enable_hold_to_check_(false),
+      is_hovered_(false),
+      current_color_(Qt::blue),
+      normal_color_(Qt::lightGray) {}
+
+TtColorButton::TtColorButton(const QColor& color, const QString& text,
+                             QWidget* parent)
+    : TtColorButton(parent) {
+  current_color_ = color;
+  text_ = text;
+}
+
+TtColorButton::~TtColorButton() {}
+
+void TtColorButton::setColors(const QColor& color) {
+  current_color_ = color;
+  update();
+}
+
+void TtColorButton::setText(const QString& text) {
+  text_ = text;
+  // updateSizeHint();
+  update();
+}
+
+void TtColorButton::setHoverBackgroundColor(const QColor& color) {
+  normal_color_ = color;
+  update();
+}
+
+bool TtColorButton::isChecked() const {
+  return is_checked_;
+}
+
+void TtColorButton::setChecked(bool checked) {
+  if (is_checked_ != checked) {
+    is_checked_ = checked;
+    emit toggled(is_checked_);
+    update();
+  }
+}
+
+void TtColorButton::setEnableHoldToCheck(bool enable) {
+  enable_hold_to_check_ = enable;
+}
+
+void TtColorButton::setEnable(bool enabled) {
+  setEnabled(enabled);
+  update();
+}
+
+void TtColorButton::paintEvent(QPaintEvent* event) {
+  QPainter painter(this);
+  painter.setRenderHint(QPainter::Antialiasing);
+
+  // 绘制背景
+  QRect bgRect = rect();
+  if (!isEnabled()) {
+    painter.fillRect(bgRect, QColor(220, 220, 220));
+  } else if (is_pressed_ || is_checked_) {
+    painter.fillRect(bgRect, current_color_.lighter(120));
+  } else if (is_hovered_) {
+    painter.fillRect(bgRect, normal_color_);
+  }
+
+  // 绘制左侧颜色块
+  QRect colorRect(4, (height() - color_size_.height()) / 2, color_size_.width(),
+                  color_size_.height());
+  painter.setPen(Qt::NoPen);
+  painter.setBrush(current_color_);
+  painter.drawRoundedRect(colorRect, 2, 2);
+
+  // 绘制文本
+  painter.setPen(isEnabled() ? palette().text().color() : Qt::gray);
+  QRect textRect(color_size_.width() + 12, 0,
+                 width() - color_size_.width() - 12, height());
+  painter.drawText(textRect, Qt::AlignLeft | Qt::AlignVCenter, text_);
+}
+
+void TtColorButton::enterEvent(QEnterEvent* event) {
+  is_hovered_ = true;
+  update();
+  QWidget::enterEvent(event);
+}
+
+void TtColorButton::leaveEvent(QEvent* event) {
+  is_hovered_ = false;
+  update();
+  QWidget::leaveEvent(event);
+}
+
+void TtColorButton::mousePressEvent(QMouseEvent* event) {
+  if (event->button() == Qt::LeftButton && isEnabled()) {
+    is_pressed_ = true;
+    if (enable_hold_to_check_)
+      setChecked(true);
+    update();
+  }
+  QWidget::mousePressEvent(event);
+}
+
+void TtColorButton::mouseReleaseEvent(QMouseEvent* event) {
+  if (event->button() == Qt::LeftButton && is_pressed_ && isEnabled()) {
+    is_pressed_ = false;
+    if (rect().contains(event->pos())) {
+      if (!enable_hold_to_check_)
+        setChecked(!is_checked_);
+      emit clicked();
+    }
+    update();
+  }
+  QWidget::mouseReleaseEvent(event);
+}
+
+QSize TtColorButton::sizeHint() const {
+  QFontMetrics fm(font());
+  int textWidth = fm.horizontalAdvance(text_);
+  int totalWidth = color_size_.width() + textWidth + 20;  // 左右留白
+  int height = qMax(color_size_.height(), fm.height()) + 8;
+  return QSize(totalWidth, height);
+}
+
 SerialWindow::SerialWindow(QWidget* parent)
     : QWidget(parent),
       worker_thread_(new QThread(this)),
@@ -102,6 +229,12 @@ QString SerialWindow::getTitle() {
 
 QJsonObject SerialWindow::getConfiguration() const {
   return cfg_.obj;
+}
+
+void SerialWindow::saveWaveFormData() {
+  if (serial_plot_) {
+    serial_plot_->saveWaveFormData();
+  }
 }
 
 void SerialWindow::switchToEditMode() {
@@ -205,19 +338,21 @@ void SerialWindow::dataReceived(const QByteArray& data) {
   // 需要经过脚本处理
   // 第三个参数是传出参数
   double solveData;
-  lua_actuator_->doLuaCode(lua_code_->getLuaCode().toStdString().c_str(),
-                           data.toInt(), &solveData);
-  // 写入到 plot 中.
-  // QVector<double> x;
-  // QVector<double> y;
-  // x.append(solveData);
-  // y.append(solveData);
-  // serial_plot_->addData()
-  // serial_plot_->addGraphsData(x, y);
-  // serial_plot_->refreshGraphs();
-  // serial_plot_->
+  // if (!lua_code_->getLuaCode().isEmpty()) {
+  // qDebug() << lua_code_->getLuaCode().toStdString().c_str() ;
+
+  // if (lua_code_->getLuaCode().toStdString().c_str()) {
+  //   qDebug() << "yes";
+  // }
+  lua_actuator_->doLuaCode(lua_code_->getLuaCode(), data.toInt(), solveData);
+  // }
+  // 写入到 plot 中
+  // 一个通道对应一个数据类型, 通道对应 header
   serial_plot_->addGraphs(1, 1);
   serial_plot_->addData(1, 1, solveData);
+  // serial_plot_->saveWaveFormData();
+
+  // 导出 csv 格式. 在 menu 中实现
 
   // 指定某些函数名
   // 假如是一个值, 对这个值进行处理
@@ -550,15 +685,22 @@ void SerialWindow::init() {
   graphWidgetLayout->addWidget(serial_plot_);
 
   QListWidget* serialDataList = new QListWidget(graphWidget);
-  serialDataList->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-  serialDataList->setFixedWidth(50);
+  // serialDataList->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  serialDataList->setFixedWidth(78);
   graphWidgetLayout->addWidget(serialDataList);
-
   QListWidgetItem* item = new QListWidgetItem(serialDataList);
-  item->setSizeHint(QSize(50, 30));
-  Ui::FancyButton* getValueButton = new Ui::FancyButton(
-      tr("写入数据之后"), ":/sys/code-square.svg", serialDataList);
+  TtColorButton* getValueButton =
+      new TtColorButton(QColor::fromRgbF(100, 200, 100), "T2", this);
+  // auto getValueButton = new QPushButton();
   serialDataList->setItemWidget(item, getValueButton);
+
+  // {
+  //   QListWidgetItem* item = new QListWidgetItem(serialDataList);
+  //   item->setSizeHint(QSize(78, 30));
+  //   Ui::TtColorButton* getValueButton =
+  //       new Ui::TtColorButton(QColor(100, 100, 140), "T2", this);
+  //   serialDataList->setItemWidget(item, getValueButton);
+  // }
 
   messageStackedView->addWidget(graphWidget);
 

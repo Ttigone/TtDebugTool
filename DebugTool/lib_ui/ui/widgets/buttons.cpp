@@ -476,7 +476,7 @@ TtSvgButton::TtSvgButton(QWidget* parent)
       svg_renderer_(new QSvgRenderer(this)),
       svg_size_(22, 22) {
   setObjectName("TtSvgButton");
-  // setMinimumSize(22, 22);
+  setMinimumSize(22, 22);
   // resize(22, 22);
   // setFixedSize(22, 22);
 }
@@ -490,7 +490,7 @@ TtSvgButton::TtSvgButton(const QString& svgPath, QWidget* parent)
       is_pressed_(false),
       is_hovered_(false),
       is_checked_(false) {
-  // setMinimumSize(22, 22);
+  setMinimumSize(22, 22);
   // resize(22, 22);
   // setFixedSize(22, 22);
   setAttribute(Qt::WA_Hover);
@@ -815,5 +815,64 @@ void TtTextButton::updateStyle() {
   // qDebug() << style;
   setStyleSheet(style);
 }
+
+// FancyButton::FancyButton(const QString& text, const QString& iconPath,
+//                          QWidget* parent)
+//     : QPushButton(text, parent),  // 关键修改：显式设置文本
+//       m_iconPath(iconPath),
+//       m_hovered(false),
+//       m_pressed(false) {
+//   // 禁用默认边框
+//   setStyleSheet("border: none;");
+//   setCursor(Qt::PointingHandCursor);
+//   setMouseTracking(true);
+
+//   setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+//   setMinimumSize(50, 30);
+// }
+
+// void FancyButton::paintEvent(QPaintEvent* event) {
+//   QPainter painter(this);
+//   painter.setRenderHint(QPainter::Antialiasing);
+
+//   // 绘制背景
+//   QColor bgColor = Qt::white;
+//   if (m_pressed) {
+//     bgColor = QColor(186, 231, 255);
+//   } else if (m_hovered) {
+//     bgColor = QColor(229, 229, 229);
+//   }
+//   painter.setBrush(bgColor);
+//   painter.setPen(Qt::NoPen);
+//   painter.drawRect(rect());
+//   painter.drawRoundedRect(rect().adjusted(1, 1, -1, -1), 3, 3);
+
+//   // 动态布局：根据宽度决定显示图标或文本
+//   const bool showIcon = !m_iconPath.isEmpty();
+//   const bool showText = (width() >= 50);  // 宽度足够时才显示文本
+
+//   // 绘制图标
+//   if (showIcon) {
+//     QPixmap pixmap(m_iconPath);
+//     if (!pixmap.isNull()) {
+//       const int iconSize = (showText) ? 20 : 16;  // 狭窄时缩小图标
+//       pixmap = pixmap.scaled(iconSize, iconSize, Qt::KeepAspectRatio,
+//                              Qt::SmoothTransformation);
+//       painter.drawPixmap(5, (height() - iconSize) / 2,
+//                          pixmap);  // 左对齐，边距 5px
+//     }
+//   }
+
+//   // 绘制文本（仅在宽度足够时显示）
+//   if (showText) {
+//     painter.setPen(QColor("#333333"));
+//     QFontMetrics fm(font());
+//     const int textLeft = showIcon ? 30 : 5;  // 图标占用 25px (20图标+5边距)
+//     const int availableWidth = width() - textLeft - 5;  // 右边距 5px
+//     QString elidedText = fm.elidedText(text(), Qt::ElideRight, availableWidth);
+//     painter.drawText(QRect(textLeft, 0, availableWidth, height()),
+//                      Qt::AlignLeft | Qt::AlignVCenter, elidedText);
+//   }
+// }
 
 }  // namespace Ui

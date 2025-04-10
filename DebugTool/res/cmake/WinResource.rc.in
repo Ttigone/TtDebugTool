@@ -1,0 +1,6 @@
+#include <windows.h>
+
+#define _STRINGIFY(x) #x
+#define STRINGIFY(x) _STRINGIFY(x)
+
+@RC_ICON_COMMENT@ IDI_ICON1               ICON    DISCARDABLE     STRINGIFY(@RC_ICON_PATH@)

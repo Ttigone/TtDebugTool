@@ -16,6 +16,14 @@ UdpServerSetting::UdpServerSetting(QWidget* parent) : QWidget(parent) {
   QWidget* linkConfig = new QWidget;
   Ui::TtVerticalLayout* linkConfigLayout = new Ui::TtVerticalLayout(linkConfig);
   self_ip_ = new Ui::TtLabelLineEdit(tr("本地地址: "), linkConfig);
+  // IPv4地址正则表达式验证
+  QString ipPattern =
+      "\\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}"
+      "(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\b";
+  // IPv6地址正则表达式验证(简化版)
+  QString ipv6Pattern = "([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}";
+  self_ip_->body()->setValidator(
+      new QRegularExpressionValidator(QRegularExpression(ipPattern), this));
   self_port_ = new Ui::TtLabelLineEdit(tr("本地端口: "), linkConfig);
 
   linkConfigLayout->addWidget(self_ip_);

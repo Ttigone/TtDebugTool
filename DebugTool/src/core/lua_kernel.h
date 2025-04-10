@@ -10,7 +10,7 @@ class LuaKernel {
   LuaKernel();
   ~LuaKernel();
 
-  void doLuaCode(const char* code, int data, double* result);
+  void doLuaCode(const QString& code, int data, double& result);
 
  private:
   lua_State* lua_state_;

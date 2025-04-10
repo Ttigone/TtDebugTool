@@ -208,7 +208,7 @@ void SerialSetting::setControlState(bool state) {
 }
 
 quint32 SerialSetting::getRefreshInterval() {
-  // return refr
+  return 0;
 }
 
 void SerialSetting::init() {
@@ -474,6 +474,7 @@ QString SerialSetting::matchingSerialCOMx(const QString& name) {
     //   continue;
     // }
   }
+  return QString();
 }
 
 }  // namespace Widget

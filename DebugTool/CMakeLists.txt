@@ -105,11 +105,12 @@ absolute_path_list(PROJECT_HEADER_FILES)
 absolute_path_list(PROJECT_SOURCE_FILES)
 
 set(RES_QRC
-    res/windowbar/windowbar_icon.qrc
+    res/shared.qrc
     res/sys-icon/sys-icon.qrc
     res/sys-icon/third/third.qrc
     res/sys-gif/sys-gif.qrc
     res/font/font.qrc
+    res/styles/theme.qrc
 )
 
 # add_compile_options(-fpermissive)  # 全局启用宽松模式
@@ -254,3 +255,44 @@ add_dependencies(${PROJECT_NAME} update_translations)
 #     BASE "${CMAKE_CURRENT_BINARY_DIR}"
 #     FILES ${QM_FILES}
 # )
+
+
+# ----------------------------------------------------------------
+# Set Icon of Window
+# ----------------------------------------------------------------
+function(add_win_rc _target)
+    set(RC_VERSION "0.0.0.0")
+    set(RC_VERSION_STRING "0.0.0.0")
+
+    set(RC_DESCRIPTION ${_target})
+    set(RC_COPYRIGHT ${_target})
+    set(RC_APPLICATION_NAME ${_target})
+
+    get_filename_component(RC_ICON_PATH "${CMAKE_CURRENT_SOURCE_DIR}/res/app/${PROJECT_NAME}.ico" ABSOLUTE)
+
+
+    set(_out_path "${CMAKE_CURRENT_BINARY_DIR}/${_target}_res.rc")
+    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/res/cmake/WinResource.rc.in" ${_out_path} @ONLY)
+    target_sources(${_target} PRIVATE ${_out_path})
+
+endfunction()
+# execute function
+add_win_rc(${PROJECT_NAME})
+
+# set app version'file
+function(add_win_manifest _target)
+    set(_name ${_target})
+    set(_version "0.0.0.0")
+    set(_desc ${_name})
+
+    set(MANIFEST_IDENTIFIER ${_name})
+    set(MANIFEST_VERSION ${_version})
+    set(MANIFEST_DESCRIPTION ${_desc})
+    set(MANIFEST_UTF8)
+    set(_out_path "${CMAKE_CURRENT_BINARY_DIR}/${_target}_manifest.manifest")
+    # message(_out_path)
+    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/res/cmake/WinManifest.manifest.in" ${_out_path} @ONLY)
+    target_sources(${_target} PRIVATE ${_out_path})
+endfunction()
+add_win_manifest(${PROJECT_NAME})
+

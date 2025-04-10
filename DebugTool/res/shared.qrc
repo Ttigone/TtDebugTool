@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/">
+        <file>app/TtDebugTool.png</file>
+        <file>window-bar/close.svg</file>
+        <file>window-bar/fullscreen.svg</file>
+        <file>window-bar/maximize.svg</file>
+        <file>window-bar/minimize.svg</file>
+        <file>window-bar/more-line.svg</file>
+        <file>window-bar/restore.svg</file>
+    </qresource>
+</RCC>

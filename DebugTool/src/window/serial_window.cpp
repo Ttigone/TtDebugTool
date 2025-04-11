@@ -56,7 +56,6 @@ void TtColorButton::setColors(const QColor& color) {
 
 void TtColorButton::setText(const QString& text) {
   text_ = text;
-  // updateSizeHint();
   update();
 }
 

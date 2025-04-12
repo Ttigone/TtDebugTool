@@ -64,6 +64,11 @@ void TtColorButton::setHoverBackgroundColor(const QColor& color) {
   update();
 }
 
+void TtColorButton::setCheckBlockColor(const QColor& color) {
+  check_block_color_ = color;
+  update();
+}
+
 bool TtColorButton::isChecked() const {
   return is_checked_;
 }
@@ -85,31 +90,87 @@ void TtColorButton::setEnable(bool enabled) {
   update();
 }
 
+void TtColorButton::modifyText() {
+  if (rename_editor_)
+    return;  // 防止重复创建
+
+  original_text_ = text_;  // 保存原始文本
+
+  // 创建编辑器
+  rename_editor_ = new QLineEdit(this);
+  rename_editor_->setText(text_);
+  rename_editor_->setGeometry(
+      rect().adjusted(color_size_.width() + 10, 0, -10, 0));  // 对齐文本区域
+  rename_editor_->installEventFilter(this);
+  rename_editor_->setStyleSheet(
+      "QLineEdit {"
+      "  border: 1px solid #666;"
+      "  background: white;"
+      "  padding: 2px 5px;"
+      "}");
+  rename_editor_->show();
+  rename_editor_->setFocus();
+
+  // 连接信号
+  connect(rename_editor_, &QLineEdit::editingFinished, this, [=]() {
+    // const QString newText = rename_editor_->text().trimmed();
+    // if (!newText.isEmpty() && newText != text_) {
+    //   setText(newText);
+    //   emit textChanged(newText);  // 触发文本修改信号
+    // }
+    // rename_editor_->deleteLater();
+    // rename_editor_ = nullptr;
+    // 通过判断文本是否修改来确定是确认还是取消
+    if (rename_editor_->text() != original_text_) {
+      setText(rename_editor_->text());
+      emit textChanged(rename_editor_->text());
+    }
+    clearupEditor();
+  });
+
+  // connect(rename_editor_, &QLineEdit::editingCanceled, this, [=]() {
+  //   rename_editor_->deleteLater();
+  //   rename_editor_ = nullptr;
+  //   update();  // 恢复原始文本显示
+  // });
+}
+
 void TtColorButton::paintEvent(QPaintEvent* event) {
   QPainter painter(this);
   painter.setRenderHint(QPainter::Antialiasing);
 
-  // 绘制背景
+  // 绘制背景（取消默认的蓝底色）
   QRect bgRect = rect();
   if (!isEnabled()) {
     painter.fillRect(bgRect, QColor(220, 220, 220));
-  } else if (is_pressed_ || is_checked_) {
-    painter.fillRect(bgRect, current_color_.lighter(120));
-  } else if (is_hovered_) {
-    painter.fillRect(bgRect, normal_color_);
+  } else {
+    // 仅在有交互状态时绘制背景
+    if (is_pressed_ || is_checked_) {
+      // painter.fillRect(bgRect, current_color_.lighter(120));
+    } else if (is_hovered_) {
+      QColor hoverBg = normal_color_;
+      hoverBg.setAlpha(100);  // 半透明效果
+      painter.fillRect(bgRect, hoverBg);
+    }
   }
 
-  // 绘制左侧颜色块
-  QRect colorRect(4, (height() - color_size_.height()) / 2, color_size_.width(),
+  // 优化颜色块绘制
+  QRect colorRect(6, (height() - color_size_.height()) / 2, color_size_.width(),
                   color_size_.height());
   painter.setPen(Qt::NoPen);
-  painter.setBrush(current_color_);
-  painter.drawRoundedRect(colorRect, 2, 2);
+  painter.setBrush(check_block_color_);
+  painter.drawRoundedRect(colorRect, 3, 3);
 
-  // 绘制文本
+  if (is_checked_) {
+    painter.setPen(Qt::white);  // 选中时的标记颜色
+    painter.setFont(QFont("Arial", 10, QFont::Bold));
+    painter.drawText(colorRect, Qt::AlignCenter, "✓");  // 可改成你想要的字符
+  }
+
+  // 绘制文本（优化间距）
   painter.setPen(isEnabled() ? palette().text().color() : Qt::gray);
-  QRect textRect(color_size_.width() + 12, 0,
-                 width() - color_size_.width() - 12, height());
+  QRect textRect(color_size_.width() + 16, 0,  // 增加间距
+                 width() - color_size_.width() - 16, height());
   painter.drawText(textRect, Qt::AlignLeft | Qt::AlignVCenter, text_);
 }
 
@@ -128,8 +189,9 @@ void TtColorButton::leaveEvent(QEvent* event) {
 void TtColorButton::mousePressEvent(QMouseEvent* event) {
   if (event->button() == Qt::LeftButton && isEnabled()) {
     is_pressed_ = true;
-    if (enable_hold_to_check_)
+    if (enable_hold_to_check_) {
       setChecked(true);
+    }
     update();
   }
   QWidget::mousePressEvent(event);
@@ -148,12 +210,38 @@ void TtColorButton::mouseReleaseEvent(QMouseEvent* event) {
   QWidget::mouseReleaseEvent(event);
 }
 
+void TtColorButton::mouseDoubleClickEvent(QMouseEvent* event) {
+  if (event->button() == Qt::LeftButton && isEnabled()) {
+    modifyText();
+  }
+  QWidget::mouseDoubleClickEvent(event);
+}
+
+bool TtColorButton::eventFilter(QObject* watched, QEvent* event) {
+  if (watched == rename_editor_ && event->type() == QEvent::KeyPress) {
+    QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
+    if (keyEvent->key() == Qt::Key_Escape) {
+      clearupEditor();
+      return true;
+    }
+  }
+  return QWidget::eventFilter(watched, event);
+}
+
 QSize TtColorButton::sizeHint() const {
   QFontMetrics fm(font());
   int textWidth = fm.horizontalAdvance(text_);
   int totalWidth = color_size_.width() + textWidth + 20;  // 左右留白
   int height = qMax(color_size_.height(), fm.height()) + 8;
   return QSize(totalWidth, height);
+}
+
+void TtColorButton::clearupEditor() {
+  if (rename_editor_) {
+    rename_editor_->deleteLater();
+    rename_editor_ = nullptr;
+    update();  // 强制重绘显示原始文本
+  }
 }
 
 SerialWindow::SerialWindow(QWidget* parent)
@@ -680,26 +768,89 @@ void SerialWindow::init() {
   QWidget* graphWidget = new QWidget;
   Ui::TtHorizontalLayout* graphWidgetLayout =
       new Ui::TtHorizontalLayout(graphWidget);
+  graphWidgetLayout->setSpacing(30);
   serial_plot_ = new SerialPlot;
   graphWidgetLayout->addWidget(serial_plot_);
 
   QListWidget* serialDataList = new QListWidget(graphWidget);
-  // serialDataList->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  serialDataList->setContextMenuPolicy(
+      Qt::CustomContextMenu);  // 启用自定义右键菜单
+  connect(serialDataList, &QListWidget::customContextMenuRequested, this,
+          [=](const QPoint& pos) {
+            // 获取当前右键点击的项
+            QListWidgetItem* item = serialDataList->itemAt(pos);
+            if (!item)
+              return;  // 空白区域点击不处理
+
+            // 创建菜单
+            QMenu menu;
+            QAction* editAction = menu.addAction(tr("编辑"));
+            QAction* addAction = menu.addAction(tr("添加"));
+            QAction* deleteAction = menu.addAction(tr("删除"));
+            QAction* renameAction = menu.addAction(tr("重命名"));
+
+            // 处理菜单点击
+            QAction* selectedAction =
+                menu.exec(serialDataList->viewport()->mapToGlobal(pos));
+            if (selectedAction == renameAction) {
+              // 触发重命名逻辑（与双击逻辑复用）
+              if (auto* btn = qobject_cast<TtColorButton*>(
+                      serialDataList->itemWidget(item))) {
+                btn->modifyText();  // 假设已为按钮添加重命名方法
+              }
+            } else if (selectedAction == deleteAction) {
+              serialDataList->takeItem(serialDataList->row(item));  // 删除项
+            } else if (selectedAction == addAction) {
+              QListWidgetItem* item = new QListWidgetItem(serialDataList);
+              item->setSizeHint(QSize(78, 30));
+              TtColorButton* getValueButton = new TtColorButton(
+                  QColor(100, 100, 140),
+                  QString("CH%1").arg(serialDataList->count()), this);
+              getValueButton->setFocusPolicy(Qt::NoFocus);
+              serialDataList->setItemWidget(item, getValueButton);
+            }
+          });
+
+  serialDataList->setContentsMargins(QMargins());
+  serialDataList->setSpacing(0);
+  serialDataList->setStyleSheet(
+      // 设置列表整体背景色
+      "QListWidget {"
+      "   background-color: white;"
+      "   outline: none;"  // 移除焦点虚线框（关键）
+      "}"
+      // 项选中状态样式
+      "QListWidget::item:selected {"
+      "   background: transparent;"  // 强制透明背景
+      "}"
+      // 项悬停状态样式
+      "QListWidget::item:hover {"
+      "   background: transparent;"  // 防止悬停变色
+      "}"
+      // 项按下状态样式
+      "QListWidget::item:pressed {"
+      "   background: transparent;"  // 防止按压变色
+      "}");
+
+  // 启用该模式, 会导致有虚线框
   serialDataList->setFixedWidth(78);
   graphWidgetLayout->addWidget(serialDataList);
   QListWidgetItem* item = new QListWidgetItem(serialDataList);
   TtColorButton* getValueButton =
-      new TtColorButton(QColor::fromRgbF(100, 200, 100), "T2", this);
-  // auto getValueButton = new QPushButton();
+      new TtColorButton(QColor::fromRgbF(200, 100, 100), "T2", this);
+  // 勾选区域的颜色
+  getValueButton->setFocusPolicy(Qt::NoFocus);
+  getValueButton->setCheckBlockColor(QColor(100, 100, 200, 100));
   serialDataList->setItemWidget(item, getValueButton);
 
-  // {
-  //   QListWidgetItem* item = new QListWidgetItem(serialDataList);
-  //   item->setSizeHint(QSize(78, 30));
-  //   Ui::TtColorButton* getValueButton =
-  //       new Ui::TtColorButton(QColor(100, 100, 140), "T2", this);
-  //   serialDataList->setItemWidget(item, getValueButton);
-  // }
+  {
+    QListWidgetItem* item = new QListWidgetItem(serialDataList);
+    item->setSizeHint(QSize(78, 30));
+    TtColorButton* getValueButton =
+        new TtColorButton(QColor(100, 100, 140), "T2", this);
+    getValueButton->setFocusPolicy(Qt::NoFocus);
+    serialDataList->setItemWidget(item, getValueButton);
+  }
 
   messageStackedView->addWidget(graphWidget);
 

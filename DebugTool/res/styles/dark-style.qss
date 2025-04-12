@@ -140,6 +140,8 @@ QMenu::separator {
 }
 
 
+
+/*
 /* Window */
 
 MainWindow {
@@ -156,3 +158,17 @@ QWidget#clock-widget {
     font-weight: bold;
     background-color: transparent;
 }
+QListView {
+    /*border: 1px solid #636363;*/
+    border: 0px;
+    selection-background-color: #4D4D4D;
+    selection-color: #F0F0F0;
+    background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 #4D4D4D, stop:1 #292929);
+    outline:0px;
+}
+
+QListWidget:focus
+{
+    outline: 0px;
+}
+*/

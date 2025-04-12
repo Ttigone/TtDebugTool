@@ -66,15 +66,20 @@ class TtColorButton : public QWidget {
   void setColors(const QColor& color);
   void setText(const QString& text);
   void setHoverBackgroundColor(const QColor& color);
+  void setCheckBlockColor(const QColor& color);
 
   bool isChecked() const;
   void setChecked(bool checked);
   void setEnableHoldToCheck(bool enable);
   void setEnable(bool enabled);
 
+ public slots:
+  void modifyText();
+
  signals:
   void clicked();
   void toggled(bool checked);
+  void textChanged(const QString& newText);  // 新增文本修改信号
 
  protected:
   void paintEvent(QPaintEvent* event) override;
@@ -82,9 +87,12 @@ class TtColorButton : public QWidget {
   void leaveEvent(QEvent* event) override;
   void mousePressEvent(QMouseEvent* event) override;
   void mouseReleaseEvent(QMouseEvent* event) override;
+  void mouseDoubleClickEvent(QMouseEvent* event) override;
+  bool eventFilter(QObject* watched, QEvent* event) override;
   QSize sizeHint() const override;
 
  private:
+  void clearupEditor();
   bool is_pressed_;
   QSize color_size_;
   bool is_checked_;
@@ -93,8 +101,11 @@ class TtColorButton : public QWidget {
   QString text_;
   QColor current_color_;
   QColor normal_color_;
-
+  QColor check_block_color_;
   bool is_hovered_;
+
+  QLineEdit* rename_editor_ = nullptr;  // 重命名编辑器
+  QString original_text_;               // 保存原始文本
 };
 
 struct SerialSaveConfig {

@@ -1564,39 +1564,59 @@
 <context>
     <name>Window::SerialWindow</name>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="411"/>
-        <location filename="../../src/window/serial_window.cpp" line="487"/>
-        <location filename="../../src/window/serial_window.cpp" line="922"/>
+        <location filename="../../src/window/serial_window.cpp" line="499"/>
+        <location filename="../../src/window/serial_window.cpp" line="575"/>
+        <location filename="../../src/window/serial_window.cpp" line="1073"/>
         <source>串口未打开</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="519"/>
+        <location filename="../../src/window/serial_window.cpp" line="607"/>
         <source>未命名串口连接</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="561"/>
+        <location filename="../../src/window/serial_window.cpp" line="649"/>
         <source>名称不能为空！</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="731"/>
+        <location filename="../../src/window/serial_window.cpp" line="787"/>
+        <source>编辑</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/window/serial_window.cpp" line="788"/>
+        <source>添加</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/window/serial_window.cpp" line="789"/>
+        <source>删除</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/window/serial_window.cpp" line="790"/>
+        <source>重命名</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/window/serial_window.cpp" line="882"/>
         <source>手动</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="732"/>
+        <location filename="../../src/window/serial_window.cpp" line="883"/>
         <source>片段</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="741"/>
+        <location filename="../../src/window/serial_window.cpp" line="892"/>
         <source>发送字节数: 0 B</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="743"/>
+        <location filename="../../src/window/serial_window.cpp" line="894"/>
         <source>接收字节数: 0 B</source>
         <translation type="unfinished"></translation>
     </message>

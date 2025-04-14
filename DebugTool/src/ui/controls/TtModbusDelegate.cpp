@@ -2,10 +2,10 @@
 
 namespace Ui {
 
-TtModbusDelegate::TtModbusDelegate(QObject* parent) {}
+// TtModbusDelegate::TtModbusDelegate(QObject* parent) {}
 
-void TtModbusDelegate::paint(QPainter* painter,
-                             const QStyleOptionViewItem& option,
-                             const QModelIndex& index) const {}
+// void TtModbusDelegate::paint(QPainter* painter,
+//                              const QStyleOptionViewItem& option,
+//                              const QModelIndex& index) const {}
 
 }  // namespace Ui

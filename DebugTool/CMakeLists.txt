@@ -87,6 +87,8 @@ set(PROJECT_SOURCES
     ${src_loc}/ui/controls/TtQCPItemRichText.h ${src_loc}/ui/controls/TtQCPItemRichText.cpp
     ${src_loc}/ui/controls/TtQCPItemRichText.h ${src_loc}/ui/controls/TtQCPItemRichText.cpp
     ${src_loc}/ui/controls/TtLuaInputBox.h ${src_loc}/ui/controls/TtLuaInputBox.cpp
+    ${src_loc}/ui/controls/TtColorButton.h ${src_loc}/ui/controls/TtColorButton.cpp
+    ${src_loc}/ui/controls/TtColorButtonEditorDialog.h ${src_loc}/ui/controls/TtColorButtonEditorDialog.cpp
 )
 
 # Apply the macro

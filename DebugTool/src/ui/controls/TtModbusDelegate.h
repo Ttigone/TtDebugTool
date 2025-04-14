@@ -5,6 +5,7 @@
 #include <QSpinBox>
 #include <QStyledItemDelegate>
 
+#include <ui/control/TtComboBox.h>
 #include <ui/control/TtSwitchButton.h>
 
 namespace Ui {
@@ -103,65 +104,81 @@ class TableModel : public QAbstractTableModel {
   QVector<RowData> m_data;
 };
 
-class TableDelegate : public QStyledItemDelegate {
+// class TableDelegate : public QStyledItemDelegate {
+class ModbusTableDelegateForType : public QStyledItemDelegate {
   Q_OBJECT
  public:
-  TableDelegate(QObject* parent = nullptr) : QStyledItemDelegate(parent) {}
+  ModbusTableDelegateForType(QObject* parent = nullptr)
+      : QStyledItemDelegate(parent) {}
+  ~ModbusTableDelegateForType() {}
 
   // 绘制单元格
-  void paint(QPainter* painter, const QStyleOptionViewItem& option,
-             const QModelIndex& index) const override {
-    // if (index.column() == 0) {
-    //   // 绘制开关按钮
-    //   drawSwitchButton(painter, option, index.data().toBool());
-    // } else {
-    //   QStyledItemDelegate::paint(painter, option, index);
-    // }
-    // 仅当不在编辑状态时绘制开关按钮
-    if (index.column() == 0 && !(option.state & QStyle::State_Editing)) {
-      drawSwitchButton(painter, option, index.data().toBool());
-    } else {
-      QStyledItemDelegate::paint(painter, option, index);
-    }
-  }
+  // void paint(QPainter* painter, const QStyleOptionViewItem& option,
+  //            const QModelIndex& index) const override {
+  //   // if (index.column() == 0) {
+  //   //   // 绘制开关按钮
+  //   //   drawSwitchButton(painter, option, index.data().toBool());
+  //   // } else {
+  //   //   QStyledItemDelegate::paint(painter, option, index);
+  //   // }
+  //   // 仅当不在编辑状态时绘制开关按钮
+  //   if (index.column() == 0 && !(option.state & QStyle::State_Editing)) {
+  //     drawSwitchButton(painter, option, index.data().toBool());
+  //   } else {
+  //     QStyledItemDelegate::paint(painter, option, index);
+  //   }
+  // }
 
-  // 创建编辑器（实际控件）
   QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option,
                         const QModelIndex& index) const override {
-    qDebug() << "test";
-    switch (index.column()) {
-      case 0:
-        return createSwitchButton(parent, index);  // 开关按钮
-      case 2:
-        return createFormatComboBox(parent, index);  // 格式下拉框
-      case 4:
-        return createDelaySpinBox(parent, index);  // 延时输入框
-      default:
-        return QStyledItemDelegate::createEditor(parent, option, index);
-    }
+    // qDebug() << "test";
+    // switch (index.column()) {
+    //   case 0:
+    //     return createSwitchButton(parent, index);  // 开关按钮
+    //   case 2:
+    //     return createFormatComboBox(parent, index);  // 格式下拉框
+    //   case 4:
+    //     return createDelaySpinBox(parent, index);  // 延时输入框
+    //   default:
+    //     return QStyledItemDelegate::createEditor(parent, option, index);
+    // }
+    // 创建编辑器（实际控件）
+    TtComboBox* editor = new TtComboBox(parent);
+    editor->addItems({"Hex, TEXT"});
+    return editor;
   }
 
   void setEditorData(QWidget* editor, const QModelIndex& index) const override {
-    switch (index.column()) {
-      case 0: {
-        TtSwitchButton* btn = qobject_cast<TtSwitchButton*>(editor);
-        btn->setChecked(index.data().toBool());
-        break;
+    // switch (index.column()) {
+    //   case 0: {
+    //     TtSwitchButton* btn = qobject_cast<TtSwitchButton*>(editor);
+    //     btn->setChecked(index.data().toBool());
+    //     break;
+    //   }
+    //   case 2: {
+    //     QComboBox* combo = qobject_cast<QComboBox*>(editor);
+    //     combo->addItems({"TEXT", "HEX"});
+    //     combo->setCurrentText(index.data().toString());
+    //     break;
+    //   }
+    //   case 4: {
+    //     QSpinBox* spin = qobject_cast<QSpinBox*>(editor);
+    //     spin->setRange(0, 9999);
+    //     spin->setValue(index.data().toInt());
+    //     break;
+    //   }
+    //   default:
+    //     QStyledItemDelegate::setEditorData(editor, index);
+    // }
+    TtComboBox* comboBox = qobject_cast<TtComboBox*>(editor);
+    if (comboBox) {
+      // 当前的 item text 值
+      QString currentData = index.model()->data(index, Qt::EditRole).toString();
+      // 根据内容, 查找索引项
+      int idx = comboBox->findText(currentData);
+      if (idx != -1) {
+        comboBox->setCurrentIndex((idx));
       }
-      case 2: {
-        QComboBox* combo = qobject_cast<QComboBox*>(editor);
-        combo->addItems({"TEXT", "HEX"});
-        combo->setCurrentText(index.data().toString());
-        break;
-      }
-      case 4: {
-        QSpinBox* spin = qobject_cast<QSpinBox*>(editor);
-        spin->setRange(0, 9999);
-        spin->setValue(index.data().toInt());
-        break;
-      }
-      default:
-        QStyledItemDelegate::setEditorData(editor, index);
     }
   }
 
@@ -171,100 +188,104 @@ class TableDelegate : public QStyledItemDelegate {
     editor->setGeometry(option.rect);
   }
 
-  // 同步编辑器数据到模型
   void setModelData(QWidget* editor, QAbstractItemModel* model,
                     const QModelIndex& index) const override {
-    switch (index.column()) {
-      case 0: {
-        auto btn = qobject_cast<TtSwitchButton*>(editor);
-        model->setData(index, btn->isChecked());
-        break;
-      }
-      case 2: {
-        auto combo = qobject_cast<QComboBox*>(editor);
-        model->setData(index, combo->currentText());
-        break;
-      }
-      case 4: {
-        auto spin = qobject_cast<QSpinBox*>(editor);
-        model->setData(index, spin->value());
-        break;
-      }
-      default:
-        QStyledItemDelegate::setModelData(editor, model, index);
+    // switch (index.column()) {
+    //   case 0: {
+    //     auto btn = qobject_cast<TtSwitchButton*>(editor);
+    //     model->setData(index, btn->isChecked());
+    //     break;
+    //   }
+    //   case 2: {
+    //     auto combo = qobject_cast<QComboBox*>(editor);
+    //     model->setData(index, combo->currentText());
+    //     break;
+    //   }
+    //   case 4: {
+    //     auto spin = qobject_cast<QSpinBox*>(editor);
+    //     model->setData(index, spin->value());
+    //     break;
+    //   }
+    //   default:
+    //     QStyledItemDelegate::setModelData(editor, model, index);
+    // }
+    // 同步编辑器数据到模型
+    TtComboBox* comboBox = qobject_cast<TtComboBox*>(editor);
+    if (comboBox) {
+      model->setData(index, comboBox->currentData(), Qt::EditRole);
     }
   }
 
  private:
   // 绘制开关按钮
-  void drawSwitchButton(QPainter* painter, const QStyleOptionViewItem& option,
-                        bool checked) const {
-    QStyleOptionButton opt;
-    opt.rect = option.rect.adjusted(4, 4, -4, -4);  // 边距
-    opt.state = QStyle::State_Enabled |
-                (checked ? QStyle::State_On : QStyle::State_Off);
-    QApplication::style()->drawControl(QStyle::CE_CheckBox, &opt, painter);
-  }
+  // void drawSwitchButton(QPainter* painter, const QStyleOptionViewItem& option,
+  //                       bool checked) const {
+  //   QStyleOptionButton opt;
+  //   opt.rect = option.rect.adjusted(4, 4, -4, -4);  // 边距
+  //   opt.state = QStyle::State_Enabled |
+  //               (checked ? QStyle::State_On : QStyle::State_Off);
+  //   QApplication::style()->drawControl(QStyle::CE_CheckBox, &opt, painter);
+  // }
 
-  // 创建控件
-  TtSwitchButton* createSwitchButton(QWidget* parent,
-                                     const QModelIndex& index) const {
-    auto btn = new TtSwitchButton(parent);
-    btn->setChecked(index.data().toBool());
-    return btn;
-  }
+  // // 创建控件
+  // TtSwitchButton* createSwitchButton(QWidget* parent,
+  //                                    const QModelIndex& index) const {
+  //   auto btn = new TtSwitchButton(parent);
+  //   btn->setChecked(index.data().toBool());
+  //   return btn;
+  // }
 
-  QComboBox* createFormatComboBox(QWidget* parent,
-                                  const QModelIndex& index) const {
-    auto combo = new QComboBox(parent);
-    qDebug() << "Test";
-    combo->addItems({"TEXT", "HEX"});
-    combo->setCurrentText(index.data().toString());
-    return combo;
-  }
-  QSpinBox* createDelaySpinBox(QWidget* parent,
-                               const QModelIndex& index) const {
-    auto spin = new QSpinBox(parent);
-    spin->setRange(0, 9999);
-    spin->setValue(index.data().toInt());
-    return spin;
-  }
+  // QComboBox* createFormatComboBox(QWidget* parent,
+  //                                 const QModelIndex& index) const {
+  //   auto combo = new QComboBox(parent);
+  //   qDebug() << "Test";
+  //   combo->addItems({"TEXT", "HEX"});
+  //   combo->setCurrentText(index.data().toString());
+  //   return combo;
+  // }
+  // QSpinBox* createDelaySpinBox(QWidget* parent,
+  //                              const QModelIndex& index) const {
+  //   auto spin = new QSpinBox(parent);
+  //   spin->setRange(0, 9999);
+  //   spin->setValue(index.data().toInt());
+  //   return spin;
+  // }
 };
 
-class TtModbusDelegate : public QStyledItemDelegate {
-  Q_OBJECT
- public:
-  //测试表格委托列索引
-  enum DelegateColIndex {
-    // NO_COL = 0,           //编号列(文本列)
-    // BATCH_CHECK_COL = 1,  //批量选择(图标列)
-    // LOVE_COL = 5          //喜欢(图标列)
-    CHECK_COL = 0,         //编号列(文本列)
-    ADDRESS_COL = 1,       //批量选择(图标列)
-    NAME_COL = 2,          //喜欢(图标列)
-    VALUE_COL = 3,         //批量选择(图标列)
-    DESCRIPITION_COL = 4,  //批量选择(图标列)
-    OPEARION_COL = 4,      //批量选择(图标列)
-  };
+// class TtModbusDelegate : public QStyledItemDelegate {
+//   Q_OBJECT
+//  public:
+//   //测试表格委托列索引
+//   enum DelegateColIndex {
+//     // NO_COL = 0,           //编号列(文本列)
+//     // BATCH_CHECK_COL = 1,  //批量选择(图标列)
+//     // LOVE_COL = 5          //喜欢(图标列)
+//     CHECK_COL = 0,         //编号列(文本列)
+//     ADDRESS_COL = 1,       //批量选择(图标列)
+//     NAME_COL = 2,          //喜欢(图标列)
+//     VALUE_COL = 3,         //批量选择(图标列)
+//     DESCRIPITION_COL = 4,  //批量选择(图标列)
+//     OPEARION_COL = 4,      //批量选择(图标列)
+//   };
 
-  explicit TtModbusDelegate(QObject* parent = 0);
+//   explicit TtModbusDelegate(QObject* parent = 0);
 
- protected:
-  /*view 表项外观渲染*/
-  void paint(QPainter* painter, const QStyleOptionViewItem& option,
-             const QModelIndex& index) const;  //绘制渲染view item(表项)外观
+//  protected:
+//   /*view 表项外观渲染*/
+//   void paint(QPainter* painter, const QStyleOptionViewItem& option,
+//              const QModelIndex& index) const;  //绘制渲染view item(表项)外观
 
- private:
-  QPixmap uncheckedPixmap;  //批量未选中图标
-  QPixmap checkedPixmap;    //批量选中图标
+//  private:
+//   QPixmap uncheckedPixmap;  //批量未选中图标
+//   QPixmap checkedPixmap;    //批量选中图标
 
-  QPixmap lovingPixmap;  //将会喜欢
-  QPixmap lovedPixmap;   //喜欢
+//   QPixmap lovingPixmap;  //将会喜欢
+//   QPixmap lovedPixmap;   //喜欢
 
- signals:
+//  signals:
 
- public slots:
-};
+//  public slots:
+// };
 
 }  // namespace Ui
 

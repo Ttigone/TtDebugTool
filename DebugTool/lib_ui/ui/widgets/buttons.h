@@ -12,6 +12,7 @@
 #include "ui/abstract_button.h"
 #include "ui/widgets/labels.h"
 
+#include <QWidget>
 #include <QtSvgWidgets/QtSvgWidgets>
 
 QT_BEGIN_NAMESPACE

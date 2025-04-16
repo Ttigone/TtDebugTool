@@ -27,6 +27,8 @@ class SerialPlot;
 
 namespace Ui {
 
+class TtRadioButton;
+
 class TtMaskWidget;
 class TtNormalLabel;
 class CommonButton;
@@ -62,6 +64,8 @@ struct SerialSaveConfig {
 class SerialWindow : public QWidget, public Ui::TabManager::ISerializable {
   Q_OBJECT
  public:
+  enum class MsgType { TEXT = 0x01, HEX = 0x02 };
+
   explicit SerialWindow(QWidget* parent = nullptr);
   ~SerialWindow();
 
@@ -86,7 +90,7 @@ class SerialWindow : public QWidget, public Ui::TabManager::ISerializable {
   void dataReceived(const QByteArray& data);
   void switchToEditMode();
   void switchToDisplayMode();
-  void setDisplayHex(bool hexMode);
+  void setDisplayType(MsgType type);
   void setHeartbeartContent();
 
  private:
@@ -123,16 +127,21 @@ class SerialWindow : public QWidget, public Ui::TabManager::ISerializable {
 
   QsciScintilla* editor;
 
+  Ui::TtRadioButton* chose_text_;
+  Ui::TtRadioButton* chose_hex_;
+  MsgType send_type_ = MsgType::TEXT;
+
   QWidget* original_widget_ = nullptr;
   QWidget* edit_widget_ = nullptr;
   Ui::TtLineEdit* title_edit_ = nullptr;
   QStackedWidget* stack_ = nullptr;
   QtMaterialFlatButton* sendBtn;
   Ui::TtTableWidget* instruction_table_;
-  bool display_hex_;
+  MsgType display_type_ = MsgType::TEXT;
+  // bool display_hex_;
   SerialSaveConfig cfg_;
 
-  uint16_t package_size_;
+  uint16_t package_size_ = 0;
   QQueue<QString> msg_queue_;
   QTimer* send_package_timer_;
 

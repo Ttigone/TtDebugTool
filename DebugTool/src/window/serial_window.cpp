@@ -145,9 +145,8 @@ void SerialWindow::switchToDisplayMode() {
   stack_->setCurrentWidget(original_widget_);
 }
 
-void SerialWindow::setDisplayHex(bool hexMode) {
-  qDebug() << hexMode;
-  display_hex_ = hexMode;
+void SerialWindow::setDisplayType(MsgType type) {
+  display_type_ = type;
   refreshTerminalDisplay();
 }
 
@@ -189,11 +188,19 @@ void SerialWindow::refreshTerminalDisplay() {
     QString header = msg->timestamp().toString("[yyyy-MM-dd hh:mm:ss.zzz] ") +
                      (msg->isOutgoing() ? "<< " : ">> ");
 
-    QString content =
-        display_hex_
-            ? msg->contentAsHex().trimmed()  // 移除hex内容末尾可能的多余空格
-            : msg->contentAsText();
+    //  text 发送, 点击 text 时，文本消失 content 为 0
+    QString content;
+    if (display_type_ == MsgType::HEX) {
+      content = msg->contentAsHex().trimmed();
+    } else if (display_type_ == MsgType::TEXT) {
+      content = msg->contentAsText();
+    }
+    // QString content =
+    //     display_type_
+    //         ? msg->contentAsHex().trimmed()  // 移除hex内容末尾可能的多余空格
+    //         : msg->contentAsText();
 
+    // qDebug() << header << content + "\n";
     // 使用appendPlainText保持换行格式
     terminal_->appendPlainText(header);
     terminal_->appendPlainText(content + "\n");
@@ -232,26 +239,20 @@ void SerialWindow::dataReceived(const QByteArray& data) {
 
   // 导出 csv 格式. 在 menu 中实现
 
-  // 指定某些函数名
-  // 假如是一个值, 对这个值进行处理
+  QDateTime now = QDateTime::currentDateTime();
+  QString timestamp = now.toString("[yyyy-MM-dd hh:mm:ss.zzz]");
+
   recv_byte_count += data.size();
   auto tmp = new Ui::TtChatMessage();
   tmp->setContent(data);
   tmp->setRawData(data);
   tmp->setOutgoing(false);
   tmp->setBubbleColor(QColor("#0ea5e9"));
+  tmp->setTimestamp(now);
   QList<Ui::TtChatMessage*> list;
   list.append(tmp);
   message_model_->appendMessages(list);
 
-  // // 获取当前时间并格式化消息
-  QDateTime now = QDateTime::currentDateTime();
-  // QString timestamp = now.toString("[yyyy-MM-dd hh:mm:ss.zzz]");
-  // QString formattedMessage = timestamp + " >> " + "\n" + data + "\n";
-
-  // terminal_->appendPlainText(formattedMessage);
-
-  QString timestamp = now.toString("[yyyy-MM-dd hh:mm:ss.zzz]");
   terminal_->appendPlainText(timestamp + " >> ");  // 单独追加箭头行
   terminal_->appendPlainText(data);  // 数据内容作为独立块
   terminal_->appendPlainText("");    // 保留空行分隔
@@ -277,12 +278,34 @@ bool SerialWindow::restoreState(const QByteArray& state) {
 }
 
 void SerialWindow::sendMessageToPort() {
+  // 一开始是 0
   // 发送包间隔可以没有, 但是心跳必须得有间隔
   // 点击发送按钮, 消息获取从 editor
-  QString data = editor->text();
+  // 判断当前的发送类型
+  // TEXT 发送, 接收正确
+  // HEX 发送, 接收正确, 但是显示错误, TEXT 应该显示 error, 切换到  HEX 则显示正确
+  // HEX 显示上有问题
+
+  // QString data = editor->text();
+  QString text = editor->text();
+  QByteArray data;
+
+  if (send_type_ == MsgType::HEX) {
+    QString hexStr = text;
+    hexStr = hexStr.remove(QRegularExpression("[^0-9A-Fa-f]"));
+    if (hexStr.length() % 2 != 0) {
+      qDebug() << "HEX 字符串长度不是偶数，可能出错";
+      return;
+    }
+    data = QByteArray::fromHex(hexStr.toUtf8());
+  } else if (send_type_ == MsgType::TEXT) {
+    data = text.toUtf8();
+  }
+
+  // 发送包拆分
   if (package_size_ > 0) {
-    for (int i = 0; i < data.size(); i += package_size_) {
-      msg_queue_.enqueue(data.mid(i, package_size_));
+    for (int i = 0; i < text.size(); i += package_size_) {
+      msg_queue_.enqueue(text.mid(i, package_size_));
     }
   } else {
     // 如果发送包大小为 0
@@ -291,21 +314,23 @@ void SerialWindow::sendMessageToPort() {
                               1500, this);
       return;
     }
-    send_byte_count += data.size();
+    send_byte_count += text.size();
     // 获取当前时间并格式化消息
     QDateTime now = QDateTime::currentDateTime();
     QString timestamp = now.toString("[yyyy-MM-dd hh:mm:ss.zzz]");
     terminal_->appendPlainText(timestamp + " << ");  // 单独追加箭头行
-    if (display_hex_) {
-      terminal_->appendPlainText(data.toUtf8().toHex(' ').toUpper());
-    } else {
-      terminal_->appendPlainText(data);  // 数据内容作为独立块
+
+    if (display_type_ == MsgType::TEXT) {
+      terminal_->appendPlainText(QString::fromUtf8(data));
+    } else if (display_type_ == MsgType::HEX) {
+      terminal_->appendPlainText(data.toHex(' ').toUpper().trimmed());
     }
     terminal_->appendPlainText("");  // 保留空行分隔
 
     auto tmp = new Ui::TtChatMessage();
-    tmp->setContent(data);
-    tmp->setRawData(data.toUtf8());
+    tmp->setContent(text);  // 显示的文本
+    // tmp->setRawData(text.toUtf8());
+    tmp->setRawData(data);  // 原始文本
     tmp->setTimestamp(now);
     tmp->setOutgoing(true);
     tmp->setBubbleColor(QColor("#DCF8C6"));
@@ -314,8 +339,11 @@ void SerialWindow::sendMessageToPort() {
     message_model_->appendMessages(list);
 
     // 串口发送
+    // QMetaObject::invokeMethod(serial_port_, "sendData", Qt::QueuedConnection,
+    //                           Q_ARG(QString, data));
+
     QMetaObject::invokeMethod(serial_port_, "sendData", Qt::QueuedConnection,
-                              Q_ARG(QString, data));
+                              Q_ARG(QByteArray, data));
 
     send_byte->setText(QString("发送字节数: %1 B").arg(send_byte_count));
     message_view_->scrollToBottom();
@@ -513,6 +541,8 @@ void SerialWindow::init() {
   //// 选择 text/hex
   Ui::TtWidgetGroup* styleGroup = new Ui::TtWidgetGroup(this);
   styleGroup->setHoldingChecked(true);
+  // 点击切换后
+  // 时间戳消失, 渲染有问题
   Ui::TtTextButton* textBtn = new Ui::TtTextButton(QColor(Qt::blue), "TEXT");
   Ui::TtTextButton* hexBtn = new Ui::TtTextButton(QColor(Qt::blue), "HEX");
   styleGroup->addWidget(textBtn);
@@ -521,9 +551,11 @@ void SerialWindow::init() {
   styleGroup->setExclusive(true);
   chose_function_layout->addWidget(textBtn);
   chose_function_layout->addWidget(hexBtn);
-  connect(
-      styleGroup, &Ui::TtWidgetGroup::widgetClicked,
-      [this](const int& index) { setDisplayHex(index == 1 ? true : false); });
+  textBtn->setChecked(true);
+  connect(styleGroup, &Ui::TtWidgetGroup::widgetClicked,
+          [this](const int& index) {
+            setDisplayType(index == 1 ? MsgType::HEX : MsgType::TEXT);
+          });
 
   // 清除历史按钮
   chose_function_layout->addWidget(clear_history_);
@@ -598,11 +630,13 @@ void SerialWindow::init() {
               TtColorButton* getValueButton = new TtColorButton(
                   QColor(100, 100, 140),
                   QString("CH%1").arg(serialDataList->count()), this);
+
               // 生成随机颜色
               int hue = QRandomGenerator::global()->bounded(0, 360);
               // 这里设置饱和度为255, 明度为200, 并使用 alpha 为 100 (透明度)
               QColor randomCheckColor = QColor::fromHsv(hue, 255, 200, 100);
               getValueButton->setCheckBlockColor(randomCheckColor);
+
               getValueButton->setFocusPolicy(Qt::NoFocus);
               serialDataList->setItemWidget(item, getValueButton);
             } else if (item) {
@@ -612,7 +646,7 @@ void SerialWindow::init() {
                 qDebug() << "rename";
                 if (auto* btn = qobject_cast<TtColorButton*>(
                         serialDataList->itemWidget(item))) {
-                  // btn->modifyText();  // 假设已为按钮添加重命名方法
+                  btn->modifyText();
                 }
               } else if (selectedAction == deleteAction) {
                 qDebug() << "delete";
@@ -686,8 +720,16 @@ void SerialWindow::init() {
   contentWidgetLayout->addWidget(messageStackedView);
 
   connect(test_, &Ui::TtWidgetGroup::widgetClicked, this,
-          [this, messageStackedView](const int& idx) {
+          [this, messageStackedView, textBtn, hexBtn](const int& idx) {
             messageStackedView->setCurrentIndex(idx);
+            if (idx == 2) {
+              // 图表
+              textBtn->setVisible(false);
+              hexBtn->setVisible(false);
+            } else {
+              textBtn->setVisible(true);
+              hexBtn->setVisible(true);
+            }
           });
 
   base::DetectRunningTime runtime;
@@ -754,15 +796,16 @@ void SerialWindow::init() {
   Ui::TtHorizontalLayout* bottomBtnWidgetLayout =
       new Ui::TtHorizontalLayout(bottomBtnWidget);
 
-  Ui::TtRadioButton* choseText = new Ui::TtRadioButton(bottomBtnWidget);
-  Ui::TtRadioButton* choseHex = new Ui::TtRadioButton(bottomBtnWidget);
-  choseText->setText("TEXT");
-  choseHex->setText("HEX");
+  // 发送的格式
+  chose_text_ = new Ui::TtRadioButton("TEXT", bottomBtnWidget);
+  chose_hex_ = new Ui::TtRadioButton("HEX", bottomBtnWidget);
+  chose_text_->setChecked(true);
+  // send_type_ = 2;
 
   sendBtn = new QtMaterialFlatButton(bottomBtnWidget);
   sendBtn->setIcon(QIcon(":/sys/send.svg"));
-  bottomBtnWidgetLayout->addWidget(choseText);
-  bottomBtnWidgetLayout->addWidget(choseHex);
+  bottomBtnWidgetLayout->addWidget(chose_text_);
+  bottomBtnWidgetLayout->addWidget(chose_hex_);
   bottomBtnWidgetLayout->addStretch();
   bottomBtnWidgetLayout->addWidget(sendBtn);
 
@@ -884,6 +927,7 @@ void SerialWindow::connectSignals() {
 
   connect(serial_setting_, &Widget::SerialSetting::sendPackageMaxSizeChanged,
           this, [this](const uint16_t size) {
+            // 不设定的时候异常数字
             if (package_size_ != size) {
               package_size_ = size;
               qDebug() << "packageSize: " << package_size_;
@@ -912,9 +956,9 @@ void SerialWindow::connectSignals() {
       QDateTime now = QDateTime::currentDateTime();
       QString timestamp = now.toString("[yyyy-MM-dd hh:mm:ss.zzz]");
       terminal_->appendPlainText(timestamp + " << ");  // 单独追加箭头行
-      if (display_hex_) {
+      if (display_type_ == MsgType::HEX) {
         terminal_->appendPlainText(package.toUtf8().toHex(' ').toUpper());
-      } else {
+      } else if (display_type_ == MsgType::TEXT) {
         terminal_->appendPlainText(package);  // 数据内容作为独立块
       }
       terminal_->appendPlainText("");  // 保留空行分隔
@@ -960,6 +1004,16 @@ void SerialWindow::connectSignals() {
               heartbeat_timer_->setInterval(times);
             }
           });
+  connect(chose_hex_, &Ui::TtRadioButton::toggled, [this](bool checked) {
+    if (checked) {
+      send_type_ = MsgType::HEX;
+    }
+  });
+  connect(chose_text_, &Ui::TtRadioButton::toggled, [this](bool checked) {
+    if (checked) {
+      send_type_ = MsgType::TEXT;
+    }
+  });
 }
 
 }  // namespace Window

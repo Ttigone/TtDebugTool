@@ -168,39 +168,46 @@ void TtColorButton::leaveEvent(QEvent* event) {
 
 void TtColorButton::mousePressEvent(QMouseEvent* event) {
   if (event->button() == Qt::LeftButton && isEnabled()) {
-    if (checkBlockRect().contains(event->pos())) {
-      is_pressed_ = true;
-      if (enable_hold_to_check_) {
-        setChecked(true);
-      }
-      update();
-    }
+    checkbox_pressed_ = checkBlockRect().contains(event->pos());  // false
+    is_pressed_ = true;
+    update();
   }
   QWidget::mousePressEvent(event);
 }
 
 void TtColorButton::mouseReleaseEvent(QMouseEvent* event) {
+  if (ignore_next_release_) {
+    ignore_next_release_ = false;  // 只忽略一次
+    is_pressed_ = true;
+  }
+
   if (event->button() == Qt::LeftButton && is_pressed_ && isEnabled()) {
     is_pressed_ = false;
-    if (rect().contains(event->pos())) {
-      if (!enable_hold_to_check_)
+    if (ignore_next_release_ == false) {
+      if (checkbox_pressed_ == false) {
+        setChecked(is_checked_);
+      } else {
         setChecked(!is_checked_);
-      emit clicked();
+      }
     }
+    emit clicked();
     update();
   }
   QWidget::mouseReleaseEvent(event);
 }
 
 void TtColorButton::mouseDoubleClickEvent(QMouseEvent* event) {
-  if (checkBlockRect().contains(event->pos())) {
-    event->ignore();
+  if (checkBlockRect().contains(event->pos())) {  // 包含
+    ignore_next_release_ = true;
+    event->accept();
     return;
   }
   if (event->button() == Qt::LeftButton && isEnabled()) {
     modifyText();
+    event->accept();
+  } else {
+    QWidget::mouseDoubleClickEvent(event);
   }
-  QWidget::mouseDoubleClickEvent(event);
 }
 
 bool TtColorButton::eventFilter(QObject* watched, QEvent* event) {

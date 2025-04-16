@@ -9,6 +9,7 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 
+#include <ui/widgets/buttons.h>
 #include "TtColorButton.h"
 #include "ui/control/TtLineEdit.h"
 
@@ -24,9 +25,7 @@ class TtColorButtonEditorDialog : public QDialog {
     // 1. 编辑文本
     QHBoxLayout* textLayout = new QHBoxLayout;
     textLayout->addWidget(new QLabel(tr("文本:"), this));
-    // m_textEdit = new QLineEdit(this);
     m_textEdit = new Ui::TtLineEdit(this);
-    // m_textEdit->setText(m_button->getText());
     textLayout->addWidget(m_textEdit);
     mainLayout->addLayout(textLayout);
 
@@ -42,8 +41,10 @@ class TtColorButtonEditorDialog : public QDialog {
     colorLayout->addWidget(new QLabel(tr("背景色:"), this));
     m_colorButton = new QPushButton(tr("选择颜色"), this);
     // 同步初始颜色
+    // 背景色不太相同
     m_colorButton->setStyleSheet(
         QString("background-color: %1").arg(m_button->getColor().name()));
+
     connect(m_colorButton, &QPushButton::clicked, this, [this]() {
       QColor chosen = QColorDialog::getColor(m_button->getColor(), this,
                                              tr("选择背景颜色"));
@@ -59,17 +60,22 @@ class TtColorButtonEditorDialog : public QDialog {
     // 3. 修改勾选区域颜色
     QHBoxLayout* checkBlockLayout = new QHBoxLayout;
     checkBlockLayout->addWidget(new QLabel(tr("勾选块色:"), this));
-    m_checkBlockButton = new QPushButton(tr("选择颜色"), this);
-    m_checkBlockButton->setStyleSheet(
-        QString("background-color: %1")
-            .arg(m_button->getCheckBlockColor().name()));
+
+    // m_checkBlockButton = new QPushButton(tr("选择颜色"), this);
+    m_checkBlockButton = new Ui::TtTextButton(tr("选择颜色"), this);
+
+    m_checkBlockButton->setAutoFillBackground(true);
+    QPalette pal = m_checkBlockButton->palette();
+    pal.setColor(QPalette::Button, m_button->getCheckBlockColor());
+    m_checkBlockButton->setPalette(pal);
+
     connect(m_checkBlockButton, &QPushButton::clicked, this, [this]() {
       QColor chosen = QColorDialog::getColor(m_button->getCheckBlockColor(),
                                              this, tr("选择勾选块颜色"));
       if (chosen.isValid()) {
-        m_chosenCheckBlockColor = chosen;
-        m_checkBlockButton->setStyleSheet(
-            QString("background-color: %1").arg(chosen.name()));
+        QPalette pal = m_checkBlockButton->palette();
+        pal.setColor(QPalette::Button, m_chosenCheckBlockColor);
+        m_checkBlockButton->setPalette(pal);
       }
     });
     checkBlockLayout->addWidget(m_checkBlockButton);
@@ -110,10 +116,10 @@ class TtColorButtonEditorDialog : public QDialog {
 
  private:
   TtColorButton* m_button;
-  // QLineEdit* m_textEdit;
   Ui::TtLineEdit* m_textEdit;
   QPushButton* m_colorButton;
-  QPushButton* m_checkBlockButton;
+  // QPushButton* m_checkBlockButton;
+  Ui::TtTextButton* m_checkBlockButton;
   QColor m_chosenColor;
   QColor m_chosenCheckBlockColor;
 };

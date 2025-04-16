@@ -638,7 +638,7 @@ void ModbusPlot::updateTracerPosition(QMouseEvent* event) {
 SerialPlot::SerialPlot(QWidget* parent) : QCustomPlot(parent) {
   setupPlot();
   this->setOpenGl(true);
-  qDebug() << "opengle=" << this->openGl();
+  // qDebug() << "opengle=" << this->openGl();
 
   setAntialiasedElements(QCP::aeAll);
 }

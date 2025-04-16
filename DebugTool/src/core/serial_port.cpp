@@ -13,14 +13,19 @@ SerialPortWorker::SerialPortWorker(QObject* parent)
   // 延迟初始化定时器
   QTimer::singleShot(0, this, [this]() {
     receive_timer_ = new QTimer(this);  // 在工作线程创建定时器
-    receive_timer_->setInterval(50);
+    receive_timer_->setInterval(50);    // 50ms 结束一次数据接收
     receive_timer_->setSingleShot(true);
-    connect(receive_timer_, &QTimer::timeout, this, [this]() {
-      if (!receive_buffer_.isEmpty()) {
-        emit dataReceived(receive_buffer_);
-        receive_buffer_.clear();
-      }
-    });
+
+    // connect(receive_timer_, &QTimer::timeout, this, [this]() {
+    //   if (!receive_buffer_.isEmpty()) {
+    //     // 50ms 发送一次数据
+    //     qDebug() << "rece: " << receive_buffer_;
+    //     emit dataReceived(receive_buffer_);
+    //     receive_buffer_.clear();
+    //   }
+    // });
+    connect(receive_timer_, &QTimer::timeout, this,
+            &SerialPortWorker::handleTimeout);
   });
 
   // qDebug() << QThread::currentThread();
@@ -74,6 +79,7 @@ bool SerialPortWorker::isOpened() {
 
 void SerialPortWorker::sendData(const QString& send_string) {
   // 发送是非阻塞的
+  // 以文本格式发送
   QByteArray data = send_string.toUtf8().append("\r\n");
   {
     QMutexLocker locker(&send_mutex_);
@@ -109,16 +115,54 @@ void SerialPortWorker::sendData(const QString& send_string) {
   // serial_->write(bts);
 }
 
+void SerialPortWorker::sendData(const QByteArray& data) {
+  {
+    QMutexLocker locker(&send_mutex_);
+    send_queue_.enqueue(data);
+  }
+  // 线程队列
+  QMetaObject::invokeMethod(this, "handleWriteRequest", Qt::QueuedConnection);
+}
+
 void SerialPortWorker::readData() {
-  // 事件驱动接收
-  if (serial_ && serial_->isOpen()) {
-    QByteArray data = serial_->readAll();
-    if (!data.isEmpty()) {
-      receive_buffer_.append(data);
-      receive_timer_->start();
-      // emit dataReceived(data);
+  // 重新开启接收定时器
+  receive_timer_->start();
+  // 数据追加到缓存区
+  receive_buffer_.append(serial_->readAll());
+
+  // 未处理的数据
+  emit dataReceived(receive_buffer_);
+  // qDebug() << receive_buffer_;
+
+  // 对方是十六进制的发送
+  // 帧头帧尾
+  // 假设帧头是0xAA，帧尾是0x55
+  int headerIndex = receive_buffer_.indexOf(static_cast<char>(0xAA));
+  if (headerIndex != -1) {
+    // 检索到帧头
+    int tailIndex =
+        receive_buffer_.indexOf(static_cast<char>(0x55), headerIndex + 1);
+    if (tailIndex != -1) {
+      // 取出完整数据帧（包含帧头与帧尾）
+      QByteArray frame =
+          receive_buffer_.mid(headerIndex, tailIndex - headerIndex + 1);
+      // 处理这部分完整帧数据
+      processFrame(frame);
+      // 移除已经处理过的部分
+      receive_buffer_.remove(0, tailIndex + 1);
     }
   }
+
+  // // 事件驱动接收
+  // if (serial_ && serial_->isOpen()) {
+  //   QByteArray data = serial_->readAll();
+  //   if (!data.isEmpty()) {
+  //     receive_buffer_.append(data);
+  //     receive_timer_->start();
+  //     // emit dataReceived(data);
+  //   }
+  // }
+
   // qint64 bytesAvailable = serial_->bytesAvailable();
   // qDebug() << "Bytes available to read:" << bytesAvailable;
 
@@ -140,8 +184,42 @@ void SerialPortWorker::handleWriteRequest() {
   QMutexLocker locker(&send_mutex_);
   while (!send_queue_.isEmpty()) {
     QByteArray data = send_queue_.dequeue();
+    // 文本写
     serial_->write(data);
-    // 移除 waitForBytesWritten，依赖异步错误信号
+  }
+}
+
+void SerialPortWorker::handleTimeout() {
+  // 定时器超时：可以在这里决定是否清理buffer或者对不完整的数据帧进行处理
+  // if (!receive_buffer_.isEmpty()) {
+  // qDebug() << "接收数据超时，处理部分数据或清空缓存";
+  // 对未完整的帧进行处理，如丢弃或部分解析，视协议而定
+  // receive_buffer_.clear();
+  // }
+
+  qDebug() << "超时，当前缓存内容:" << receive_buffer_.toHex();
+
+  // 索引
+  int headerIndex = receive_buffer_.indexOf(static_cast<char>(0xAA));
+  // 帧尾
+  int tailIndex =
+      receive_buffer_.indexOf(static_cast<char>(0x55), headerIndex + 1);
+
+  if (headerIndex != -1 && tailIndex != -1) {
+    // 还有可能是一帧数据，处理它
+    QByteArray frame =
+        receive_buffer_.mid(headerIndex, tailIndex - headerIndex + 1);
+    processFrame(frame);
+    receive_buffer_.remove(0, tailIndex + 1);
+  } else {
+    // 没有发现完整帧，可以选择部分保留
+    if (headerIndex != -1) {
+      // 说明头存在但尾巴还没来，可以保留从header开始的部分
+      receive_buffer_ = receive_buffer_.mid(headerIndex);
+    } else {
+      // 没有帧头，数据无效，清空
+      receive_buffer_.clear();
+    }
   }
 }
 

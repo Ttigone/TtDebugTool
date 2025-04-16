@@ -46,18 +46,25 @@ class SerialPortWorker : public QObject {
   void openSerialPort(SerialPortConfiguration cfg);
   void closeSerialPort();
   void sendData(const QString& send_string);
+  void sendData(const QByteArray& data);
   void readData();
 
  private slots:
   // 实际向串口写入数据的函数
   void handleWriteRequest();
+  void handleTimeout();
 
  private:
   void init();
+  void processFrame(const QByteArray& frame) {
+    // 根据具体协议处理帧数据
+    qDebug() << "收到完整帧:" << frame.toHex();
+  }
 
   QSerialPort* serial_ = nullptr;
-  QByteArray receive_buffer_;
-  QTimer* receive_timer_;
+
+  QByteArray receive_buffer_;  // 接收缓冲区
+  QTimer* receive_timer_;      // 接收数据时长
 
   QQueue<QByteArray> send_queue_;  // 队列
   QMutex send_mutex_;              // 互斥锁

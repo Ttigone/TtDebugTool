@@ -49,6 +49,7 @@ class TtColorButton : public QWidget {
   QSize color_size_;
   bool is_checked_;
   bool enable_hold_to_check_;
+  bool checkbox_pressed_ = false;
 
   QString text_;
   QColor current_color_;
@@ -58,6 +59,7 @@ class TtColorButton : public QWidget {
 
   QLineEdit* rename_editor_ = nullptr;  // 重命名编辑器
   QString original_text_;               // 保存原始文本
+  bool ignore_next_release_;
 };
 
 #endif  // TTCOLORBUTTON_H

@@ -588,14 +588,12 @@ void SerialWindow::init() {
   messageStackedView->addWidget(message_view_);
 
   // 添加图表
-  QWidget* graphWidget = new QWidget;
-  Ui::TtHorizontalLayout* graphWidgetLayout =
-      new Ui::TtHorizontalLayout(graphWidget);
-  graphWidgetLayout->setSpacing(30);
-  serial_plot_ = new SerialPlot;
-  graphWidgetLayout->addWidget(serial_plot_);
+  QSplitter* graphSpiltter = new QSplitter;
 
-  QListWidget* serialDataList = new QListWidget(graphWidget);
+  serial_plot_ = new SerialPlot;
+  graphSpiltter->addWidget(serial_plot_);
+
+  QListWidget* serialDataList = new QListWidget(graphSpiltter);
   serialDataList->setContextMenuPolicy(
       Qt::CustomContextMenu);  // 启用自定义右键菜单
   connect(serialDataList, &QListWidget::customContextMenuRequested, this,
@@ -631,31 +629,25 @@ void SerialWindow::init() {
                   QColor(100, 100, 140),
                   QString("CH%1").arg(serialDataList->count()), this);
 
-              // 生成随机颜色
-              int hue = QRandomGenerator::global()->bounded(0, 360);
-              // 这里设置饱和度为255, 明度为200, 并使用 alpha 为 100 (透明度)
-              QColor randomCheckColor = QColor::fromHsv(hue, 255, 200, 100);
+              int red = QRandomGenerator::global()->bounded(0, 256);
+              int green = QRandomGenerator::global()->bounded(0, 256);
+              int blue = QRandomGenerator::global()->bounded(0, 256);
+              QColor randomCheckColor = QColor(red, green, blue, 100);
               getValueButton->setCheckBlockColor(randomCheckColor);
-
               getValueButton->setFocusPolicy(Qt::NoFocus);
               serialDataList->setItemWidget(item, getValueButton);
             } else if (item) {
-              qDebug() << "in item";
               if (selectedAction == renameAction) {
                 // 触发重命名逻辑（与双击逻辑复用）
-                qDebug() << "rename";
                 if (auto* btn = qobject_cast<TtColorButton*>(
                         serialDataList->itemWidget(item))) {
                   btn->modifyText();
                 }
               } else if (selectedAction == deleteAction) {
-                qDebug() << "delete";
                 serialDataList->takeItem(serialDataList->row(item));  // 删除项
               } else if (selectedAction == editAction) {
-                qDebug() << "edit";
                 if (auto* btn = qobject_cast<TtColorButton*>(
                         serialDataList->itemWidget(item))) {
-                  // 编辑按钮, 弹出一个框, 代表当前的通道值
                   TtColorButtonEditorDialog* editorDialog =
                       new TtColorButtonEditorDialog(btn, this);
                   editorDialog->exec();
@@ -687,34 +679,14 @@ void SerialWindow::init() {
       "}");
 
   // 启用该模式, 会导致有虚线框
-  serialDataList->setFixedWidth(78);
-  graphWidgetLayout->addWidget(serialDataList);
-  // QListWidgetItem* item = new QListWidgetItem(serialDataList);
-  // item->setSizeHint(QSize(78, 30));
-  // TtColorButton* getValueButton =
-  //     new TtColorButton(QColor::fromRgbF(200, 100, 100), "T2", this);
-  // // 勾选区域的颜色
-  // getValueButton->setFocusPolicy(Qt::NoFocus);
-  // getValueButton->setCheckBlockColor(QColor(100, 100, 200, 100));
-  // serialDataList->setItemWidget(item, getValueButton);
+  graphSpiltter->addWidget(serialDataList);
+  graphSpiltter->setSizes(QList<int>{500, 100});
+  graphSpiltter->setCollapsible(0, false);
+  graphSpiltter->setCollapsible(1, false);
+  graphSpiltter->setStretchFactor(0, 1);
+  graphSpiltter->setStretchFactor(1, 0);
 
-  // {
-  //   QListWidgetItem* item = new QListWidgetItem(serialDataList);
-  //   item->setSizeHint(QSize(78, 30));
-  //   TtColorButton* getValueButton =
-  //       new TtColorButton(QColor(100, 100, 140), "T2", this);
-
-  //   // 生成随机颜色
-  //   int hue = QRandomGenerator::global()->bounded(0, 360);
-  //   // 这里设置饱和度为255, 明度为200, 并使用 alpha 为 100 (透明度)
-  //   QColor randomCheckColor = QColor::fromHsv(hue, 255, 200, 100);
-  //   getValueButton->setCheckBlockColor(randomCheckColor);
-
-  //   getValueButton->setFocusPolicy(Qt::NoFocus);
-  //   serialDataList->setItemWidget(item, getValueButton);
-  // }
-
-  messageStackedView->addWidget(graphWidget);
+  messageStackedView->addWidget(graphSpiltter);
 
   contentWidgetLayout->addWidget(chose_function);
   contentWidgetLayout->addWidget(messageStackedView);

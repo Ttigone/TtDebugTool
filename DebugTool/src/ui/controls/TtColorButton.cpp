@@ -32,7 +32,7 @@ QString TtColorButton::getText() const {
 
 QColor TtColorButton::getColor() const {
   // 背景色
-  return normal_color_;
+  return current_color_;
 }
 
 void TtColorButton::setText(const QString& text) {
@@ -123,12 +123,9 @@ void TtColorButton::paintEvent(QPaintEvent* event) {
   if (!isEnabled()) {
     painter.fillRect(bgRect, QColor(220, 220, 220));
   } else {
-    // 仅在有交互状态时绘制背景
-    // if (is_pressed_ || is_checked_) {
-    // painter.fillRect(bgRect, current_color_.lighter(120));
-    // } else if
     if (is_hovered_) {
-      QColor hoverBg = normal_color_;
+      // QColor hoverBg = normal_color_;
+      QColor hoverBg = current_color_;
       hoverBg.setAlpha(100);  // 半透明效果
       painter.fillRect(bgRect, hoverBg);
     }
@@ -140,11 +137,12 @@ void TtColorButton::paintEvent(QPaintEvent* event) {
   painter.drawRoundedRect(cbRect, 3, 3);
 
   if (!rename_editor_ || !rename_editor_->isVisible()) {
-    // 当编辑器没有显示时, 绘制文本, 避免重复显示
     painter.setPen(isEnabled() ? palette().text().color() : Qt::gray);
     QRect textRect(cbRect.right() + 10, 0, width() - cbRect.width() - 16,
                    height());
-    painter.drawText(textRect, Qt::AlignLeft | Qt::AlignVCenter, text_);
+    QString elidedText = painter.fontMetrics().elidedText(text_, Qt::ElideRight,
+                                                          textRect.width());
+    painter.drawText(textRect, Qt::AlignLeft | Qt::AlignVCenter, elidedText);
   }
 
   if (is_checked_) {

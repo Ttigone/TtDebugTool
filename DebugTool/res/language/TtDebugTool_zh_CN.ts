@@ -239,33 +239,32 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtColorButtonEditorDialog.h" line="27"/>
-        <source>文本:</source>
+        <location filename="../../src/ui/controls/TtColorButtonEditorDialog.h" line="25"/>
+        <source>名称</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtColorButtonEditorDialog.h" line="33"/>
+        <location filename="../../src/ui/controls/TtColorButtonEditorDialog.h" line="28"/>
         <source>帧头</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtColorButtonEditorDialog.h" line="34"/>
+        <location filename="../../src/ui/controls/TtColorButtonEditorDialog.h" line="30"/>
+        <source>数据帧长度</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/controls/TtColorButtonEditorDialog.h" line="31"/>
         <source>帧尾</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtColorButtonEditorDialog.h" line="41"/>
-        <source>背景色:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/ui/controls/TtColorButtonEditorDialog.h" line="42"/>
         <location filename="../../src/ui/controls/TtColorButtonEditorDialog.h" line="65"/>
         <source>选择颜色</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtColorButtonEditorDialog.h" line="50"/>
+        <location filename="../../src/ui/controls/TtColorButtonEditorDialog.h" line="68"/>
         <source>选择背景颜色</source>
         <translation type="unfinished"></translation>
     </message>
@@ -275,17 +274,17 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtColorButtonEditorDialog.h" line="74"/>
-        <source>选择勾选块颜色</source>
+        <location filename="../../src/ui/controls/TtColorButtonEditorDialog.h" line="39"/>
+        <source>脚本编辑</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtColorButtonEditorDialog.h" line="86"/>
+        <location filename="../../src/ui/controls/TtColorButtonEditorDialog.h" line="80"/>
         <source>确定</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtColorButtonEditorDialog.h" line="87"/>
+        <location filename="../../src/ui/controls/TtColorButtonEditorDialog.h" line="81"/>
         <source>取消</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1625,7 +1624,7 @@
     <message>
         <location filename="../../src/window/serial_window.cpp" line="313"/>
         <location filename="../../src/window/serial_window.cpp" line="394"/>
-        <location filename="../../src/window/serial_window.cpp" line="945"/>
+        <location filename="../../src/window/serial_window.cpp" line="917"/>
         <source>串口未打开</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1640,42 +1639,42 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="615"/>
+        <location filename="../../src/window/serial_window.cpp" line="613"/>
         <source>编辑</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="608"/>
+        <location filename="../../src/window/serial_window.cpp" line="606"/>
         <source>添加</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="616"/>
+        <location filename="../../src/window/serial_window.cpp" line="614"/>
         <source>删除</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="617"/>
+        <location filename="../../src/window/serial_window.cpp" line="615"/>
         <source>重命名</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="752"/>
+        <location filename="../../src/window/serial_window.cpp" line="724"/>
         <source>手动</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="753"/>
+        <location filename="../../src/window/serial_window.cpp" line="725"/>
         <source>片段</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="762"/>
+        <location filename="../../src/window/serial_window.cpp" line="734"/>
         <source>发送字节数: 0 B</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="764"/>
+        <location filename="../../src/window/serial_window.cpp" line="736"/>
         <source>接收字节数: 0 B</source>
         <translation type="unfinished"></translation>
     </message>

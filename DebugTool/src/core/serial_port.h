@@ -6,6 +6,8 @@
 #include <QSerialPortInfo>
 #include <QTimer>
 
+#include "serial_helper.h"
+
 namespace Core {
 
 struct SerialPortConfiguration {
@@ -56,18 +58,24 @@ class SerialPortWorker : public QObject {
 
  private:
   void init();
-  void processFrame(const QByteArray& frame) {
-    // 根据具体协议处理帧数据
-    qDebug() << "收到完整帧:" << frame.toHex();
-  }
+  void processFrame();
+  void processFrame(quint8 type, const QByteArray& payload);
+
+  // 帧格式常量
+  static constexpr char HDR0 = char(0xAA);
+  static constexpr char HDR1 = char(0x55);
 
   QSerialPort* serial_ = nullptr;
 
   QByteArray receive_buffer_;  // 接收缓冲区
+  quint16 recv_max_len_ = 1024;
+  quint16 recv_len_ = 0;
   QTimer* receive_timer_;      // 接收数据时长
 
   QQueue<QByteArray> send_queue_;  // 队列
   QMutex send_mutex_;              // 互斥锁
+
+  SerialHelper* helper_ = nullptr;
 };
 
 }  // namespace Core

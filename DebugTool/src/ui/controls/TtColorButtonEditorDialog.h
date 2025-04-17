@@ -22,63 +22,57 @@ class TtColorButtonEditorDialog : public QDialog {
     setWindowTitle(tr("编辑按钮属性"));
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
 
-    // 1. 编辑文本
-    QHBoxLayout* textLayout = new QHBoxLayout;
-    textLayout->addWidget(new QLabel(tr("文本:"), this));
-    m_textEdit = new Ui::TtLineEdit(this);
-    textLayout->addWidget(m_textEdit);
-    mainLayout->addLayout(textLayout);
-
-    Ui::TtLabelLineEdit* FrameHeader =
+    title_edit_ = new Ui::TtLabelLineEdit(tr("名称"), this);
+    title_edit_->setText(m_button->getText());
+    Ui::TtLabelLineEdit* frameHeader =
         new Ui::TtLabelLineEdit(tr("帧头"), this);
-    Ui::TtLabelLineEdit* FrameEnd = new Ui::TtLabelLineEdit(tr("帧尾"), this);
+    Ui::TtLabelLineEdit* frameLength =
+        new Ui::TtLabelLineEdit(tr("数据帧长度"), this);
+    Ui::TtLabelLineEdit* frameEnd = new Ui::TtLabelLineEdit(tr("帧尾"), this);
 
-    mainLayout->addWidget(FrameHeader);
-    mainLayout->addWidget(FrameEnd);
+    mainLayout->addWidget(title_edit_);
+    mainLayout->addWidget(frameHeader);
+    mainLayout->addWidget(frameLength);
+    mainLayout->addWidget(frameEnd);
 
-    // 2. 修改按钮颜色
-    QHBoxLayout* colorLayout = new QHBoxLayout;
-    colorLayout->addWidget(new QLabel(tr("背景色:"), this));
-    m_colorButton = new QPushButton(tr("选择颜色"), this);
-    // 同步初始颜色
-    // 背景色不太相同
-    m_colorButton->setStyleSheet(
-        QString("background-color: %1").arg(m_button->getColor().name()));
+    Ui::TtFancyButton* scriptBtton =
+        new Ui::TtFancyButton(Qt::white, tr("脚本编辑"), this);
+    mainLayout->addWidget(scriptBtton);
 
-    connect(m_colorButton, &QPushButton::clicked, this, [this]() {
-      QColor chosen = QColorDialog::getColor(m_button->getColor(), this,
-                                             tr("选择背景颜色"));
-      if (chosen.isValid()) {
-        m_chosenColor = chosen;
-        m_colorButton->setStyleSheet(
-            QString("background-color: %1").arg(chosen.name()));
-      }
+    connect(scriptBtton, &Ui::TtFancyButton::clicked, this, [this]() {
+
     });
-    colorLayout->addWidget(m_colorButton);
-    mainLayout->addLayout(colorLayout);
 
-    // 3. 修改勾选区域颜色
+    // QHBoxLayout* colorLayout = new QHBoxLayout;
+    // colorLayout->addWidget(new QLabel(tr("背景色:"), this));
+    // m_colorButton =
+    //     new Ui::TtFancyButton(m_button->getColor(), tr("选择颜色"), this);
+    // connect(m_colorButton, &Ui::TtFancyButton::clicked, this, [this]() {
+    //   QColor chosen = QColorDialog::getColor(m_button->getColor(), this,
+    //                                          tr("选择背景颜色"));
+    //   if (chosen.isValid()) {
+    //     m_chosenColor = chosen;
+    //     m_colorButton->setColor(m_chosenColor);
+    //   }
+    // });
+    // colorLayout->addWidget(m_colorButton);
+    // mainLayout->addLayout(colorLayout);
+
     QHBoxLayout* checkBlockLayout = new QHBoxLayout;
     checkBlockLayout->addWidget(new QLabel(tr("勾选块色:"), this));
 
-    // m_checkBlockButton = new QPushButton(tr("选择颜色"), this);
-    m_checkBlockButton = new Ui::TtTextButton(tr("选择颜色"), this);
-
-    m_checkBlockButton->setAutoFillBackground(true);
-    QPalette pal = m_checkBlockButton->palette();
-    pal.setColor(QPalette::Button, m_button->getCheckBlockColor());
-    m_checkBlockButton->setPalette(pal);
-
-    connect(m_checkBlockButton, &QPushButton::clicked, this, [this]() {
+    m_checkBlockButton = new Ui::TtFancyButton(m_button->getCheckBlockColor(),
+                                               tr("选择颜色"), this);
+    connect(m_checkBlockButton, &Ui::TtFancyButton::clicked, this, [this]() {
       QColor chosen = QColorDialog::getColor(m_button->getCheckBlockColor(),
-                                             this, tr("选择勾选块颜色"));
+                                             this, tr("选择背景颜色"));
       if (chosen.isValid()) {
-        QPalette pal = m_checkBlockButton->palette();
-        pal.setColor(QPalette::Button, m_chosenCheckBlockColor);
-        m_checkBlockButton->setPalette(pal);
+        m_chosenCheckBlockColor = chosen;
+        m_checkBlockButton->setColor(m_chosenCheckBlockColor);
       }
     });
     checkBlockLayout->addWidget(m_checkBlockButton);
+
     mainLayout->addLayout(checkBlockLayout);
 
     // 4. 底部确定与取消按钮
@@ -98,15 +92,10 @@ class TtColorButtonEditorDialog : public QDialog {
  private slots:
   void applyChanges() {
     if (m_button) {
-      // 修改 TtColorButton 的文本
-      m_button->setText(m_textEdit->text());
-
-      // 如果选择了新的背景颜色，则更新
-      if (m_chosenColor.isValid()) {
-        m_button->setColors(m_chosenColor);
-      }
-
-      // 如果选择了新的勾选区域颜色，则更新
+      m_button->setText(title_edit_->currentText());
+      // if (m_chosenColor.isValid()) {
+      //   m_button->setColors(m_chosenColor);
+      // }
       if (m_chosenCheckBlockColor.isValid()) {
         m_button->setCheckBlockColor(m_chosenCheckBlockColor);
       }
@@ -116,10 +105,10 @@ class TtColorButtonEditorDialog : public QDialog {
 
  private:
   TtColorButton* m_button;
-  Ui::TtLineEdit* m_textEdit;
-  QPushButton* m_colorButton;
-  // QPushButton* m_checkBlockButton;
-  Ui::TtTextButton* m_checkBlockButton;
+  // Ui::TtLineEdit* m_textEdit;
+  Ui::TtLabelLineEdit* title_edit_;
+  Ui::TtFancyButton* m_colorButton;
+  Ui::TtFancyButton* m_checkBlockButton;
   QColor m_chosenColor;
   QColor m_chosenCheckBlockColor;
 };

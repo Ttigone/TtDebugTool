@@ -397,44 +397,110 @@ class Tt_EXPORT TtTextButton : public QPushButton {
   QColor default_color_;             // 初始文字颜色
 };
 
-// class Tt_EXPORT FancyButton : public QPushButton {
-//   Q_OBJECT
+class Tt_EXPORT TtFancyButton : public QWidget {
+  Q_OBJECT
+ public:
+  explicit TtFancyButton(const QColor& color, const QString& text,
+                         QWidget* parent = nullptr)
+      : QWidget(parent), background_color_(color), text_(text) {
+    setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+    setMinimumSize(80, 30);
+    setCursor(Qt::PointingHandCursor);
+  }
+  ~TtFancyButton() {}
 
-//  public:
-//   explicit FancyButton(const QString& text, const QString& iconPath = "",
-//                        QWidget* parent = nullptr);
+  void setColor(const QColor& color) {
+    background_color_ = color;
+    update();
+  }
 
-//  protected:
-//   void paintEvent(QPaintEvent* event) override;
+  QColor color() const { return background_color_; }
 
-//   void enterEvent(QEnterEvent* event) override {
-//     m_hovered = true;
-//     update();
-//     QPushButton::enterEvent(event);
-//   }
-//   void leaveEvent(QEvent* event) override {
-//     m_hovered = false;
-//     update();
-//     QPushButton::leaveEvent(event);
-//   }
+  void setText(const QString& text) {
+    text_ = text;
+    updateGeometry();  // 更新布局
+    update();          // 触发重绘
+  }
 
-//   void mousePressEvent(QMouseEvent* event) override {
-//     m_pressed = true;
-//     update();
-//     QPushButton::mousePressEvent(event);
-//   }
+  QString text() const { return text_; }
 
-//   void mouseReleaseEvent(QMouseEvent* event) override {
-//     m_pressed = false;
-//     update();
-//     QPushButton::mouseReleaseEvent(event);
-//   }
+  // 实现类似 QPushButton 的尺寸计算逻辑
+  QSize sizeHint() const override {
+    QFontMetrics fm(font());
+    int textWidth = fm.horizontalAdvance(text_) + 20;  // 左右边距各 10
+    int textHeight = fm.height() + 10;                 // 上下边距各 5
+    return QSize(qMax(textWidth, 80), qMax(textHeight, 30));
+  }
 
-//  private:
-//   QString m_iconPath;
-//   bool m_hovered;
-//   bool m_pressed;
-// };
+ signals:
+  void clicked();
+
+ protected:
+  void paintEvent(QPaintEvent* event) override {
+    QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing);
+
+    QColor bgColor = background_color_;
+    if (!isEnabled()) {
+      bgColor = bgColor.darker(120);
+    } else if (mouse_pressed_) {
+      bgColor = bgColor.lighter(150);
+    } else if (underMouse()) {
+      bgColor = bgColor.lighter(120);
+    }
+
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(bgColor);
+    painter.drawRoundedRect(rect(), 4, 4);
+
+    // 2. 绘制文本（自动计算颜色对比度）
+    QColor textColor = getContrastColor(background_color_);
+    painter.setPen(textColor);
+    painter.setFont(font());
+
+    QRect textRect = rect().adjusted(10, 5, -10, -5);
+    painter.drawText(rect(), Qt::AlignCenter, text_);
+  }
+
+  // 鼠标事件处理
+  void mousePressEvent(QMouseEvent* event) override {
+    if (event->button() == Qt::LeftButton && isEnabled()) {
+      mouse_pressed_ = true;
+      update();  // 触发重绘显示按下状态
+    }
+    QWidget::mousePressEvent(event);
+  }
+  void mouseReleaseEvent(QMouseEvent* event) override {
+    if (mouse_pressed_ && isEnabled()) {
+      mouse_pressed_ = false;
+      if (rect().contains(event->pos())) {
+        emit clicked();  // 触发点击信号
+      }
+      update();
+    }
+    QWidget::mouseReleaseEvent(event);
+  }
+  // 悬停检测
+  void enterEvent(QEnterEvent* event) override {
+    update();
+    QWidget::enterEvent(event);
+  }
+
+  void leaveEvent(QEvent* event) override {
+    update();
+    QWidget::leaveEvent(event);
+  }
+
+ private:
+  // 自动计算对比色（深色背景用白色，浅色用黑色）
+  QColor getContrastColor(const QColor& bg) const {
+    return (bg.lightness() > 128) ? Qt::black : Qt::white;
+  }
+
+  QColor background_color_;
+  QString text_;
+  bool mouse_pressed_ = false;
+};
 
 }  // namespace Ui
 

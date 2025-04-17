@@ -36,6 +36,7 @@ set(PROJECT_SOURCES
     ${src_loc}/Def.h
 
     ${src_loc}/core/serial_port.h ${src_loc}/core/serial_port.cpp
+    ${src_loc}/core/serial_helper.h ${src_loc}/core/serial_helper.cpp
     ${src_loc}/core/udp_server.h ${src_loc}/core/udp_server.cpp
     ${src_loc}/core/tcp_server.h ${src_loc}/core/tcp_server.cpp
     ${src_loc}/core/tcp_client.h ${src_loc}/core/tcp_client.cpp

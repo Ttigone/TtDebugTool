@@ -99,6 +99,7 @@ class SerialWindow : public QWidget, public Ui::TabManager::ISerializable {
   void connectSignals();
   void saveLog();
   void refreshTerminalDisplay();
+  void handleDialogData(const QByteArray& blob);
 
   Ui::TtVerticalLayout* main_layout_;
 
@@ -138,7 +139,6 @@ class SerialWindow : public QWidget, public Ui::TabManager::ISerializable {
   QtMaterialFlatButton* sendBtn;
   Ui::TtTableWidget* instruction_table_;
   MsgType display_type_ = MsgType::TEXT;
-  // bool display_hex_;
   SerialSaveConfig cfg_;
 
   uint16_t package_size_ = 0;
@@ -154,6 +154,14 @@ class SerialWindow : public QWidget, public Ui::TabManager::ISerializable {
 
   // Ui::TtQCustomPlot* serial_plot_;
   SerialPlot* serial_plot_;
+
+  struct ChannelMetaDef {
+    QString header_;
+    QString tail_;
+    QString length_;
+  };
+
+  QMap<QString, QPair<QByteArray, ChannelMetaDef>> channel_info_;
 };
 
 }  // namespace Window

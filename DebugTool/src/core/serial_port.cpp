@@ -130,9 +130,10 @@ void SerialPortWorker::readData() {
   // 重新开启接收定时器 4ms
   // receive_timer_->start(4);
   // 数据追加到缓存区
+  // 直接读取全部数据
   receive_buffer_.append(serial_->readAll());
-
-  processFrame();
+  // processFrame();
+  parseBuffer();
 
   // 这个有问题
   // 读取数据, 串口中有数据, 立马读取
@@ -303,22 +304,21 @@ void SerialPortWorker::handleTimeout() {
   // qDebug() << receive_buffer_;
 }
 
-void SerialPortWorker::processFrame() {
-  qDebug() << "receBUf" << receive_buffer_;
+void SerialPortWorker::parseBuffer() {
+  qDebug() << "raw hex:" << receive_buffer_.toHex().toUpper();
   // 根据具体协议处理帧数据
   // qDebug() << "收到完整帧:" << frame.toHex();
 
   // 最小帧长度
   const int MIN_FRAME_SIZE = 2 /*hdr*/ + 1 /*type*/ + 1 /*len*/ + 1 /*cs*/;
 
-  while (true) {
-    // 会不会因为串口数据卡顿 ?
-    // 波特率 ?
+  // while (true) {
+  while (receive_buffer_.size() >= MIN_FRAME_SIZE) {
+
     if (receive_buffer_.size() < MIN_FRAME_SIZE) {
       return;
     }
-
-    // 帧头
+    // 检索帧头
     int pos = receive_buffer_.indexOf(QByteArrayView(&HDR0), 0);
 
     // 找到帧头
@@ -346,7 +346,7 @@ void SerialPortWorker::processFrame() {
     quint8 len = quint8(receive_buffer_[3]);
 
     // hdr0+hdr1+type+len+payload+cs
-    int fullSize = 2 + 1 + 1 + len + 1;
+    int fullSize = 2 + 1 + 1 + len + 1;  // 附带校验
 
     if (receive_buffer_.size() < fullSize) {
       // 完整帧没齐, 等下一次 readAll
@@ -366,16 +366,23 @@ void SerialPortWorker::processFrame() {
     // } else {
     //   qWarning() << "Frame checksum error!";
     // }
+
+    // 处理帧
     processFrame(type, receive_buffer_.mid(4, len));
+
+    // 移出已经处理的一帧字节, 保留后面的
+    receive_buffer_.remove(0, fullSize);
   }
 }
 
 void SerialPortWorker::processFrame(quint8 type, const QByteArray& payload) {
   // qDebug() << payload;
+  // 能够解析 0102
   // 按 type 分发、解析 payload
   switch (type) {
     case 0x01:
       // 解析命令 A
+      qDebug() << "type 01: " << payload;
       break;
     case 0x02:
       // 解析命令 B
@@ -383,6 +390,7 @@ void SerialPortWorker::processFrame(quint8 type, const QByteArray& payload) {
     default:
       qWarning() << "Unknown frame type" << type;
   }
+  // 处理完后, 帧应该如何做 ?
 }
 
 void SerialPortWorker::openSerialPort(SerialPortConfiguration cfg) {

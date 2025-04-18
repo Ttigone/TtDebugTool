@@ -209,6 +209,26 @@ void SerialWindow::refreshTerminalDisplay() {
   terminal_->setUpdatesEnabled(true);
 }
 
+void SerialWindow::handleDialogData(const QByteArray& blob) {
+  QDataStream in(blob);
+  in.setVersion(QDataStream::Qt_6_4);
+
+  QString title, header, length, tail;
+  in >> title >> header >> length >> tail;
+
+  ChannelMetaDef meta = {header, length, tail};
+
+  if (channel_info_.contains(title)) {
+    // 弹出一个提示框
+    Ui::TtMessageBar::information(TtMessageBarType::Top, "",
+                                  tr("已经存在相同标签, 设置失效"), 1500);
+    return;
+  }
+  // channel_info_[title] = meta;
+  channel_info_[title] = qMakePair(blob, meta);
+
+  // qDebug() << header << length << tail;
+}
 
 void SerialWindow::showErrorMessage(const QString& text) {
   Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""), text, 1500, this);
@@ -650,7 +670,17 @@ void SerialWindow::init() {
                         serialDataList->itemWidget(item))) {
                   TtColorButtonEditorDialog* editorDialog =
                       new TtColorButtonEditorDialog(btn, this);
-                  editorDialog->exec();
+                  if (channel_info_.contains(btn->getText())) {
+
+                    editorDialog->setMetaInfo(
+                        channel_info_.value(btn->getText()).first);
+                  }
+                  // 模态
+                  if (editorDialog->exec() == QDialog::Accepted) {
+                    // 获取元数据保存, 与 button 形成对应关系, button 的 title 唯一
+                    // 检查 title 是否重复
+                    handleDialogData(editorDialog->metaInfo());
+                  }
                 }
               }
             }
@@ -745,7 +775,6 @@ void SerialWindow::init() {
   layout->setSpacing(0);
 
   QWidget* messageEdit = new QWidget(la_w);
-  // messageEdit
   QVBoxLayout* messageEditLayout = new QVBoxLayout;
   messageEdit->setLayout(messageEditLayout);
   messageEditLayout->setContentsMargins(3, 0, 3, 0);
@@ -755,7 +784,6 @@ void SerialWindow::init() {
   editor->setWrapMode(QsciScintilla::WrapWord);
   editor->setWrapVisualFlags(QsciScintilla::WrapFlagInMargin,
                              QsciScintilla::WrapFlagInMargin, 0);
-  // editor->setCaretForegroundColor(QColor("Coral"));
   editor->setCaretWidth(10);
   editor->setMarginType(1, QsciScintilla::NumberMargin);
   editor->setFrameStyle(QFrame::NoFrame);
@@ -764,7 +792,6 @@ void SerialWindow::init() {
 
   QWidget* bottomBtnWidget = new QWidget(messageEdit);
   bottomBtnWidget->setMinimumHeight(40);
-  //bottomBtnWidget->setStyleSheet("back)ground-color: red");
   Ui::TtHorizontalLayout* bottomBtnWidgetLayout =
       new Ui::TtHorizontalLayout(bottomBtnWidget);
 
@@ -772,7 +799,6 @@ void SerialWindow::init() {
   chose_text_ = new Ui::TtRadioButton("TEXT", bottomBtnWidget);
   chose_hex_ = new Ui::TtRadioButton("HEX", bottomBtnWidget);
   chose_text_->setChecked(true);
-  // send_type_ = 2;
 
   sendBtn = new QtMaterialFlatButton(bottomBtnWidget);
   sendBtn->setIcon(QIcon(":/sys/send.svg"));

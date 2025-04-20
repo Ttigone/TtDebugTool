@@ -299,7 +299,6 @@ TtLineEdit* TtLabelLineEdit::body() {
 }
 
 void TtLabelLineEdit::setText(const QString& text) {
-  qDebug() << "TEST: " << text;
   line_edit_->setText(text);
 }
 

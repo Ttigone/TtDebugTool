@@ -28,8 +28,8 @@
 #include "ui/controls/TtTableView.h"
 #include "widget/serial_setting.h"
 
-#include "ui/controls/TtColorButton.h"
-#include "ui/controls/TtColorButtonEditorDialog.h"
+#include "ui/controls/TtChannelButton.h"
+#include "ui/controls/TtChannelButtonEditorDialog.h"
 
 namespace Window {
 
@@ -209,25 +209,377 @@ void SerialWindow::refreshTerminalDisplay() {
   terminal_->setUpdatesEnabled(true);
 }
 
-void SerialWindow::handleDialogData(const QByteArray& blob) {
+void SerialWindow::addChannelInfo(const QString& uuid, const QByteArray& blob) {
+  channel_info_[uuid] = blob;
+  // title 可以重复
   QDataStream in(blob);
   in.setVersion(QDataStream::Qt_6_4);
 
-  QString title, header, length, tail;
-  in >> title >> header >> length >> tail;
+  QString title, header, headerLength, typeOffset, lengthOffset, length, tail;
+  in >> title >> header >> headerLength >> typeOffset >> lengthOffset >>
+      length >> tail;
 
-  ChannelMetaDef meta = {header, length, tail};
+  // ChannelMetaDef meta = {title, header, length, tail};
 
-  if (channel_info_.contains(title)) {
-    // 弹出一个提示框
+  // 无校验
+  ParserRule rule = {
+      QByteArray::fromHex(header.toUtf8()),
+      headerLength.toInt(),  // 帧头长度
+      typeOffset.toInt(),    // 类型字段偏移
+      lengthOffset.toInt(),  // 长度字段偏移
+      length.toInt(),        // 长度字段字节数
+      0,                     // 帧尾长度
+      false,                 // 无校验
+      {},
+      [&](uint8_t type, const QByteArray& payload) {
+        qDebug() << "payload: " << payload;
+        // qDebug() << payload.size();
+        // qDebug() << payload[0];
+        // qDebug() << payload[1];
+        // 解析为 int16_t
+        // 2 个字节长度
+        // quin16_t
+        // 2 * 16
+        // 0x0101
+
+        // 十六进制
+        // 小端序解析 (低字节在前)
+        quint16 value = (static_cast<quint8>(payload[1]) << 8) |
+                        static_cast<quint8>(payload[0]);
+
+        serial_plot_->addGraphs(1, 1);
+        serial_plot_->addData(1, 1, value);
+        // 多通道添加通道独特 i
+        // serial_plot_->addGraphs(uuid.toInt(), uuid.toInt());
+        // serial_plot_->addData(uuid.toInt(), uuid.toInt(), value);
+
+        // // 或大端序解析 (高字节在前)
+        // quint16 valueBeEndian =
+        //     (static_cast<quint8>(data[0]) << 8) |
+        //     static_cast<quint8>(data[1]);
+
+        qDebug() << "解析的整数值:" << value;
+
+        /*
+                       // double 类型是 8 字节
+                       // 数据字节长度不足 2 字节, 需要补齐高位, 填充 0
+                       // 创建8字节数组，其余填充0
+                       QByteArray fullData(8, 0);
+                       // 复制现有数据
+                       for (int i = 0; i < qMin(payload.size(), 8); ++i) {
+                         fullData[i] = payload[i];
+                       }
+
+                       // 获取到了对应的数据
+                       // 显示到图像 customplot 中
+                       // 一个通道对应一个数据类型, 通道对应 header
+                       // double value = numStr.toDouble();  // 转换为 12.34
+                       double value;
+                       memcpy(&value, fullData.constData(), sizeof(double));
+                       // qDebug() << "value: " << value;
+                       serial_plot_->addGraphs(1, 1);
+                       // 添加数据, 时间戳是横组
+                       serial_plot_->addData(1, 1, value);
+                        */
+      }};
+  // 修改则覆盖原有的值
+  rules_.insert(uuid, rule);
+}
+
+void SerialWindow::handleDialogData(const QString& uuid,
+                                    const QByteArray& blob) {
+  // title 可以重复
+  QDataStream in(blob);
+  in.setVersion(QDataStream::Qt_6_4);
+
+  QString title, header, headerLength, typeOffset, lengthOffset, length, tail;
+  in >> title >> header >> headerLength >> typeOffset >> lengthOffset >>
+      length >> tail;
+
+  // 每个 uuid 的对应配置数组
+  channel_info_[uuid] = blob;
+
+  // qDebug() << title << header << headerLength << typeOffset << lengthOffset
+  //          << length << tail;
+
+  auto it = rules_.find(uuid);
+  if (it != rules_.end()) {
+    // 修改配置
+    ParserRule& rule = it.value();
+    rule.header = QByteArray::fromHex(header.toUtf8());
+
+    if (rule.header.isEmpty()) {
+      Ui::TtMessageBar::information(TtMessageBarType::Top, "",
+                                    tr("输入的不是合法的十六进制字符串!"), 1500,
+                                    this);
+      return;
+    }
+
+    rule.header_len = headerLength.toInt();
+    rule.type_offset = typeOffset.toInt();
+    rule.len_offset = lengthOffset.toInt();
+    rule.len_bytes = length.toInt();
+  } else {
     Ui::TtMessageBar::information(TtMessageBarType::Top, "",
-                                  tr("已经存在相同标签, 设置失效"), 1500);
+                                  tr("不存在当前配置, 请删除配置选项"), 1500,
+                                  this);
     return;
   }
-  // channel_info_[title] = meta;
-  channel_info_[title] = qMakePair(blob, meta);
 
-  // qDebug() << header << length << tail;
+  // ChannelMetaDef meta = {title, header, length, tail};
+
+  // 但是如何区分每一个不同的数据呢?
+  // 每个 button 都有自己的 uuid
+
+  // qDebug() << label << title;
+  // if (label != title) {
+  // 2. 修改的 title, 与其他 chx 歧义
+  //   if (channel_info_.contains(title)) {
+  //     // 已经存在了这个 title
+  //     Ui::TtMessageBar::information(TtMessageBarType::Top, "",
+  //                                   tr("已经存在相同标签, 配置失效"), 1500,
+  //                                   this);
+  //     qDebug() << "重复";
+  //     return;
+  //   } else {
+  //     // 不包含
+  //     channel_info_[title] = qMakePair(blob, meta);
+  //   }
+  // } else {
+  //   // 1. 自身没动, 改变配置
+  // channel_info_[title] = qMakePair(blob, meta);
+  //   return;
+  // }
+
+  // if (modify_meta_data_) {
+  //   // 之前不存在这个 title
+  //   if (label != title) {
+  //     // 2. 修改的 title, 与其他 chx 歧义
+  //     if (channel_info_.contains(title)) {
+  //       // 已经存在了这个 title
+  //       Ui::TtMessageBar::information(TtMessageBarType::Top, "",
+  //                                     tr("已经存在相同标签, 配置失效"), 1500,
+  //                                     this);
+  //       qDebug() << "重复";
+  //       return;
+  //     }
+  //   } else {
+  //     // 1. 自身没动, 改变配置
+  //     channel_info_[title] = qMakePair(blob, meta);
+  //     return;
+  //   }
+  // } else {
+  //   // 新建立的, 但是还未建立 channel
+  //   if (channel_info_.contains(title)) {
+  //     // 已经存在了这个 title
+  //     Ui::TtMessageBar::information(TtMessageBarType::Top, "",
+  //                                   tr("已经存在相同标签, 配置失效"), 1500,
+  //                                   this);
+  //     qDebug() << "重复";
+  //     return;
+  //   }
+  //   // 都不包含
+  //   // 比如立马建立了两个通道，但是没有对其改变
+  // }
+  // 更新配置
+  // channel_info_[uuid] = qMakePair(blob, meta);
+}
+
+void SerialWindow::parseBuffer() {
+  //   // 解析, 每个通道都有不同的 uuid 值
+  //   for (auto& channel : channel_info_) {
+  //     // 每个 channel 都保存者一个 receive_buffer_ 的副本
+  //     // channel.second;
+  //     QByteArrayView view(channel.second.header.toUtf8());
+  //   }
+
+  //   static constexpr char HDR0 = char(0xAA);
+  //   static constexpr char HDR1 = char(0x55);
+  //   // qDebug() << "raw hex:" << receive_buffer_.toHex().toUpper();
+
+  //   // 根据具体协议处理帧数据
+  //   // qDebug() << "收到完整帧:" << frame.toHex();
+
+  //   // 校验位是否需要 ?
+  //   // 最小帧长度
+  //   // const int MIN_FRAME_SIZE = 2 /*hdr*/ + 1 /*type*/ + 1 /*len*/ + 1 /*cs*/;
+  //   const int MIN_FRAME_SIZE = 2 /*hdr*/ + 1 /*type*/ + 1 /*len*/;
+
+  //   // while (true) {
+  //   while (receive_buffer_.size() >= MIN_FRAME_SIZE) {
+
+  //     if (receive_buffer_.size() < MIN_FRAME_SIZE) {
+  //       return;
+  //     }
+  //     // 检索帧头
+  //     int pos = receive_buffer_.indexOf(QByteArrayView(&HDR0), 0);
+
+  //     // 找到帧头
+  //     while (pos >= 0 && (pos + 1 >= receive_buffer_.size() ||
+  //                         receive_buffer_[pos + 1] != HDR1)) {
+  //       pos = receive_buffer_.indexOf(QByteArrayView(&HDR0, 1), pos + 1);
+  //     }
+  //     // 没有帧头
+  //     if (pos < 0) {
+  //       receive_buffer_.clear();
+  //       return;
+  //     }
+  //     // 丢弃帧头前的无效字节
+  //     if (pos > 0) {
+  //       // [0] == header0 [1] = header2
+  //       receive_buffer_.remove(0, pos);
+  //     }
+  //     // 剩余长度是否小于最小长度, 满足一个帧的长度
+  //     if (receive_buffer_.size() < MIN_FRAME_SIZE) {
+  //       // 等下一次 readAll
+  //       return;
+  //     }
+
+  //     quint8 type = quint8(receive_buffer_[2]);
+  //     quint8 len = quint8(receive_buffer_[3]);
+
+  //     // hdr0+hdr1+type+len+payload+cs
+  //     // int fullSize = 2 + 1 + 1 + len + 1;  // 附带校验
+  //     int fullSize = 2 + 1 + 1 + len;  // 无校验
+
+  //     if (receive_buffer_.size() < fullSize) {
+  //       // 完整帧没齐, 等下一次 readAll
+  //       return;
+  //     }
+
+  //     // 提取帧
+  //     QByteArray frame = receive_buffer_.mid(0, fullSize);
+
+  //     // // 校验：简单求和取低8位
+  //     // quint8 cs = 0;
+  //     // for (int i = 2; i < 2 + 1 + 1 + len; ++i)  // 从 type 开始到 payload 末尾
+  //     //   cs += quint8(receive_buffer_[i]);
+  //     // if (cs == quint8(receive_buffer_[2 + 1 + 1 + len])) {
+  //     //   // 校验通过
+  //     //   processFrame(type, receive_buffer_.mid(4, len));
+  //     // } else {
+  //     //   qWarning() << "Frame checksum error!";
+  //     // }
+
+  //     // 处理帧
+  //     processFrame(type, receive_buffer_.mid(4, len));
+
+  //     // 移出已经处理的一帧字节, 保留后面的
+  //     receive_buffer_.remove(0, fullSize);
+  //   }
+  // }
+
+  // void SerialWindow::processFrame(quint8 type, const QByteArray& payload) {
+  //   // qDebug() << payload;
+  //   // 能够解析 0102
+  //   // 按 type 分发、解析 payload
+  //   switch (type) {
+  //     case 0x01:
+  //       // 解析命令 A
+  //       qDebug() << "type 01: " << payload;
+  //       break;
+  //     case 0x02:
+  //       // 解析命令 B
+  //       break;
+  //     default:
+  //       qWarning() << "Unknown frame type" << type;
+  //   }
+  //   // 处理完后, 帧应该如何做 ?
+  //   // 对应的图像通道展示数据
+
+  while (!receive_buffer_.isEmpty()) {
+    // 遍历所有解析规则，寻找最早出现的有效帧头
+    int bestPos = -1;
+    ParserRule const* bestRule = nullptr;  // 解析规则
+    // 遍历当前存在的规则
+    for (auto& rule : rules_) {
+      // 能够查找头部
+      qDebug() << "header: " << rule.header;
+      qDebug() << "rece: " << receive_buffer_;
+      // 索引某个规则的头部, 谁先索引得到, 那就先解析
+      int pos = receive_buffer_.indexOf(rule.header);
+      if (pos >= 0 && (bestPos == -1 || pos < bestPos)) {
+        bestPos = pos;
+        bestRule = &rule;
+      }
+    }
+    // 没有匹配的帧头, 丢弃所有数据
+    if (!bestRule) {
+      receive_buffer_.clear();
+      return;
+    }
+    // 丢弃帧头前的无用字节
+    if (bestPos > 0) {
+      receive_buffer_.remove(0, bestPos);
+    }
+    // 剩余最小长度 >= 头部长度 +
+    if (receive_buffer_.size() <
+        bestRule->header_len + bestRule->len_offset + bestRule->len_bytes) {
+      return;
+    }
+
+    // // 查找到了
+    // qDebug() << "find";
+    // 读取长度字段
+    // 假设 len_bytes==1 的简单情况
+    // quint8 payloadLen = quint8(receive_buffer_.at(bestRule->len_offset));
+    // qDebug() << "payloadlen: " << payloadLen;
+
+    // 提取长度字段 (ex.多字节长度)
+    quint32 payloadLen = 0;
+    for (int i = 0; i < bestRule->len_bytes; ++i) {
+      payloadLen =
+          (payloadLen << 8) |
+          static_cast<quint8>(receive_buffer_[bestRule->len_offset + i]);
+    }
+
+    const int fullSize = bestRule->header_len + bestRule->len_bytes +
+                         payloadLen + bestRule->tail_len +
+                         (bestRule->has_checksum ? 1 : 0);
+
+    // 长度: 头部长度 + ? + 长度字段 + 数据长度 + 帧尾长度 + 校验位字段
+    // const int fullSize =
+    //     bestRule->header_len +
+    //     (bestRule->len_offset - bestRule->header_len)  // type 字段也涵盖在内
+    //     + bestRule->len_bytes + payloadLen + bestRule->tail_len +
+    //     (bestRule->has_checksum ? 1 : 0);
+
+    qDebug() << "size: " << fullSize;
+
+    if (receive_buffer_.size() < fullSize) {
+      return;
+    }
+
+    // 切出一整帧
+    QByteArray frame = receive_buffer_.left(fullSize);
+
+    // 可选校验
+    if (bestRule->has_checksum && !bestRule->validate(frame)) {
+      if (!bestRule->validate(frame)) {
+        // 校验失败，丢弃这个 header 字节，重试
+        receive_buffer_.remove(0, 1);
+        continue;
+      }
+    }
+
+    qDebug() << "frame: " << frame;
+
+    // 处理有效帧
+
+    // 调用各自的处理函数
+    // 类型 01
+    quint8 type = static_cast<quint8>(frame.at(bestRule->type_offset));
+    // 数据
+    // QByteArray payload =
+    //     frame.mid(bestRule->len_offset + bestRule->len_bytes, payloadLen);
+    QByteArray payload =
+        frame.mid(bestRule->header_len + bestRule->len_bytes, payloadLen);
+    // 调用自己的帧处理函数
+    bestRule->processFrame(type, payload);
+
+    // 调用自己的处理的这帧
+    receive_buffer_.remove(0, fullSize);
+  }
 }
 
 void SerialWindow::showErrorMessage(const QString& text) {
@@ -240,6 +592,13 @@ void SerialWindow::showErrorMessage(const QString& text) {
 }
 
 void SerialWindow::dataReceived(const QByteArray& data) {
+  // 接收数据
+  receive_buffer_.append(data);
+  // 解析数据帧
+  parseBuffer();
+
+  // 上面只对 receive_buffer_ 处理
+
   // 需要经过脚本处理
   // 第三个参数是传出参数
   double solveData;
@@ -253,8 +612,9 @@ void SerialWindow::dataReceived(const QByteArray& data) {
   // }
   // 写入到 plot 中
   // 一个通道对应一个数据类型, 通道对应 header
-  serial_plot_->addGraphs(1, 1);
-  serial_plot_->addData(1, 1, solveData);
+  // serial_plot_->addGraphs(1, 1);
+  // serial_plot_->addData(1, 1, solveData);
+
   // serial_plot_->saveWaveFormData();
 
   // 导出 csv 格式. 在 menu 中实现
@@ -274,8 +634,12 @@ void SerialWindow::dataReceived(const QByteArray& data) {
   message_model_->appendMessages(list);
 
   terminal_->appendPlainText(timestamp + " >> ");  // 单独追加箭头行
-  terminal_->appendPlainText(data);  // 数据内容作为独立块
-  terminal_->appendPlainText("");    // 保留空行分隔
+  if (display_type_ == MsgType::HEX) {
+    terminal_->appendPlainText(data.toHex(' ').toUpper());
+  } else if (display_type_ == MsgType::TEXT) {
+    terminal_->appendPlainText(data);  // 数据内容作为独立块
+  }
+  terminal_->appendPlainText("");  // 保留空行分隔
 
   recv_byte->setText(QString("接收字节数: %1 B").arg(recv_byte_count));
   message_view_->scrollToBottom();
@@ -643,43 +1007,51 @@ void SerialWindow::init() {
               return;
             }
             if (selectedAction == addAction) {
-              QListWidgetItem* item = new QListWidgetItem(serialDataList);
-              item->setSizeHint(QSize(78, 30));
-              TtColorButton* getValueButton = new TtColorButton(
-                  QColor(100, 100, 140),
-                  QString("CH%1").arg(serialDataList->count()), this);
-
-              int red = QRandomGenerator::global()->bounded(0, 256);
-              int green = QRandomGenerator::global()->bounded(0, 256);
-              int blue = QRandomGenerator::global()->bounded(0, 256);
-              QColor randomCheckColor = QColor(red, green, blue, 100);
-              getValueButton->setCheckBlockColor(randomCheckColor);
-              getValueButton->setFocusPolicy(Qt::NoFocus);
-              serialDataList->setItemWidget(item, getValueButton);
+              TtChannelButtonEditorDialog editorDialog(this);
+              if (editorDialog.exec() == QDialog::Accepted) {
+                QListWidgetItem* item = new QListWidgetItem(serialDataList);
+                item->setSizeHint(QSize(78, 30));
+                TtChannelButton* channelBtn = new TtChannelButton(
+                    QColor(100, 100, 140), editorDialog.title(), this);
+                channelBtn->setCheckBlockColor(editorDialog.checkBlockColor());
+                channelBtn->setFocusPolicy(Qt::NoFocus);
+                // QUuid::createUuidV3()
+                QUuid uuid = QUuid::createUuid();
+                channelBtn->setUuid(uuid.toString());
+                serialDataList->setItemWidget(item, channelBtn);
+                // 添加解析规则
+                addChannelInfo(uuid.toString(), editorDialog.metaInfo());
+              }
             } else if (item) {
               if (selectedAction == renameAction) {
                 // 触发重命名逻辑（与双击逻辑复用）
-                if (auto* btn = qobject_cast<TtColorButton*>(
+                if (auto* btn = qobject_cast<TtChannelButton*>(
                         serialDataList->itemWidget(item))) {
                   btn->modifyText();
                 }
               } else if (selectedAction == deleteAction) {
                 serialDataList->takeItem(serialDataList->row(item));  // 删除项
               } else if (selectedAction == editAction) {
-                if (auto* btn = qobject_cast<TtColorButton*>(
+                if (auto* btn = qobject_cast<TtChannelButton*>(
                         serialDataList->itemWidget(item))) {
-                  TtColorButtonEditorDialog* editorDialog =
-                      new TtColorButtonEditorDialog(btn, this);
-                  if (channel_info_.contains(btn->getText())) {
-
-                    editorDialog->setMetaInfo(
-                        channel_info_.value(btn->getText()).first);
-                  }
-                  // 模态
-                  if (editorDialog->exec() == QDialog::Accepted) {
-                    // 获取元数据保存, 与 button 形成对应关系, button 的 title 唯一
-                    // 检查 title 是否重复
-                    handleDialogData(editorDialog->metaInfo());
+                  // TtChannelButtonEditorDialog* editorDialog =
+                  //     new TtChannelButtonEditorDialog(btn, this);
+                  TtChannelButtonEditorDialog editorDialog(btn, this);
+                  editorDialog.setMetaInfo(channel_info_.value(btn->getUuid()));
+                  // 这里有一个标志位
+                  // 存在之前的文本, 设置之前的配置
+                  // 有两个已经存在配置 ch
+                  // 将一个更改为另一个的名字
+                  // 所有都会 存在
+                  // if (channel_info_.contains(btn->getText())) {
+                  //   editorDialog->setMetaInfo(
+                  //       channel_info_.value(btn->getText()).first);
+                  //   modify_meta_data_ = true;
+                  // } else {
+                  //   modify_meta_data_ = false;
+                  // }
+                  if (editorDialog.exec() == QDialog::Accepted) {
+                    handleDialogData(btn->getUuid(), editorDialog.metaInfo());
                   }
                 }
               }
@@ -724,7 +1096,7 @@ void SerialWindow::init() {
   connect(test_, &Ui::TtWidgetGroup::widgetClicked, this,
           [this, messageStackedView, textBtn, hexBtn](const int& idx) {
             messageStackedView->setCurrentIndex(idx);
-            if (idx == 2) {
+            if (idx != 0) {
               // 图表
               textBtn->setVisible(false);
               hexBtn->setVisible(false);

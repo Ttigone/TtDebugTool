@@ -1,14 +1,14 @@
-#ifndef TTCOLORBUTTON_H
-#define TTCOLORBUTTON_H
+#ifndef TTCHANNELBUTTON_H
+#define TTCHANNELBUTTON_H
 
-class TtColorButton : public QWidget {
+class TtChannelButton : public QWidget {
   Q_OBJECT
   Q_PROPERTY(bool checked READ isChecked WRITE setChecked)
  public:
-  explicit TtColorButton(QWidget* parent = nullptr);
-  explicit TtColorButton(const QColor& color, const QString& text,
-                         QWidget* parent = nullptr);
-  ~TtColorButton();
+  explicit TtChannelButton(QWidget* parent = nullptr);
+  explicit TtChannelButton(const QColor& color, const QString& text,
+                           QWidget* parent = nullptr);
+  ~TtChannelButton();
 
   QColor getColor() const;
   void setColors(const QColor& color);
@@ -23,6 +23,9 @@ class TtColorButton : public QWidget {
   void setChecked(bool checked);
   void setEnableHoldToCheck(bool enable);
   void setEnable(bool enabled);
+
+  QString getUuid() const;
+  void setUuid(const QString& uuid);
 
  public slots:
   void modifyText();
@@ -57,9 +60,11 @@ class TtColorButton : public QWidget {
   QColor check_block_color_;
   bool is_hovered_;
 
-  QLineEdit* rename_editor_ = nullptr;  // 重命名编辑器
-  QString original_text_;               // 保存原始文本
+  QLineEdit* rename_editor_ = nullptr;
+  QString original_text_;
   bool ignore_next_release_;
+
+  QString uuid_;
 };
 
-#endif  // TTCOLORBUTTON_H
+#endif  // TTCHANNELBUTTON_H

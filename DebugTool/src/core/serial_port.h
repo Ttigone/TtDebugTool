@@ -40,7 +40,8 @@ class SerialPortWorker : public QObject {
   bool isOpened();
 
  signals:
-  void dataReceived(QByteArray data);
+  // 数据处理实在 该串口处理, 还是给外面的信号接收者处理 ?
+  void dataReceived(const QByteArray& data);
   void errorOccurred(const QString& error);
   void serialPortStatusChanged(bool isOpen);
 
@@ -61,8 +62,8 @@ class SerialPortWorker : public QObject {
   void parseBuffer();
   void processFrame(quint8 type, const QByteArray& payload);
 
-  // 帧格式需要外部提供
-  // 帧格式常量
+  // // 帧格式需要外部提供
+  // // 帧格式常量
   static constexpr char HDR0 = char(0xAA);
   static constexpr char HDR1 = char(0x55);
 

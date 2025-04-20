@@ -129,11 +129,15 @@ void SerialPortWorker::sendData(const QByteArray& data) {
 void SerialPortWorker::readData() {
   // 重新开启接收定时器 4ms
   // receive_timer_->start(4);
+
   // 数据追加到缓存区
   // 直接读取全部数据
-  receive_buffer_.append(serial_->readAll());
-  // processFrame();
-  parseBuffer();
+  // receive_buffer_.append(serial_->readAll());
+  // parseBuffer();
+
+  // 发送数据, 内部不做串口数据解析, 交给外部处理
+  QByteArray data = serial_->readAll();
+  emit dataReceived(data);
 
   // 这个有问题
   // 读取数据, 串口中有数据, 立马读取

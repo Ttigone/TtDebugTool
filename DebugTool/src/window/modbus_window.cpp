@@ -30,6 +30,7 @@ ModbusWindow::ModbusWindow(TtProtocolType::ProtocolRole role, QWidget* parent)
   base::DetectRunningTime runtime;
   init();
   qDebug() << runtime.elapseMilliseconds();
+
   connectSignals();
   modbus_master_ = new Core::ModbusMaster();
   connect(modbus_master_, &Core::ModbusMaster::errorOccurred, this,
@@ -41,6 +42,9 @@ ModbusWindow::ModbusWindow(TtProtocolType::ProtocolRole role, QWidget* parent)
   //                  &Window::ModbusWindow::sloveDataReceived);
   QObject::connect(modbus_master_, &Core::ModbusMaster::dataReceived, this,
                    &Window::ModbusWindow::sloveDataReceived);
+  // 单独新建链接正常
+  // 这个地方失效
+  qDebug() << "TEST3";
 }
 
 ModbusWindow::~ModbusWindow() {}
@@ -206,6 +210,8 @@ void ModbusWindow::init() {
   stack_->addWidget(original_widget_);
   stack_->addWidget(edit_widget_);
 
+  qDebug() << "TEST1";
+
   // 优化后的信号连接（仅需2个连接点）
   connect(modify_title_btn_, &Ui::TtSvgButton::clicked, this,
           &ModbusWindow::switchToEditMode);
@@ -291,6 +297,8 @@ void ModbusWindow::init() {
     mainSplitter->addWidget(modbus_client_setting_);
   } else {
   }
+
+  qDebug() << "TEST2";
 
   // 主界面是左右分隔
   main_layout_->addWidget(mainSplitter);

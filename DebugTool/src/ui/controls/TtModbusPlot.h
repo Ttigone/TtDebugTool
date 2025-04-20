@@ -93,6 +93,7 @@ class SerialPlot : public QCustomPlot {
 
   // 添加新的数据点
   void addData(int type, const int& addr, double value);
+  void addData(int channel, double value);
 
   void setShowTooltip(bool show) { m_showTooltip = show; }
   void setAutoScaleY(bool autoScale) { m_autoScaleY = autoScale; }
@@ -134,8 +135,12 @@ class SerialPlot : public QCustomPlot {
     QPointer<QCPGraph> graph;
     QPointer<AxisTag> tag;
   };
+
+  QMap<int, CurveData> curves_;               // Key: Channel
   QMap<QPair<int, int>, CurveData> m_curves;  // Key: (Type, Addr)
   QList<QColor> m_colorPalette;               // 颜色轮转列表
+
+  QList<QCPItemText*> m_hoverLabels;
 };
 
 #endif  // UI_CONTROLS_TTMODBUSPLOT_H

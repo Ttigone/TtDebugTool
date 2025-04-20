@@ -99,7 +99,11 @@ class SerialWindow : public QWidget, public Ui::TabManager::ISerializable {
   void connectSignals();
   void saveLog();
   void refreshTerminalDisplay();
-  void handleDialogData(const QByteArray& blob);
+  void addChannelInfo(const QString& label, const QByteArray& blob);
+  void handleDialogData(const QString& label, const QByteArray& blob);
+
+  void parseBuffer();
+  void processFrame(quint8 type, const QByteArray& payload);
 
   Ui::TtVerticalLayout* main_layout_;
 
@@ -156,12 +160,35 @@ class SerialWindow : public QWidget, public Ui::TabManager::ISerializable {
   SerialPlot* serial_plot_;
 
   struct ChannelMetaDef {
-    QString header_;
-    QString tail_;
-    QString length_;
+    QString title;
+    QString header;
+    QString tail;
+    QString length;
   };
 
-  QMap<QString, QPair<QByteArray, ChannelMetaDef>> channel_info_;
+  struct ParserRule {
+    // 通道
+    QByteArray header;  // 帧头字节序列
+    int header_len;     // header.size()
+    int type_offset;    // 从 buffer[offset] 读类型
+    int len_offset;     // 从 buffer[offset] 读长度
+    int len_bytes;      // 长度字段占几字节（通常 1）
+    int tail_len;       // 帧尾长度（若无尾则 = 0）
+    bool has_checksum;
+    std::function<bool(const QByteArray&)> validate;  // 可选：校验函数
+    std::function<void(quint8, const QByteArray&)> processFrame;
+  };
+
+  // 修改相关配置
+  // QVector<ParserRule> rules_;
+  QMap<QString, ParserRule> rules_;
+
+  // uuid 通道
+  // QMap<QString, QPair<QByteArray, ChannelMetaDef>> channel_info_;
+  QMap<QString, QByteArray> channel_info_;
+  // bool modify_meta_data_ = false;
+
+  QByteArray receive_buffer_;  // 接收缓冲区
 };
 
 }  // namespace Window

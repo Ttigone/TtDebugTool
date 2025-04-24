@@ -890,22 +890,22 @@ void MainWindow::connectSignals() {
   connect(history_mock_list_, &Ui::SessionManager::uuidsChanged, tabWidget_,
           &Ui::TabManager::removeUuidWidget);
 
-  QObject::connect(function_select_, &FunctionSelectionWindow::switchRequested,
-                   [this](TtProtocolRole::Role role) {
-                     tabWidget_->handleButtonClicked(tabWidget_->currentIndex(),
-                                                     role);
-                   });
+  connect(function_select_, &FunctionSelectionWindow::switchRequested,
+          [this](TtProtocolRole::Role role) {
+            tabWidget_->handleButtonClicked(tabWidget_->currentIndex(), role);
+          });
   connect(setting_, &Ui::TtSvgButton::clicked, this, [this]() {
+    // 点击多次, 为什么 按钮失效
     if (!setting_widget_) {
       setting_widget_ = new Ui::SettingWidget;
+      setting_widget_->setObjectName(QStringLiteral("SettingWidget"));
+      tabWidget_->addNewTab(setting_widget_, QIcon(":/sys/settings.svg"),
+                            tr("设置"));
     }
-    tabWidget_->addNewTab(setting_widget_, QIcon(":/sys/settings.svg"),
-                          tr("设置"));
     tabWidget_->setCurrentWidget(setting_widget_);
   });
 
   connect(tabWidget_, &Ui::TabManager::requestNewTab, this, [this]() {
-    qDebug() << "new";
     AllFunctionSelectionWindow* all = new AllFunctionSelectionWindow();
     tabWidget_->addNewTab(all, tr("选择功能"));
     QObject::connect(all, &AllFunctionSelectionWindow::switchRequested,
@@ -915,6 +915,15 @@ void MainWindow::connectSignals() {
                      });
     tabWidget_->setCurrentWidget(all);
   });
+  connect(
+      tabWidget_, &Ui::TabManager::widgetDeleted, this,
+      [this](QWidget* deleteWidget) {
+        // 如果被删除的是保存的widget，则置空指针
+        if (setting_widget_ == deleteWidget) {
+          setting_widget_ = nullptr;
+        }
+      },
+      Qt::DirectConnection);
 }
 
 void MainWindow::registerTabWidget() {

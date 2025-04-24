@@ -11,7 +11,6 @@ Q_PROPERTY_CREATE_Q_CPP(TtLineEdit, int, BorderRadius)
 
 TtLineEdit::TtLineEdit(QWidget* parent)
     : QLineEdit(parent), d_ptr(new TtLineEditPrivate) {
-
   Q_D(TtLineEdit);
   d->q_ptr = this;
   d->init();
@@ -28,6 +27,9 @@ TtLineEdit::TtLineEdit(QWidget* parent)
   QFont textFont = font();
   textFont.setLetterSpacing(QFont::AbsoluteSpacing, d->text_spacing_);
   setFont(textFont);
+
+  // 默认空文本
+  setText("");
 
   // 设置控件可见
   setVisible(true);

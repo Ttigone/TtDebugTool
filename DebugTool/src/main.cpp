@@ -54,10 +54,11 @@ LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS* exceptionInfo) {
 int main(int argc, char* argv[]) {
   QApplication app(argc, argv);
 
-  QCoreApplication::setApplicationName(
-      QStringLiteral("SerialportTool-C3H3_Ttigone"));
-  QCoreApplication::setOrganizationName(QStringLiteral("WWB-Qt"));
-
+  // 程序名
+  QCoreApplication::setApplicationName(QStringLiteral("TtDebugTool"));
+  // 组织名
+  QCoreApplication::setOrganizationName(QStringLiteral("C3H3_Ttigone"));
+  // 主应用字体
   QFontDatabase::addApplicationFont(":/font/iconfont.ttf");
   auto fid =
       QFontDatabase::addApplicationFont(":/font/fontawesome-webfont.ttf");

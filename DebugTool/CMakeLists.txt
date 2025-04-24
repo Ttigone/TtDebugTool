@@ -196,7 +196,8 @@ find_package(OpenGL REQUIRED)
 target_link_libraries(${PROJECT_NAME}
 PRIVATE
   desktop-app::lib_base
-  desktop-app::lib_ui
+  lib_ui
+  # desktop-app::lib_ui
   QWindowKit::Widgets
   external_qtadvancedcss
   external_qt-material

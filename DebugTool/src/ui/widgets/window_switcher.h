@@ -140,6 +140,7 @@ class TabManager : public QTabWidget {
  signals:
   void newTabRequested();  // 新建标签信号
   void requestNewTab();
+  void widgetDeleted(QWidget* widget);
 
  public slots:
   // 处理 widget1 中按钮点击事件
@@ -191,6 +192,13 @@ class TabManager : public QTabWidget {
     QIcon icon;
     QByteArray state;  // 用于保存widget状态
   };
+
+  // struct TabData {
+  //   QString title;
+  //   // QWidget* widget;
+  //   QIcon icon;
+  //   QByteArray state;  // 用于保存widget状态
+  // };
 
   // uuid, 存储已关闭的标签页信息
   QList<QPair<QString, TabData>> closedTabs_;

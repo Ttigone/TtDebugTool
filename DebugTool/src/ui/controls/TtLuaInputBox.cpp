@@ -2,6 +2,7 @@
 
 #include <ui/control/TtListView.h>
 #include <ui/control/buttonbox/TtButtonBox.h>
+#include <ui/layout/horizontal_layout.h>
 #include <ui/layout/vertical_layout.h>
 #include <ui/widgets/buttons.h>
 #include <ui/widgets/session_manager.h>
@@ -11,19 +12,55 @@
 
 namespace Ui {
 
-TtLuaInputBox::TtLuaInputBox(QWidget* parent) : QDialog(parent) {
+TtLuaInputBox::TtLuaInputBox(bool enableSaveSetting, QWidget* parent)
+    : QDialog(parent), save_setting_(enableSaveSetting) {
   init();
 }
 
 TtLuaInputBox::~TtLuaInputBox() {
+  // 每次关闭后, 栈模态都会关闭
   qDebug() << "delete inpubot";
 }
 
-QString TtLuaInputBox::getLuaCode() {
+void TtLuaInputBox::setLuaCode(const QString& code) {
+  edit_lua_code_->append(code);
+  // edit_lua_code_->setCursorPosition();
+  edit_lua_code_->SendScintilla(QsciScintilla::SCI_DOCUMENTEND);
+}
+
+QString TtLuaInputBox::getLuaCode() const {
   return edit_lua_code_->text();
 }
 
+// void TtLuaInputBox::setEnableSaveSetting(bool enable) {
+//   save_setting_ = enable;
+// }
+
+void TtLuaInputBox::applyChanges() {
+  // 点击取消, 然后 ChanDialog 点击确定后, 消失
+
+  qDebug() << "apply";
+  // [this, script_listview, buttonGroup] {
+  //           Ui::TtSpecialDeleteButton* button = new Ui::TtSpecialDeleteButton(
+  //               "TEST", ":/sys/displayport.svg", ":/sys/delete.svg", this);
+  //           auto uuid = QUuid::createUuid().toString();
+
+  //           script_listview->addAdaptiveWidget("TEST", uuid, button);
+  //           buttonGroup->addButton(uuid, button);
+  //           // 存储
+  //           lua_code_[uuid] = edit_lua_code_->text();
+  // if (edit_lua_code_->text().isEmpty()) {
+  //   accept();
+  // } else {
+
+  //   // 返回 QString code 的代码给 SerialWindow 保存
+  // }
+  accept();
+}
+
 void TtLuaInputBox::init() {
+  setWindowTitle(tr("Lua 代码编辑器"));
+  resize(400, 280);
   // 显示的编辑组件
   edit_lua_code_ = new QsciScintilla;
   edit_lua_code_->setMarginType(0, QsciScintilla::NumberMargin);
@@ -43,46 +80,80 @@ void TtLuaInputBox::init() {
   addLuaApis(apis);
   enhanceCompletion(edit_lua_code_);
 
-  // Ui::TtTextButton* canclebutton = new Ui::TtTextButton(tr("取消"), this);
-  // canclebutton->setCheckedColor(Qt::cyan);
-  // Ui::TtTextButton* savebutton = new Ui::TtTextButton(tr("保存"), this);
-  // savebutton->setCheckedColor(Qt::cyan);
-
-  QGridLayout* layout = new QGridLayout(this);
+  // 主布局
+  // QGridLayout* layout = new QGridLayout(this);
+  Ui::TtHorizontalLayout* layout = new Ui::TtHorizontalLayout(this);
   layout->setContentsMargins(QMargins());
   layout->setSpacing(0);
 
   QListWidget* addFunctionList = new QListWidget;
-  addFunctionList->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-  addFunctionList->setFixedWidth(200);
+  addFunctionList->setContentsMargins(QMargins());
+  addFunctionList->setSpacing(0);
+  addFunctionList->setStyleSheet(
+      // 设置列表整体背景色
+      "QListWidget {"
+      "   background-color: white;"
+      "   outline: none;"  // 移除焦点虚线框（关键）
+      "}"
+      // 项选中状态样式
+      "QListWidget::item:selected {"
+      "   background: transparent;"  // 强制透明背景
+      "}"
+      // 项悬停状态样式
+      "QListWidget::item:hover {"
+      "   background: transparent;"  // 防止悬停变色
+      "}"
+      // 项按下状态样式
+      "QListWidget::item:pressed {"
+      "   background: transparent;"  // 防止按压变色
+      "}");
+
+  // addFunctionList->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  // addFunctionList->setFixedWidth(200);
 
   QListWidgetItem* item = new QListWidgetItem(addFunctionList);
-  item->setSizeHint(QSize(200, 30));
-  // 显示获取值并改变函数
-  // FancyButton* getValueButton = new FancyButton(
-  //     tr("写入数据之后"), ":/sys/code-square.svg", addFunctionList);
-  // addFunctionList->setItemWidget(item, getValueButton);
-  // connect(getValueButton, &QPushButton::clicked, this, [this] {
-  //   // 获取函数文本
-  //   QString functionTemplate =
-  //       "function getValue(value)\n"
-  //       "    return value + 1\n"
-  //       "end\n";
+  item->setSizeHint(QSize(128, 30));
 
-  //   appendCodeToEnd(edit_lua_code_, functionTemplate);
-  // });
+  QHBoxLayout* buttonLayout = new QHBoxLayout();
 
-  // QHBoxLayout* buttonLayout = new QHBoxLayout();
-  // buttonLayout->addStretch();
-  // buttonLayout->addWidget(canclebutton, 0, Qt::AlignRight);
-  // buttonLayout->addWidget(savebutton, 0, Qt::AlignRight);
+  TtCodeButton* codeButton = new TtCodeButton(
+      tr("写入数据之后"), ":/sys/code-square.svg", addFunctionList);
+  // codeButton->setText(tr("写入数据之后"));
+  addFunctionList->setItemWidget(item, codeButton);
+  connect(codeButton, &TtCodeButton::clicked, this, [this] {
+    // 获取函数文本
+    QString functionTemplate =
+        "function getValue(value)\n"
+        "    return value + 1\n"
+        "end\n";
 
-  // layout->addWidget(edit_lua_code_, 0, 0, 2, 1);
-  // layout->addWidget(addFunctionList, 0, 1, 2, 1);
+    appendCodeToEnd(edit_lua_code_, functionTemplate);
+  });
 
-  // setLayout(layout);
+  layout->addWidget(edit_lua_code_, 3);
 
-  // WidgetGroup* buttonGroup = new WidgetGroup(this);
+  Ui::TtVerticalLayout* vl = new Ui::TtVerticalLayout();
+  vl->addWidget(addFunctionList);
+
+  if (save_setting_) {
+    Ui::TtTextButton* canclebutton = new Ui::TtTextButton(tr("取消"), this);
+    canclebutton->setCheckedColor(Qt::cyan);
+    Ui::TtTextButton* savebutton = new Ui::TtTextButton(tr("保存"), this);
+    savebutton->setCheckedColor(Qt::cyan);
+
+    buttonLayout->addWidget(canclebutton);
+    buttonLayout->addWidget(savebutton);
+
+    vl->addLayout(buttonLayout, 0);
+
+    layout->addLayout(vl, 1);
+
+    connect(canclebutton, &QPushButton::clicked, this, &TtLuaInputBox::reject);
+    connect(savebutton, &QPushButton::clicked, this,
+            &TtLuaInputBox::applyChanges);
+  }
+
+  setLayout(layout);
 
   // connect(savebutton, &Ui::TtTextButton::clicked, this,
   //         [this, script_listview, buttonGroup] {
@@ -94,11 +165,6 @@ void TtLuaInputBox::init() {
   //           buttonGroup->addButton(uuid, button);
   //           // 存储
   //           lua_code_[uuid] = edit_lua_code_->text();
-  //         });
-  // connect(buttonGroup, &WidgetGroup::currentIndexChanged, this,
-  //         [this](const QString& index) {
-  //           // 添加不同的 lua 代码到编辑器上
-  //           edit_lua_code_->setText(lua_code_.value(index));
   //         });
 
   // // 连接到适当的信号

@@ -51,7 +51,7 @@ class SerialSetting;
 
 namespace Core {
 class SerialPortWorker;
-class LuaKernel;
+// class LuaKernel;
 };
 
 namespace Window {
@@ -99,8 +99,10 @@ class SerialWindow : public QWidget, public Ui::TabManager::ISerializable {
   void connectSignals();
   void saveLog();
   void refreshTerminalDisplay();
-  void addChannelInfo(const QString& label, const QByteArray& blob);
-  void handleDialogData(const QString& label, const QByteArray& blob);
+  void addChannelInfo(const QString& label, const QColor& olor,
+                      const QByteArray& blob);
+  void handleDialogData(const QString& label, quint16 channel,
+                        const QByteArray& blob);
 
   void parseBuffer();
   void processFrame(quint8 type, const QByteArray& payload);
@@ -154,7 +156,7 @@ class SerialWindow : public QWidget, public Ui::TabManager::ISerializable {
   uint32_t heartbeat_interval_;
 
   Ui::TtLuaInputBox* lua_code_;
-  Core::LuaKernel* lua_actuator_;
+  // Core::LuaKernel* lua_actuator_;
 
   // Ui::TtQCustomPlot* serial_plot_;
   SerialPlot* serial_plot_;
@@ -167,16 +169,17 @@ class SerialWindow : public QWidget, public Ui::TabManager::ISerializable {
   };
 
   struct ParserRule {
-    // 通道
+    quint16 channel;    // 通道
     QByteArray header;  // 帧头字节序列
     int header_len;     // header.size()
+    // int type_bytes;     // 类型字段字节数(通常 1)
     int type_offset;    // 从 buffer[offset] 读类型
+    // int len_bytes;      // 长度字段占几字节（通常 1）
     int len_offset;     // 从 buffer[offset] 读长度
-    int len_bytes;      // 长度字段占几字节（通常 1）
     int tail_len;       // 帧尾长度（若无尾则 = 0）
     bool has_checksum;
     std::function<bool(const QByteArray&)> validate;  // 可选：校验函数
-    std::function<void(quint8, const QByteArray&)> processFrame;
+    std::function<void(quint8, const QByteArray&, const QString&)> processFrame;
   };
 
   // 修改相关配置
@@ -185,7 +188,12 @@ class SerialWindow : public QWidget, public Ui::TabManager::ISerializable {
 
   // uuid 通道
   // QMap<QString, QPair<QByteArray, ChannelMetaDef>> channel_info_;
-  QMap<QString, QByteArray> channel_info_;
+  quint16 channel_nums_ = 0;
+  QMap<QString, QPair<quint16, QByteArray>> channel_info_;
+
+  // 每个通道, 保存对应的 lua 解析代码
+  QMap<quint16, QString> lua_script_codes_;
+
   // bool modify_meta_data_ = false;
 
   QByteArray receive_buffer_;  // 接收缓冲区

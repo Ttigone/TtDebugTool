@@ -10,13 +10,19 @@ namespace Ui {
 class TtLuaInputBox : public QDialog {
   Q_OBJECT
  public:
-  explicit TtLuaInputBox(QWidget* parent = nullptr);
+  explicit TtLuaInputBox(bool enableSaveSetting, QWidget* parent = nullptr);
   ~TtLuaInputBox();
 
-  QString getLuaCode();
+  void setLuaCode(const QString& code);
+  QString getLuaCode() const;
+
+  // void setEnableSaveSetting(bool enable);
 
  signals:
   void closed();
+
+ private slots:
+  void applyChanges();
 
  private:
   void init();
@@ -29,6 +35,8 @@ class TtLuaInputBox : public QDialog {
   QsciScintilla* edit_lua_code_;
 
   QMap<QString, QString> lua_code_;
+
+  bool save_setting_ = true;
 };
 
 }  // namespace Ui

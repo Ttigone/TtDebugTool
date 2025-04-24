@@ -4,6 +4,7 @@
 #include <QHBoxLayout>
 
 #include "ui/Def.h"
+#include "ui/ui_pch.h"
 
 namespace Ui {
 

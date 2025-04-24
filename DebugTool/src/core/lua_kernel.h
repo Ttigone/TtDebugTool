@@ -11,6 +11,7 @@ class LuaKernel {
   ~LuaKernel();
 
   void doLuaCode(const QString& code, int data, double& result);
+  void doLuaCode(const QString& code, const QVariantList& args, double& result);
 
  private:
   lua_State* lua_state_;

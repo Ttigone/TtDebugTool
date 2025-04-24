@@ -2,9 +2,16 @@
 #define UI_CONTROLS_TTMODBUSPLOT_H
 
 #include "TtQCPItemRichText.h"
-#include "qcustomplot/qcustomplot.h"
+// #include "qcustomplot/qcustomplot.h"
 
 #include "Def.h"
+
+class QCustomPlot;
+class QCPAxis;
+class QCPItemTracer;
+class QCPItemLine;
+class QCPItemText;
+class QCPItemTracer;
 
 class AxisTag : public QObject {
   Q_OBJECT
@@ -92,7 +99,6 @@ class SerialPlot : public QCustomPlot {
   ~SerialPlot();
 
   // 添加新的数据点
-  void addData(int type, const int& addr, double value);
   void addData(int channel, double value);
 
   void setShowTooltip(bool show) { m_showTooltip = show; }
@@ -102,8 +108,8 @@ class SerialPlot : public QCustomPlot {
   void saveWaveFormData();
 
  public slots:
-  void addGraphs(int type, const int& addr);
-  void removeGraphs(int type, const int& addr);
+  void addGraphs(int channel, const QColor& color = Qt::red);
+  void removeGraphs(int channel);
   void setGraphsPointCapacity(quint16 nums);
 
  protected:
@@ -137,7 +143,6 @@ class SerialPlot : public QCustomPlot {
   };
 
   QMap<int, CurveData> curves_;               // Key: Channel
-  QMap<QPair<int, int>, CurveData> m_curves;  // Key: (Type, Addr)
   QList<QColor> m_colorPalette;               // 颜色轮转列表
 
   QList<QCPItemText*> m_hoverLabels;

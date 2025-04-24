@@ -211,22 +211,22 @@
 <context>
     <name>SerialPlot</name>
     <message>
-        <location filename="../../src/ui/controls/TtModbusPlot.cpp" line="773"/>
+        <location filename="../../src/ui/controls/TtModbusPlot.cpp" line="774"/>
         <source>*.csv</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtModbusPlot.cpp" line="779"/>
+        <location filename="../../src/ui/controls/TtModbusPlot.cpp" line="780"/>
         <source>提示</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtModbusPlot.cpp" line="780"/>
+        <location filename="../../src/ui/controls/TtModbusPlot.cpp" line="781"/>
         <source>无法创建文件!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtModbusPlot.cpp" line="787"/>
+        <location filename="../../src/ui/controls/TtModbusPlot.cpp" line="788"/>
         <source>time(s),</source>
         <translation type="unfinished"></translation>
     </message>
@@ -234,94 +234,68 @@
 <context>
     <name>TtChannelButtonEditorDialog</name>
     <message>
-        <location filename="../../src/ui/controls/TtChannelButtonEditorDialog.cpp" line="6"/>
-        <location filename="../../src/ui/controls/TtChannelButtonEditorDialog.cpp" line="94"/>
+        <location filename="../../src/ui/controls/TtChannelButtonEditorDialog.cpp" line="107"/>
         <source>编辑通道属性</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtChannelButtonEditorDialog.cpp" line="9"/>
-        <location filename="../../src/ui/controls/TtChannelButtonEditorDialog.cpp" line="97"/>
+        <location filename="../../src/ui/controls/TtChannelButtonEditorDialog.cpp" line="110"/>
         <source>名称</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtChannelButtonEditorDialog.cpp" line="11"/>
+        <location filename="../../src/ui/controls/TtChannelButtonEditorDialog.cpp" line="112"/>
         <source>帧头(HEX)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtChannelButtonEditorDialog.cpp" line="12"/>
-        <location filename="../../src/ui/controls/TtChannelButtonEditorDialog.cpp" line="100"/>
+        <location filename="../../src/ui/controls/TtChannelButtonEditorDialog.cpp" line="113"/>
         <source>帧头长度</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtChannelButtonEditorDialog.cpp" line="13"/>
-        <location filename="../../src/ui/controls/TtChannelButtonEditorDialog.cpp" line="101"/>
+        <location filename="../../src/ui/controls/TtChannelButtonEditorDialog.cpp" line="116"/>
         <source>类型字段偏移</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtChannelButtonEditorDialog.cpp" line="14"/>
+        <location filename="../../src/ui/controls/TtChannelButtonEditorDialog.cpp" line="119"/>
         <source>长度字段偏移</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtChannelButtonEditorDialog.cpp" line="15"/>
-        <location filename="../../src/ui/controls/TtChannelButtonEditorDialog.cpp" line="103"/>
-        <source>长度字段(字节)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/ui/controls/TtChannelButtonEditorDialog.cpp" line="99"/>
-        <source>帧头</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/ui/controls/TtChannelButtonEditorDialog.cpp" line="102"/>
-        <source>长度字段频偏移</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/ui/controls/TtChannelButtonEditorDialog.cpp" line="17"/>
-        <location filename="../../src/ui/controls/TtChannelButtonEditorDialog.cpp" line="105"/>
+        <location filename="../../src/ui/controls/TtChannelButtonEditorDialog.cpp" line="120"/>
         <source>帧尾</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtChannelButtonEditorDialog.cpp" line="28"/>
-        <location filename="../../src/ui/controls/TtChannelButtonEditorDialog.cpp" line="116"/>
+        <location filename="../../src/ui/controls/TtChannelButtonEditorDialog.cpp" line="132"/>
         <source>脚本编辑</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtChannelButtonEditorDialog.cpp" line="51"/>
-        <location filename="../../src/ui/controls/TtChannelButtonEditorDialog.cpp" line="139"/>
+        <location filename="../../src/ui/controls/TtChannelButtonEditorDialog.cpp" line="177"/>
         <source>勾选块色:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtChannelButtonEditorDialog.cpp" line="61"/>
-        <location filename="../../src/ui/controls/TtChannelButtonEditorDialog.cpp" line="142"/>
+        <location filename="../../src/ui/controls/TtChannelButtonEditorDialog.cpp" line="184"/>
+        <location filename="../../src/ui/controls/TtChannelButtonEditorDialog.cpp" line="192"/>
         <source>选择颜色</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtChannelButtonEditorDialog.cpp" line="66"/>
-        <location filename="../../src/ui/controls/TtChannelButtonEditorDialog.cpp" line="145"/>
+        <location filename="../../src/ui/controls/TtChannelButtonEditorDialog.cpp" line="198"/>
         <source>选择背景颜色</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtChannelButtonEditorDialog.cpp" line="77"/>
-        <location filename="../../src/ui/controls/TtChannelButtonEditorDialog.cpp" line="156"/>
+        <location filename="../../src/ui/controls/TtChannelButtonEditorDialog.cpp" line="209"/>
         <source>确定</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtChannelButtonEditorDialog.cpp" line="78"/>
-        <location filename="../../src/ui/controls/TtChannelButtonEditorDialog.cpp" line="157"/>
+        <location filename="../../src/ui/controls/TtChannelButtonEditorDialog.cpp" line="210"/>
         <source>取消</source>
         <translation type="unfinished"></translation>
     </message>
@@ -334,8 +308,31 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/widgets/window_switcher.cpp" line="466"/>
+        <location filename="../../src/ui/widgets/window_switcher.cpp" line="505"/>
         <source>New Tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>Ui::TtLuaInputBox</name>
+    <message>
+        <location filename="../../src/ui/controls/TtLuaInputBox.cpp" line="62"/>
+        <source>Lua 代码编辑器</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/controls/TtLuaInputBox.cpp" line="120"/>
+        <source>写入数据之后</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/controls/TtLuaInputBox.cpp" line="139"/>
+        <source>取消</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/controls/TtLuaInputBox.cpp" line="141"/>
+        <source>保存</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -761,183 +758,183 @@
 <context>
     <name>Widget::SerialSetting</name>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="173"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="176"/>
         <source>无校验</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="174"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="177"/>
         <source>偶校验</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="175"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="178"/>
         <source>奇校验</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="176"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="179"/>
         <source>0 校验</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="177"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="180"/>
         <source>1 校验</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="181"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="184"/>
         <source>1 位</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="182"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="185"/>
         <source>1.5 位</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="183"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="186"/>
         <source>2 位</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="187"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="190"/>
         <source>None</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="188"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="191"/>
         <source>RTS/CTS</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="189"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="192"/>
         <source>Xon/Xoff</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="218"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="407"/>
         <source>串口:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="219"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="408"/>
         <source>波特率:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="220"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="409"/>
         <source>数据位:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="221"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="410"/>
         <source>校验位:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="222"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="411"/>
         <source>停止位:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="223"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="412"/>
         <source>流控:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="225"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="414"/>
         <source>发送包间隔:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="228"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="417"/>
         <source>发送包最大尺寸:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="260"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="450"/>
         <source>连接设置</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="269"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="460"/>
         <source>脚本设置</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="278"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="469"/>
         <source>模式: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="279"/>
-        <location filename="../../src/widget/serial_setting.cpp" line="328"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="470"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="523"/>
         <source>无</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="280"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="471"/>
         <source>超时时间</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="281"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="472"/>
         <source>固定长度</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="282"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="473"/>
         <source>时间: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="283"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="474"/>
         <source>长度: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="288"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="480"/>
         <source>分帧</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="317"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="510"/>
         <source>换行符: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="321"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="515"/>
         <source>换行</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="327"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="522"/>
         <source>类型: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="329"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="524"/>
         <source>文本</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="330"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="525"/>
         <source>HEX</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="331"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="526"/>
         <source>间隔: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="332"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="527"/>
         <source>内容: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/serial_setting.cpp" line="336"/>
+        <location filename="../../src/widget/serial_setting.cpp" line="533"/>
         <source>心跳</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1484,73 +1481,73 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="987"/>
-        <location filename="../../src/window/main_window.cpp" line="1008"/>
-        <location filename="../../src/window/main_window.cpp" line="1029"/>
-        <location filename="../../src/window/main_window.cpp" line="1051"/>
-        <location filename="../../src/window/main_window.cpp" line="1073"/>
-        <location filename="../../src/window/main_window.cpp" line="1094"/>
-        <location filename="../../src/window/main_window.cpp" line="1117"/>
+        <location filename="../../src/window/main_window.cpp" line="996"/>
+        <location filename="../../src/window/main_window.cpp" line="1017"/>
+        <location filename="../../src/window/main_window.cpp" line="1038"/>
+        <location filename="../../src/window/main_window.cpp" line="1060"/>
+        <location filename="../../src/window/main_window.cpp" line="1082"/>
+        <location filename="../../src/window/main_window.cpp" line="1103"/>
+        <location filename="../../src/window/main_window.cpp" line="1126"/>
         <source>保存成功</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="991"/>
+        <location filename="../../src/window/main_window.cpp" line="1000"/>
         <source>未命名的串口连接</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1012"/>
+        <location filename="../../src/window/main_window.cpp" line="1021"/>
         <source>未命 TCP 客户端连接</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1033"/>
+        <location filename="../../src/window/main_window.cpp" line="1042"/>
         <source>未命名 UDP 连接</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1055"/>
+        <location filename="../../src/window/main_window.cpp" line="1064"/>
         <source>未命名的 MQTT 客户端</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1077"/>
+        <location filename="../../src/window/main_window.cpp" line="1086"/>
         <source>未命名的 Modbus 主机</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1098"/>
+        <location filename="../../src/window/main_window.cpp" line="1107"/>
         <source>未命名的 TCP 服务模拟端</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1121"/>
+        <location filename="../../src/window/main_window.cpp" line="1130"/>
         <source>未命名的 UDP 服务模拟端</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1172"/>
+        <location filename="../../src/window/main_window.cpp" line="1181"/>
         <source>简体中文</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1173"/>
+        <location filename="../../src/window/main_window.cpp" line="1182"/>
         <source>英文</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1174"/>
+        <location filename="../../src/window/main_window.cpp" line="1183"/>
         <source>法语</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1175"/>
+        <location filename="../../src/window/main_window.cpp" line="1184"/>
         <source>德语</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1176"/>
+        <location filename="../../src/window/main_window.cpp" line="1185"/>
         <source>日语</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1659,69 +1656,69 @@
 <context>
     <name>Window::SerialWindow</name>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="697"/>
-        <location filename="../../src/window/serial_window.cpp" line="778"/>
-        <location filename="../../src/window/serial_window.cpp" line="1315"/>
+        <location filename="../../src/window/serial_window.cpp" line="822"/>
+        <location filename="../../src/window/serial_window.cpp" line="903"/>
+        <location filename="../../src/window/serial_window.cpp" line="1450"/>
         <source>串口未打开</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="810"/>
+        <location filename="../../src/window/serial_window.cpp" line="935"/>
         <source>未命名串口连接</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="852"/>
+        <location filename="../../src/window/serial_window.cpp" line="977"/>
         <source>名称不能为空！</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="997"/>
+        <location filename="../../src/window/serial_window.cpp" line="1122"/>
         <source>编辑</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="990"/>
+        <location filename="../../src/window/serial_window.cpp" line="1115"/>
         <source>添加</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="313"/>
+        <location filename="../../src/window/serial_window.cpp" line="358"/>
         <source>输入的不是合法的十六进制字符串!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="324"/>
+        <location filename="../../src/window/serial_window.cpp" line="370"/>
         <source>不存在当前配置, 请删除配置选项</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="998"/>
+        <location filename="../../src/window/serial_window.cpp" line="1123"/>
         <source>删除</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="999"/>
+        <location filename="../../src/window/serial_window.cpp" line="1124"/>
         <source>重命名</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="1126"/>
+        <location filename="../../src/window/serial_window.cpp" line="1261"/>
         <source>手动</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="1127"/>
+        <location filename="../../src/window/serial_window.cpp" line="1262"/>
         <source>片段</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="1136"/>
+        <location filename="../../src/window/serial_window.cpp" line="1271"/>
         <source>发送字节数: 0 B</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/serial_window.cpp" line="1138"/>
+        <location filename="../../src/window/serial_window.cpp" line="1273"/>
         <source>接收字节数: 0 B</source>
         <translation type="unfinished"></translation>
     </message>

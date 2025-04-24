@@ -113,6 +113,7 @@ void TabManager::addNewTab(QWidget* defaultWidget, const QString& title) {
   // 添加的 tab 是一直在最后面的
   QIcon icon(":/sys/unlink.svg");
   addTab(defaultWidget, icon, title);
+  // 对应的 index
   setupCustomTabButton(tabIndex);
   // updateTabStyle(tabIndex);
 }
@@ -164,6 +165,7 @@ void TabManager::switchToWidget(int tabIndex, TtProtocolRole::Role role) {
   // 实例应当个性化
   //widgetInstances[newWidget] = ;  // 存储原始指针
   // 根据 uuid 标识
+  // 存储实例
   widgetInstances[QUuid::createUuid().toString()] = newWidget;
 
 
@@ -256,22 +258,46 @@ QString TabManager::findWidget(QWidget* widget) {
 }
 
 void TabManager::handleTabClose(int index) {
+  // 点击关闭后, 清空状况
   // // 保存标签页信息
+  // 关闭的如果是设置页面呢 ?
+  if (widget(index)->objectName() == "SettingWidget") {
+    // qDebug() << "setting";
+    handleTabCloseRequested(index);
+    return;
+  }
+
   TabData info;
   info.title = tabText(index);
-  info.widget = widget(index);
+  info.widget = widget(index);  // 存储 widget 界面
   info.icon = tabIcon(index);
   // info.state
 
-  // 保存widget状态
-  if (auto* serializable = dynamic_cast<ISerializable*>(info.widget)) {
-    info.state = serializable->saveState();
-  }
+  // // 保存widget状态
+  // if (auto* serializable = dynamic_cast<ISerializable*>(info.widget)) {
+  //   info.state = serializable->saveState();
+  // }
+
+  // 获取 widget 实例的 uuid
+  // 删除了 uuid 对应的 widget, 还有什么用呢 uuid ?
+
+  //
+  // if (widget)
+
+  QString removeWidgetUuid = findWidget(widget(index));
+  // closedTabs_.prepend(qMakePair(findWidget(widget(index)), info));
+  closedTabs_.prepend(qMakePair((removeWidgetUuid), info));
+  removeTab(index);
+
+  // 移出实例
+  // widgetInstances.remove(removeWidgetUuid);
+
+  // --------
+
   // qDebug() << info.state;
 
   // 添加到历史列表
   // QTabWidget::widget(index);
-  closedTabs_.prepend(qMakePair(findWidget(widget(index)), info));
   // qDebug() << closedTabs_.size();
 
   // 过多则本地化一部分
@@ -283,17 +309,17 @@ void TabManager::handleTabClose(int index) {
   // }
 
   // 从TabWidget中移除，但不删除widget
-  removeTab(index);
+  // deleteLater();
+
+  // qDebug() << "close index: " << index;
+  // qDebug() << info.title;
+  // qDebug() << info.widget;
+  // qDebug() << info.icon;
 
   // emit tabClosed(index);
 }
 
 void TabManager::restoreLastClosedTab() {
-  // if (!closedTabs_.isEmpty()) {
-  //   TabInfo info = closedTabs_.takeFirst();
-  //   int index = addTab(info.widget, info.icon, info.title);
-  //   setCurrentIndex(index);
-  // }
   if (closedTabs_.isEmpty()) {
     return;
   }
@@ -301,16 +327,16 @@ void TabManager::restoreLastClosedTab() {
   TabData info = closedTabs_.takeFirst().second;
 
   // 恢复状态
-  if (!info.state.isEmpty()) {
-    if (auto* serializable = dynamic_cast<ISerializable*>(info.widget)) {
-      serializable->restoreState(info.state);
-    }
-  }
+  // if (!info.state.isEmpty()) {
+  //   if (auto* serializable = dynamic_cast<ISerializable*>(info.widget)) {
+  //     serializable->restoreState(info.state);
+  //   }
+  // }
 
+  // 重新构造 widget
   int index = addTab(info.widget, info.icon, info.title);
-  setCurrentIndex(index);
 
-  // emit tabRestored(index);
+  setCurrentIndex(index);
 }
 
 QStringList TabManager::getClosedTabsList() const {
@@ -365,13 +391,20 @@ void TabManager::handleAddNewTab() {
 }
 
 void TabManager::handleTabCloseRequested(int index) {
-  if (count() <= 1)
-    return;  // 至少保留一个标签
+  // if (count() <= 1)
+  //   return;  // 至少保留一个标签
 
   QWidget* widget = this->widget(index);
   // 彻底删除
-  widget->deleteLater();
   removeTab(index);
+  if (widget) {
+    emit widgetDeleted(widget);
+
+    widget->disconnect();
+    widget->setParent(nullptr);
+    delete widget;
+    widget = nullptr;
+  }
 }
 
 void TabManager::removeUuidWidget(const QString& index) {
@@ -394,13 +427,17 @@ void TabManager::removeUuidWidget(const QString& index) {
 }
 
 void TabManager::switchToCurrentIndex(const QString& index) {
+  // 根据 uuid 索引
   // qDebug() << "get index" << index;
   // uuid QWidget
   // 切换, 以及复原
   // 先查找是否被 remove
   // if (closedTabs_.contains())
+
   // 以下操作都是整个应用程序没有完全关闭，运行于内存的时候
   // 持久化存储需要整个页面关闭
+  // 完整删除, 然后恢复
+
   for (auto it = closedTabs_.begin(); it != closedTabs_.end(); ++it) {
     if (it->first == index) {
       qDebug() << "remove";
@@ -408,6 +445,7 @@ void TabManager::switchToCurrentIndex(const QString& index) {
       addNewTab(it->second.widget, it->second.title);
       // 切换到复原的 tab
       setCurrentIndex(count() - 1);
+      // 删除, 确保只会存储一份
       closedTabs_.erase(it);
       return;
     }
@@ -420,6 +458,7 @@ void TabManager::switchToCurrentIndex(const QString& index) {
 }
 
 void TabManager::setupCustomTabButton(int index) {
+  // 当前 index 的 closebutton
   auto* closeButton = new TabCloseButton(this);
   tabBar()->setTabButton(index, QTabBar::RightSide, closeButton);
 

@@ -136,8 +136,12 @@ void SerialPortWorker::readData() {
   // parseBuffer();
 
   // 发送数据, 内部不做串口数据解析, 交给外部处理
-  QByteArray data = serial_->readAll();
-  emit dataReceived(data);
+  if (serial_->bytesAvailable()) {
+    QByteArray data = serial_->readAll();
+    // if (!data.isEmpty()) {
+    emit dataReceived(data);
+    // }
+  }
 
   // 这个有问题
   // 读取数据, 串口中有数据, 立马读取

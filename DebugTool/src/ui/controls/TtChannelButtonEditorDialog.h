@@ -9,9 +9,12 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 
-#include <ui/widgets/buttons.h>
-#include "TtChannelButton.h"
-#include "ui/control/TtLineEdit.h"
+class TtChannelButton;
+
+namespace Ui {
+class TtLabelLineEdit;
+class TtFancyButton;
+}  // namespace Ui
 
 class TtChannelButtonEditorDialog : public QDialog {
   Q_OBJECT
@@ -25,13 +28,13 @@ class TtChannelButtonEditorDialog : public QDialog {
   QByteArray metaInfo();
 
   QString title() const;
-
   QColor checkBlockColor() const;
 
  private slots:
   void applyChanges();
 
  private:
+  void init();
   // TtColorButton* m_button;
   TtChannelButton* m_button = nullptr;
   Ui::TtLabelLineEdit* title_edit_;
@@ -42,10 +45,16 @@ class TtChannelButtonEditorDialog : public QDialog {
 
   Ui::TtLabelLineEdit* frame_header_;
   Ui::TtLabelLineEdit* frame_header_length_;
+  Ui::TtLabelLineEdit* frame_type_;
   Ui::TtLabelLineEdit* frame_type_offset_;
-  Ui::TtLabelLineEdit* frame_length_offset_;
   Ui::TtLabelLineEdit* frame_length_;
+  Ui::TtLabelLineEdit* frame_length_offset_;
   Ui::TtLabelLineEdit* frame_end_;
+
+  bool save_scripit_ = false;
+  QString lua_code_;
+  QString lua_code_copy_;
+  // QStringLiteral()
 };
 
 #endif  // TTCHANNELBUTTONEDITORDIALOG_H

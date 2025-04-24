@@ -6,11 +6,14 @@ LuaKernel::LuaKernel() {
   // 创建 lua 对象
   lua_state_ = luaL_newstate();
 
+  // 标准库
   luaL_openlibs(lua_state_);
 
 }
 
-LuaKernel::~LuaKernel() {}
+LuaKernel::~LuaKernel() {
+  lua_close(lua_state_);
+}
 
 void LuaKernel::doLuaCode(const QString& code, int data, double& result) {
   if (code.isEmpty()) {
@@ -54,6 +57,79 @@ void LuaKernel::doLuaCode(const QString& code, int data, double& result) {
   // qDebug() << sum;
 
   /* 出栈一个数据。此时栈中存的是 getValue 函数的执行结果，所以需要出栈 */
+  lua_pop(L, 1);
+}
+
+void LuaKernel::doLuaCode(const QString& code, const QVariantList& args,
+                          double& result) {
+  if (code.isEmpty()) {
+    result = 0;
+    return;
+  }
+  lua_State* L = lua_state_;
+  if (luaL_dostring(L, code.toStdString().c_str())) {
+    qDebug() << "LUA ERROR:" << lua_tostring(L, -1);
+    lua_pop(L, 1);
+    return;
+  }
+
+  // 获取 Lua 函数
+  lua_getglobal(L, "getValue");
+  // 动态参数入栈
+  for (const QVariant& arg : args) {
+    switch (arg.userType()) {
+      case QMetaType::Int:
+        lua_pushinteger(L, arg.toInt());
+        break;
+      case QMetaType::Double:
+        lua_pushnumber(L, arg.toDouble());
+        break;
+      case QMetaType::QString:
+        lua_pushstring(L, arg.toString().toStdString().c_str());
+        break;
+      case QMetaType::Bool:
+        lua_pushboolean(L, arg.toBool());
+        break;
+      // case QMetaType::QByteArray: {
+      //   // 修改参数处理分支, 文本类型
+      //   QByteArray bytes = arg.toByteArray();
+      //   lua_pushlstring(L, bytes.constData(),
+      //                   bytes.size());  // 保留二进制中的 \0 字符
+      //   break;
+      // function getValue(data)
+      //     print(#data)        --> 输出字节长度
+      //                          print(data:byte(1)) --> 输出第一个字节的 ASCII 值
+      //     return #data
+      //     end
+      // }
+      case QMetaType::QByteArray: {
+        // 二进制数据
+        QByteArray bytes = arg.toByteArray();
+        lua_createtable(L, bytes.size(), 0);  // 创建数组型 table
+        for (int i = 0; i < bytes.size(); ++i) {
+          // hex
+          // 转换为整数
+          // 2 ^ 8 =  256 ->  0 ~  255
+          lua_pushinteger(L, static_cast<unsigned char>(bytes[i]));
+          lua_rawseti(L, -2, i + 1);  // Lua 索引从 1 开始
+        }
+        break;
+      }
+      default:
+        qDebug() << "Unsupported type:" << arg.typeName();
+        lua_pop(L, lua_gettop(L));
+        result = 0;
+        return;
+    }
+  }
+  if (lua_pcall(L, args.size(), 1, 0) != LUA_OK) {
+    qDebug() << "Function Error:" << lua_tostring(L, -1);
+    lua_pop(L, 1);
+    result = 0;
+    return;
+  }
+  // 处理返回值
+  result = lua_tonumber(L, -1);
   lua_pop(L, 1);
 }
 

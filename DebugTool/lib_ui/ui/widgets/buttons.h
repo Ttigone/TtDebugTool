@@ -285,6 +285,9 @@ class Tt_EXPORT TtSvgButton : public QWidget {
   void setSvgSize(const int& w, const int& h);
   void setSvgSize(const QSize& size);
 
+  QString svgPath() const;
+  void setSvgPath(const QString& path);
+
   bool isChecked() const;
   void setChecked(bool checked);
 
@@ -395,6 +398,33 @@ class Tt_EXPORT TtTextButton : public QPushButton {
   bool is_checked_ = false;
   QColor checked_color_ = Qt::blue;  // 默认选中颜色
   QColor default_color_;             // 初始文字颜色
+};
+
+class Tt_EXPORT TtCodeButton : public QWidget {
+  Q_OBJECT
+ public:
+  explicit TtCodeButton(const QString& text, const QString& path,
+                        QWidget* parent);
+  ~TtCodeButton();
+
+ signals:
+  void clicked();
+
+ protected:
+  void paintEvent(QPaintEvent* event) override;
+  void enterEvent(QEnterEvent* event) override;
+  void leaveEvent(QEvent* event) override;
+  void resizeEvent(QResizeEvent* event) override;
+  void mousePressEvent(QMouseEvent* event) override;
+  void mouseReleaseEvent(QMouseEvent* event) override;
+
+ private:
+  Ui::TtHorizontalLayout* layout_;
+  QPixmap icon_;
+  TtElidedLabel* name_;
+  bool is_hovered_;
+  bool is_pressed_;
+  bool old_state_;
 };
 
 class Tt_EXPORT TtFancyButton : public QWidget {

@@ -209,29 +209,42 @@ void SerialWindow::refreshTerminalDisplay() {
   terminal_->setUpdatesEnabled(true);
 }
 
-void SerialWindow::addChannelInfo(const QString& uuid, const QByteArray& blob) {
-  channel_info_[uuid] = blob;
+void SerialWindow::addChannelInfo(const QString& uuid, const QColor& color,
+                                  const QByteArray& blob) {
+  channel_info_[uuid] = qMakePair(channel_nums_, blob);
   // title 可以重复
   QDataStream in(blob);
   in.setVersion(QDataStream::Qt_6_4);
 
-  QString title, header, headerLength, typeOffset, lengthOffset, length, tail;
-  in >> title >> header >> headerLength >> typeOffset >> lengthOffset >>
-      length >> tail;
+  // QString title, header, headerLength, type, typeOffset, length, lengthOffset,
+  //     tail;
+  // in >> title >> header >> headerLength >> type >> typeOffset >> length >>
+  //     lengthOffset >> tail;
+
+  QString title, header, headerLength, typeOffset, lengthOffset, tail;
+  in >> title >> header >> headerLength >> typeOffset >> lengthOffset >> tail;
+
+  QString luaCode;
+  in >> luaCode;
+
+  if (!luaCode.isEmpty()) {
+    // 存储 lua 代码
+    lua_script_codes_[channel_nums_] = luaCode;
+  }
 
   // ChannelMetaDef meta = {title, header, length, tail};
 
   // 无校验
   ParserRule rule = {
-      QByteArray::fromHex(header.toUtf8()),
-      headerLength.toInt(),  // 帧头长度
-      typeOffset.toInt(),    // 类型字段偏移
-      lengthOffset.toInt(),  // 长度字段偏移
-      length.toInt(),        // 长度字段字节数
-      0,                     // 帧尾长度
-      false,                 // 无校验
+      channel_nums_,                         // 通道
+      QByteArray::fromHex(header.toUtf8()),  // 头部
+      headerLength.toInt(),                  // 帧头长度
+      typeOffset.toInt(),                    // 类型字段偏移
+      lengthOffset.toInt(),                  // 长度字段偏移
+      0,                                     // 帧尾长度
+      false,                                 // 无校验
       {},
-      [&](uint8_t type, const QByteArray& payload) {
+      [&](uint8_t type, const QByteArray& payload, const QString& luaCode) {
         qDebug() << "payload: " << payload;
         // qDebug() << payload.size();
         // qDebug() << payload[0];
@@ -242,13 +255,32 @@ void SerialWindow::addChannelInfo(const QString& uuid, const QByteArray& blob) {
         // 2 * 16
         // 0x0101
 
-        // 十六进制
-        // 小端序解析 (低字节在前)
+        // 长度为 x 个 hex 字节
+        // 解析的 payload 长度, 每个字节提供给 lua 使用
+        quint8 paramNums = payload.size();
+
+        QVariantList params;
+        params << payload;
+        double ret;
+
+        qDebug() << luaCode;
+
+        Core::LuaKernel kernel;
+        kernel.doLuaCode(luaCode, params, ret);
+
+        // // for
+
+        // // 十六进制
+        // // 小端序解析 (低字节在前)
         quint16 value = (static_cast<quint8>(payload[1]) << 8) |
                         static_cast<quint8>(payload[0]);
 
-        serial_plot_->addGraphs(1, 1);
-        serial_plot_->addData(1, 1, value);
+        // serial_plot_->addGraphs(1, 1);
+        // serial_plot_->addData(1, 1, value);
+
+        serial_plot_->addGraphs(channel_nums_, color);
+        serial_plot_->addData(channel_nums_, value);
+
         // 多通道添加通道独特 i
         // serial_plot_->addGraphs(uuid.toInt(), uuid.toInt());
         // serial_plot_->addData(uuid.toInt(), uuid.toInt(), value);
@@ -284,20 +316,33 @@ void SerialWindow::addChannelInfo(const QString& uuid, const QByteArray& blob) {
       }};
   // 修改则覆盖原有的值
   rules_.insert(uuid, rule);
+  channel_nums_++;
 }
 
-void SerialWindow::handleDialogData(const QString& uuid,
+void SerialWindow::handleDialogData(const QString& uuid, quint16 channel,
                                     const QByteArray& blob) {
   // title 可以重复
   QDataStream in(blob);
   in.setVersion(QDataStream::Qt_6_4);
 
-  QString title, header, headerLength, typeOffset, lengthOffset, length, tail;
-  in >> title >> header >> headerLength >> typeOffset >> lengthOffset >>
-      length >> tail;
+  // QString title, header, headerLength, type, typeOffset, length, lengthOffset,
+  //     tail;
+  // in >> title >> header >> headerLength >> type >> typeOffset >> length >>
+  //     lengthOffset >> tail;
+
+  QString title, header, headerLength, typeOffset, lengthOffset, tail;
+  in >> title >> header >> headerLength >> typeOffset >> lengthOffset >> tail;
+
+  QString luaCode;
+  in >> luaCode;
+
+  if (!luaCode.isEmpty()) {
+    qDebug() << "test";
+    lua_script_codes_[channel] = luaCode;
+  }
 
   // 每个 uuid 的对应配置数组
-  channel_info_[uuid] = blob;
+  channel_info_[uuid] = qMakePair(channel, blob);
 
   // qDebug() << title << header << headerLength << typeOffset << lengthOffset
   //          << length << tail;
@@ -316,9 +361,10 @@ void SerialWindow::handleDialogData(const QString& uuid,
     }
 
     rule.header_len = headerLength.toInt();
+    // rule.type_bytes = type.toInt();
     rule.type_offset = typeOffset.toInt();
+    // rule.len_bytes = length.toInt();
     rule.len_offset = lengthOffset.toInt();
-    rule.len_bytes = length.toInt();
   } else {
     Ui::TtMessageBar::information(TtMessageBarType::Top, "",
                                   tr("不存在当前配置, 请删除配置选项"), 1500,
@@ -495,10 +541,11 @@ void SerialWindow::parseBuffer() {
     for (auto& rule : rules_) {
       // 能够查找头部
       qDebug() << "header: " << rule.header;
-      qDebug() << "rece: " << receive_buffer_;
+      // qDebug() << "rece: " << receive_buffer_;
       // 索引某个规则的头部, 谁先索引得到, 那就先解析
       int pos = receive_buffer_.indexOf(rule.header);
       if (pos >= 0 && (bestPos == -1 || pos < bestPos)) {
+        // 保存了当前索引头部字节的 地址
         bestPos = pos;
         bestRule = &rule;
       }
@@ -512,9 +559,20 @@ void SerialWindow::parseBuffer() {
     if (bestPos > 0) {
       receive_buffer_.remove(0, bestPos);
     }
-    // 剩余最小长度 >= 头部长度 +
+    qDebug() << "size: " << receive_buffer_.size();
+    // qDebug() << bestRule->header_len + bestRule->len_offset +
+    //                 bestRule->len_bytes;
+    // 剩余最小长度 >= 头部长度
+    // if (receive_buffer_.size() <
+    //     bestRule->header_len + bestRule->type_offset + bestRule->len_offset + bestRule->len_bytes) {
+    //   return;
+    // }
+    // 1 + 1 + 2 +
+    // 缺少数据字段和校验字段, 等待
+    // 帧头长度与类型偏移总是一致的
+
     if (receive_buffer_.size() <
-        bestRule->header_len + bestRule->len_offset + bestRule->len_bytes) {
+        bestRule->header_len + bestRule->type_offset + bestRule->len_offset) {
       return;
     }
 
@@ -525,25 +583,67 @@ void SerialWindow::parseBuffer() {
     // quint8 payloadLen = quint8(receive_buffer_.at(bestRule->len_offset));
     // qDebug() << "payloadlen: " << payloadLen;
 
+    // 有问题 应当是 长度为 2
     // 提取长度字段 (ex.多字节长度)
+    // len_offset 是 2
     quint32 payloadLen = 0;
-    for (int i = 0; i < bestRule->len_bytes; ++i) {
-      payloadLen =
-          (payloadLen << 8) |
-          static_cast<quint8>(receive_buffer_[bestRule->len_offset + i]);
-    }
 
-    const int fullSize = bestRule->header_len + bestRule->len_bytes +
+    // quint8 len = static_cast<quint8>(receive_buffer_[bestRule->len_offset]);
+    // quint16 dataLen = 0;
+    // for (int i = 0; i < len; ++i) {
+    //   dataLen =
+    //       (dataLen << 8) |
+    //       static_cast<quint8>(receive_buffer_[bestRule->len_offset + 1 + i]);
+    // }
+    // qDebug() << "dataLen: " << dataLen;
+
+    // 长度偏移 2
+    // for (int i = 0; i < bestRule->len_offset; ++i) {
+    //   payloadLen =
+    //       // 第 0 是头部
+    //       (payloadLen << 8) |
+    //       static_cast<quint8>(receive_buffer_[bestRule->len_offset + i]);
+    // }
+
+    // 获取长度字段
+    payloadLen = receive_buffer_[bestRule->len_offset];
+
+    // 长度为 3， 负载为 2
+    qDebug() << bestRule->len_offset << payloadLen;
+
+    // 帧头 + 类型 + 数据字节
+    // 帧头长度 1
+    // 长度字段 1
+    // 负载长度 2
+
+    // 类型是 55
+    // 个数是 01
+    // qDebug() << bestRule->header_len << bestRule->type_bytes
+    //          << bestRule->len_bytes << payloadLen << bestRule->tail_len;
+
+    // 少了个类型字段
+    // const int fullSize = bestRule->header_len + bestRule->type_bytes +
+    //                      bestRule->len_bytes + payloadLen + bestRule->tail_len +
+    //                      (bestRule->has_checksum ? 1 : 0);
+
+    // 1 + 2 + 2 + 0 + 0
+    // 5
+
+    // 1 + 1 + 1 + 2
+
+    // 2 + 3 + 2 + 0
+    // 7
+    // const int fullSize = bestRule->header_len + bestRule->len_offset +
+    //                      payloadLen + bestRule->tail_len +
+    //                      (bestRule->has_checksum ? 1 : 0);
+
+    // 2 + 1 + 1 + 2 + 0 + 0
+    const int fullSize = bestRule->header_len + 1 +
+                         (bestRule->len_offset - bestRule->header_len) +
                          payloadLen + bestRule->tail_len +
                          (bestRule->has_checksum ? 1 : 0);
 
-    // 长度: 头部长度 + ? + 长度字段 + 数据长度 + 帧尾长度 + 校验位字段
-    // const int fullSize =
-    //     bestRule->header_len +
-    //     (bestRule->len_offset - bestRule->header_len)  // type 字段也涵盖在内
-    //     + bestRule->len_bytes + payloadLen + bestRule->tail_len +
-    //     (bestRule->has_checksum ? 1 : 0);
-
+    // 输出6
     qDebug() << "size: " << fullSize;
 
     if (receive_buffer_.size() < fullSize) {
@@ -572,10 +672,34 @@ void SerialWindow::parseBuffer() {
     // 数据
     // QByteArray payload =
     //     frame.mid(bestRule->len_offset + bestRule->len_bytes, payloadLen);
-    QByteArray payload =
-        frame.mid(bestRule->header_len + bestRule->len_bytes, payloadLen);
+
+    // 1 + 1 + 1
+
+    // 数据字节
+    /**
+     * @brief payload 
+     * 1 字节头部长度 
+     * 1 字节类型长度
+     * 1 字节长度字段
+     * 剩余是 数据字段 + cs
+     */
+    // QByteArray payload = frame.mid(
+    //     bestRule->header_len + bestRule->type_bytes + bestRule->len_bytes,
+    //     payloadLen);
+
+    // 3
+    // 1 + 2
+
+    // 双头部解析错误
+
+    // QByteArray payload =
+    //     frame.mid(bestRule->header_len + bestRule->len_offset, payloadLen);
+    QByteArray payload = frame.mid(
+        bestRule->header_len + 1 + bestRule->len_offset - bestRule->header_len,
+        payloadLen);
+
     // 调用自己的帧处理函数
-    bestRule->processFrame(type, payload);
+    bestRule->processFrame(type, payload, lua_script_codes_[bestRule->channel]);
 
     // 调用自己的处理的这帧
     receive_buffer_.remove(0, fullSize);
@@ -593,7 +717,9 @@ void SerialWindow::showErrorMessage(const QString& text) {
 
 void SerialWindow::dataReceived(const QByteArray& data) {
   // 接收数据
+  qDebug() << "data: " << data;
   receive_buffer_.append(data);
+  // qDebug() << "rece_buf"
   // 解析数据帧
   parseBuffer();
 
@@ -608,7 +734,7 @@ void SerialWindow::dataReceived(const QByteArray& data) {
   // if (lua_code_->getLuaCode().toStdString().c_str()) {
   //   qDebug() << "yes";
   // }
-  lua_actuator_->doLuaCode(lua_code_->getLuaCode(), data.toInt(), solveData);
+  // lua_actuator_->doLuaCode(lua_code_->getLuaCode(), data.toInt(), solveData);
   // }
   // 写入到 plot 中
   // 一个通道对应一个数据类型, 通道对应 header
@@ -619,6 +745,7 @@ void SerialWindow::dataReceived(const QByteArray& data) {
 
   // 导出 csv 格式. 在 menu 中实现
 
+  QString content;
   QDateTime now = QDateTime::currentDateTime();
   QString timestamp = now.toString("[yyyy-MM-dd hh:mm:ss.zzz]");
 
@@ -633,7 +760,7 @@ void SerialWindow::dataReceived(const QByteArray& data) {
   list.append(tmp);
   message_model_->appendMessages(list);
 
-  terminal_->appendPlainText(timestamp + " >> ");  // 单独追加箭头行
+  terminal_->appendPlainText(timestamp + " R ");  // 单独追加箭头行
   if (display_type_ == MsgType::HEX) {
     terminal_->appendPlainText(data.toHex(' ').toUpper());
   } else if (display_type_ == MsgType::TEXT) {
@@ -1020,7 +1147,9 @@ void SerialWindow::init() {
                 channelBtn->setUuid(uuid.toString());
                 serialDataList->setItemWidget(item, channelBtn);
                 // 添加解析规则
-                addChannelInfo(uuid.toString(), editorDialog.metaInfo());
+                addChannelInfo(uuid.toString(),
+                               channelBtn->getCheckBlockColor(),
+                               editorDialog.metaInfo());
               }
             } else if (item) {
               if (selectedAction == renameAction) {
@@ -1030,28 +1159,36 @@ void SerialWindow::init() {
                   btn->modifyText();
                 }
               } else if (selectedAction == deleteAction) {
-                serialDataList->takeItem(serialDataList->row(item));  // 删除项
+                auto* deleteItem = serialDataList->takeItem(
+                    serialDataList->row(item));  // 删除项
+                if (deleteItem) {
+                  // 获取 button
+                  if (auto* btn = qobject_cast<TtChannelButton*>(
+                          serialDataList->itemWidget(deleteItem))) {
+                    lua_script_codes_.remove(
+                        channel_info_.value(btn->getUuid()).first);
+                    // 移出规则
+                    channel_info_.remove(btn->getUuid());
+                    rules_.remove(btn->getUuid());
+                  }
+                  qDebug() << "delete";
+
+                  delete deleteItem;
+                }
+
               } else if (selectedAction == editAction) {
                 if (auto* btn = qobject_cast<TtChannelButton*>(
                         serialDataList->itemWidget(item))) {
-                  // TtChannelButtonEditorDialog* editorDialog =
-                  //     new TtChannelButtonEditorDialog(btn, this);
                   TtChannelButtonEditorDialog editorDialog(btn, this);
-                  editorDialog.setMetaInfo(channel_info_.value(btn->getUuid()));
-                  // 这里有一个标志位
-                  // 存在之前的文本, 设置之前的配置
-                  // 有两个已经存在配置 ch
-                  // 将一个更改为另一个的名字
-                  // 所有都会 存在
-                  // if (channel_info_.contains(btn->getText())) {
-                  //   editorDialog->setMetaInfo(
-                  //       channel_info_.value(btn->getText()).first);
-                  //   modify_meta_data_ = true;
-                  // } else {
-                  //   modify_meta_data_ = false;
-                  // }
+                  editorDialog.setMetaInfo(
+                      channel_info_.value(btn->getUuid()).second);
+
                   if (editorDialog.exec() == QDialog::Accepted) {
-                    handleDialogData(btn->getUuid(), editorDialog.metaInfo());
+                    // 保存
+                    // 编辑
+                    handleDialogData(btn->getUuid(),
+                                     channel_info_.value(btn->getUuid()).first,
+                                     editorDialog.metaInfo());
                   }
                 }
               }
@@ -1208,7 +1345,7 @@ void SerialWindow::init() {
 
   // 显示, 并输入 lua 脚本
   lua_code_ = new Ui::TtLuaInputBox(this);
-  lua_actuator_ = new Core::LuaKernel;
+  // lua_actuator_ = new Core::LuaKernel;
 
   bottomAllLayout->addWidget(tabs_and_count);
   bottomAllLayout->addWidget(la_w);

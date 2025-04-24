@@ -7,6 +7,8 @@ set(CMAKE_AUTOMOC ON)
 # set(CMAKE_AUTOUIC OFF)
 # set_target_properties(lib_ui PROPERTIES AUTOUIC ON)
 
+# 使能静态库, 出现找不到对应的函数定义
+# 只能动态库
 option(TTLIBUI_LIBRARY_BUILD_STATIC_LIB "Build static library." OFF)
 
 # 设置输出路径
@@ -120,6 +122,7 @@ PRIVATE
     ui/control/TtDialog.h ui/control/TtDialog.cpp
     ui/control/TtDialog_p.h
     ui/control/TtSwitchButton.h ui/control/TtSwitchButton.cpp
+    ui/control/TtDrawer.h ui/control/TtDrawer.cpp
 
 
     ui/control/buttonbox/TtButtonBox.h ui/control/buttonbox/TtButtonBox.cpp
@@ -133,7 +136,7 @@ PRIVATE
 )
 
 
-add_library(desktop-app::lib_ui ALIAS ${TARGET_NAME}) # 别名
+# add_library(desktop-app::lib_ui ALIAS ${TARGET_NAME}) # 别名
 
 
 if (MINGW)
@@ -161,11 +164,11 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 
-install(TARGETS ${TARGET_NAME}
-    ARCHIVE DESTINATION ${LIB_UI_OUT_ROOT}/lib
-    LIBRARY DESTINATION ${LIB_UI_OUT_ROOT}}/lib
-    RUNTIME DESTINATION ${LIB_UI_OUT_ROOT}}/bin
-)
+# install(TARGETS ${TARGET_NAME}
+#     ARCHIVE DESTINATION ${LIB_UI_OUT_ROOT}/lib
+#     LIBRARY DESTINATION ${LIB_UI_OUT_ROOT}}/lib
+#     RUNTIME DESTINATION ${LIB_UI_OUT_ROOT}}/bin
+# )
 
 # 设置动态库的输出路径
 #set_target_properties(${TARGET_NAME} PROPERTIES

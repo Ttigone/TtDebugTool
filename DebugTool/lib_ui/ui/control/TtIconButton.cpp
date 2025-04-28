@@ -1,5 +1,6 @@
 #include "ui/control/TtIconButton.h"
 #include "ui/control/TtIconButton_p.h"
+#include "ui/text/font/TtFontManager.h"
 
 #include <QEvent>
 #include <QFontDatabase>
@@ -138,9 +139,10 @@ void TtIconButton::paintEvent(QPaintEvent* event) {
   }
   painter.drawRoundedRect(rect(), d->pBorderRadius_, d->pBorderRadius_);
 
-  int fontId =
-      QFontDatabase::addApplicationFont(":/font/fontawesome-webfont.ttf");
-  QString family = QFontDatabase::applicationFontFamilies(fontId).at(0);
+  // int fontId =
+  //     QFontDatabase::addApplicationFont(":/font/fontawesome-webfont.ttf");
+  // QString family = QFontDatabase::applicationFontFamilies(fontId).at(0);
+  QString family = Ui::FontManager::getFontAwesomeFamily();
   QFont iconFont(family);
   painter.setFont(iconFont);
   // 图标绘制

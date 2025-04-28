@@ -2,74 +2,11 @@
 
 #include <ui/widgets/message_bar.h>
 #include "qcustomplot/qcustomplot.h"
+#include "ui/controls/TtPlotItem.h"
 
-AxisTag::AxisTag(QCPAxis* parentAxis) : QObject(parentAxis), mAxis(parentAxis) {
-  mDummyTracer = new QCPItemTracer(mAxis->parentPlot());
-  mDummyTracer->setVisible(false);
-  mDummyTracer->position->setTypeX(
-      QCPItemPosition::ptAxisRectRatio);  // x 是固定的
-  mDummyTracer->position->setTypeY(
-      QCPItemPosition::ptPlotCoords);  // y 值动态改变
-  mDummyTracer->position->setAxisRect(mAxis->axisRect());
-  mDummyTracer->position->setAxes(0, mAxis);
-  mDummyTracer->position->setCoords(1, 0);  // 解释 x: 1 右下角, y: 值
+namespace Ui {
 
-  // 箭头
-  mArrow = new QCPItemLine(mAxis->parentPlot());
-  mArrow->setLayer("overlay");
-  mArrow->setClipToAxisRect(false);
-  mArrow->setHead(QCPLineEnding::esSpikeArrow);
-  mArrow->start->setParentAnchor(mArrow->end);  // 起点跟随终点
-  mArrow->start->setCoords(15, 0);
-  mArrow->end->setParentAnchor(
-      mDummyTracer->position);  // 终点跟随 tracer 的位置
-  mArrow->setVisible(true);
-
-  mLabel = new QCPItemText(mAxis->parentPlot());
-  mLabel->setLayer("overlay");
-  mLabel->setClipToAxisRect(false);
-  mLabel->setPadding(QMargins(3, 0, 3, 0));
-  mLabel->setPen(QPen(Qt::blue, 1));
-  mLabel->setPositionAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-  mLabel->position->setParentAnchor(mArrow->start);
-  mLabel->setVisible(true);
-
-  // 增加文本可视化设置
-  mLabel->setColor(Qt::black);  // 文字颜色
-  // mLabel->setBrush(QBrush(Qt::white));       // 背景填充
-  mLabel->setBrush(QBrush(QColor(255, 255, 255, 220)));  // 背景填充
-  // mLabel->setPadding(QMargins(4, 2, 4, 2));  // 增加内边距
-  mLabel->setFont(QFont("Arial", 8));  // 明确设置字体
-}
-
-AxisTag::~AxisTag() {
-  if (mDummyTracer)
-    mDummyTracer->parentPlot()->removeItem(mDummyTracer);
-  if (mArrow)
-    mArrow->parentPlot()->removeItem(mArrow);
-  if (mLabel)
-    mLabel->parentPlot()->removeItem(mLabel);
-}
-
-void AxisTag::setPen(const QPen& pen) {
-  mArrow->setPen(pen);
-  mLabel->setPen(pen);
-}
-
-void AxisTag::setBrush(const QBrush& brush) {
-  mLabel->setBrush(brush);
-}
-
-void AxisTag::setText(const QString& text) {
-  mLabel->setText(text);
-}
-
-void AxisTag::updatePosition(double value) {
-  mDummyTracer->position->setCoords(1, value);
-  mArrow->end->setCoords(mAxis->offset(), 0);
-}
-
-ModbusPlot::ModbusPlot(QWidget* parent) : QCustomPlot(parent) {
+TtModbusPlot::TtModbusPlot(QWidget* parent) : QCustomPlot(parent) {
   setupPlot();
   this->setOpenGl(true);
   qDebug() << "opengle=" << this->openGl();
@@ -77,9 +14,9 @@ ModbusPlot::ModbusPlot(QWidget* parent) : QCustomPlot(parent) {
   setAntialiasedElements(QCP::aeAll);
 }
 
-ModbusPlot::~ModbusPlot() {}
+TtModbusPlot::~TtModbusPlot() {}
 
-void ModbusPlot::setupPlot() {
+void TtModbusPlot::setupPlot() {
   QCPAxis* rightAxis = axisRect()->addAxis(QCPAxis::atRight);
   rightAxis->setPadding(60);
   rightAxis->setVisible(true);
@@ -154,8 +91,8 @@ void ModbusPlot::setupPlot() {
   this->setMouseTracking(true);
 }
 
-void ModbusPlot::addData(TtModbusRegisterType::Type type, const int& addr,
-                         double value) {
+void TtModbusPlot::addData(TtModbusRegisterType::Type type, const int& addr,
+                           double value) {
 
   auto key = qMakePair(static_cast<int>(type), addr);
 
@@ -251,7 +188,7 @@ void ModbusPlot::addData(TtModbusRegisterType::Type type, const int& addr,
   replot();
 }
 
-void ModbusPlot::addGraphs(TtModbusRegisterType::Type type, const int& addr) {
+void TtModbusPlot::addGraphs(TtModbusRegisterType::Type type, const int& addr) {
   auto key = qMakePair(static_cast<int>(type), addr);
   if (!m_curves.contains(key)) {
     // 新曲线
@@ -268,7 +205,7 @@ void ModbusPlot::addGraphs(TtModbusRegisterType::Type type, const int& addr) {
 
     // 创建右侧标签
     QCPAxis* valueAxis = this->yAxis;  // 共享Y轴或为每个曲线创建右轴
-    newCurve.tag = new AxisTag(valueAxis);
+    newCurve.tag = new TtAxisTag(valueAxis);
     newCurve.tag->setPen(newCurve.graph->pen());
 
     m_tracer->setGraph(newCurve.graph);
@@ -277,8 +214,8 @@ void ModbusPlot::addGraphs(TtModbusRegisterType::Type type, const int& addr) {
   }
 }
 
-void ModbusPlot::removeGraphs(TtModbusRegisterType::Type type,
-                              const int& addr) {
+void TtModbusPlot::removeGraphs(TtModbusRegisterType::Type type,
+                                const int& addr) {
   auto key = qMakePair(static_cast<int>(type), addr);
   if (m_curves.contains(key)) {
     qDebug() << "remove";
@@ -301,7 +238,7 @@ void ModbusPlot::removeGraphs(TtModbusRegisterType::Type type,
   }
 }
 
-void ModbusPlot::setGraphsPointCapacity(quint16 nums) {
+void TtModbusPlot::setGraphsPointCapacity(quint16 nums) {
   // points_nums_ = nums;
   if (nums > 0 && nums != points_nums_) {
     points_nums_ = nums;
@@ -330,7 +267,7 @@ void ModbusPlot::setGraphsPointCapacity(quint16 nums) {
   // clearGrphs();
 }
 
-void ModbusPlot::clearData() {
+void TtModbusPlot::clearData() {
   m_startTime = 0.0;
   for (auto& curve : m_curves) {
     curve.timeData.clear();
@@ -340,7 +277,7 @@ void ModbusPlot::clearData() {
   this->replot();
 }
 
-// void ModbusPlot::mouseMoveEvent(QMouseEvent* event) {
+// void TtModbusPlot::mouseMoveEvent(QMouseEvent* event) {
 //   QCustomPlot::mouseMoveEvent(event);
 
 //   // 显示/隐藏组件
@@ -367,7 +304,7 @@ void ModbusPlot::clearData() {
 //   updateTracerPosition(event);
 // }
 
-void ModbusPlot::mouseMoveEvent(QMouseEvent* event) {
+void TtModbusPlot::mouseMoveEvent(QMouseEvent* event) {
   QCustomPlot::mouseMoveEvent(event);
 
   // 显示/隐藏组件
@@ -393,7 +330,7 @@ void ModbusPlot::mouseMoveEvent(QMouseEvent* event) {
   }
 }
 
-// void ModbusPlot::updateTracerPosition(QMouseEvent* event) {
+// void TtModbusPlot::updateTracerPosition(QMouseEvent* event) {
 //   if (m_curves.isEmpty()) {
 //     m_tracer->setVisible(false);
 //     m_tracerLabel->setVisible(false);
@@ -503,7 +440,7 @@ void ModbusPlot::mouseMoveEvent(QMouseEvent* event) {
 //   replot();
 // }
 
-void ModbusPlot::updateTracerPosition(QMouseEvent* event) {
+void TtModbusPlot::updateTracerPosition(QMouseEvent* event) {
   if (m_curves.isEmpty()) {
     m_tracer->setVisible(false);
     m_tracerLabel->setVisible(false);
@@ -850,6 +787,7 @@ void SerialPlot::addGraphs(int channel, const QColor& color) {
     //     Qt::blue, Qt::red, Qt::green, Qt::cyan, Qt::magenta, Qt::yellow};
     // QColor color = defaultColors.at(curves_.size() % defaultColors.size());
 
+    qDebug() << "color: " << color;
     // 创建图形
     newCurve.graph = this->addGraph();
     newCurve.graph->setPen(QPen(color, 2));
@@ -857,7 +795,7 @@ void SerialPlot::addGraphs(int channel, const QColor& color) {
 
     // 创建右侧标签
     QCPAxis* valueAxis = this->yAxis;  // 共享Y轴或为每个曲线创建右轴
-    newCurve.tag = new AxisTag(valueAxis);
+    newCurve.tag = new TtAxisTag(valueAxis);
     newCurve.tag->setPen(newCurve.graph->pen());
 
     m_tracer->setGraph(newCurve.graph);
@@ -1253,3 +1191,5 @@ void SerialPlot::updateTracerPosition(QMouseEvent* event) {
   }
   replot();
 }
+
+}  // namespace Ui

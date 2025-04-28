@@ -14,11 +14,10 @@
 #include <ui/widgets/collapsible_panel.h>
 #include <ui/widgets/labels.h>
 #include <ui/widgets/message_bar.h>
-
+#include "core/modbus_client.h"
+#include "ui/controls/TtModbusPlot.h"
 #include "ui/controls/TtTableView.h"
 #include "ui/widgets/message_bar.h"
-
-#include "core/modbus_client.h"
 // #include "ui/controls/TtModbusDelegate.h"
 #include "Def.h"
 #include "widget/modbus_setting.h"
@@ -26,7 +25,7 @@
 namespace Window {
 
 ModbusWindow::ModbusWindow(TtProtocolType::ProtocolRole role, QWidget* parent)
-    : QWidget(parent), customPlot(new ModbusPlot) {
+    : QWidget(parent), customPlot(new Ui::TtModbusPlot) {
   base::DetectRunningTime runtime;
   init();
   qDebug() << runtime.elapseMilliseconds();

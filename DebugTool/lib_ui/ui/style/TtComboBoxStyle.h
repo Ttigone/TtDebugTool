@@ -12,8 +12,17 @@ class TtComboBoxStyle : public QProxyStyle {
   Q_PROPERTY_CREATE(qreal, ExpandIconRotate)
   Q_PROPERTY_CREATE(qreal, ExpandMarkWidth)
  public:
-  TtComboBoxStyle(QStyle* style = nullptr);
+  // static TtComboBoxStyle* instance() {
+  //   static TtComboBoxStyle instance;
+  //   return &instance;
+  // }
+
   ~TtComboBoxStyle();
+
+  // private:
+  TtComboBoxStyle(QStyle* style = nullptr);
+
+ protected:
   void drawPrimitive(PrimitiveElement element, const QStyleOption* option,
                      QPainter* painter,
                      const QWidget* widget = nullptr) const override;

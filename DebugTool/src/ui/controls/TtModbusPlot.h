@@ -2,7 +2,6 @@
 #define UI_CONTROLS_TTMODBUSPLOT_H
 
 #include "TtQCPItemRichText.h"
-// #include "qcustomplot/qcustomplot.h"
 
 #include "Def.h"
 
@@ -13,38 +12,16 @@ class QCPItemLine;
 class QCPItemText;
 class QCPItemTracer;
 
-class AxisTag : public QObject {
-  Q_OBJECT
- public:
-  explicit AxisTag(QCPAxis* parentAxis);
-  virtual ~AxisTag();
+namespace Ui {
 
-  // setters:
-  void setPen(const QPen& pen);
-  void setBrush(const QBrush& brush);
-  void setText(const QString& text);
+class TtAxisTag;
 
-  // getters:
-  QPen pen() const { return mLabel->pen(); }
-  QBrush brush() const { return mLabel->brush(); }
-  QString text() const { return mLabel->text(); }
-
-  // other methods:
-  void updatePosition(double value);
-
- protected:
-  QCPAxis* mAxis;
-  QPointer<QCPItemTracer> mDummyTracer;
-  QPointer<QCPItemLine> mArrow;
-  QPointer<QCPItemText> mLabel;
-};
-
-class ModbusPlot : public QCustomPlot {
+class TtModbusPlot : public QCustomPlot {
   Q_OBJECT
 
  public:
-  explicit ModbusPlot(QWidget* parent = nullptr);
-  ~ModbusPlot();
+  explicit TtModbusPlot(QWidget* parent = nullptr);
+  ~TtModbusPlot();
 
   // 添加新的数据点
   void addData(TtModbusRegisterType::Type type, const int& addr, double value);
@@ -85,7 +62,7 @@ class ModbusPlot : public QCustomPlot {
     QVector<double> timeData;
     QVector<double> valueData;
     QPointer<QCPGraph> graph;
-    QPointer<AxisTag> tag;
+    QPointer<TtAxisTag> tag;
   };
   QMap<QPair<int, int>, CurveData> m_curves;  // Key: (Type, Addr)
   QList<QColor> m_colorPalette;               // 颜色轮转列表
@@ -139,7 +116,7 @@ class SerialPlot : public QCustomPlot {
     QVector<double> timeData;
     QVector<double> valueData;
     QPointer<QCPGraph> graph;
-    QPointer<AxisTag> tag;
+    QPointer<TtAxisTag> tag;
   };
 
   QMap<int, CurveData> curves_;               // Key: Channel
@@ -147,5 +124,7 @@ class SerialPlot : public QCustomPlot {
 
   QList<QCPItemText*> m_hoverLabels;
 };
+
+}  // namespace Ui
 
 #endif  // UI_CONTROLS_TTMODBUSPLOT_H

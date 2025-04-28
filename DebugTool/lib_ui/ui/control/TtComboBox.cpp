@@ -26,6 +26,8 @@ TtComboBox::TtComboBox(QWidget* parent)
   setObjectName("TtComboBox");
   setFixedHeight(35);
   d->comboBox_style_ = new style::TtComboBoxStyle(style());
+  // d->comboBox_style_ = style::TtComboBoxStyle();
+  // d->comboBox_style_ = style::TtComboBoxStyle::instance();
   setStyle(d->comboBox_style_);
 
   //调用view 让container初始化
@@ -43,7 +45,7 @@ TtComboBox::TtComboBox(QWidget* parent)
       "#ElaComboBoxView{background-color:transparent;}");
   comboBoxView->setStyle(d->comboBox_style_);
   QWidget* container = this->findChild<QFrame*>();
-  if (container) {
+  if (container && container->parent() == this) {
     container->setWindowFlags(Qt::Popup | Qt::FramelessWindowHint |
                               Qt::NoDropShadowWindowHint);
     container->setAttribute(Qt::WA_TranslucentBackground);
@@ -258,7 +260,10 @@ TtLabelComboBox::TtLabelComboBox(Qt::AlignmentFlag flag, const QString& text,
 TtLabelComboBox::TtLabelComboBox(const QString& text, QWidget* parent)
     : TtLabelComboBox(Qt::AlignLeft, text, parent) {}
 
-TtLabelComboBox::~TtLabelComboBox() {}
+TtLabelComboBox::~TtLabelComboBox() {
+  // delete combo_box_;
+  // delete label_;
+}
 
 TtComboBox* TtLabelComboBox::body() {
   return combo_box_;

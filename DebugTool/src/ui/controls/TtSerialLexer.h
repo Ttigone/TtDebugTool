@@ -15,22 +15,28 @@ class SerialHighlighter : public QSyntaxHighlighter {
   void highlightBlock(const QString& text) override;
 
  private:
-  struct HighlightRule {
-    QRegularExpression pattern;
-    QTextCharFormat format;
-    int state = -1;  // -1表示不改变状态
-  };
+  // 预编译的正则表达式
+  QRegularExpression m_txTagPattern;
+  QRegularExpression m_rxTagPattern;
+  QRegularExpression m_timeStampPattern;
+  QRegularExpression m_hexDataPattern;
 
+  // 格式定义
+  QTextCharFormat m_txFormat;
+  QTextCharFormat m_rxFormat;
   QTextCharFormat m_timestampFormat;
-  QTextCharFormat m_sendArrowFormat;
-  QTextCharFormat m_recvArrowFormat;
-  QTextCharFormat m_sendMsgFormat;
-  QTextCharFormat m_recvMsgFormat;
+  QTextCharFormat m_hexDataFormat;
+  QTextCharFormat m_txTextFormat;
+  QTextCharFormat m_rxTextFormat;
 
-  QVector<HighlightRule> m_rules;
-
-  // 状态定义
-  enum { NoneState = 0, SendMessageState = 1, RecvMessageState = 2 };
+  // 状态定义 - 使用明确的值，避免冲突
+  enum {
+    NoneState = -1,  // 初始状态
+    SendMessageState = 1,
+    RecvMessageState = 2,
+    SendEndState = 3,  // 发送结尾
+    RecvEndState = 4   // 接收结尾
+  };
 };
 
 #endif  // TTSERIALLEXER_H

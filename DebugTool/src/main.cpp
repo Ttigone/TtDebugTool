@@ -2,6 +2,8 @@
 #include <QTextCodec>
 #include "qt-easy-logger-main/logger.h"
 
+#include "lang/translation_manager.h"
+#include "storage/configs_manager.h"
 #include "storage/setting_manager.h"
 #include "window/main_window.h"
 
@@ -60,29 +62,51 @@ int main(int argc, char* argv[]) {
   QCoreApplication::setOrganizationName(QStringLiteral("C3H3_Ttigone"));
   // 主应用字体
   QFontDatabase::addApplicationFont(":/font/iconfont.ttf");
-  auto fid =
-      QFontDatabase::addApplicationFont(":/font/fontawesome-webfont.ttf");
-  qDebug() << "TEST: " << QFontDatabase::applicationFontFamilies(fid);
 
   // 语言切换
   // 读取命令行参数中的语言设置
-  QString language;
-  QStringList args = QApplication::arguments();
-  int langIndex = args.indexOf("--lang");
-  if (langIndex != -1 && langIndex + 1 < args.size()) {
-    language = args.at(langIndex + 1);
-  } else {
-    // 从配置文件读取默认语言
-    QSettings settings("MyCompany", "MyApp");
-    language = settings.value("Language", "en_US").toString();
-  }
+  // QString language;
+  // QStringList args = QApplication::arguments();
+  // int langIndex = args.indexOf("--lang");
+  // if (langIndex != -1 && langIndex + 1 < args.size()) {
+  //   language = args.at(langIndex + 1);
+  // } else {
+  //   // 从配置文件读取默认语言
+  //   QSettings settings("MyCompany", "MyApp");
+  //   language = settings.value("Language", "en_US").toString();
+  // }
 
   // 加载对应的翻译文件
-  QTranslator translator;
-  if (translator.load(":/translations/" + language + ".qm")) {
-    app.installTranslator(&translator);
-  }
+  // QTranslator translator;
+  // if (translator.load(":/translations/" + language + ".qm")) {
+  //   app.installTranslator(&translator);
+  // }
 
+  // QTranslator translator;
+
+  Storage::TtConfigsManager& configManager =
+      Storage::TtConfigsManager::instance();
+  configManager.setTargetStoreFile("config.ini");
+
+  // QSettings settings(app.applicationDirPath() + "config.ini");
+  // 注册表读取
+  // QString curLang = settings.value("Language", "TtDebugTool_zh.qm").toString();
+  QString curLang =
+      configManager.getConfigVaule("Language", "TtDebugTool_zh.qm").toString();
+  bool suss = false;
+  qDebug() << curLang;
+
+  QString fr = "F:/MyProject/DebugTool/DebugTool/res/language/";
+  if (curLang == "TtDebugTool_zh.qm") {
+    qDebug() << "zh";
+    // suss = translator.load(fr + "TtDebugTool_zh.qm");
+    // suss = Lang::TtTranslationManager
+    Lang::TtTranslationManager::instance().setLanguage(fr, "TtDebugTool_zh.qm");
+  } else {
+    qDebug() << "en";
+    // suss = translator.load(fr + "TtDebugTool_en.qm");
+    Lang::TtTranslationManager::instance().setLanguage(fr, "TtDebugTool_en.qm");
+  }
   // 设置全局字体
   QFont font(":/font/roboto/Roboto-Black.ttf", 10);  // 微软雅黑，10号字体
   app.setFont(font);

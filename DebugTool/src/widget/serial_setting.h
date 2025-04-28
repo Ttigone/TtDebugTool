@@ -32,6 +32,7 @@ class SerialSetting : public QWidget {
   const QJsonObject& getSerialSetting();
 
  signals:
+  void currentSettingChanged(bool changed);
   void showScriptSetting();
   void sendPackageMaxSizeChanged(uint16_t size);
   void sendPackageIntervalChanged(uint16_t interval);
@@ -63,6 +64,14 @@ class SerialSetting : public QWidget {
   Ui::TtLabelComboBox* parity_bit_;
   Ui::TtLabelComboBox* stop_bit_;
   Ui::TtLabelComboBox* flow_control_;
+
+  // QComboBox* serial_port_;
+  // QComboBox* baud_rate_;
+  // QComboBox* data_bit_;
+  // QComboBox* parity_bit_;
+  // QComboBox* stop_bit_;
+  // QComboBox* flow_control_;
+
   Ui::TtLabelLineEdit* send_package_interval_;
   Ui::TtLabelLineEdit* send_package_max_size_;
 

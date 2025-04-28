@@ -5,11 +5,10 @@
 #include <QTimer>
 #include <QWidget>
 
-#include <ui/controls/TtModbusPlot.h>
 #include "Def.h"
-#include "qcustomplot/qcustomplot.h"
+// #include "qcustomplot/qcustomplot.h"
 
-#include <ui/controls/TtQCustomPlot.h>
+// #include <ui/controls/TtQCustomPlot.h>
 
 QT_BEGIN_NAMESPACE
 class QStackedWidget;
@@ -27,6 +26,8 @@ class TtLineEdit;
 class TtChatView;
 class TtChatMessageModel;
 class TtMaskWidget;
+
+class TtModbusPlot;
 }  // namespace Ui
 
 namespace Widget {
@@ -83,7 +84,7 @@ class ModbusWindow : public QWidget {
   QWidget* createHoldingRegisterWidget();
   QWidget* createInputRegisterWidget();
 
-  ModbusPlot* customPlot;
+  Ui::TtModbusPlot* customPlot;
   QVector<double> xData, yData;
   double lastPointKey;
 

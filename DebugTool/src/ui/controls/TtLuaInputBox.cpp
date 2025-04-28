@@ -1,4 +1,5 @@
 #include "ui/controls/TtLuaInputBox.h"
+#include <ui/control/TtTextButton.h>
 
 #include <ui/control/TtListView.h>
 #include <ui/control/buttonbox/TtButtonBox.h>

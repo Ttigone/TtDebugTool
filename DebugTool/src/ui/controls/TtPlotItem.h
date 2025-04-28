@@ -1,9 +1,32 @@
-#ifndef UI_CONTROLS_TTTRACER_H
-#define UI_CONTROLS_TTTRACER_H
+#ifndef UI_CONTROLS_TTPLOTITEM_H
+#define UI_CONTROLS_TTPLOTITEM_H
 
 #include "qcustomplot/qcustomplot.h"
 
 namespace Ui {
+
+class TtAxisTag : public QObject {
+  Q_OBJECT
+ public:
+  explicit TtAxisTag(QCPAxis* parentAxis);
+  virtual ~TtAxisTag();
+
+  void setPen(const QPen& pen);
+  void setBrush(const QBrush& brush);
+  void setText(const QString& text);
+
+  QPen pen() const { return mLabel->pen(); }
+  QBrush brush() const { return mLabel->brush(); }
+  QString text() const { return mLabel->text(); }
+
+  void updatePosition(double value);
+
+ protected:
+  QCPAxis* mAxis;
+  QPointer<QCPItemTracer> mDummyTracer;
+  QPointer<QCPItemLine> mArrow;
+  QPointer<QCPItemText> mLabel;
+};
 
 class TtTracer : public QCPItemTracer {
  public:

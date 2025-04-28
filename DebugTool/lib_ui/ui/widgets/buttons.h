@@ -368,38 +368,6 @@ class Tt_EXPORT TtSpecialDeleteButton : public QWidget {
   bool old_state_;
 };
 
-class Tt_EXPORT TtTextButton : public QPushButton {
-  Q_OBJECT
-  Q_PROPERTY(QColor checkedColor READ checkedColor WRITE setCheckedColor)
-  Q_PROPERTY(bool checked READ isChecked WRITE setChecked)  // 新增属性
-
- public:
-  explicit TtTextButton(QWidget* parent = nullptr);
-  explicit TtTextButton(const QString& text, QWidget* parent = nullptr);
-  explicit TtTextButton(const QColor& color, const QString& text,
-                        QWidget* parent = nullptr);
-  ~TtTextButton();
-
-  // 设置/获取选中状态
-  void setChecked(bool checked);
-  bool isChecked() const { return is_checked_; }
-
-  // 设置/获取选中时的文字颜色
-  void setCheckedColor(const QColor& color);
-  QColor checkedColor() const { return checked_color_; }
-
- signals:
-  void toggled(bool checked);
-
- protected:
-  void updateStyle();  // 更新样式
-
- private:
-  bool is_checked_ = false;
-  QColor checked_color_ = Qt::blue;  // 默认选中颜色
-  QColor default_color_;             // 初始文字颜色
-};
-
 class Tt_EXPORT TtCodeButton : public QWidget {
   Q_OBJECT
  public:

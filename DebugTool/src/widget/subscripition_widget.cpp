@@ -3,6 +3,7 @@
 #include <ui/control/TtComboBox.h>
 #include <ui/control/TtLineEdit.h>
 #include <ui/control/TtRadioButton.h>
+#include <ui/control/TtTextButton.h>
 #include <ui/layout/horizontal_layout.h>
 #include <ui/layout/vertical_layout.h>
 #include <ui/widgets/buttons.h>

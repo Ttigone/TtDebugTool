@@ -8,6 +8,8 @@
 
 #include "ui/layout/vertical_layout.h"
 
+#include <window/frame_window.h>
+
 namespace Ui {
 
 QMap<TtProtocolRole::Role, int> TabManager::type_map_ = {
@@ -258,13 +260,26 @@ QString TabManager::findWidget(QWidget* widget) {
 }
 
 void TabManager::handleTabClose(int index) {
-  // 点击关闭后, 清空状况
-  // // 保存标签页信息
-  // 关闭的如果是设置页面呢 ?
+  // 只保留正在工作的 widget, 没工作的直接 delete 掉
   if (widget(index)->objectName() == "SettingWidget") {
     // qDebug() << "setting";
     handleTabCloseRequested(index);
     return;
+  }
+  // 判断当前 widget 是否保存
+  // if (Widget.)
+  // 先判断是否保存, 再判断是否 当前的状态
+  FrameWindow* w = qobject_cast<FrameWindow*>(widget(index));
+  if (w != nullptr && w->IsSaved()) {
+    // QDialog
+    qDebug() << "save";
+  } else {
+    if (w != nullptr) {
+      qDebug() << "no saved";
+      // QDialog test;
+    } else {
+      qDebug() << "nullptr";
+    }
   }
 
   TabData info;

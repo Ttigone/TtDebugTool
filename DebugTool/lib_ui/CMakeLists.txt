@@ -63,9 +63,10 @@ PRIVATE
     ui/TtTheme.h ui/TtTheme.cpp
     ui/TtTheme_p.h
 
+    ui/text/font/TtFontManager.h ui/text/font/TtFontManager.cpp
+
     ui/window/title/windowbar.h ui/window/title/windowbar.cpp  ui/window/title/windowbar_p.h
     ui/window/title/window_button.h ui/window/title/window_button.cpp  ui/window/title/window_button_p.h
-
 
     ui/style/style_core_types.h
     ui/style/style_font.h ui/style/style_font.cpp
@@ -123,6 +124,10 @@ PRIVATE
     ui/control/TtDialog_p.h
     ui/control/TtSwitchButton.h ui/control/TtSwitchButton.cpp
     ui/control/TtDrawer.h ui/control/TtDrawer.cpp
+    ui/control/TtContentDialog.h ui/control/TtContentDialog.cpp
+    ui/control/TtContentDialog_p.h
+    ui/control/TtTextButton.h ui/control/TtTextButton.cpp
+    ui/control/TtTextButton_p.h
 
 
     ui/control/buttonbox/TtButtonBox.h ui/control/buttonbox/TtButtonBox.cpp

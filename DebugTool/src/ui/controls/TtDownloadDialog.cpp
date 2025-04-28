@@ -1,7 +1,10 @@
 #include "TtDownloadDialog.h"
 
 #include <ui/control/TtLineEdit.h>
-#include <ui/widgets/buttons.h>
+#include <ui/control/TtTextButton.h>
+
+#include <QFileDialog>
+// #include <ui/widgets/buttons.h>
 
 namespace Ui {
 

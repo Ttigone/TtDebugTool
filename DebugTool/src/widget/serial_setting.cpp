@@ -5,6 +5,7 @@
 #include <ui/control/TtComboBox.h>
 #include <ui/control/TtDrawer.h>
 #include <ui/control/TtLineEdit.h>
+#include <ui/control/TtTextButton.h>
 #include <ui/layout/horizontal_layout.h>
 #include <ui/layout/vertical_layout.h>
 #include <ui/widgets/buttons.h>
@@ -29,7 +30,7 @@ SerialSetting::SerialSetting(QWidget* parent)
 SerialSetting::~SerialSetting() {}
 
 void SerialSetting::setOldSettings() {
-  serial_port_->setCurrentItem(1);
+  // serial_port_->setCurrentItem(1);
 }
 
 Core::SerialPortConfiguration SerialSetting::getSerialPortConfiguration() {
@@ -122,11 +123,11 @@ const QJsonObject& SerialSetting::getSerialSetting() {
   serial_save_config_.insert("Framing", QJsonValue(lineFeed));
 
   QJsonObject heartbeat;
-  heartbeat.insert("Type", QJsonValue(heartbeat_send_type_->body()->currentText()));
+  heartbeat.insert("Type",
+                   QJsonValue(heartbeat_send_type_->body()->currentText()));
   heartbeat.insert("Interval", QJsonValue(heartbeat_interval_->body()->text()));
   heartbeat.insert("Content", QJsonValue(heartbeat_content_->body()->text()));
   serial_save_config_.insert("Heartbeat", QJsonValue(heartbeat));
-
 
   //qDebug() << "Json: " << serial_save_config_;
 
@@ -142,14 +143,8 @@ void SerialSetting::setSerialPortsName() {
   }
   serial_port_->body()->model()->sort(0);
 
-  connect(
-      serial_port_->body(), &QComboBox::currentTextChanged,
-      [this](const QString& text) {
-        // qDebug() << text;
-        // qDebug() << serial_port_->body()->currentData().value<QString>();
-        // serial_port_->body()->setCurrentText(
-        //     serial_port_->body()->currentData().value<QString>() + "test");
-      });
+  connect(serial_port_->body(), &QComboBox::currentTextChanged,
+          [this](const QString& text) {});
   serial_port_->setCurrentItem(0);
 }
 
@@ -410,6 +405,12 @@ void SerialSetting::init() {
   parity_bit_ = new Ui::TtLabelComboBox(tr("校验位:"), serialConfigWidget);
   stop_bit_ = new Ui::TtLabelComboBox(tr("停止位:"), serialConfigWidget);
   flow_control_ = new Ui::TtLabelComboBox(tr("流控:"), serialConfigWidget);
+  // serial_port_ = new QComboBox(serialConfigWidget);
+  // baud_rate_ = new QComboBox(serialConfigWidget);
+  // data_bit_ = new QComboBox(serialConfigWidget);
+  // parity_bit_ = new QComboBox(serialConfigWidget);
+  // stop_bit_ = new QComboBox(serialConfigWidget);
+  // flow_control_ = new QComboBox(serialConfigWidget);
   send_package_interval_ =
       new Ui::TtLabelLineEdit(tr("发送包间隔:"), serialConfigWidget);
   send_package_interval_->setText(0);

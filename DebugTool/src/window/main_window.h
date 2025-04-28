@@ -59,9 +59,8 @@ class MainWindow : public QMainWindow {
   void themeChanged();
 
  private slots:
+  void closeWindow();
   void compileTsFilesFinished();
-
- private slots:
   void saveCsvFile();
 
  protected:

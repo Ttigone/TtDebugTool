@@ -19,8 +19,9 @@
 #include <QWidget>
 
 #include <Qsci/qsciscintilla.h>
-
 #include "qtmaterialflatbutton.h"
+
+#include "frame_window.h"
 #include "ui/widgets/window_switcher.h"
 
 class SerialPlot;
@@ -28,7 +29,6 @@ class SerialPlot;
 namespace Ui {
 
 class TtRadioButton;
-
 class TtMaskWidget;
 class TtNormalLabel;
 class CommonButton;
@@ -43,6 +43,7 @@ class TtChatMessageModel;
 class TtTableWidget;
 
 class TtLuaInputBox;
+class TtSerialPortPlot;
 }  // namespace Ui
 
 namespace Widget {
@@ -51,7 +52,6 @@ class SerialSetting;
 
 namespace Core {
 class SerialPortWorker;
-// class LuaKernel;
 };
 
 namespace Window {
@@ -61,18 +61,22 @@ struct SerialSaveConfig {
   QJsonObject obj;
 };
 
-class SerialWindow : public QWidget, public Ui::TabManager::ISerializable {
+// class SerialWindow : public QWidget, public Ui::TabManager::ISerializable {
+class SerialWindow : public FrameWindow, public Ui::TabManager::ISerializable {
   Q_OBJECT
  public:
   enum class MsgType { TEXT = 0x01, HEX = 0x02 };
+  // enum class
 
   explicit SerialWindow(QWidget* parent = nullptr);
   ~SerialWindow();
 
   QString getTitle();
   QJsonObject getConfiguration() const;
-
   void saveWaveFormData();
+
+  bool IsWorking() const override;
+  bool IsSaved() override;
 
  signals:
   void requestSaveConfig();
@@ -106,6 +110,8 @@ class SerialWindow : public QWidget, public Ui::TabManager::ISerializable {
 
   void parseBuffer();
   void processFrame(quint8 type, const QByteArray& payload);
+
+  bool unsaved_ = false;
 
   Ui::TtVerticalLayout* main_layout_;
 
@@ -156,25 +162,15 @@ class SerialWindow : public QWidget, public Ui::TabManager::ISerializable {
   uint32_t heartbeat_interval_;
 
   Ui::TtLuaInputBox* lua_code_;
-  // Core::LuaKernel* lua_actuator_;
 
-  // Ui::TtQCustomPlot* serial_plot_;
-  SerialPlot* serial_plot_;
-
-  struct ChannelMetaDef {
-    QString title;
-    QString header;
-    QString tail;
-    QString length;
-  };
+  Ui::TtSerialPortPlot* serial_plot_;
 
   struct ParserRule {
+    bool enable;        // 是否使能
     quint16 channel;    // 通道
     QByteArray header;  // 帧头字节序列
     int header_len;     // header.size()
-    // int type_bytes;     // 类型字段字节数(通常 1)
     int type_offset;    // 从 buffer[offset] 读类型
-    // int len_bytes;      // 长度字段占几字节（通常 1）
     int len_offset;     // 从 buffer[offset] 读长度
     int tail_len;       // 帧尾长度（若无尾则 = 0）
     bool has_checksum;
@@ -183,18 +179,14 @@ class SerialWindow : public QWidget, public Ui::TabManager::ISerializable {
   };
 
   // 修改相关配置
-  // QVector<ParserRule> rules_;
   QMap<QString, ParserRule> rules_;
 
   // uuid 通道
-  // QMap<QString, QPair<QByteArray, ChannelMetaDef>> channel_info_;
   quint16 channel_nums_ = 0;
   QMap<QString, QPair<quint16, QByteArray>> channel_info_;
 
   // 每个通道, 保存对应的 lua 解析代码
   QMap<quint16, QString> lua_script_codes_;
-
-  // bool modify_meta_data_ = false;
 
   QByteArray receive_buffer_;  // 接收缓冲区
 };

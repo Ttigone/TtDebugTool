@@ -22,6 +22,7 @@
 #include <ui/effects/animated_drawer.h>
 #include <ui/layout/vertical_layout.h>
 
+#include <ui/control/TtContentDialog.h>
 #include <ui/widgets/buttons.h>
 #include <ui/widgets/customizationtabwidget.h>
 #include <ui/widgets/labels.h>
@@ -42,12 +43,14 @@
 #include "ui/widgets/session_manager.h"
 
 #include <ui/window/title/window_button.h>
+#include "storage/configs_manager.h"
 #include "storage/setting_manager.h"
 #include "ui/widgets/window_switcher.h"
 
 #include <ui/widgets/widget_group.h>
 #include "window/instruction_window.h"
 
+#include "lang/translation_manager.h"
 #include "ui/widgets/setting_widget.h"
 
 namespace Window {
@@ -100,7 +103,7 @@ MainWindow::MainWindow(QWidget* parent)
   installWindowAgent();
   setProperty("TtBaseClassName", "TtMainWindow");
   setObjectName("TtMainWindow");
-  resize(800, 600);
+  resize(980, 720);
 
   window_agent_->centralize();
 
@@ -476,9 +479,41 @@ void MainWindow::initLanguageMenu() {
   }
 }
 
+void MainWindow::closeWindow() {
+
+  // QRect windowRect = window()->geometry();
+  // // 抵消setFixedSize导致的移动偏航
+  // window()->setMinimumSize(0, 0);
+  // window()->setMaximumSize(QSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX));
+  // QPropertyAnimation* closeGeometryAnimation =
+  //     new QPropertyAnimation(window(), "geometry");
+  // QPropertyAnimation* closeOpacityAnimation =
+  //     new QPropertyAnimation(window(), "windowOpacity");
+  // connect(closeGeometryAnimation, &QPropertyAnimation::finished, this,
+  //         [=]() { window()->close(); });
+  // closeGeometryAnimation->setStartValue(windowRect);
+  // // qreal minmumWidth = (d->_titleLabel->width() + 320);
+  // qreal minmumWidth = 320;
+  // closeGeometryAnimation->setEndValue(QRect(
+  //     windowRect.x() + (windowRect.width() - minmumWidth) / 2,
+  //     windowRect.y() + (windowRect.height() / 2) - 145, minmumWidth, 290));
+  // closeGeometryAnimation->setDuration(300);
+  // closeGeometryAnimation->setEasingCurve(QEasingCurve::InOutSine);
+
+  // closeOpacityAnimation->setStartValue(1);
+  // closeOpacityAnimation->setEndValue(0);
+  // closeOpacityAnimation->setDuration(300);
+  // closeOpacityAnimation->setEasingCurve(QEasingCurve::InOutSine);
+  // closeGeometryAnimation->start(QAbstractAnimation::DeleteWhenStopped);
+  // closeOpacityAnimation->start(QAbstractAnimation::DeleteWhenStopped);
+  QWidget::close();
+}
+
 void MainWindow::compileTsFilesFinished() {
   QMenuBar* menuBar =
       qobject_cast<Ui::WindowBar*>(window_agent_->titleBar())->menuBar();
+  QActionGroup* actionGroup = new QActionGroup(this);
+  actionGroup->setExclusive(true);
   QMenu* languageMenu = menuBar->addMenu(tr("语言"));
   // 搜索获取 .qm 文件列表 qmFiles
   QDir languageDir("F:/MyProject/DebugTool/DebugTool/res/language/");
@@ -487,6 +522,10 @@ void MainWindow::compileTsFilesFinished() {
     return;
   }
 
+  QString currentLoadedFile =
+      Lang::TtTranslationManager::instance().currentLanguage();
+  qDebug() << currentLoadedFile;
+  // 搜索 .qm
   QStringList qmFiles = languageDir.entryList(QStringList("*.qm"), QDir::Files);
   // 动态生成语言菜单
   for (const QString& qmFile : qmFiles) {
@@ -494,10 +533,15 @@ void MainWindow::compileTsFilesFinished() {
     QAction* action = new QAction(languageName, this);
     action->setCheckable(true);
     languageMenu->addAction(action);
-    // 用Lambda表达式为语言菜单动态添加槽函数
+    actionGroup->addAction(action);
+    qDebug() << qmFile;
+    if (currentLoadedFile == qmFile) {
+      action->setChecked(true);
+    }
     connect(action, &QAction::triggered, this,
             [this, qmFile]() { changeLanguage(qmFile); });
   }
+  // qDebug() <<
 }
 
 void MainWindow::saveCsvFile() {
@@ -702,6 +746,11 @@ void MainWindow::installWindowAgent() {
   iconButton->setObjectName(QStringLiteral("icon-button"));
   iconButton->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
 
+  auto putOnTopButton = new Ui::WindowbarButton();
+  putOnTopButton->setObjectName(QStringLiteral("put-to-top-button"));
+  putOnTopButton->setProperty("system-button", true);
+  putOnTopButton->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+
   auto minButton = new Ui::WindowbarButton();
   minButton->setObjectName(QStringLiteral("min-button"));
   minButton->setProperty("system-button", true);
@@ -786,7 +835,18 @@ void MainWindow::installWindowAgent() {
         // manually send leave events to the button.
         emulateLeaveEvent(maxButton);
       });
-  connect(windowBar, &Ui::WindowBar::closeRequested, this, &QWidget::close);
+  // connect(windowBar, &Ui::WindowBar::closeRequested, this, &QWidget::close);
+  connect(windowBar, &Ui::WindowBar::closeRequested, this, [this]() {
+    Ui::TtContentDialog* dialog = new Ui::TtContentDialog(
+        Ui::TtContentDialog::LayoutSelection::THREE_OPTIONS, this);
+    connect(dialog, &Ui::TtContentDialog::leftButtonClicked, this,
+            [this, dialog]() { dialog->close(); });
+    connect(dialog, &Ui::TtContentDialog::rightButtonClicked, this,
+            &MainWindow::closeWindow);
+    connect(dialog, &Ui::TtContentDialog::middleButtonClicked, this,
+            &QWidget::showMinimized);
+    dialog->show();
+  });
 #endif
 }
 
@@ -1178,7 +1238,7 @@ void MainWindow::addDifferentConfiguration(TtFunctionalCategory::Category type,
 }
 
 QString MainWindow::extractLanguageName(const QString& qmFile) {
-  QMap<QString, QString> mapLanguage = {{"_zh_CN", tr("简体中文")},
+  QMap<QString, QString> mapLanguage = {{"_zh", tr("简体中文")},
                                         {"_en", tr("英文")},
                                         {"_fr", tr("法语")},
                                         {"_de", tr("德语")},
@@ -1195,26 +1255,35 @@ void MainWindow::changeLanguage(const QString& qmFile) {
 
   saveLanguageSetting(qmFile);
 
-  // // 2. 重启应用
-  // savedLanguage_ = language; // 临时保存语言参数
-  // restartApplication();
+  Ui::TtContentDialog* dialag = new Ui::TtContentDialog(
+      Ui::TtContentDialog::LayoutSelection::TWO_OPTIONS, this);
+  dialag->setLeftButtonText(tr("立马重启"));
+  dialag->setRightButtonText(tr("自己稍后重启"));
+  connect(dialag, &Ui::TtContentDialog::leftButtonClicked, this, [this]() {
+    // 2. 重启应用
+    restartApplication();
+  });
+  dialag->show();
 
   if (translator_) {
     qApp->removeTranslator(translator_);
     delete translator_;
   }
-  // qDebug() << "TEST LA";
   translator_ = new QTranslator(this);
+  // 安装的时候, 这些会放在哪里 ?
   if (translator_->load("F:/MyProject/DebugTool/DebugTool/res/language/" +
                         qmFile)) {
     qApp->installTranslator(translator_);
-    // qDebug() << "changed";
   }
 }
 
 void MainWindow::saveLanguageSetting(const QString& language) {
-  QSettings settings("MyCompany", "MyApp");
-  settings.setValue("Language", language);
+  // QSettings settings("MyCompany", "MyApp");
+  // language 是 xxx.qm 前缀
+  // QSettings settings(QCoreApplication::applicationDirPath() + "config.ini");
+  // settings.setValue("Language", language);
+  Storage::TtConfigsManager::instance().setConfigVaule("Language", language);
+  qDebug() << "save: " << language;
 }
 
 void MainWindow::restartApplication() {

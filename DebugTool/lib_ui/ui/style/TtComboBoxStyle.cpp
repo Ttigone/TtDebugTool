@@ -2,8 +2,11 @@
 
 #include <QFontDatabase>
 #include <QPainterPath>
+#include <mutex>
 
 #include "ui/TtTheme.h"
+
+#include "ui/text/font/TtFontManager.h"
 
 namespace style {
 
@@ -15,7 +18,15 @@ style::TtComboBoxStyle::TtComboBoxStyle(QStyle* style) {
           [=](TtThemeType::ThemeMode themeMode) { theme_mode_ = themeMode; });
 }
 
-TtComboBoxStyle::~TtComboBoxStyle() {}
+TtComboBoxStyle::~TtComboBoxStyle() {
+  // Q_D(TtComboBox);
+  // // 停止所有动画
+  // for (QPropertyAnimation* anim : findChildren<QPropertyAnimation*>()) {
+  //   anim->stop();
+  //   anim->deleteLater();
+  // }
+  // delete d_ptr;  // 正确释放 d_ptr
+}
 
 void TtComboBoxStyle::drawPrimitive(PrimitiveElement element,
                                     const QStyleOption* option,
@@ -203,9 +214,28 @@ void TtComboBoxStyle::drawComplexControl(ComplexControl control,
         QRect expandIconRect = subControlRect(
             QStyle::CC_ComboBox, copt, QStyle::SC_ScrollBarAddPage, widget);
         if (expandIconRect.isValid()) {
-          int fontId = QFontDatabase::addApplicationFont(
-              ":/font/fontawesome-webfont.ttf");
-          QString family = QFontDatabase::applicationFontFamilies(fontId).at(0);
+          // 使用 std::call_once 确保字体仅加载一次
+
+          // static std::once_flag fontLoadedFlag;
+          // std::call_once(fontLoadedFlag, []() {
+          //   QFontDatabase::addApplicationFont(":/font/fontawesome-webfont.ttf");
+          // });
+          // 获取已加载的字体
+          // QString family = QFontDatabase::applicationFontFamilies(
+          //                      QFontDatabase::applicationFontFamilies().indexOf(
+          //                          "FontAwesome")  // 假设字体名已知
+          //                      )
+          //                      .at(0);
+          // 获取字体家族名称
+          QString family = Ui::FontManager::getFontAwesomeFamily();
+          // if (family.isEmpty()) {
+          //   // qDebug() << "no";
+          //   // 没有字体
+          //   // return;  // 处理字体未加载的情况
+          // }
+          // int fontId = QFontDatabase::addApplicationFont(
+          //     ":/font/fontawesome-webfont.ttf");
+          // QString family = QFontDatabase::applicationFontFamilies(fontId).at(0);
           QFont iconFont(family);
           iconFont.setPixelSize(15);
           painter->setFont(iconFont);

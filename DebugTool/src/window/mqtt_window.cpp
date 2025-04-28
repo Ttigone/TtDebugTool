@@ -12,6 +12,7 @@
 #include <ui/control/TtMaskWidget.h>
 #include <ui/control/TtRadioButton.h>
 #include <ui/control/TtSwitchButton.h>
+#include <ui/control/TtTextButton.h>
 #include <ui/layout/horizontal_layout.h>
 #include <ui/layout/vertical_layout.h>
 #include <ui/widgets/buttons.h>
@@ -20,7 +21,6 @@
 #include <ui/widgets/message_bar.h>
 
 #include "core/mqtt_client.h"
-#include "ui/widgets/pop_widget.h"
 #include "ui/widgets/subscripition_manager.h"
 #include "widget/mqtt_meta_setting_widget.h"
 #include "widget/mqtt_setting.h"

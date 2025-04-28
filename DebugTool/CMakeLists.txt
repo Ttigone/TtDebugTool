@@ -47,6 +47,10 @@ set(PROJECT_SOURCES
     ${src_loc}/core/download.h ${src_loc}/core/download.cpp
     ${src_loc}/core/lua_kernel.h ${src_loc}/core/lua_kernel.cpp
 
+    # src/lang/ ${src_loc}/core/lua_kernel.cpp
+    src/lang/translation_manager.h src/lang/translation_manager.cpp
+
+    ${src_loc}/window/frame_window.h ${src_loc}/window/frame_window.cpp
     ${src_loc}/window/main_window.h ${src_loc}/window/main_window.cpp
     ${src_loc}/window/left_bar.h ${src_loc}/window/left_bar.cpp
     ${src_loc}/window/popup_window.h ${src_loc}/window/popup_window.cpp
@@ -68,6 +72,7 @@ set(PROJECT_SOURCES
 
     ${src_loc}/storage/setting_manager.h ${src_loc}/storage/setting_manager.cpp
     ${src_loc}/storage/csv_handler.h ${src_loc}/storage/csv_handler.cpp
+    ${src_loc}/storage/configs_manager.h ${src_loc}/storage/configs_manager.cpp
 
     ${src_loc}/ui/widgets/text_widget.h ${src_loc}/ui/widgets/text_widget.cpp
     ${src_loc}/ui/widgets/pop_widget.h ${src_loc}/ui/widgets/pop_widget.cpp
@@ -79,7 +84,7 @@ set(PROJECT_SOURCES
 
 
     ${src_loc}/ui/controls/TtQCustomPlot.h ${src_loc}/ui/controls/TtQCustomPlot.cpp
-    ${src_loc}/ui/controls/TtTracer.h ${src_loc}/ui/controls/TtTracer.cpp
+    ${src_loc}/ui/controls/TtPlotItem.h ${src_loc}/ui/controls/TtPlotItem.cpp
     ${src_loc}/ui/controls/TtModbusDelegate.h ${src_loc}/ui/controls/TtModbusDelegate.cpp
     ${src_loc}/ui/controls/TtTableView.h ${src_loc}/ui/controls/TtTableView.cpp
     ${src_loc}/ui/controls/TtModbusPlot.h ${src_loc}/ui/controls/TtModbusPlot.cpp
@@ -90,6 +95,7 @@ set(PROJECT_SOURCES
     ${src_loc}/ui/controls/TtLuaInputBox.h ${src_loc}/ui/controls/TtLuaInputBox.cpp
     ${src_loc}/ui/controls/TtChannelButton.h ${src_loc}/ui/controls/TtChannelButton.cpp
     ${src_loc}/ui/controls/TtChannelButtonEditorDialog.h ${src_loc}/ui/controls/TtChannelButtonEditorDialog.cpp
+    ${src_loc}/ui/controls/TtSerialPortPlot.h ${src_loc}/ui/controls/TtSerialPortPlot.cpp
 )
 
 # Apply the macro
@@ -225,7 +231,7 @@ find_package(Qt6 REQUIRED COMPONENTS LinguistTools)
 
 SET(TS_FILES
     "${CMAKE_CURRENT_SOURCE_DIR}/res/language/${PROJECT_NAME}_en.ts"
-    "${CMAKE_CURRENT_SOURCE_DIR}/res/language/${PROJECT_NAME}_zh_CN.ts"
+    "${CMAKE_CURRENT_SOURCE_DIR}/res/language/${PROJECT_NAME}_zh.ts"
 )
 
 get_target_property(LUPDATE_EXECUTABLE Qt6::lupdate IMPORTED_LOCATION)

@@ -29,3 +29,10 @@ windows 11, Qt 6.4.3 / Qt 6.6.3
 
 ## Star 历史
 [![Star History Chart](https://api.star-history.com/svg?repos=Ttigone/TtDebugTool&type=Date)](https://www.star-history.com/#Ttigone/TtDebugTool&Date)
+
+
+## TODO
+
+1. TtComboBox 有内存泄漏
+2. Drawer 也有内存泄漏
+3. 删除对应通道时, 首先确定是否要保存数据, 然后 delete 掉对应的内存

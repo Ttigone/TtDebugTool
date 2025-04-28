@@ -3,7 +3,7 @@
 
 #include <qcustomplot/qcustomplot.h>
 
-#include "ui/controls/TtTracer.h"
+#include "ui/controls/TtPlotItem.h"
 
 namespace Ui {
 

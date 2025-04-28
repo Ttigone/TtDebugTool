@@ -143,7 +143,6 @@ class TabManager : public QTabWidget {
   void widgetDeleted(QWidget* widget);
 
  public slots:
-  // 处理 widget1 中按钮点击事件
   void handleButtonClicked(int tabIndex, TtProtocolRole::Role role);
   void handleAddNewTab();                   // 处理关闭标签
   void handleTabCloseRequested(int index);  // 处理关闭标签

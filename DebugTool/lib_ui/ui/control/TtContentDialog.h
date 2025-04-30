@@ -44,6 +44,7 @@ class Tt_EXPORT TtContentDialog : public QDialog {
 
  protected:
   void paintEvent(QPaintEvent* event) override;
+  void showEvent(QShowEvent* event) override;
   bool eventFilter(QObject* obj, QEvent* event) override;
 
   // #if (QT_VERSION == QT_VERSION_CHECK(6, 5, 3) || \
@@ -59,6 +60,13 @@ class Tt_EXPORT TtContentDialog : public QDialog {
   // //   virtual bool nativeEventFilter(const QByteArray& eventType, void* message,
   // //                                  long* result) override;
   // #endif
+
+ private:
+  void adjustPosition();
+  void startShowAnimation();
+
+  QPoint start_pos_;
+  QPropertyAnimation* animation_ = nullptr;
 };
 
 }  // namespace Ui

@@ -188,15 +188,15 @@ void TtSerialPortPlot::saveWaveFormData() {
 
 void TtSerialPortPlot::addGraphs(int channel, const QColor& color) {
   if (!curves_.contains(channel)) {
-
     // 新曲线
     CurveData newCurve;
     // 创建图形
     newCurve.graph = this->addGraph();
-    newCurve.graph->setPen(QPen(color, 2));
+    newCurve.graph->setPen(QPen(color, 3));
     newCurve.graph->setName(QString("channel@%1").arg(channel));
-    // newCurve.graph->setScatterStyle(QCPScatterStyle::ssCircle);
-    newCurve.graph->setScatterStyle(QCPScatterStyle::ssDot);
+    newCurve.graph->setScatterStyle(QCPScatterStyle::ssCircle);
+    // newCurve.graph->setScatterStyle(QCPScatterStyle::ssDot);
+    // newCurve.graph->setScatterStyle(QCPScatterStyle::ssDot);
     // newCurve.graph->setLineStyle()
 
     // 创建右侧标签
@@ -204,29 +204,47 @@ void TtSerialPortPlot::addGraphs(int channel, const QColor& color) {
     newCurve.tag = new TtAxisTag(valueAxis);
     newCurve.tag->setPen(newCurve.graph->pen());
 
-    m_tracer->setGraph(newCurve.graph);
+    // 图形没有数据
+    // m_tracer->setGraph(newCurve.graph);
+
     curves_.insert(channel, newCurve);
   }
 }
 
 void TtSerialPortPlot::removeGraphs(int channel) {
+  // qDebug() << "first delete channel" << channel;
+  // qDebug() << "curves Keys: " << curves_.keys();
   if (curves_.contains(channel)) {
+    // qDebug() << "delete channel" << channel;
     auto& curve = curves_[channel];
+
+    // 当前关联的图形
+    if (m_tracer->graph() == curve.graph) {
+      m_tracer->setGraph(nullptr);
+    }
 
     // 移除图形
     if (curve.graph) {
+      qDebug() << "graph";
       this->removeGraph(curve.graph);
       curve.graph.clear();
     }
 
     // 删除标签
     if (curve.tag) {
+      qDebug() << "tag";
       delete curve.tag;
       curve.tag = nullptr;
     }
     curves_.remove(channel);
-    replot();
   }
+
+  if (curves_.isEmpty()) {
+    qDebug() << "curves Empty";
+    m_tracer->setVisible(false);
+    m_coordLabel->setVisible(false);
+  }
+  replot();
 }
 
 void TtSerialPortPlot::setGraphsPointCapacity(quint16 nums) {
@@ -248,22 +266,23 @@ void TtSerialPortPlot::setGraphsPointCapacity(quint16 nums) {
 
 void TtSerialPortPlot::mouseMoveEvent(QMouseEvent* event) {
   QCustomPlot::mouseMoveEvent(event);
+  // if (curves_.isEmpty()) {
+  //   return;
+  // }
 
-  // const bool show = this->rect().contains(event->pos());
   const bool show = viewport().contains(event->pos());
-  // qDebug() << this->rect() << viewport();
-  // 水平线
+  // // 水平线
   m_vLine->setVisible(show);
   m_tracer->setVisible(show);
   m_coordLabel->setVisible(show);
 
-  for (auto* label : m_hoverLabels) {
-    if (label) {
-      label->setVisible(false);
-      this->removeItem(label);
-    }
-  }
-  m_hoverLabels.clear();
+  // for (auto* label : m_hoverLabels) {
+  //   if (label) {
+  //     label->setVisible(false);
+  //     this->removeItem(label);
+  //   }
+  // }
+  // m_hoverLabels.clear();
 
   if (!show) {
     replot();
@@ -271,10 +290,13 @@ void TtSerialPortPlot::mouseMoveEvent(QMouseEvent* event) {
   }
 
   double x = this->xAxis->pixelToCoord(event->pos().x());
+  // qDebug() << x;
 
-  // 设置垂直线位置
+  // 同一个 x 坐标, y 值分别是最大和最小, 竖直线
   m_vLine->point1->setCoords(x, this->yAxis->range().lower);
   m_vLine->point2->setCoords(x, this->yAxis->range().upper);
+
+  // qDebug() << "test";
 
   updateTracerPosition(event);
 
@@ -319,21 +341,21 @@ void TtSerialPortPlot::setupPlot() {
   m_tracer = new QCPItemTracer(this);
   // m_tracer->setGraph(m_dataGraph);
   m_tracer->setInterpolating(true);
-  m_tracer->setStyle(QCPItemTracer::tsCircle);
+  m_tracer->setStyle(QCPItemTracer::TracerStyle::tsPlus);
   m_tracer->setPen(QPen(Qt::red));
   m_tracer->setBrush(QBrush(Qt::red));
-  m_tracer->setSize(8);
+  m_tracer->setSize(7);
   m_tracer->setVisible(false);
 
-  // 创建跟踪器标签（显示坐标值）
-  m_tracerLabel = new QCPItemText(this);
-  m_tracerLabel->setPositionAlignment(Qt::AlignLeft | Qt::AlignTop);
-  m_tracerLabel->position->setType(QCPItemPosition::ptAbsolute);
-  // m_tracerLabel->position->setType(QCPItemPosition::ptPlotCoords);
-  m_tracerLabel->setPadding(QMargins(5, 5, 5, 5));
-  m_tracerLabel->setBrush(QBrush(QColor(255, 255, 255, 200)));
-  m_tracerLabel->setPen(QPen(Qt::black));
-  m_tracerLabel->setVisible(false);
+  // // 创建跟踪器标签（显示坐标值）
+  // m_tracerLabel = new QCPItemText(this);
+  // m_tracerLabel->setPositionAlignment(Qt::AlignLeft | Qt::AlignTop);
+  // m_tracerLabel->position->setType(QCPItemPosition::ptAbsolute);
+  // // m_tracerLabel->position->setType(QCPItemPosition::ptPlotCoords);
+  // m_tracerLabel->setPadding(QMargins(5, 5, 5, 5));
+  // m_tracerLabel->setBrush(QBrush(QColor(255, 255, 255, 200)));
+  // m_tracerLabel->setPen(QPen(Qt::black));
+  // m_tracerLabel->setVisible(false);
 
   // 创建垂直指示线
   m_vLine = new QCPItemStraightLine(this);
@@ -471,12 +493,15 @@ void TtSerialPortPlot::setupPlot() {
 
 void TtSerialPortPlot::updateTracerPosition(QMouseEvent* event) {
   if (curves_.isEmpty()) {
+    // 没有图像, 不显示
+    // qDebug() << "empty";
     m_tracer->setVisible(false);
-    m_tracerLabel->setVisible(false);
+    m_vLine->setVisible(false);
+    m_coordLabel->setVisible(false);
     return;
   }
 
-  // 当前鼠标坐标值
+  // // 当前鼠标坐标值
   double mouseX = this->xAxis->pixelToCoord(event->pos().x());
   double mouseY = this->xAxis->pixelToCoord(event->pos().y());
 
@@ -485,33 +510,31 @@ void TtSerialPortPlot::updateTracerPosition(QMouseEvent* event) {
       mouseX > this->xAxis->range().upper) {
     // qDebug() << "move outside";
     m_tracer->setVisible(false);
-    m_tracerLabel->setVisible(false);
+    // m_tracerLabel->setVisible(false);
+    m_coordLabel->setVisible(false);
     return;
   }
-  // // 鼠标移出 y 轴外
-  // if (mouseY < this->yAxis->range().lower ||
-  //     mouseY > this->yAxis->range().upper) {
-  //   qDebug() << "test";
-  //   m_tracer->setVisible(false);
-  //   m_tracerLabel->setVisible(false);
-  //   return;
-  // }
 
   QDateTime time =
       QDateTime::fromMSecsSinceEpoch((m_startTime + mouseX) * 1000);
   QStringList tooltipLines;
   tooltipLines.append(
       QString("<b>时间: %1</b>").arg(time.toString("HH:mm:ss")));
+  // 默认 false
   bool tracerSet = false;
 
+  bool hasVailData = false;
+
+  // qDebug() << "update: " << curves_.size();
   // 遍历每一个图像
   for (auto it = curves_.begin(); it != curves_.end(); ++it) {
     //
     const auto& curve = it.value();
     if (!curve.graph || curve.timeData.isEmpty()) {
+      // 没有数据
       continue;
     }
-
+    // qDebug() << "insit";
     const auto& times = curve.timeData;
     const auto& values = curve.valueData;
 
@@ -547,15 +570,19 @@ void TtSerialPortPlot::updateTracerPosition(QMouseEvent* event) {
                               .arg(color.name())
                               .arg(name)
                               .arg(value, 0, 'f', 2));
+      hasVailData = true;
     }
   }
 
-  if (tooltipLines.size() > 1) {
+  // if (tooltipLines.size() > 1) {
+  if (hasVailData) {
+    // 设置显示的富文本
     m_coordLabel->setText(tooltipLines.join("<br>"));
 
-    TtQCPItemRichText* richLabel =
-        qobject_cast<TtQCPItemRichText*>(m_coordLabel);
-    const QTextDocument& doc = richLabel->document();
+    // TtQCPItemRichText* richLabel =
+    //     qobject_cast<TtQCPItemRichText*>(m_coordLabel);
+    // const QTextDocument& doc = richLabel->document();
+    const QTextDocument& doc = m_coordLabel->document();
     qreal textWidth = doc.idealWidth() + 10;  // 增加10px边距
     qreal textHeight = doc.size().height() + 10;
 
@@ -585,9 +612,14 @@ void TtSerialPortPlot::updateTracerPosition(QMouseEvent* event) {
     m_coordLabel->setVisible(false);
   }
 
-  if (!tracerSet) {
-    m_tracer->setVisible(false);  // 没有找到点时隐藏
-  }
+  // if (!tracerSet) {
+  //   // 为什么进来?
+  //   qDebug() << "none";
+  //   m_vLine->setVisible(false);
+  //   m_tracer->setVisible(false);  // 没有找到点时隐藏
+  //   // m_coordLabel->setVisible(false);
+  // }
+
   replot();
 }
 

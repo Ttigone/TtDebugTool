@@ -3,12 +3,15 @@
 
 #include <ui/control/TtTextButton.h>
 #include <QApplication>
+#include <QScreen>
 
 namespace Ui {
 
 TtContentDialog::TtContentDialog(LayoutSelection layout, QWidget* parent)
     : QDialog(parent), d_ptr(new TtContentDialogPrivate) {
   Q_D(TtContentDialog);
+  // 透明背景
+  setAttribute(Qt::WA_TranslucentBackground);
   d->q_ptr = this;
   QList<QWidget*> widgetList = QApplication::topLevelWidgets();
   QWidget* mainWindow = nullptr;
@@ -31,6 +34,8 @@ TtContentDialog::TtContentDialog(LayoutSelection layout, QWidget* parent)
     mainWindow->installEventFilter(this);
   }
   resize(400, height());
+  // setWindowFlags((window()->windowFlags()) | Qt::WindowMinimizeButtonHint |
+  //                Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
   setWindowFlags((window()->windowFlags()) | Qt::WindowMinimizeButtonHint |
                  Qt::FramelessWindowHint);
   // #if (QT_VERSION == QT_VERSION_CHECK(6, 5, 3) || \
@@ -170,6 +175,9 @@ TtContentDialog::TtContentDialog(LayoutSelection layout, QWidget* parent)
     //           d->_themeMode = themeMode;
     //         });
   }
+  if (d->main_window_) {
+    QTimer::singleShot(0, this, [=]() { adjustPosition(); });
+  }
 }
 
 TtContentDialog::~TtContentDialog() {
@@ -227,8 +235,11 @@ void TtContentDialog::paintEvent(QPaintEvent* event) {
   painter.setBrush(d->_themeMode == TtThemeType::ThemeMode::Light
                        ? Qt::white
                        : QColor(0x2B, 0x2B, 0x2B));
-  // 背景绘制
-  painter.drawRect(rect());
+
+  painter.drawRoundedRect(rect(), 8, 8);  // 统一使用8px圆角半径
+                                          // // / 背景绘制
+                                          //  painter.drawRect(rect());
+
   // 按钮栏背景绘制
   painter.setBrush(d->_themeMode == TtThemeType::ThemeMode::Light
                        ? QColor(0xF3, 0xF3, 0xF3)
@@ -238,14 +249,72 @@ void TtContentDialog::paintEvent(QPaintEvent* event) {
   painter.restore();
 }
 
+void TtContentDialog::showEvent(QShowEvent* event) {}
+
 bool TtContentDialog::eventFilter(QObject* obj, QEvent* event) {
   Q_D(TtContentDialog);
   if (event->type() == QEvent::Resize && obj == d->main_window_) {
     if (d->_shadowWidget) {
       d->_shadowWidget->setFixedSize(d->main_window_->size());
     }
+    adjustPosition();
   }
   return QDialog::eventFilter(obj, event);
+}
+
+void TtContentDialog::adjustPosition() {
+  // #if 0
+  //   Q_D(TtContentDialog);
+  //   if (!d->main_window_ || !isVisible()) {
+  //     return;
+  //   }
+  //   const QSize parentSize = d->main_window_->size();
+  //   const QSize mySize = size();
+
+  //   const int x = (parentSize.width() - mySize.width()) / 2;
+  //   const int y = (parentSize.height() - mySize.height()) / 2;
+
+  //   move(d->main_window_->mapToGlobal(QPoint(x, y)));
+  // #else
+  //   Q_D(TtContentDialog);
+  //   if (!d->main_window_ || !isVisible()) {
+  //     return;
+  //   }
+  //   QRect parentRect = d->main_window_->frameGeometry();
+  //   QPoint parentCenter = parentRect.center();
+  //   QPoint targetPos = parentCenter - QPoint(width() / 2, height() / 2);
+  //   move(targetPos);
+  //   // QPoint center = parentRect.center() - rect().center();
+  //   // move(d->main_window_->mapToGlobal(center));
+  // #endif
+
+  Q_D(TtContentDialog);
+  if (!d->main_window_ || !isVisible())
+    return;
+
+  // 获取父窗口实际显示区域（包含装饰）
+  const QRect parentGeo = d->main_window_->frameGeometry();
+
+  // 计算目标位置
+  const int x = parentGeo.x() + (parentGeo.width() - width()) / 2;
+  const int y = parentGeo.y() + (parentGeo.height() - height()) / 2;
+
+  QRect screenGeo;
+
+  // 边界检查
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
+  QScreen* screen = this->screen();
+  if (!screen) {
+    // 获取当前的主窗口
+    screen = QGuiApplication::primaryScreen();
+  }
+  screenGeo = screen->availableGeometry();
+#elif (QT_VERSION >= QT_VERSION_CHECK(5, 0, 0))
+  QRect screenGeo = QApplication::desktop()->availableGeometry(this);
+#endif
+  const int finalX = qBound(screenGeo.left(), x, screenGeo.right() - width());
+  const int finalY = qBound(screenGeo.top(), y, screenGeo.bottom() - height());
+  move(finalX, finalY);
 }
 
 TtContentDialogPrivate::TtContentDialogPrivate(QObject* parent)

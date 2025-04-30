@@ -56,10 +56,14 @@ LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS* exceptionInfo) {
 int main(int argc, char* argv[]) {
   QApplication app(argc, argv);
 
-  // 程序名
-  QCoreApplication::setApplicationName(QStringLiteral("TtDebugTool"));
-  // 组织名
-  QCoreApplication::setOrganizationName(QStringLiteral("C3H3_Ttigone"));
+  qInstallMessageHandler(h::Logger::messageHandler);  // 启用功能
+
+  // 注册表使用
+  QCoreApplication::setApplicationName(
+      QStringLiteral("TtDebugTool"));  // 程序名
+  QCoreApplication::setOrganizationName(
+      QStringLiteral("C3H3_Ttigone"));  // 组织名
+
   // 主应用字体
   QFontDatabase::addApplicationFont(":/font/iconfont.ttf");
 
@@ -94,9 +98,14 @@ int main(int argc, char* argv[]) {
   QString curLang =
       configManager.getConfigVaule("Language", "TtDebugTool_zh.qm").toString();
   bool suss = false;
+  // 英文
   qDebug() << curLang;
 
-  QString fr = "F:/MyProject/DebugTool/DebugTool/res/language/";
+  // 语言加载路径
+  // 加载的文件, 从那个地方去加载 ?
+  QString fr = QApplication::applicationDirPath() + "/translations";
+  // QString fr = "F:/MyProject/DebugTool/DebugTool/res/language/";
+  // QString fr = "F:/MyProject/DebugTool/DebugTool/res/language/";
   if (curLang == "TtDebugTool_zh.qm") {
     qDebug() << "zh";
     // suss = translator.load(fr + "TtDebugTool_zh.qm");
@@ -162,7 +171,6 @@ int main(int argc, char* argv[]) {
   SetUnhandledExceptionFilter((LPTOP_LEVEL_EXCEPTION_FILTER)ExceptionHandler);
 #endif
 
-  qInstallMessageHandler(h::Logger::messageHandler);  // 启用功能
 
   Window::MainWindow w;
   w.show();

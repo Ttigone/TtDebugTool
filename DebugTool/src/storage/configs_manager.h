@@ -56,7 +56,8 @@ class TtConfigsManager {
   QString getConfigFilePath(const QString& filename) {
     // 获取当前可执行文件的路径
     QString appDirPath = QCoreApplication::applicationDirPath();
-    QString configPath = appDirPath + filename;
+    QString configPath = appDirPath + "/" + filename;
+    qDebug() << "配置文件: " << configPath;
     // 创建文件
     QFile file(configPath);
     if (!file.exists()) {

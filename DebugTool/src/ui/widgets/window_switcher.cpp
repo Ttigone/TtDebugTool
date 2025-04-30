@@ -262,6 +262,7 @@ QString TabManager::findWidget(QWidget* widget) {
 void TabManager::handleTabClose(int index) {
   // 只保留正在工作的 widget, 没工作的直接 delete 掉
   if (widget(index)->objectName() == "SettingWidget") {
+    // SettingWidget 直接 delete
     // qDebug() << "setting";
     handleTabCloseRequested(index);
     return;
@@ -272,9 +273,11 @@ void TabManager::handleTabClose(int index) {
   FrameWindow* w = qobject_cast<FrameWindow*>(widget(index));
   if (w != nullptr && w->IsSaved()) {
     // QDialog
+    // 已经保存了, 可以删除当前的widget
     qDebug() << "save";
   } else {
     if (w != nullptr) {
+      // 为保存的状态, 弹出一个 dialog
       qDebug() << "no saved";
       // QDialog test;
     } else {

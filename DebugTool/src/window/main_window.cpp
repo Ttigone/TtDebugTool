@@ -1253,28 +1253,34 @@ QString MainWindow::extractLanguageName(const QString& qmFile) {
 
 void MainWindow::changeLanguage(const QString& qmFile) {
 
+  // 如果一直切换语言, 则以最后一次切换为准
+  // 保存到配置文件
   saveLanguageSetting(qmFile);
 
-  Ui::TtContentDialog* dialag = new Ui::TtContentDialog(
+  Ui::TtContentDialog* dialog = new Ui::TtContentDialog(
       Ui::TtContentDialog::LayoutSelection::TWO_OPTIONS, this);
-  dialag->setLeftButtonText(tr("立马重启"));
-  dialag->setRightButtonText(tr("自己稍后重启"));
-  connect(dialag, &Ui::TtContentDialog::leftButtonClicked, this, [this]() {
+  dialog->setLeftButtonText(tr("立马重启"));
+  dialog->setRightButtonText(tr("自己稍后重启"));
+  connect(dialog, &Ui::TtContentDialog::leftButtonClicked, this, [this]() {
     // 2. 重启应用
     restartApplication();
   });
-  dialag->show();
+  connect(dialog, &Ui::TtContentDialog::rightButtonClicked, this, [this]() {
+    // 保持当前语言
+  });
 
-  if (translator_) {
-    qApp->removeTranslator(translator_);
-    delete translator_;
-  }
-  translator_ = new QTranslator(this);
-  // 安装的时候, 这些会放在哪里 ?
-  if (translator_->load("F:/MyProject/DebugTool/DebugTool/res/language/" +
-                        qmFile)) {
-    qApp->installTranslator(translator_);
-  }
+  dialog->show();
+
+  // if (translator_) {
+  //   qApp->removeTranslator(translator_);
+  //   delete translator_;
+  // }
+  // translator_ = new QTranslator(this);
+  // // 安装的时候, 这些会放在哪里 ?
+  // if (translator_->load("F:/MyProject/DebugTool/DebugTool/res/language/" +
+  //                       qmFile)) {
+  //   qApp->installTranslator(translator_);
+  // }
 }
 
 void MainWindow::saveLanguageSetting(const QString& language) {

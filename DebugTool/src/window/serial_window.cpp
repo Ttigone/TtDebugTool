@@ -286,10 +286,19 @@ void SerialWindow::addChannelInfo(const QString& uuid, const QColor& color,
         Core::LuaKernel kernel;
         kernel.doLuaCode(luaCode, params, ret);
 
+        qDebug() << payload.size();
+
+        // 原始数据保存在 payload 中
+        // 根据 payload.size() 决定个数长度
         // // 十六进制
         // // 小端序解析 (低字节在前)
-        quint16 value = (static_cast<quint8>(payload[1]) << 8) |
-                        static_cast<quint8>(payload[0]);
+        size_t len = payload.size();
+        quint16 value = 0;
+        for (int i = 0; i < len; ++i) {
+          value += static_cast<quint8>(payload[i]);
+        }
+        // quint16 value = (static_cast<quint8>(payload[1]) << 8) |
+        //                 static_cast<quint8>(payload[0]);
 
         serial_plot_->addData(channel, value);
 
@@ -491,6 +500,7 @@ void SerialWindow::parseBuffer() {
     if (bestPos > 0) {
       receive_buffer_.remove(0, bestPos);
     }
+    // 长度没问题
     qDebug() << "size: " << receive_buffer_.size();
     // qDebug() << bestRule->header_len + bestRule->len_offset +
     //                 bestRule->len_bytes;
@@ -513,11 +523,14 @@ void SerialWindow::parseBuffer() {
     // len_offset 是 2
     quint32 payloadLen = 0;
 
+    // 长度是 1
     // 获取长度字段
     payloadLen = receive_buffer_[bestRule->len_offset];
 
     // 长度为 3， 负载为 2
     qDebug() << bestRule->len_offset << payloadLen;
+
+    // 1 + 1 + 1 + 0 + 0 = 3 + 1
 
     // 2 + 1 + 1 + 2 + 0 + 0
     const int fullSize = bestRule->header_len + 1 +
@@ -656,6 +669,10 @@ void SerialWindow::sendMessageToPort() {
 
   QString content;
   QString text = editor->text();
+  if (editor->text().isEmpty()) {
+    qDebug() << "empty";
+    return;
+  }
   QByteArray data;
 
   if (send_type_ == MsgType::HEX) {
@@ -1021,6 +1038,7 @@ void SerialWindow::init() {
                 // 绑定选中符号
                 connect(channelBtn, &TtChannelButton::toggled, this,
                         [this, channelBtn](bool check) {
+                          // 失效勾选, 删除图像, 并删除原有消息
                           // 设定是否使能
                           auto it = rules_.find(channelBtn->getUuid());
                           if (it != rules_.end()) {
@@ -1035,23 +1053,24 @@ void SerialWindow::init() {
                   btn->modifyText();
                 }
               } else if (selectedAction == deleteAction) {
+                auto* btn = qobject_cast<TtChannelButton*>(
+                    serialDataList->itemWidget(item));
+                if (btn) {
+                  qDebug() << btn;
+
+                  quint16 channel = channel_info_.value(btn->getUuid()).first;
+                  qDebug() << channel;
+                  serial_plot_->removeGraphs(channel);
+                  lua_script_codes_.remove(channel);
+                  // 移出规则
+                  channel_info_.remove(btn->getUuid());
+                  rules_.remove(btn->getUuid());
+                }
                 auto* deleteItem = serialDataList->takeItem(
                     serialDataList->row(item));  // 删除项
-                if (deleteItem) {
-                  // 获取 button
-                  if (auto* btn = qobject_cast<TtChannelButton*>(
-                          serialDataList->itemWidget(deleteItem))) {
-                    quint16 channel = channel_info_.value(btn->getUuid()).first;
-                    serial_plot_->removeGraphs(channel);
-                    lua_script_codes_.remove(channel);
-                    // 移出规则
-                    channel_info_.remove(btn->getUuid());
-                    rules_.remove(btn->getUuid());
-                  }
-                  qDebug() << "delete";
-                  // 是移出了, 但是 graph 没有
-                  delete deleteItem;
-                }
+
+                qDebug() << "delete";
+                delete deleteItem;
 
               } else if (selectedAction == editAction) {
                 if (auto* btn = qobject_cast<TtChannelButton*>(

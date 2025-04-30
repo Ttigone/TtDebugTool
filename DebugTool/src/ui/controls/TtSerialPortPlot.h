@@ -45,8 +45,8 @@ class TtSerialPortPlot : public QCustomPlot {
 
   bool m_firstDataReceived = false;
 
-  QCPItemTracer* m_tracer;     // 数据点跟踪器
-  QCPItemText* m_tracerLabel;  // 显示坐标的标签
+  QCPItemTracer* m_tracer;  // 数据点跟踪器
+  // QCPItemText* m_tracerLabel;  // 显示坐标的标签
 
   bool m_showTooltip = true;  // 是否显示坐标提示
   bool m_autoScaleY = true;   // 是否自动调整Y轴范围

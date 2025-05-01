@@ -20,6 +20,7 @@ class Tt_EXPORT TtContentDialog : public QDialog {
     THREE_OPTIONS,
   };
 
+  explicit TtContentDialog(QWidget* parent = nullptr);
   explicit TtContentDialog(
       LayoutSelection layout = LayoutSelection::TWO_OPTIONS,
       QWidget* parent = nullptr);
@@ -31,6 +32,9 @@ class Tt_EXPORT TtContentDialog : public QDialog {
   void setLeftButtonText(const QString& text);
   void setMiddleButtonText(const QString& text);
   void setRightButtonText(const QString& text);
+  void setCenterText(const QString& text);
+
+  void setEnablePointOnMouse(bool enable);
 
  public slots:
   virtual void onLeftButtonClicked();
@@ -45,6 +49,7 @@ class Tt_EXPORT TtContentDialog : public QDialog {
  protected:
   void paintEvent(QPaintEvent* event) override;
   void showEvent(QShowEvent* event) override;
+  void closeEvent(QCloseEvent* event) override;
   bool eventFilter(QObject* obj, QEvent* event) override;
 
   // #if (QT_VERSION == QT_VERSION_CHECK(6, 5, 3) || \

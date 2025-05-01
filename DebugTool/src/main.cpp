@@ -103,7 +103,7 @@ int main(int argc, char* argv[]) {
 
   // 语言加载路径
   // 加载的文件, 从那个地方去加载 ?
-  QString fr = QApplication::applicationDirPath() + "/translations";
+  QString fr = QApplication::applicationDirPath() + "/translations/";
   // QString fr = "F:/MyProject/DebugTool/DebugTool/res/language/";
   // QString fr = "F:/MyProject/DebugTool/DebugTool/res/language/";
   if (curLang == "TtDebugTool_zh.qm") {

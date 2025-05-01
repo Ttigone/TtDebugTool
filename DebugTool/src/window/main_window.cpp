@@ -514,6 +514,7 @@ void MainWindow::compileTsFilesFinished() {
       qobject_cast<Ui::WindowBar*>(window_agent_->titleBar())->menuBar();
   QActionGroup* actionGroup = new QActionGroup(this);
   actionGroup->setExclusive(true);
+  // 固定插入到最后
   QMenu* languageMenu = menuBar->addMenu(tr("语言"));
   // 搜索获取 .qm 文件列表 qmFiles
   QDir languageDir("F:/MyProject/DebugTool/DebugTool/res/language/");
@@ -574,7 +575,7 @@ bool MainWindow::event(QEvent* event) {
       break;
     }
     case QEvent::Close: {
-      // 保存设置
+      // 写入文件
       Storage::SettingsManager::instance().saveSettings();
       break;
     }
@@ -593,20 +594,30 @@ void MainWindow::installWindowAgent() {
     auto menuBar = new QMenuBar(this);
 
     // Virtual menu
-    auto file = new QMenu(tr("File(&F)"), menuBar);
-    file->addAction(new QAction(tr("New"), menuBar));
-    file->addAction(new QAction(tr("Open"), menuBar));
+    // auto file = new QMenu(tr("File(&F)"), menuBar);
+    // file->addAction(new QAction(tr("New"), menuBar));
+    // file->addAction(new QAction(tr("Open"), menuBar));
+    auto file = new QMenu(tr("文件(&F)"), menuBar);
+    file->addAction(new QAction(tr("新建"), menuBar));
+    file->addAction(new QAction(tr("打开"), menuBar));
+
     file->addSeparator();
-    auto saveToCsv = new QAction(tr("Save To CSV"), menuBar);
+    // auto saveToCsv = new QAction(tr("Save To CSV"), menuBar);
+    auto saveToCsv = new QAction(tr("保存到 CSV"), menuBar);
     file->addAction(saveToCsv);
     connect(saveToCsv, &QAction::triggered, this, [this] { saveCsvFile(); });
 
-    file->addAction(new QAction(tr("Save To Sqlite"), menuBar));
+    // file->addAction(new QAction(tr("Save To Sqlite"), menuBar));
+    file->addAction(new QAction(tr("保存到 Sqlite 数据库"), menuBar));
     file->addSeparator();
 
-    auto edit = new QMenu(tr("Edit(&E)"), menuBar);
-    edit->addAction(new QAction(tr("Undo(&U)"), menuBar));
-    edit->addAction(new QAction(tr("Redo(&R)"), menuBar));
+    // auto edit = new QMenu(tr("Edit(&E)"), menuBar);
+    // edit->addAction(new QAction(tr("Undo(&U)"), menuBar));
+    // edit->addAction(new QAction(tr("Redo(&R)"), menuBar));
+
+    auto help = new QMenu(tr("帮助(&H)"), menuBar);
+    help->addAction(new QAction(tr("关于 Qt"), menuBar));
+    help->addAction(new QAction(tr("联系作者"), menuBar));
 
     // Theme action
     // auto darkAction = new QAction(tr("Enable dark theme"), menuBar);
@@ -730,7 +741,8 @@ void MainWindow::installWindowAgent() {
 #endif
 
     menuBar->addMenu(file);
-    menuBar->addMenu(edit);
+    menuBar->addMenu(help);
+    // menuBar->addMenu(edit);
     // menuBar->addMenu(settings);
     return menuBar;
   }();
@@ -836,16 +848,28 @@ void MainWindow::installWindowAgent() {
         emulateLeaveEvent(maxButton);
       });
   // connect(windowBar, &Ui::WindowBar::closeRequested, this, &QWidget::close);
+
   connect(windowBar, &Ui::WindowBar::closeRequested, this, [this]() {
     Ui::TtContentDialog* dialog = new Ui::TtContentDialog(
         Ui::TtContentDialog::LayoutSelection::THREE_OPTIONS, this);
+    QPointer<Ui::TtContentDialog> dialogPtr(dialog);
+    dialog->setCenterText(tr("确定要退出程序吗"));
     connect(dialog, &Ui::TtContentDialog::leftButtonClicked, this,
-            [this, dialog]() { dialog->close(); });
-    connect(dialog, &Ui::TtContentDialog::rightButtonClicked, this,
-            &MainWindow::closeWindow);
+            [this, dialogPtr] { dialogPtr->reject(); });
     connect(dialog, &Ui::TtContentDialog::middleButtonClicked, this,
-            &QWidget::showMinimized);
-    dialog->show();
+            [this, dialogPtr] {
+              dialogPtr->accept();
+              MainWindow::showMinimized();
+            });
+    connect(dialog, &Ui::TtContentDialog::rightButtonClicked, this,
+            [this, dialogPtr] {
+              dialogPtr->accept();
+              MainWindow::closeWindow();
+            });
+    dialog->exec();
+    delete dialog;
+    qDebug() << "finale test";
+    delete dialog;
   });
 #endif
 }
@@ -1047,7 +1071,7 @@ void MainWindow::registerTabWidget() {
                                         tabWidget_->getCurrentWidgetUUid());
               tabWidget_->setTabTitle(serial->getTitle());
               // 只有关闭整个 app 的时候才会保存到本地
-              // 如果存在多个串口配置
+              // 如果存在多个串口配置, 根据个数区分不同
               Storage::SettingsManager::instance().setSetting(
                   "Serial" + QString::number(tabWidget_->SpecialTypeNums(
                                  TtProtocolRole::Serial)),
@@ -1178,6 +1202,7 @@ void MainWindow::registerTabWidget() {
                                             udpServer->getTitle(),
                                             tabWidget_->getCurrentWidgetUUid());
                   tabWidget_->setTabTitle(udpServer->getTitle());
+                  // 序号决定
                   Storage::SettingsManager::instance().setSetting(
                       "UdpServer" + QString::number(tabWidget_->SpecialTypeNums(
                                         TtProtocolRole::UdpServer)),
@@ -1257,19 +1282,44 @@ void MainWindow::changeLanguage(const QString& qmFile) {
   // 保存到配置文件
   saveLanguageSetting(qmFile);
 
-  Ui::TtContentDialog* dialog = new Ui::TtContentDialog(
-      Ui::TtContentDialog::LayoutSelection::TWO_OPTIONS, this);
-  dialog->setLeftButtonText(tr("立马重启"));
-  dialog->setRightButtonText(tr("自己稍后重启"));
-  connect(dialog, &Ui::TtContentDialog::leftButtonClicked, this, [this]() {
-    // 2. 重启应用
-    restartApplication();
-  });
-  connect(dialog, &Ui::TtContentDialog::rightButtonClicked, this, [this]() {
-    // 保持当前语言
-  });
+  // Ui::TtContentDialog* dialog = new Ui::TtContentDialog(
+  //     Ui::TtContentDialog::LayoutSelection::TWO_OPTIONS, this);
+  // dialog->setLeftButtonText(tr("立马重启"));
+  // dialog->setRightButtonText(tr("自己稍后重启"));
+  // connect(dialog, &Ui::TtContentDialog::leftButtonClicked, this, [this]() {
+  //   // 2. 重启应用
+  //   restartApplication();
+  // });
+  // connect(dialog, &Ui::TtContentDialog::rightButtonClicked, this, [this]() {
+  //   // 保持当前语言
+  // });
 
-  dialog->show();
+  // dialog->show();
+
+  Ui::TtContentDialog* dialog = new Ui::TtContentDialog(this);
+  dialog->setLeftButtonText(tr("立马重启"));
+  dialog->setRightButtonText(tr("稍后重启"));
+
+  QPointer<Ui::TtContentDialog> dialogPtr(dialog);
+
+  connect(dialog, &Ui::TtContentDialog::leftButtonClicked, this,
+          [dialogPtr, this]() {
+            if (dialogPtr) {
+              dialogPtr->accept();
+            }
+            // 2. 重启应用
+            restartApplication();
+          });
+  connect(dialog, &Ui::TtContentDialog::rightButtonClicked, this,
+          [dialogPtr, this]() {
+            if (dialogPtr) {
+              dialogPtr->reject();
+            }
+          });
+
+  dialog->exec();
+  // 需要手动释放
+  delete dialog;
 
   // if (translator_) {
   //   qApp->removeTranslator(translator_);

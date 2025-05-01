@@ -27,6 +27,7 @@ class TtTableWidget : public QTableWidget {
   void setCellWidget(int row, int column, QWidget* widget);
 
  signals:
+  void rowsChanged(quint16 rows);
   void sendRowMsg(const QString& msg);
   void sendRowsMsg(const QVector<QPair<QString, int>>& msg);
 

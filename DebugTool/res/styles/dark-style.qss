@@ -171,19 +171,16 @@ QListWidget:focus
 
 
 QSplitter::handle {
-    background-color: #282c34;
+    background-color: #3c3c3c;
     width: 1px;
     height: 1px;
     margin: 1px;
 }
 
-/* 3. 鼠标悬浮时高亮 */
 QSplitter::handle:hover {
-    background-color: #3a3f4a;
+    background-color: #c191dd;
 }
 
-
-/* 4. 鼠标按下时再深一点 */
 QSplitter::handle:pressed {
     background-color: #1f2329;
 }

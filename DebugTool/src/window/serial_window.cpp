@@ -33,6 +33,8 @@
 #include "ui/controls/TtChannelButtonEditorDialog.h"
 #include "ui/controls/TtSerialPortPlot.h"
 
+#include "storage/setting_manager.h"
+
 namespace Window {
 
 SerialWindow::SerialWindow(QWidget* parent)
@@ -64,7 +66,7 @@ SerialWindow::SerialWindow(QWidget* parent)
 }
 
 SerialWindow::~SerialWindow() {
-  // // qDebug() << "delete SerialWindow";
+  qDebug() << "delete SerialWindow";
   // worker_thread_->quit();
   // // worker_thread_->exit();
   // worker_thread_->wait();
@@ -117,17 +119,37 @@ void SerialWindow::saveWaveFormData() {
   }
 }
 
-bool SerialWindow::IsWorking() const {
+bool SerialWindow::workState() const {
   // 如果打开的是异常串口, 同时又保存了, 有问题
   return serial_port_opened;
 }
 
-bool SerialWindow::IsSaved() {
+bool SerialWindow::saveState() {
   // serial_setting_->getSerialSetting();
 
   // if (cfg_.obj.value("WindowTitle").toString() != title_->text()) {
   // }
-  return !unsaved_;
+  // return !unsaved_;
+  // 需要检测配置的区分, 还是改动一处, 标志位设置为 false
+  return false;
+  // return saved_;
+}
+
+void SerialWindow::setSaveState(bool state) {
+  saved_ = state;
+}
+
+void SerialWindow::saveSetting() {
+  qDebug() << "saving setting";
+  cfg_.obj.insert("WindowTitle", title_->text());
+  cfg_.obj.insert("SerialSetting", serial_setting_->getSerialSetting());
+  cfg_.obj.insert("InstructionTable", instruction_table_->getTableRecord());
+  emit requestSaveConfig();
+  Ui::TtMessageBar::success(TtMessageBarType::Top, "", tr("保存成功"), 1500,
+                            this);
+  saved_ = true;
+  // 配置文件保存到文件中
+  // 当前的 tabWidget 匹配对应的 QJsonObject
 }
 
 void SerialWindow::switchToEditMode() {
@@ -156,13 +178,19 @@ void SerialWindow::switchToDisplayMode() {
   //anim->setEndValue(1);
   //anim->start(QAbstractAnimation::DeleteWhenStopped);
   // 切换显示模式
-  title_->setText(title_edit_->text());
+  if (title_->text() != title_edit_->text()) {
+    title_->setText(title_edit_->text());
+    saved_ = false;
+  }
   stack_->setCurrentWidget(original_widget_);
 }
 
 void SerialWindow::setDisplayType(MsgType type) {
-  display_type_ = type;
-  refreshTerminalDisplay();
+  if (display_type_ != type) {
+    display_type_ = type;
+    refreshTerminalDisplay();
+    saved_ = false;
+  }
 }
 
 void SerialWindow::setHeartbeartContent() {
@@ -172,7 +200,7 @@ void SerialWindow::setHeartbeartContent() {
   }
 }
 
-void SerialWindow::saveLog() {
+void SerialWindow::saveSerialLog() {
   // saveBtn->connect(saveBtn, &QPushButton::clicked, [this]() {
   //   QString fileName = QFileDialog::getSaveFileName(this, tr("保存日志"),
   //                                                   QDir::homePath() + "/serial_log.txt",
@@ -1022,6 +1050,7 @@ void SerialWindow::init() {
             if (selectedAction == addAction) {
               TtChannelButtonEditorDialog editorDialog(this);
               if (editorDialog.exec() == QDialog::Accepted) {
+                saved_ = false;
                 QListWidgetItem* item = new QListWidgetItem(serialDataList);
                 item->setSizeHint(QSize(78, 30));
                 TtChannelButton* channelBtn = new TtChannelButton(
@@ -1050,14 +1079,14 @@ void SerialWindow::init() {
               if (selectedAction == renameAction) {
                 if (auto* btn = qobject_cast<TtChannelButton*>(
                         serialDataList->itemWidget(item))) {
+                  saved_ = false;
                   btn->modifyText();
                 }
               } else if (selectedAction == deleteAction) {
                 auto* btn = qobject_cast<TtChannelButton*>(
                     serialDataList->itemWidget(item));
                 if (btn) {
-                  qDebug() << btn;
-
+                  saved_ = false;
                   quint16 channel = channel_info_.value(btn->getUuid()).first;
                   qDebug() << channel;
                   serial_plot_->removeGraphs(channel);
@@ -1075,6 +1104,7 @@ void SerialWindow::init() {
               } else if (selectedAction == editAction) {
                 if (auto* btn = qobject_cast<TtChannelButton*>(
                         serialDataList->itemWidget(item))) {
+                  saved_ = false;
                   TtChannelButtonEditorDialog editorDialog(btn, this);
                   editorDialog.setMetaInfo(
                       channel_info_.value(btn->getUuid()).second);
@@ -1230,6 +1260,8 @@ void SerialWindow::init() {
               sendMessageToPort(pair.first, pair.second);
             }
           });
+  connect(instruction_table_, &Ui::TtTableWidget::rowsChanged, this,
+          [this]() { saved_ = false; });
 
   layout->setCurrentIndex(0);
 
@@ -1258,7 +1290,6 @@ void SerialWindow::init() {
   // qDebug() << "Create SerialWindow: " << runtime.elapseMilliseconds();
 
   send_package_timer_ = new QTimer(this);
-
   heartbeat_timer_ = new QTimer(this);
 }
 
@@ -1274,17 +1305,8 @@ void SerialWindow::setSerialSetting() {
 }
 
 void SerialWindow::connectSignals() {
-  connect(save_btn_, &Ui::TtSvgButton::clicked, [this]() {
-    cfg_.obj.insert("WindowTitle", title_->text());
-    cfg_.obj.insert("SerialSetting", serial_setting_->getSerialSetting());
-    cfg_.obj.insert("InstructionTable", instruction_table_->getTableRecord());
-    emit requestSaveConfig();
-    Ui::TtMessageBar::success(TtMessageBarType::Top, "", tr("保存成功"), 1500,
-                              this);
-    unsaved_ = false;
-    // 配置文件保存到文件中
-    // 当前的 tabWidget 匹配对应的 QJsonObject
-  });
+  connect(save_btn_, &Ui::TtSvgButton::clicked, this,
+          &SerialWindow::saveSetting);
 
   connect(on_off_btn_, &Ui::TtSvgButton::clicked, [this]() {
     // // 检查是否处于打开状态

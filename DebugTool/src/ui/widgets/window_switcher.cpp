@@ -1,5 +1,6 @@
 #include "window_switcher.h"
 
+#include <ui/control/TtContentDialog.h>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QStackedLayout>
@@ -186,13 +187,6 @@ void TabManager::switchToWidget(int tabIndex, TtProtocolRole::Role role) {
 }
 
 void TabManager::setupTabBar() {
-  // ExtTabBar* tabBar = new ExtTabBar(this);
-  // setTabBar(tabBar);
-
-  //// 连接信号
-  //connect(tabBar, &ExtTabBar::tabCloseRequested, this,
-  //        &TabManager::handleTabCloseRequested);
-  //connect(tabBar, &ExtTabBar::newTabRequested, this, &TabManager::handleAddNewTab);
 }
 
 bool TabManager::saveState(const QString& filePath) const {
@@ -267,20 +261,54 @@ void TabManager::handleTabClose(int index) {
     handleTabCloseRequested(index);
     return;
   }
-  // 判断当前 widget 是否保存
-  // if (Widget.)
   // 先判断是否保存, 再判断是否 当前的状态
+  // 先判断当前的工作状态, 处于开始工作状态, 以及无法改变了
+
   FrameWindow* w = qobject_cast<FrameWindow*>(widget(index));
-  if (w != nullptr && w->IsSaved()) {
-    // QDialog
-    // 已经保存了, 可以删除当前的widget
+  if (w != nullptr && w->saveState()) {
     qDebug() << "save";
   } else {
     if (w != nullptr) {
-      // 为保存的状态, 弹出一个 dialog
+      TtContentDialog* dialog = new TtContentDialog(this);
+      dialog->setLeftButtonText(tr("取消"));
+      dialog->setRightButtonText(tr("确定"));
+      dialog->setCenterText(tr("通讯链接配置已修改, 是否保存"));
+
+      connect(dialog, &Ui::TtContentDialog::leftButtonClicked, this, [&]() {
+        // dialog->close();
+        dialog->reject();
+        qDebug() << "取消保存";
+        if (w->workState()) {
+          // 处于工作状态
+          // 保存
+        } else {
+          // 删除
+          handleTabCloseRequested(index);
+        }
+      });
+      connect(dialog, &Ui::TtContentDialog::rightButtonClicked, this, [&]() {
+        // dialog->close();
+        dialog->accept();
+        qDebug() << "保存最新变动";
+        w->saveSetting();
+        handleTabCloseRequested(index);
+        // 判断工作状态
+        if (w->workState()) {
+          // 处于工作状态
+          // 保存
+        } else {
+          handleTabCloseRequested(index);
+        }
+      });
+      // 阻塞
+      // dialog->show();
+      dialog->exec();
+      delete dialog;
+
       qDebug() << "no saved";
       // QDialog test;
     } else {
+      // 一般不会进入
       qDebug() << "nullptr";
     }
   }
@@ -455,6 +483,9 @@ void TabManager::switchToCurrentIndex(const QString& index) {
   // 以下操作都是整个应用程序没有完全关闭，运行于内存的时候
   // 持久化存储需要整个页面关闭
   // 完整删除, 然后恢复
+
+  // 切换
+  // 处于工作状态的才会保存
 
   for (auto it = closedTabs_.begin(); it != closedTabs_.end(); ++it) {
     if (it->first == index) {

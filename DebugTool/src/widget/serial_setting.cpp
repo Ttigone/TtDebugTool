@@ -209,194 +209,10 @@ quint32 SerialSetting::getRefreshInterval() {
   return 0;
 }
 
-// void SerialSetting::init() {
-//   main_layout_ = new Ui::TtVerticalLayout(this);
-
-//   QWidget* serialConfigWidget = new QWidget(this);
-//   serial_port_ = new Ui::TtLabelBtnComboBox(tr("串口:"), serialConfigWidget);
-//   baud_rate_ = new Ui::TtLabelComboBox(tr("波特率:"), serialConfigWidget);
-//   data_bit_ = new Ui::TtLabelComboBox(tr("数据位:"), serialConfigWidget);
-//   parity_bit_ = new Ui::TtLabelComboBox(tr("校验位:"), serialConfigWidget);
-//   stop_bit_ = new Ui::TtLabelComboBox(tr("停止位:"), serialConfigWidget);
-//   flow_control_ = new Ui::TtLabelComboBox(tr("流控:"), serialConfigWidget);
-//   send_package_interval_ =
-//       new Ui::TtLabelLineEdit(tr("发送包间隔:"), serialConfigWidget);
-//   send_package_interval_->setText(0);
-//   send_package_max_size_ =
-//       new Ui::TtLabelLineEdit(tr("发送包最大尺寸:"), serialConfigWidget);
-//   send_package_max_size_->setText(0);
-
-//   Ui::TtVerticalLayout* layout = new Ui::TtVerticalLayout(serialConfigWidget);
-
-//   layout->addWidget(serial_port_);
-//   layout->addWidget(baud_rate_);
-//   layout->addWidget(data_bit_);
-//   layout->addWidget(parity_bit_);
-//   layout->addWidget(stop_bit_);
-//   layout->addWidget(flow_control_);
-//   layout->addWidget(send_package_interval_);
-//   layout->addWidget(send_package_max_size_);
-
-//   connect(serial_port_, &Ui::TtLabelBtnComboBox::clicked,
-//           [this]() { setSerialPortsName(); });
-
-//   setSerialPortsName();
-//   setSerialPortsBaudRate();
-//   setSerialPortsDataBit();
-//   setSerialPortsParityBit();
-//   setSerialPortsStopBit();
-//   setSerialPortsFluidControl();
-//   // displayDefaultSetting();
-
-//   QWidget* linkSettingWidget = new QWidget;
-//   QVBoxLayout* linkSettingWidgetLayout = new QVBoxLayout(linkSettingWidget);
-//   linkSettingWidgetLayout->setSpacing(0);
-//   linkSettingWidgetLayout->setContentsMargins(QMargins());
-//   linkSettingWidgetLayout->addWidget(serialConfigWidget);
-//   linkSettingWidget->adjustSize();  // 确保大小正确
-//   Ui::Drawer* drawerLinkSetting =
-//       new Ui::Drawer(tr("连接设置"), linkSettingWidget);
-
-//   QWidget* scriptWidget = new QWidget;
-//   Ui::TtVerticalLayout* scriptWidgetLayout =
-//       new Ui::TtVerticalLayout(scriptWidget);
-//   // script_ = new Ui::TtLabelLineEdit(tr("脚本"), scriptWidget);
-//   Ui::TtTextButton* script_ = new Ui::TtTextButton("脚本", scriptWidget);
-//   script_->setCheckedColor(Qt::cyan);
-//   scriptWidgetLayout->addWidget(script_);
-//   Ui::Drawer* drawerScript = new Ui::Drawer(tr("脚本设置"), scriptWidget);
-
-//   connect(script_, &Ui::TtTextButton::clicked, this,
-//           &SerialSetting::showScriptSetting);
-
-//   QWidget* framingWidget = new QWidget;
-//   Ui::TtVerticalLayout* framingWidgetLayout =
-//       new Ui::TtVerticalLayout(framingWidget);
-//   framingWidget->adjustSize();  // 确保大小正确
-//   framing_model_ = new Ui::TtLabelComboBox(tr("模式: "));
-//   framing_model_->addItem(tr("无"));
-//   framing_model_->addItem(tr("超时时间"));
-//   framing_model_->addItem(tr("固定长度"));
-//   framing_timeout_ = new Ui::TtLabelComboBox(tr("时间: "));
-//   framing_fixed_length_ = new Ui::TtLabelComboBox(tr("长度: "));
-//   framingWidgetLayout->addWidget(framing_model_);
-//   framingWidgetLayout->addWidget(framing_timeout_);
-//   framingWidgetLayout->addWidget(framing_fixed_length_);
-
-//   Ui::Drawer* drawerFraming = new Ui::Drawer(tr("分帧"), framingWidget);
-
-//   connect(framing_model_, &Ui::TtLabelComboBox::currentIndexChanged,
-//           [this, drawerFraming](int index) {
-//             switch (index) {
-//               case 0: {
-//                 framing_timeout_->setVisible(false);
-//                 framing_fixed_length_->setVisible(false);
-//                 break;
-//               }
-//               case 1: {
-//                 framing_timeout_->setVisible(true);
-//                 framing_fixed_length_->setVisible(false);
-//                 break;
-//               }
-//               case 2: {
-//                 framing_timeout_->setVisible(false);
-//                 framing_fixed_length_->setVisible(true);
-//                 break;
-//               }
-//             }
-//             const auto event =
-//                 new QResizeEvent(drawerFraming->size(), drawerFraming->size());
-//             QCoreApplication::postEvent(drawerFraming, event);
-//           });
-//   framing_model_->setCurrentItem(0);
-//   framing_timeout_->setVisible(false);
-//   framing_fixed_length_->setVisible(false);
-
-//   line_break_ = new Ui::TtLabelComboBox(tr("换行符: "));
-//   line_break_->addItem("\\r");
-//   line_break_->addItem("\\n");
-//   line_break_->addItem("\\r\\n");
-//   Ui::Drawer* drawerLineBreak = new Ui::Drawer(tr("换行"), line_break_);
-
-//   QWidget* heartbeatWidget = new QWidget;
-//   Ui::TtVerticalLayout* heartbeatWidgetLayout =
-//       new Ui::TtVerticalLayout(heartbeatWidget);
-//   heartbeatWidget->adjustSize();  // 确保大小正确
-//   heartbeat_send_type_ = new Ui::TtLabelComboBox(tr("类型: "));
-//   heartbeat_send_type_->addItem(tr("无"));
-//   heartbeat_send_type_->addItem(tr("文本"));
-//   heartbeat_send_type_->addItem(tr("HEX"));
-//   heartbeat_interval_ = new Ui::TtLabelLineEdit(tr("间隔: "));
-//   heartbeat_content_ = new Ui::TtLabelLineEdit(tr("内容: "));
-//   heartbeatWidgetLayout->addWidget(heartbeat_send_type_);
-//   heartbeatWidgetLayout->addWidget(heartbeat_interval_);
-//   heartbeatWidgetLayout->addWidget(heartbeat_content_);
-//   Ui::Drawer* drawerHeartBeat = new Ui::Drawer(tr("心跳"), heartbeatWidget);
-
-//   connect(heartbeat_send_type_, &Ui::TtLabelComboBox::currentIndexChanged,
-//           [this, heartbeatWidget, drawerHeartBeat](int index) {
-//             switch (index) {
-//               case 0: {
-//                 heartbeat_interval_->setVisible(false);
-//                 heartbeat_content_->setVisible(false);
-//                 break;
-//               }
-//               case 1: {
-//                 heartbeat_interval_->setVisible(true);
-//                 heartbeat_content_->setVisible(true);
-//                 break;
-//               }
-//               case 2: {
-//                 heartbeat_interval_->setVisible(true);
-//                 heartbeat_content_->setVisible(true);
-//                 break;
-//               }
-//             }
-//             const auto event = new QResizeEvent(drawerHeartBeat->size(),
-//                                                 drawerHeartBeat->size());
-//             QCoreApplication::postEvent(drawerHeartBeat, event);
-//           });
-//   heartbeat_send_type_->setCurrentItem(0);
-//   heartbeat_interval_->setVisible(false);
-//   heartbeat_content_->setVisible(false);
-
-//   // 滚动区域
-//   QScrollArea* scr = new QScrollArea(this);
-//   scr->setFrameStyle(QFrame::NoFrame);
-//   QWidget* scrollContent = new QWidget(scr);
-//   //scr->setWidget(scrollContent);
-//   //scr->setWidgetResizable(true);
-
-//   Ui::TtVerticalLayout* lascr = new Ui::TtVerticalLayout(scrollContent);
-
-//   lascr->addWidget(drawerLinkSetting, 0, Qt::AlignTop);
-//   lascr->addWidget(drawerScript);
-//   lascr->addWidget(drawerLineBreak);
-//   lascr->addWidget(drawerHeartBeat);
-//   lascr->addStretch();
-//   scrollContent->setLayout(lascr);
-
-//   scr->setWidget(scrollContent);
-//   scr->setWidgetResizable(true);
-
-//   main_layout_->addWidget(scr);
-
-//   connect(
-//       heartbeat_content_, &Ui::TtLabelLineEdit::currentTextChanged, this,
-//       [this](const QString& text) {
-//         if (heartbeat_send_type_->body()->currentIndex() == 1) {
-//           emit heartbeatContentChanged(heartbeat_content_->currentText());
-//         } else if (heartbeat_send_type_->body()->currentIndex() == 1) {  // HEX
-//           emit heartbeatContentChanged(
-//               heartbeat_content_->currentText().toUtf8().toHex(' ').toUpper());
-//         }
-//       });
-//   connect(heartbeat_interval_, &Ui::TtLabelLineEdit::currentTextToUInt32, this,
-//           &SerialSetting::heartbeatInterval);
-// }
-
 void SerialSetting::init() {
   main_layout_ = new Ui::TtVerticalLayout(this);
+
+  QList<QComboBox*> comboBoxes;
 
   QWidget* serialConfigWidget = new QWidget(this);
   serial_port_ = new Ui::TtLabelBtnComboBox(tr("串口:"), serialConfigWidget);
@@ -405,12 +221,6 @@ void SerialSetting::init() {
   parity_bit_ = new Ui::TtLabelComboBox(tr("校验位:"), serialConfigWidget);
   stop_bit_ = new Ui::TtLabelComboBox(tr("停止位:"), serialConfigWidget);
   flow_control_ = new Ui::TtLabelComboBox(tr("流控:"), serialConfigWidget);
-  // serial_port_ = new QComboBox(serialConfigWidget);
-  // baud_rate_ = new QComboBox(serialConfigWidget);
-  // data_bit_ = new QComboBox(serialConfigWidget);
-  // parity_bit_ = new QComboBox(serialConfigWidget);
-  // stop_bit_ = new QComboBox(serialConfigWidget);
-  // flow_control_ = new QComboBox(serialConfigWidget);
   send_package_interval_ =
       new Ui::TtLabelLineEdit(tr("发送包间隔:"), serialConfigWidget);
   send_package_interval_->setText(0);
@@ -419,6 +229,8 @@ void SerialSetting::init() {
   send_package_max_size_->setText(0);
 
   Ui::TtVerticalLayout* layout = new Ui::TtVerticalLayout(serialConfigWidget);
+
+  comboBoxes << serial_port_->body();
 
   layout->addWidget(serial_port_);
   layout->addWidget(baud_rate_);
@@ -583,6 +395,20 @@ void SerialSetting::init() {
   scroll->setWidgetResizable(true);
 
   main_layout_->addWidget(scroll);
+
+  for (Ui::TtLabelComboBox* comboBox : comboBoxes) {
+    if (comboBox) {
+      // connect(comboBox,
+      //         QOverload<int>::of(&Ui::TtLabelComboBox::currentIndexChanged),
+      //         this, [this](int index) {
+      //           Q_UNUSED(index);
+      //           // onComboBoxChangedCommon();
+      //         });
+      connect(comboBox,
+              QOverload<int>::of(&Ui::TtLabelComboBox::currentIndexChanged),
+              this, &SerialSetting::currentSettingChanged);
+    }
+  }
 
   connect(
       heartbeat_content_, &Ui::TtLabelLineEdit::currentTextChanged, this,

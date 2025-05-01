@@ -75,8 +75,11 @@ class SerialWindow : public FrameWindow, public Ui::TabManager::ISerializable {
   QJsonObject getConfiguration() const;
   void saveWaveFormData();
 
-  bool IsWorking() const override;
-  bool IsSaved() override;
+  bool workState() const override;
+  bool saveState() override;
+  void setSaveState(bool state) override;
+
+  void saveSetting() override;
 
  signals:
   void requestSaveConfig();
@@ -101,7 +104,7 @@ class SerialWindow : public FrameWindow, public Ui::TabManager::ISerializable {
   void init();
   void setSerialSetting();
   void connectSignals();
-  void saveLog();
+  void saveSerialLog();
   void refreshTerminalDisplay();
   void addChannelInfo(const QString& label, const QColor& olor,
                       const QByteArray& blob);
@@ -111,7 +114,7 @@ class SerialWindow : public FrameWindow, public Ui::TabManager::ISerializable {
   void parseBuffer();
   void processFrame(quint8 type, const QByteArray& payload);
 
-  bool unsaved_ = false;
+  bool saved_ = false;
 
   Ui::TtVerticalLayout* main_layout_;
 

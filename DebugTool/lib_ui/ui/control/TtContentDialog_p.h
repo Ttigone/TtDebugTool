@@ -25,14 +25,21 @@ class TtContentDialogPrivate : public QObject {
   QWidget* _centralWidget{nullptr};
   QVBoxLayout* _mainLayout{nullptr};
   QHBoxLayout* _buttonLayout{nullptr};
+
   QString _leftButtonText{"cancel"};
   QString _middleButtonText{"minimum"};
   QString _rightButtonText{"exit"};
+
   TtTextButton* _leftButton{nullptr};
   TtTextButton* _middleButton{nullptr};
   TtTextButton* _rightButton{nullptr};
+
+  QString center_text_;
+  QLabel* content_{nullptr};
+
   QWidget* main_window_{nullptr};  // 监控的父窗口
-  QWidget* shadow_widget{nullptr};
+  QWidget* shadow_widget_{nullptr};
+  bool enable_point_on_mouse_{false};
 };
 
 }  // namespace Ui

@@ -11,8 +11,10 @@ class FrameWindow : public QWidget {
 
   virtual QString title() const;
 
-  virtual bool IsWorking() const = 0;
-  virtual bool IsSaved() = 0;
+  virtual bool workState() const = 0;
+  virtual bool saveState() = 0;
+  virtual void setSaveState(bool state) = 0;
+  virtual void saveSetting() = 0;
 };
 
 #endif  // FRAME_WINDOW_H

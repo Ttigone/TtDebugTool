@@ -33,7 +33,7 @@ endif ()
 if (${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_library(${TARGET_NAME}
         ${LIB_TYPE}
-        ui/res/fonts.qrc
+        ui/res/res.qrc
         # ${PROJECT_SOURCES}
     )
 else ()
@@ -55,8 +55,6 @@ target_precompile_headers(${TARGET_NAME} PRIVATE
 
 target_sources(${TARGET_NAME}
 PRIVATE
-    ui/res/fonts.qrc
-
     ui/ui_pch.h
     ui/Def.h
     ui/singleton.h

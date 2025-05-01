@@ -2,4 +2,7 @@
     <qresource prefix="/font">
         <file>fontawesome-webfont.ttf</file>
     </qresource>
+    <qresource prefix="/icon">
+        <file>icon/info-circle.svg</file>
+    </qresource>
 </RCC>

@@ -56,11 +56,6 @@ class SerialPortWorker;
 
 namespace Window {
 
-
-struct SerialSaveConfig {
-  QJsonObject obj;
-};
-
 // class SerialWindow : public QWidget, public Ui::TabManager::ISerializable {
 class SerialWindow : public FrameWindow, public Ui::TabManager::ISerializable {
   Q_OBJECT
@@ -102,17 +97,17 @@ class SerialWindow : public FrameWindow, public Ui::TabManager::ISerializable {
 
  private:
   void init();
-  void setSerialSetting();
-  void connectSignals();
-  void saveSerialLog();
-  void refreshTerminalDisplay();
+  void connectSignals();          // 信号槽链接
+  void setSerialSetting();        // 设置通讯配置
+  void saveSerialLog();           // 保存串口日志
+  void refreshTerminalDisplay();  // 显示方式刷新
   void addChannelInfo(const QString& label, const QColor& olor,
                       const QByteArray& blob);
   void handleDialogData(const QString& label, quint16 channel,
                         const QByteArray& blob);
 
-  void parseBuffer();
-  void processFrame(quint8 type, const QByteArray& payload);
+  void parseBuffer();                                         // 解析数据
+  void processFrame(quint8 type, const QByteArray& payload);  // 解析帧
 
   bool saved_ = false;
 
@@ -154,7 +149,7 @@ class SerialWindow : public FrameWindow, public Ui::TabManager::ISerializable {
   QtMaterialFlatButton* sendBtn;
   Ui::TtTableWidget* instruction_table_;
   MsgType display_type_ = MsgType::TEXT;
-  SerialSaveConfig cfg_;
+  // SerialSaveConfig cfg_;
 
   uint16_t package_size_ = 0;
   QQueue<QString> msg_queue_;
@@ -192,6 +187,8 @@ class SerialWindow : public FrameWindow, public Ui::TabManager::ISerializable {
   QMap<quint16, QString> lua_script_codes_;
 
   QByteArray receive_buffer_;  // 接收缓冲区
+
+  QJsonObject config_;
 };
 
 }  // namespace Window

@@ -144,13 +144,14 @@ class TabManager : public QTabWidget {
 
  public slots:
   void handleButtonClicked(int tabIndex, TtProtocolRole::Role role);
-  void handleAddNewTab();                   // 处理关闭标签
-  void handleTabCloseRequested(int index);  // 处理关闭标签
+  void handleAddNewTab();                   // 添加标签
+  void handleTabCloseRequested(int index);  // 删除 Page
   void removeUuidWidget(const QString& index);
-  void switchToCurrentIndex(const QString& index);
+  void switchToOtherIndex(const QString& index);  // 切换 Page
 
  private:
-  QToolButton* addButton;
+  struct TabData;
+
   void setupCustomTabButton(int index);
   void updateTabStyle(int index);
 
@@ -165,40 +166,30 @@ class TabManager : public QTabWidget {
     }
     return -1;
   }
-  // 初始化默认的 widget1
-  QWidget* createDefaultWidget(int tabIndex);
+  QWidget* createDefaultWidget(int tabIndex);  // 初始化默认的 widget1
   QString findWidget(QWidget* widget);
-
   void handleTabClose(int index);
 
-  // 恢复最近关闭的标签页
-  void restoreLastClosedTab();
-  // 获取可恢复的标签页列表
-  QStringList getClosedTabsList() const;
-  // 序列化
-  QJsonObject serializeTab(int index) const;
-  // 反序列化
-  void deserializeTab(const QJsonObject& obj);
+  void saveWorkingTabPageToMem(int index);  // 保存正在工作的 page 到 Mem 中
+  void restoreClosedTabFromMem(
+      struct TabData data);  // 从内存中恢复最近关闭的标签页
 
-  // struct TabInfo {
-  //   QString title;
-  //   QWidget* widget;
-  //   QIcon icon;
-  // };
+  void saveTabPageToDisk(int index);  // 保存配置 page 到磁盘中
+  void restoreClosedTabFromDisk();    // 从本地中恢复标签页
+
+  QStringList getClosedTabsList() const;  // 获取可恢复的标签页列表
+  QJsonObject serializeTab(int index) const;    // 序列化
+  void deserializeTab(const QJsonObject& obj);  // 反序列化
+
   struct TabData {
     QString title;
     QWidget* widget;
+    // QSharedPointer<QWidget> widget;
     QIcon icon;
     QByteArray state;  // 用于保存widget状态
   };
 
-  // struct TabData {
-  //   QString title;
-  //   // QWidget* widget;
-  //   QIcon icon;
-  //   QByteArray state;  // 用于保存widget状态
-  // };
-
+  QToolButton* add_button_;
   // uuid, 存储已关闭的标签页信息
   QList<QPair<QString, TabData>> closedTabs_;
   // 最大保存历史数量

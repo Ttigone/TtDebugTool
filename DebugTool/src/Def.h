@@ -49,7 +49,7 @@ Q_ENUM_CREATE(ProtocolRole)
 Q_END_ENUM_CREATE(TtProtocolType)
 
 Q_BEGIN_ENUM_CREATE_SRC(TtFunctionalCategory)
-enum Category { Communication, Instruction, Simulate };
+enum Category { Communication, Instruction, Simulate, None };
 Q_ENUM_CREATE(Category)
 Q_END_ENUM_CREATE(TtFunctionalCategory)
 

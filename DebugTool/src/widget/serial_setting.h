@@ -32,7 +32,7 @@ class SerialSetting : public QWidget {
   const QJsonObject& getSerialSetting();
 
  signals:
-  void currentSettingChanged(bool changed);
+  void settingChanged();
   void showScriptSetting();
   void sendPackageMaxSizeChanged(uint16_t size);
   void sendPackageIntervalChanged(uint16_t interval);

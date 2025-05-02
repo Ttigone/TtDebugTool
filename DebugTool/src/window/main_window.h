@@ -75,13 +75,13 @@ class MainWindow : public QMainWindow {
   void addDifferentConfiguration(TtFunctionalCategory::Category type,
                                  const QString& title, const QString& uuid);
 
-  QString extractLanguageName(const QString& qmFile);
-  void changeLanguage(const QString& qmFile);
+  QString extractLanguageName(const QString& qmFile);  // 解析语言后缀名
+  void changeLanguage(const QString& qmFile);          // 切换语言
 
-  void saveLanguageSetting(const QString& language);
-  void restartApplication();
+  void saveLanguageSetting(const QString& language);  // 语言选项保存至配置文件
+  void restartApplication();                          // 重启应用
 
-  // void createDockWindows();
+  void readingProjectConfiguration();
 
   Theme currentTheme{};
 
@@ -92,7 +92,6 @@ class MainWindow : public QMainWindow {
   // 侧边弹出的菜单栏, 设置串口参数, 其他事项, 按钮组
   QWidget* left_bar_;
   Ui::TtWidgetGroup *left_bar_logic_;
-  //bool ishi{true};
 
   Ui::SessionManager* history_link_list_;
   Ui::SessionManager* history_instruction_list_;

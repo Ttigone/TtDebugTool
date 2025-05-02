@@ -265,59 +265,62 @@ void TabManager::handleTabClose(int index) {
   // 先判断当前的工作状态, 处于开始工作状态, 以及无法改变了
 
   FrameWindow* w = qobject_cast<FrameWindow*>(widget(index));
-  if (w != nullptr && w->saveState()) {
-    qDebug() << "save";
-  } else {
-    if (w != nullptr) {
+  // if (w != nullptr && w->saveState()) {
+  // } else {
+  if (w != nullptr) {
+    if (!w->saveState()) {
+      qDebug() << "no saved";
       TtContentDialog* dialog = new TtContentDialog(this);
       dialog->setLeftButtonText(tr("取消"));
       dialog->setRightButtonText(tr("确定"));
       dialog->setCenterText(tr("通讯链接配置已修改, 是否保存"));
 
       connect(dialog, &Ui::TtContentDialog::leftButtonClicked, this, [&]() {
-        // dialog->close();
         dialog->reject();
         qDebug() << "取消保存";
         if (w->workState()) {
-          // 处于工作状态
           // 保存
+          saveWorkingTabPageToMem(index);
         } else {
           // 删除
           handleTabCloseRequested(index);
         }
       });
       connect(dialog, &Ui::TtContentDialog::rightButtonClicked, this, [&]() {
-        // dialog->close();
         dialog->accept();
         qDebug() << "保存最新变动";
         w->saveSetting();
-        handleTabCloseRequested(index);
-        // 判断工作状态
         if (w->workState()) {
           // 处于工作状态
           // 保存
+          saveWorkingTabPageToMem(index);
         } else {
           handleTabCloseRequested(index);
         }
       });
-      // 阻塞
-      // dialog->show();
       dialog->exec();
       delete dialog;
-
-      qDebug() << "no saved";
-      // QDialog test;
     } else {
-      // 一般不会进入
-      qDebug() << "nullptr";
+      qDebug() << "save";
+      if (w->workState()) {
+        saveWorkingTabPageToMem(index);
+      } else {
+        // 保存到本地
+        saveTabPageToDisk(index);
+        handleTabCloseRequested(index);
+      }
     }
+  } else {
+    // 一般不会进入
+    qDebug() << "nullptr";
   }
+  // }
 
+  /*
   TabData info;
   info.title = tabText(index);
   info.widget = widget(index);  // 存储 widget 界面
   info.icon = tabIcon(index);
-  // info.state
 
   // // 保存widget状态
   // if (auto* serializable = dynamic_cast<ISerializable*>(info.widget)) {
@@ -327,24 +330,16 @@ void TabManager::handleTabClose(int index) {
   // 获取 widget 实例的 uuid
   // 删除了 uuid 对应的 widget, 还有什么用呢 uuid ?
 
-  //
-  // if (widget)
-
   QString removeWidgetUuid = findWidget(widget(index));
   // closedTabs_.prepend(qMakePair(findWidget(widget(index)), info));
   closedTabs_.prepend(qMakePair((removeWidgetUuid), info));
   removeTab(index);
+  */
 
   // 移出实例
   // widgetInstances.remove(removeWidgetUuid);
 
   // --------
-
-  // qDebug() << info.state;
-
-  // 添加到历史列表
-  // QTabWidget::widget(index);
-  // qDebug() << closedTabs_.size();
 
   // 过多则本地化一部分
   // // 限制历史数量
@@ -354,9 +349,6 @@ void TabManager::handleTabClose(int index) {
   //   closedTabs_.removeLast();
   // }
 
-  // 从TabWidget中移除，但不删除widget
-  // deleteLater();
-
   // qDebug() << "close index: " << index;
   // qDebug() << info.title;
   // qDebug() << info.widget;
@@ -365,12 +357,29 @@ void TabManager::handleTabClose(int index) {
   // emit tabClosed(index);
 }
 
-void TabManager::restoreLastClosedTab() {
-  if (closedTabs_.isEmpty()) {
-    return;
-  }
+void TabManager::saveWorkingTabPageToMem(int index) {
+  TabData info;
+  info.title = tabText(index);
+  info.widget = widget(index);  // 存储 widget 界面
+  // info.widget.reset(widget(index));  // 存储 widget 界面
+  info.icon = tabIcon(index);
 
-  TabData info = closedTabs_.takeFirst().second;
+  QString removeWidgetUuid = findWidget(widget(index));
+  qDebug() << "remove uuid" << removeWidgetUuid;
+  // 保存到 closedTabs_
+  closedTabs_.prepend(qMakePair((removeWidgetUuid), info));
+  removeTab(index);
+  qDebug() << "保存到 mem";
+}
+
+void TabManager::restoreClosedTabFromMem(struct TabData data) {
+  qDebug() << "restore mem";
+  // // 恢复 添加到最后
+  // addNewTab(data.second.widget, data.second.title);
+  addNewTab(data.widget, data.title);
+  // addNewTab(data.widget.data(), data.title);
+  // 切换到复原的 tab
+  setCurrentIndex(count() - 1);
 
   // 恢复状态
   // if (!info.state.isEmpty()) {
@@ -378,12 +387,16 @@ void TabManager::restoreLastClosedTab() {
   //     serializable->restoreState(info.state);
   //   }
   // }
-
   // 重新构造 widget
-  int index = addTab(info.widget, info.icon, info.title);
-
-  setCurrentIndex(index);
+  // int index = addTab(info.widget, info.icon, info.title);
+  // setCurrentIndex(index);
 }
+
+void TabManager::saveTabPageToDisk(int index) {
+  qDebug() << "保存到 disk";
+}
+
+void TabManager::restoreClosedTabFromDisk() {}
 
 QStringList TabManager::getClosedTabsList() const {
   QStringList list;
@@ -472,38 +485,43 @@ void TabManager::removeUuidWidget(const QString& index) {
   removeTab(i);
 }
 
-void TabManager::switchToCurrentIndex(const QString& index) {
+void TabManager::switchToOtherIndex(const QString& index) {
   // 根据 uuid 索引
-  // qDebug() << "get index" << index;
+  qDebug() << "get index" << index;
   // uuid QWidget
   // 切换, 以及复原
   // 先查找是否被 remove
-  // if (closedTabs_.contains())
-
   // 以下操作都是整个应用程序没有完全关闭，运行于内存的时候
   // 持久化存储需要整个页面关闭
   // 完整删除, 然后恢复
+  qDebug() << closedTabs_.size();
 
+  bool switchFlag = false;
   // 切换
   // 处于工作状态的才会保存
-
   for (auto it = closedTabs_.begin(); it != closedTabs_.end(); ++it) {
+    qDebug() << it->first;
     if (it->first == index) {
-      qDebug() << "remove";
-      // 恢复 添加到最后
-      addNewTab(it->second.widget, it->second.title);
-      // 切换到复原的 tab
-      setCurrentIndex(count() - 1);
-      // 删除, 确保只会存储一份
+      qDebug() << "restore";
+      // 从内存中恢复
+      // restoreClosedTabFromMem(*it);
+      restoreClosedTabFromMem(it->second);
       closedTabs_.erase(it);
-      return;
+      switchFlag = true;
+      break;
     }
   }
 
-  // 切换
-  if (widgetInstances.contains(index)) {
-    setCurrentWidget(widgetInstances.value(index));
+  if (!switchFlag) {
+    // 不是从 mem 恢复
+    qDebug() << "no find to create";
+    // restoreClosedTabFromDisk();
   }
+
+  // // 切换
+  // if (widgetInstances.contains(index)) {
+  //   setCurrentWidget(widgetInstances.value(index));
+  // }
 }
 
 void TabManager::setupCustomTabButton(int index) {
@@ -549,10 +567,10 @@ void TabManager::updateTabStyle(int index) {
 }
 
 void TabManager::setupCornerButton() {
-  addButton = new QToolButton(this);
-  addButton->setIcon(QIcon(":/sys/plus-circle.svg"));
-  addButton->setToolTip(tr("New Tab"));
-  addButton->setStyleSheet(R"(
+  add_button_ = new QToolButton(this);
+  add_button_->setIcon(QIcon(":/sys/plus-circle.svg"));
+  add_button_->setToolTip(tr("New Tab"));
+  add_button_->setStyleSheet(R"(
         QToolButton {
             border: none;
             padding: 2px;
@@ -566,9 +584,9 @@ void TabManager::setupCornerButton() {
         }
     )");
 
-  setCornerWidget(addButton, Qt::TopRightCorner);
+  setCornerWidget(add_button_, Qt::TopRightCorner);
 
-  connect(addButton, &QPushButton::clicked, this, &TabManager::requestNewTab);
+  connect(add_button_, &QPushButton::clicked, this, &TabManager::requestNewTab);
 }
 
 QWidget* TabManager::createDefaultWidget(int tabIndex) {

@@ -213,6 +213,8 @@ void SerialSetting::init() {
   main_layout_ = new Ui::TtVerticalLayout(this);
 
   QList<QComboBox*> comboBoxes;
+  QList<QLineEdit*> lineEdits;
+  // QList<QLineEdit *> line
 
   QWidget* serialConfigWidget = new QWidget(this);
   serial_port_ = new Ui::TtLabelBtnComboBox(tr("串口:"), serialConfigWidget);
@@ -231,6 +233,14 @@ void SerialSetting::init() {
   Ui::TtVerticalLayout* layout = new Ui::TtVerticalLayout(serialConfigWidget);
 
   comboBoxes << serial_port_->body();
+  comboBoxes << baud_rate_->body();
+  comboBoxes << data_bit_->body();
+  comboBoxes << parity_bit_->body();
+  comboBoxes << stop_bit_->body();
+  comboBoxes << flow_control_->body();
+
+  lineEdits << send_package_interval_->body();
+  lineEdits << send_package_max_size_->body();
 
   layout->addWidget(serial_port_);
   layout->addWidget(baud_rate_);
@@ -285,6 +295,11 @@ void SerialSetting::init() {
   framing_model_->addItem(tr("固定长度"));
   framing_timeout_ = new Ui::TtLabelComboBox(tr("时间: "));
   framing_fixed_length_ = new Ui::TtLabelComboBox(tr("长度: "));
+
+  comboBoxes << framing_model_->body();
+  comboBoxes << framing_timeout_->body();
+  comboBoxes << framing_fixed_length_->body();
+
   framingWidgetLayout->addWidget(framing_model_);
   framingWidgetLayout->addWidget(framing_timeout_);
   framingWidgetLayout->addWidget(framing_fixed_length_);
@@ -338,6 +353,12 @@ void SerialSetting::init() {
   heartbeat_send_type_->addItem(tr("HEX"));
   heartbeat_interval_ = new Ui::TtLabelLineEdit(tr("间隔: "));
   heartbeat_content_ = new Ui::TtLabelLineEdit(tr("内容: "));
+
+  comboBoxes << line_break_->body();
+  comboBoxes << heartbeat_send_type_->body();
+  lineEdits << heartbeat_interval_->body();
+  lineEdits << heartbeat_content_->body();
+
   heartbeatWidgetLayout->addWidget(heartbeat_send_type_);
   heartbeatWidgetLayout->addWidget(heartbeat_interval_);
   heartbeatWidgetLayout->addWidget(heartbeat_content_);
@@ -396,17 +417,18 @@ void SerialSetting::init() {
 
   main_layout_->addWidget(scroll);
 
-  for (Ui::TtLabelComboBox* comboBox : comboBoxes) {
+  for (auto* comboBox : comboBoxes) {
     if (comboBox) {
-      // connect(comboBox,
-      //         QOverload<int>::of(&Ui::TtLabelComboBox::currentIndexChanged),
-      //         this, [this](int index) {
-      //           Q_UNUSED(index);
-      //           // onComboBoxChangedCommon();
-      //         });
       connect(comboBox,
-              QOverload<int>::of(&Ui::TtLabelComboBox::currentIndexChanged),
-              this, &SerialSetting::currentSettingChanged);
+              QOverload<int>::of(&Ui::TtComboBox::currentIndexChanged), this,
+              &SerialSetting::settingChanged);
+    }
+  }
+
+  for (auto* lineEdit : lineEdits) {
+    if (lineEdit) {  // 确保指针有效
+      connect(lineEdit, &QLineEdit::textChanged, this,
+              &SerialSetting::settingChanged);
     }
   }
 

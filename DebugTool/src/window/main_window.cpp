@@ -428,11 +428,12 @@ MainWindow::MainWindow(QWidget* parent)
 
   // 不是根据 index 切换, 而是特定的 uuid, 如果 tabwidget 不存在 uuid, 那么新建立 tab, 应当传递 uuid
   connect(buttonGroup, &Ui::WidgetGroup::currentIndexChanged, tabWidget_,
-          &Ui::TabManager::switchToCurrentIndex);
+          &Ui::TabManager::switchToOtherIndex);
 
   connectSignals();
 
   initLanguageMenu();
+  readingProjectConfiguration();
 }
 
 MainWindow::~MainWindow() {}
@@ -869,7 +870,6 @@ void MainWindow::installWindowAgent() {
     dialog->exec();
     delete dialog;
     qDebug() << "finale test";
-    delete dialog;
   });
 #endif
 }
@@ -1070,14 +1070,24 @@ void MainWindow::registerTabWidget() {
                                         serial->getTitle(),
                                         tabWidget_->getCurrentWidgetUUid());
               tabWidget_->setTabTitle(serial->getTitle());
+              // 直接保存到本地
+
               // 只有关闭整个 app 的时候才会保存到本地
               // 如果存在多个串口配置, 根据个数区分不同
+              // Storage::SettingsManager::instance().setSetting(
+              //     "Serial" + QString::number(tabWidget_->SpecialTypeNums(
+              //                    TtProtocolRole::Serial)),
+              //     serial->getConfiguration());
+
+              // 从磁盘读取，又从磁盘写入, 怎么区分 ?
+              // 重新开启应用时, 从磁盘读取内容, 有 uuid, 则不需要创建
+              // 直接保存到磁盘
               Storage::SettingsManager::instance().setSetting(
-                  "Serial" + QString::number(tabWidget_->SpecialTypeNums(
-                                 TtProtocolRole::Serial)),
+                  "Serial+" + tabWidget_->getCurrentWidgetUUid(),
                   serial->getConfiguration());
               Ui::TtMessageBar::success(TtMessageBarType::Top, "",
                                         tr("保存成功"), 1000);
+              // 追加的形式
             });
         return serial;
       },
@@ -1361,6 +1371,53 @@ void MainWindow::restartApplication() {
 
   // 关闭当前应用
   QApplication::quit();
+}
+
+void MainWindow::readingProjectConfiguration() {
+  // 显示到对应的 session 中
+  // 怎么区分不同的 session 呢 ?
+  auto configs = Storage::SettingsManager::instance().getHistorySettings();
+  // qDebug() << configs;
+  for (const QJsonValue& value : configs) {
+    if (value.isObject()) {
+      // 先查找 type
+      QJsonObject obj = value.toObject();
+      QJsonValue typeValue = obj.value("Type");
+
+      TtFunctionalCategory::Category retrievedCategory =
+          TtFunctionalCategory::None;  // 提供一个默认值，以防出错
+      // 是数字类型
+      if (typeValue.isDouble()) {
+        int value = typeValue.toInt(-1);
+        // 有效范围内
+        if (value >= TtFunctionalCategory::Communication &&
+            value <= TtFunctionalCategory::Simulate) {
+          // 4. 静态转换为枚举类型
+          retrievedCategory =
+              static_cast<TtFunctionalCategory::Category>(value);
+          qDebug() << "成功取回枚举值:" << retrievedCategory;
+        } else {
+          qWarning() << "从 JSON 取回的整数值" << value
+                     << "不在 TtFunctionalCategory::Category 的有效范围内。";
+          // 保留默认值
+        }
+      }
+      switch (retrievedCategory) {
+        case TtFunctionalCategory::Communication:
+          qDebug() << "处理 Communication 类型";
+          break;
+        case TtFunctionalCategory::Instruction:
+          qDebug() << "处理 Instruction 类型";
+          break;
+        case TtFunctionalCategory::Simulate:
+          qDebug() << "处理 Simulate 类型";
+          break;
+        default:
+          qDebug() << "未知的类型";
+          break;
+      }
+    }
+  }
 }
 
 }  // namespace Window

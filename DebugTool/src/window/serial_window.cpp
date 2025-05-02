@@ -35,13 +35,14 @@
 
 #include "storage/setting_manager.h"
 
+#include "Def.h"
+
 namespace Window {
 
 SerialWindow::SerialWindow(QWidget* parent)
     : FrameWindow(parent),
       worker_thread_(new QThread(this)),
-      serial_port_(new Core::SerialPortWorker),
-      serial_setting_(new Widget::SerialSetting) {
+      serial_port_(new Core::SerialPortWorker) {
 
   init();
   connectSignals();
@@ -108,7 +109,9 @@ QString SerialWindow::getTitle() {
 }
 
 QJsonObject SerialWindow::getConfiguration() const {
-  return cfg_.obj;
+  // qDebug() << "get obj";
+  // return cfg_.obj;
+  return config_;
 }
 
 void SerialWindow::saveWaveFormData() {
@@ -125,14 +128,8 @@ bool SerialWindow::workState() const {
 }
 
 bool SerialWindow::saveState() {
-  // serial_setting_->getSerialSetting();
-
-  // if (cfg_.obj.value("WindowTitle").toString() != title_->text()) {
-  // }
-  // return !unsaved_;
   // 需要检测配置的区分, 还是改动一处, 标志位设置为 false
-  return false;
-  // return saved_;
+  return saved_;
 }
 
 void SerialWindow::setSaveState(bool state) {
@@ -140,14 +137,16 @@ void SerialWindow::setSaveState(bool state) {
 }
 
 void SerialWindow::saveSetting() {
-  qDebug() << "saving setting";
-  cfg_.obj.insert("WindowTitle", title_->text());
-  cfg_.obj.insert("SerialSetting", serial_setting_->getSerialSetting());
-  cfg_.obj.insert("InstructionTable", instruction_table_->getTableRecord());
-  emit requestSaveConfig();
+  // 执行保存操作, 先会向 cfg_.obj 插入内容
+  // qDebug() << "saving setting";
+  config_.insert("Type", TtFunctionalCategory::Communication);
+  config_.insert("WindowTitle", title_->text());
+  config_.insert("SerialSetting", serial_setting_->getSerialSetting());
+  config_.insert("InstructionTable", instruction_table_->getTableRecord());
   Ui::TtMessageBar::success(TtMessageBarType::Top, "", tr("保存成功"), 1500,
                             this);
   saved_ = true;
+  emit requestSaveConfig();
   // 配置文件保存到文件中
   // 当前的 tabWidget 匹配对应的 QJsonObject
 }
@@ -1281,6 +1280,7 @@ void SerialWindow::init() {
 
   // 左右分区
   mainSplitter->addWidget(VSplitter);
+  serial_setting_ = new Widget::SerialSetting;
   mainSplitter->addWidget(serial_setting_);
   mainSplitter->setSizes(QList<int>() << 500 << 200);
 
@@ -1365,6 +1365,8 @@ void SerialWindow::connectSignals() {
             qDebug() << "interval: " << interval;
             send_package_timer_->setInterval(interval);
           });
+  connect(serial_setting_, &Widget::SerialSetting::settingChanged, this,
+          [this]() { saved_ = false; });
 
   connect(send_package_timer_, &QTimer::timeout, this, [this] {
     if (!serial_port_opened) {

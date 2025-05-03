@@ -149,7 +149,6 @@ class SerialWindow : public FrameWindow, public Ui::TabManager::ISerializable {
   QtMaterialFlatButton* sendBtn;
   Ui::TtTableWidget* instruction_table_;
   MsgType display_type_ = MsgType::TEXT;
-  // SerialSaveConfig cfg_;
 
   uint16_t package_size_ = 0;
   QQueue<QString> msg_queue_;

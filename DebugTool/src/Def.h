@@ -27,6 +27,8 @@
 #define Q_ENUM_CREATE(CLASS) Q_ENUM(CLASS)
 #endif
 
+const QString serialPrefix = "Serial+";  // Define the prefix
+
 Q_BEGIN_ENUM_CREATE_SRC(TtProtocolRole)
 enum Role {
   Serial = 0x0,

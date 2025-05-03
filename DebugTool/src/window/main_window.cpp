@@ -1377,44 +1377,79 @@ void MainWindow::readingProjectConfiguration() {
   // 显示到对应的 session 中
   // 怎么区分不同的 session 呢 ?
   auto configs = Storage::SettingsManager::instance().getHistorySettings();
-  // qDebug() << configs;
-  for (const QJsonValue& value : configs) {
-    if (value.isObject()) {
-      // 先查找 type
-      QJsonObject obj = value.toObject();
-      QJsonValue typeValue = obj.value("Type");
 
-      TtFunctionalCategory::Category retrievedCategory =
-          TtFunctionalCategory::None;  // 提供一个默认值，以防出错
-      // 是数字类型
-      if (typeValue.isDouble()) {
-        int value = typeValue.toInt(-1);
-        // 有效范围内
-        if (value >= TtFunctionalCategory::Communication &&
-            value <= TtFunctionalCategory::Simulate) {
-          // 4. 静态转换为枚举类型
-          retrievedCategory =
-              static_cast<TtFunctionalCategory::Category>(value);
-          qDebug() << "成功取回枚举值:" << retrievedCategory;
-        } else {
-          qWarning() << "从 JSON 取回的整数值" << value
-                     << "不在 TtFunctionalCategory::Category 的有效范围内。";
-          // 保留默认值
+  // 遍历 key
+  for (const QString& key : configs.keys()) {
+    if (key.startsWith(serialPrefix)) {
+      QString entryType = "Serial";
+
+      QString uuid = key.sliced(serialPrefix.length());
+      qDebug() << "Found Entry - Type:" << entryType << ", UUID:" << uuid;
+
+      QJsonValue value = configs.value(key);
+      if (value.isObject()) {
+        // 先查找 type
+        QJsonObject obj = value.toObject();
+        QJsonValue typeValue = obj.value("Type");
+
+        TtFunctionalCategory::Category retrievedCategory =
+            TtFunctionalCategory::None;  // 提供一个默认值，以防出错
+        // 是数字类型
+        if (typeValue.isDouble()) {
+          int value = typeValue.toInt(-1);
+          // 有效范围内
+          if (value >= TtFunctionalCategory::Communication &&
+              value <= TtFunctionalCategory::Simulate) {
+            // 4. 静态转换为枚举类型
+            retrievedCategory =
+                static_cast<TtFunctionalCategory::Category>(value);
+            qDebug() << "成功取回枚举值:" << retrievedCategory;
+          } else {
+            qWarning() << "从 JSON 取回的整数值" << value
+                       << "不在 TtFunctionalCategory::Category 的有效范围内。";
+          }
         }
-      }
-      switch (retrievedCategory) {
-        case TtFunctionalCategory::Communication:
-          qDebug() << "处理 Communication 类型";
-          break;
-        case TtFunctionalCategory::Instruction:
-          qDebug() << "处理 Instruction 类型";
-          break;
-        case TtFunctionalCategory::Simulate:
-          qDebug() << "处理 Simulate 类型";
-          break;
-        default:
-          qDebug() << "未知的类型";
-          break;
+        switch (retrievedCategory) {
+          case TtFunctionalCategory::Communication:
+            if (obj.contains("SerialSetting")) {
+              QJsonObject serialSetting = obj.value("SerialSetting").toObject();
+
+              if (serialSetting.contains("LinkSetting")) {
+                QJsonObject linkSetting =
+                    serialSetting.value("LinkSetting").toObject();
+                quint64 baud = linkSetting.value("BaudRate").toInteger();
+                QString portName = linkSetting.value("PortName").toString();
+                int dataBits = linkSetting.value("DataBits").toInt();
+                int stopBit = linkSetting.value("StopBits").toInt();
+              }
+              if (serialSetting.contains("Heartbeat")) {
+                QJsonObject heartBeat =
+                    serialSetting.value("Heartbeat").toObject();
+                QString content = heartBeat.value("Content").toString();
+                QString interval = heartBeat.value("Interval").toString();
+                QString type = heartBeat.value("Type").toString();
+              }
+              if (serialSetting.contains("Framing")) {
+                QJsonObject framing = serialSetting.value("Framing").toObject();
+                QString lineFeed = framing.value("LineFeed").toString();
+              }
+            }
+            // 获取 uuid
+            addDifferentConfiguration(
+                retrievedCategory, obj.value("WindowTitle").toString(), uuid);
+            qDebug() << "处理 Communication 类型";
+            // 能够恢复
+            break;
+          case TtFunctionalCategory::Instruction:
+            qDebug() << "处理 Instruction 类型";
+            break;
+          case TtFunctionalCategory::Simulate:
+            qDebug() << "处理 Simulate 类型";
+            break;
+          default:
+            qDebug() << "未知的类型";
+            break;
+        }
       }
     }
   }

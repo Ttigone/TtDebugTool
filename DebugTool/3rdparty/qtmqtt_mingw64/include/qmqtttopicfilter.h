@@ -4,8 +4,8 @@
 #ifndef QMQTTTOPICFILTER_H
 #define QMQTTTOPICFILTER_H
 
-#include <QtMqtt/qmqttglobal.h>
-#include <QtMqtt/qmqtttopicname.h>
+#include <qmqttglobal.h>
+#include <qmqtttopicname.h>
 
 #include <QtCore/QExplicitlySharedDataPointer>
 #include <QtCore/QMetaType>

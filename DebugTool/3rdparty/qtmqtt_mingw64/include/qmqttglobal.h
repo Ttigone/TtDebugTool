@@ -5,7 +5,7 @@
 #define QTQMQTTGLOBAL_H
 
 #include <QtCore/qglobal.h>
-#include <QtMqtt/qtmqttexports.h>
+#include <qtmqttexports.h>
 
 QT_BEGIN_NAMESPACE
 

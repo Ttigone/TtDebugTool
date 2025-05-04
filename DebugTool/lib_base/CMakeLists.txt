@@ -5,7 +5,14 @@ set(CMAKE_AUTOMOC ON)
 
 get_filename_component(src_loc . REALPATH)
 
-target_precompile_headers(lib_base 
+set(LIB_BASE_OUT_ROOT "${CMAKE_BINARY_DIR}/${PROJECT_NAME}")
+#set(LIB_BASE_OUT_ROOT ${CMAKE_BINARY_DIR})
+# 设置库导出路径
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${LIB_BASE_OUT_ROOT})
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${LIB_BASE_OUT_ROOT})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${LIB_BASE_OUT_ROOT})
+
+target_precompile_headers(lib_base
 PRIVATE 
   $<$<COMPILE_LANGUAGE:CXX,OBJCXX>:${src_loc}/base/basic_pch.h>
 )

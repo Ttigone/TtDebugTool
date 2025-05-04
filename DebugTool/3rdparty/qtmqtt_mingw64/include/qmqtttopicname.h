@@ -4,7 +4,7 @@
 #ifndef QMQTTTOPICNAME_H
 #define QMQTTTOPICNAME_H
 
-#include <QtMqtt/qmqttglobal.h>
+#include <qmqttglobal.h>
 
 #include <QtCore/QExplicitlySharedDataPointer>
 #include <QtCore/QMetaType>

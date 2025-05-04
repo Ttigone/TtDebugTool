@@ -171,16 +171,21 @@ QListWidget:focus
 
 
 QSplitter::handle {
-    background-color: #3c3c3c;
+    background-color: #404142;
     width: 1px;
     height: 1px;
     margin: 1px;
 }
 
 QSplitter::handle:hover {
-    background-color: #c191dd;
+    background-color: #404142;
 }
 
 QSplitter::handle:pressed {
-    background-color: #1f2329;
+    background-color: white;
 }
+
+QTabWidget::pane {
+
+}
+

@@ -10,7 +10,7 @@
 // 编译器版本为 6.5.3 时, 调整宽度和高度时, 控件会改变布局, qwindowkit bug
 // 编译器 < 6.5.3 or 编译器 > 6.6.2
 
-#if (WIN32)
+#if (!WIN32)
 #include <Windows.h>
 #include <dbghelp.h>
 #include <QSettings>
@@ -30,26 +30,26 @@
 //   return EXCEPTION_EXECUTE_HANDLER;
 // }
 
-void CreateDumpFile(EXCEPTION_POINTERS* exceptionInfo) {
-  qDebug() << "create";
-  HANDLE hFile = CreateFileW(L"dumpfile.dmp", GENERIC_WRITE, 0, NULL,
-                             CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-  if (hFile != INVALID_HANDLE_VALUE) {
-    MINIDUMP_EXCEPTION_INFORMATION mdei;
-    mdei.ThreadId = GetCurrentThreadId();
-    mdei.ExceptionPointers = exceptionInfo;
-    mdei.ClientPointers = FALSE;
+// void CreateDumpFile(EXCEPTION_POINTERS* exceptionInfo) {
+//   qDebug() << "create";
+//   HANDLE hFile = CreateFileW(L"dumpfile.dmp", GENERIC_WRITE, 0, NULL,
+//                              CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+//   if (hFile != INVALID_HANDLE_VALUE) {
+//     MINIDUMP_EXCEPTION_INFORMATION mdei;
+//     mdei.ThreadId = GetCurrentThreadId();
+//     mdei.ExceptionPointers = exceptionInfo;
+//     mdei.ClientPointers = FALSE;
+//
+//     MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), hFile,
+//                       MiniDumpWithFullMemory, &mdei, NULL, NULL);
+//     CloseHandle(hFile);
+//   }
+// }
 
-    MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), hFile,
-                      MiniDumpWithFullMemory, &mdei, NULL, NULL);
-    CloseHandle(hFile);
-  }
-}
-
-LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS* exceptionInfo) {
-  CreateDumpFile(exceptionInfo);
-  return EXCEPTION_EXECUTE_HANDLER;  // 继续执行默认的崩溃处理
-}
+// LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS* exceptionInfo) {
+//   CreateDumpFile(exceptionInfo);
+//   return EXCEPTION_EXECUTE_HANDLER;  // 继续执行默认的崩溃处理
+// }
 
 #endif
 
@@ -164,12 +164,12 @@ int main(int argc, char* argv[]) {
   settingsManager.setTargetStoreFile(filePath);
   settingsManager.saveSettings();
 
-#if (WIN32)
-  //注冊异常捕获函数
-  // SetUnhandledExceptionFilter(
-  // (LPTOP_LEVEL_EXCEPTION_FILTER)ApplicationCrashHandler);
-  SetUnhandledExceptionFilter((LPTOP_LEVEL_EXCEPTION_FILTER)ExceptionHandler);
-#endif
+// #if (WIN32)
+//   //注冊异常捕获函数
+//   // SetUnhandledExceptionFilter(
+//   // (LPTOP_LEVEL_EXCEPTION_FILTER)ApplicationCrashHandler);
+//   SetUnhandledExceptionFilter((LPTOP_LEVEL_EXCEPTION_FILTER)ExceptionHandler);
+// #endif
 
 
   Window::MainWindow w;

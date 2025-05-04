@@ -3,8 +3,8 @@
 #ifndef QMQTTPUBLISHPROPERTIES_H
 #define QMQTTPUBLISHPROPERTIES_H
 
-#include <QtMqtt/qmqttglobal.h>
-#include <QtMqtt/qmqtttype.h>
+#include <qmqttglobal.h>
+#include <qmqtttype.h>
 
 #include <QtCore/QObject>
 #include <QtCore/QSharedDataPointer>

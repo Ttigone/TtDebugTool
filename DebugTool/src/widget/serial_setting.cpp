@@ -20,18 +20,12 @@ Core::SerialPortConfiguration DefaultSetting = {
     QString(""),           QSerialPort::Baud9600, QSerialPort::Data8,
     QSerialPort::NoParity, QSerialPort::OneStop,  QSerialPort::NoFlowControl};
 
-SerialSetting::SerialSetting(QWidget* parent)
-    : QWidget(parent)
-{
+SerialSetting::SerialSetting(QWidget *parent) : QWidget(parent) {
   init();
   connnectSignals();
 }
 
 SerialSetting::~SerialSetting() {}
-
-void SerialSetting::setOldSettings() {
-  // serial_port_->setCurrentItem(1);
-}
 
 Core::SerialPortConfiguration SerialSetting::getSerialPortConfiguration() {
   // 使用构造函数初始化
@@ -42,8 +36,8 @@ Core::SerialPortConfiguration SerialSetting::getSerialPortConfiguration() {
       parity_bit_->currentData().value<QSerialPort::Parity>(),
       stop_bit_->currentData().value<QSerialPort::StopBits>(),
       flow_control_->currentData().value<QSerialPort::FlowControl>());
-  //qDebug() << cfg.com << cfg.baud_rate << cfg.data_bits << cfg.parity
-  //         << cfg.stop_bits << cfg.flow_control;
+  // qDebug() << cfg.com << cfg.baud_rate << cfg.data_bits << cfg.parity
+  //          << cfg.stop_bits << cfg.flow_control;
   return config;
 }
 
@@ -63,52 +57,138 @@ Core::SerialPortConfiguration SerialSetting::defaultSerialPortConfiguration() {
 }
 
 void SerialSetting::displayDefaultSetting() {
-  for (int i = 0; i < baud_rate_->count(); ++i) {
-    if (baud_rate_->itemText(i).contains(
-            QString::number(DefaultSetting.baud_rate))) {
-      baud_rate_->setCurrentItem(i);
-      break;
-    }
-  }
-  for (int i = 0; i < data_bit_->count(); ++i) {
-    if (data_bit_->itemText(i).contains(
-            QString::number(DefaultSetting.data_bits))) {
-      data_bit_->setCurrentItem(i);
-      break;
-    }
-  }
-  for (int i = 0; i < parity_bit_->count(); ++i) {
-    if (parity_bit_->itemText(i).contains(
-            QString::number(DefaultSetting.parity))) {
-      parity_bit_->setCurrentItem(i);
-      break;
-    }
-  }
-  for (int i = 0; i < stop_bit_->count(); ++i) {
-    if (stop_bit_->itemText(i).contains(
-            QString::number(DefaultSetting.stop_bits))) {
-      stop_bit_->setCurrentItem(i);
-      break;
-    }
-  }
-  for (int i = 0; i < flow_control_->count(); ++i) {
-    if (flow_control_->itemText(i).contains(
-            QString::number(DefaultSetting.flow_control))) {
-      flow_control_->setCurrentItem(i);
-      break;
-    }
-  }
+  // 设置串口名
+  // for (int i = 0; i < serial_port_->body()->count(); ++i) {
+  //   if (serial_port_->body()->itemData(i).toString() == portName) {
+  //     serial_port_->body()->setCurrentIndex(i);
+  //     break;
+  //   }
+  // }
+
+  // for (int i = 0; i < baud_rate_->count(); ++i) {
+  //   if (baud_rate_->itemText(i).contains(
+  //           QString::number(DefaultSetting.baud_rate))) {
+  //     baud_rate_->setCurrentItem(i);
+  //     break;
+  //   }
+  // }
+  // for (int i = 0; i < data_bit_->count(); ++i) {
+  //   if (data_bit_->itemText(i).contains(
+  //           QString::number(DefaultSetting.data_bits))) {
+  //     data_bit_->setCurrentItem(i);
+  //     break;
+  //   }
+  // }
+  // for (int i = 0; i < parity_bit_->count(); ++i) {
+  //   if (parity_bit_->itemText(i).contains(
+  //           QString::number(DefaultSetting.parity))) {
+  //     parity_bit_->setCurrentItem(i);
+  //     break;
+  //   }
+  // }
+  // for (int i = 0; i < stop_bit_->count(); ++i) {
+  //   if (stop_bit_->itemText(i).contains(
+  //           QString::number(DefaultSetting.stop_bits))) {
+  //     stop_bit_->setCurrentItem(i);
+  //     break;
+  //   }
+  // }
+  // for (int i = 0; i < flow_control_->count(); ++i) {
+  //   if (flow_control_->itemText(i).contains(
+  //           QString::number(DefaultSetting.flow_control))) {
+  //     flow_control_->setCurrentItem(i);
+  //     break;
+  //   }
+  // }
 }
 
-const QJsonObject& SerialSetting::getSerialSetting() {
+void SerialSetting::setOldSettings(const QJsonObject &config) {
+  if (config.isEmpty()) {
+    // 设置默认配置
+    return;
+  }
+  QJsonObject linkSetting = config.value("LinkSetting").toObject();
+  QString portName = linkSetting.value("PortName").toString();
+  quint64 baud = linkSetting.value("BaudRate").toInteger();
+  int dataBits = linkSetting.value("DataBits").toInt();
+  int parity = linkSetting.value("ParityBit").toInt();
+  int stopBit = linkSetting.value("StopBits").toInt();
+  int flowControl = linkSetting.value("FlowControl").toInt();
+
+  QJsonObject heartBeat = config.value("Heartbeat").toObject();
+  QString content = heartBeat.value("Content").toString();
+  QString interval = heartBeat.value("Interval").toString();
+  QString type = heartBeat.value("Type").toString();
+  QJsonObject framing = config.value("Framing").toObject();
+  QString lineFeed = framing.value("LineFeed").toString();
+
+  // serial_port_->body()->setCurrentText(portName);
+  // baud_rate_->body()->setCurrentText(QString::number(baud));
+  // data_bit_->body()->setCurrentText(QString::number(dataBits));
+  // parity_bit_->body()->setCurrentText(QString::number());
+  // stop_bit_->body()->setCurrentText(QString::number(stopBit));
+
+  // 设置串口名
+  for (int i = 0; i < serial_port_->body()->count(); ++i) {
+    if (serial_port_->body()->itemData(i).toString() == portName) {
+      serial_port_->body()->setCurrentIndex(i);
+      break;
+    }
+  }
+
+  // 设置波特率
+  for (int i = 0; i < baud_rate_->body()->count(); ++i) {
+    if (baud_rate_->body()->itemData(i).toInt() == baud) {
+      baud_rate_->body()->setCurrentIndex(i);
+      break;
+    }
+  }
+
+  // 设置数据位
+  for (int i = 0; i < data_bit_->body()->count(); ++i) {
+    if (data_bit_->body()->itemData(i).toInt() == dataBits) {
+      data_bit_->body()->setCurrentIndex(i);
+      break;
+    }
+  }
+
+  // 设置校验位
+  for (int i = 0; i < parity_bit_->body()->count(); ++i) {
+    if (parity_bit_->body()->itemData(i).toInt() == parity) {
+      parity_bit_->body()->setCurrentIndex(i);
+      break;
+    }
+  }
+
+  // 设置停止位
+  for (int i = 0; i < stop_bit_->body()->count(); ++i) {
+    if (stop_bit_->body()->itemData(i).toInt() == stopBit) {
+      stop_bit_->body()->setCurrentIndex(i);
+      break;
+    }
+  }
+
+  // 设置流控
+  for (int i = 0; i < flow_control_->body()->count(); ++i) {
+    if (flow_control_->body()->itemData(i).toInt() == flowControl) {
+      flow_control_->body()->setCurrentIndex(i);
+      break;
+    }
+  }
+
+  // 初始化的时候, 是读取了默认的配置, 现在需要设置为当前的 历史配置
+}
+
+const QJsonObject &SerialSetting::getSerialSetting() {
   auto cfg = getSerialPortConfiguration();
   QJsonObject linkSetting;
   linkSetting.insert("PortName", QJsonValue(cfg.com));
   linkSetting.insert("BaudRate", QJsonValue(cfg.baud_rate));
   linkSetting.insert("DataBits", QJsonValue(cfg.data_bits));
+  linkSetting.insert("ParityBit", QJsonValue(cfg.parity));
   linkSetting.insert("StopBits", QJsonValue(cfg.stop_bits));
   linkSetting.insert("FlowControl", QJsonValue(cfg.flow_control));
-  serial_save_config_.insert("LinkSetting", QJsonValue(linkSetting));
+  config_.insert("LinkSetting", QJsonValue(linkSetting));
 
   QJsonObject framing;
   framing.insert("Model", QJsonValue(framing_model_->body()->currentText()));
@@ -116,35 +196,35 @@ const QJsonObject& SerialSetting::getSerialSetting() {
                  QJsonValue(framing_timeout_->body()->currentText()));
   framing.insert("FixedLength",
                  QJsonValue(framing_fixed_length_->body()->currentText()));
-  serial_save_config_.insert("Framing", QJsonValue(framing));
+  config_.insert("Framing", QJsonValue(framing));
 
   QJsonObject lineFeed;
   lineFeed.insert("LineFeed", QJsonValue(line_break_->body()->currentText()));
-  serial_save_config_.insert("Framing", QJsonValue(lineFeed));
+  config_.insert("Framing", QJsonValue(lineFeed));
 
   QJsonObject heartbeat;
   heartbeat.insert("Type",
                    QJsonValue(heartbeat_send_type_->body()->currentText()));
   heartbeat.insert("Interval", QJsonValue(heartbeat_interval_->body()->text()));
   heartbeat.insert("Content", QJsonValue(heartbeat_content_->body()->text()));
-  serial_save_config_.insert("Heartbeat", QJsonValue(heartbeat));
+  config_.insert("Heartbeat", QJsonValue(heartbeat));
 
-  //qDebug() << "Json: " << serial_save_config_;
+  // qDebug() << "Json: " << config_;
 
-  return serial_save_config_;
+  return config_;
 }
 
 void SerialSetting::setSerialPortsName() {
   const auto serialPortInfos = QSerialPortInfo::availablePorts();
   serial_port_->body()->clear();
-  for (const QSerialPortInfo& portInfo : serialPortInfos) {
+  for (const QSerialPortInfo &portInfo : serialPortInfos) {
     QString portName = (portInfo.portName() + "-" + portInfo.description());
     serial_port_->addItem(portName, portInfo.portName());
   }
   serial_port_->body()->model()->sort(0);
 
   connect(serial_port_->body(), &QComboBox::currentTextChanged,
-          [this](const QString& text) {});
+          [this](const QString &text) {});
   serial_port_->setCurrentItem(0);
 }
 
@@ -205,18 +285,16 @@ void SerialSetting::setControlState(bool state) {
   heartbeat_content_->setEnabled(state);
 }
 
-quint32 SerialSetting::getRefreshInterval() {
-  return 0;
-}
+quint32 SerialSetting::getRefreshInterval() { return 0; }
 
 void SerialSetting::init() {
   main_layout_ = new Ui::TtVerticalLayout(this);
 
-  QList<QComboBox*> comboBoxes;
-  QList<QLineEdit*> lineEdits;
+  QList<QComboBox *> comboBoxes;
+  QList<QLineEdit *> lineEdits;
   // QList<QLineEdit *> line
 
-  QWidget* serialConfigWidget = new QWidget(this);
+  QWidget *serialConfigWidget = new QWidget(this);
   serial_port_ = new Ui::TtLabelBtnComboBox(tr("串口:"), serialConfigWidget);
   baud_rate_ = new Ui::TtLabelComboBox(tr("波特率:"), serialConfigWidget);
   data_bit_ = new Ui::TtLabelComboBox(tr("数据位:"), serialConfigWidget);
@@ -230,7 +308,7 @@ void SerialSetting::init() {
       new Ui::TtLabelLineEdit(tr("发送包最大尺寸:"), serialConfigWidget);
   send_package_max_size_->setText(0);
 
-  Ui::TtVerticalLayout* layout = new Ui::TtVerticalLayout(serialConfigWidget);
+  Ui::TtVerticalLayout *layout = new Ui::TtVerticalLayout(serialConfigWidget);
 
   comboBoxes << serial_port_->body();
   comboBoxes << baud_rate_->body();
@@ -262,33 +340,33 @@ void SerialSetting::init() {
   setSerialPortsFluidControl();
   // displayDefaultSetting();
 
-  QWidget* linkSettingWidget = new QWidget;
-  QVBoxLayout* linkSettingWidgetLayout = new QVBoxLayout(linkSettingWidget);
+  QWidget *linkSettingWidget = new QWidget;
+  QVBoxLayout *linkSettingWidgetLayout = new QVBoxLayout(linkSettingWidget);
   linkSettingWidgetLayout->setSpacing(0);
   linkSettingWidgetLayout->setContentsMargins(QMargins());
   linkSettingWidgetLayout->addWidget(serialConfigWidget);
-  linkSettingWidget->adjustSize();  // 确保大小正确
+  linkSettingWidget->adjustSize(); // 确保大小正确
 
-  Ui::TtDrawer* drawerLinkSetting = new Ui::TtDrawer(
+  Ui::TtDrawer *drawerLinkSetting = new Ui::TtDrawer(
       tr("连接设置"), ":/sys/chevron-double-up.svg",
       ":/sys/chevron-double-down.svg", linkSettingWidget, false, this);
 
-  QWidget* scriptWidget = new QWidget;
-  Ui::TtVerticalLayout* scriptWidgetLayout =
+  QWidget *scriptWidget = new QWidget;
+  Ui::TtVerticalLayout *scriptWidgetLayout =
       new Ui::TtVerticalLayout(scriptWidget);
   // script_ = new Ui::TtLabelLineEdit(tr("脚本"), scriptWidget);
-  Ui::TtTextButton* script_ = new Ui::TtTextButton("脚本", scriptWidget);
+  Ui::TtTextButton *script_ = new Ui::TtTextButton("脚本", scriptWidget);
   script_->setCheckedColor(Qt::cyan);
   scriptWidgetLayout->addWidget(script_);
-  Ui::Drawer* drawerScript = new Ui::Drawer(tr("脚本设置"), scriptWidget);
+  Ui::Drawer *drawerScript = new Ui::Drawer(tr("脚本设置"), scriptWidget);
 
   connect(script_, &Ui::TtTextButton::clicked, this,
           &SerialSetting::showScriptSetting);
 
-  QWidget* framingWidget = new QWidget;
-  Ui::TtVerticalLayout* framingWidgetLayout =
+  QWidget *framingWidget = new QWidget;
+  Ui::TtVerticalLayout *framingWidgetLayout =
       new Ui::TtVerticalLayout(framingWidget);
-  framingWidget->adjustSize();  // 确保大小正确
+  framingWidget->adjustSize(); // 确保大小正确
   framing_model_ = new Ui::TtLabelComboBox(tr("模式: "));
   framing_model_->addItem(tr("无"));
   framing_model_->addItem(tr("超时时间"));
@@ -304,28 +382,28 @@ void SerialSetting::init() {
   framingWidgetLayout->addWidget(framing_timeout_);
   framingWidgetLayout->addWidget(framing_fixed_length_);
 
-  Ui::TtDrawer* drawerFraming = new Ui::TtDrawer(
+  Ui::TtDrawer *drawerFraming = new Ui::TtDrawer(
       tr("分帧"), ":/sys/chevron-double-up.svg",
       ":/sys/chevron-double-down.svg", framingWidget, false, this);
 
   connect(framing_model_, &Ui::TtLabelComboBox::currentIndexChanged,
           [this, drawerFraming](int index) {
             switch (index) {
-              case 0: {
-                framing_timeout_->setVisible(false);
-                framing_fixed_length_->setVisible(false);
-                break;
-              }
-              case 1: {
-                framing_timeout_->setVisible(true);
-                framing_fixed_length_->setVisible(false);
-                break;
-              }
-              case 2: {
-                framing_timeout_->setVisible(false);
-                framing_fixed_length_->setVisible(true);
-                break;
-              }
+            case 0: {
+              framing_timeout_->setVisible(false);
+              framing_fixed_length_->setVisible(false);
+              break;
+            }
+            case 1: {
+              framing_timeout_->setVisible(true);
+              framing_fixed_length_->setVisible(false);
+              break;
+            }
+            case 2: {
+              framing_timeout_->setVisible(false);
+              framing_fixed_length_->setVisible(true);
+              break;
+            }
             }
             const auto event =
                 new QResizeEvent(drawerFraming->size(), drawerFraming->size());
@@ -339,14 +417,14 @@ void SerialSetting::init() {
   line_break_->addItem("\\r");
   line_break_->addItem("\\n");
   line_break_->addItem("\\r\\n");
-  Ui::TtDrawer* drawerLineBreak = new Ui::TtDrawer(
+  Ui::TtDrawer *drawerLineBreak = new Ui::TtDrawer(
       tr("换行"), ":/sys/chevron-double-up.svg",
       ":/sys/chevron-double-down.svg", line_break_, false, this);
 
-  QWidget* heartbeatWidget = new QWidget;
-  Ui::TtVerticalLayout* heartbeatWidgetLayout =
+  QWidget *heartbeatWidget = new QWidget;
+  Ui::TtVerticalLayout *heartbeatWidgetLayout =
       new Ui::TtVerticalLayout(heartbeatWidget);
-  heartbeatWidget->adjustSize();  // 确保大小正确
+  heartbeatWidget->adjustSize(); // 确保大小正确
   heartbeat_send_type_ = new Ui::TtLabelComboBox(tr("类型: "));
   heartbeat_send_type_->addItem(tr("无"));
   heartbeat_send_type_->addItem(tr("文本"));
@@ -363,28 +441,28 @@ void SerialSetting::init() {
   heartbeatWidgetLayout->addWidget(heartbeat_interval_);
   heartbeatWidgetLayout->addWidget(heartbeat_content_);
 
-  Ui::TtDrawer* drawerHeartBeat = new Ui::TtDrawer(
+  Ui::TtDrawer *drawerHeartBeat = new Ui::TtDrawer(
       tr("心跳"), ":/sys/chevron-double-up.svg",
       ":/sys/chevron-double-down.svg", heartbeatWidget, false, this);
 
   connect(heartbeat_send_type_, &Ui::TtLabelComboBox::currentIndexChanged,
           [this, heartbeatWidget, drawerHeartBeat](int index) {
             switch (index) {
-              case 0: {
-                heartbeat_interval_->setVisible(false);
-                heartbeat_content_->setVisible(false);
-                break;
-              }
-              case 1: {
-                heartbeat_interval_->setVisible(true);
-                heartbeat_content_->setVisible(true);
-                break;
-              }
-              case 2: {
-                heartbeat_interval_->setVisible(true);
-                heartbeat_content_->setVisible(true);
-                break;
-              }
+            case 0: {
+              heartbeat_interval_->setVisible(false);
+              heartbeat_content_->setVisible(false);
+              break;
+            }
+            case 1: {
+              heartbeat_interval_->setVisible(true);
+              heartbeat_content_->setVisible(true);
+              break;
+            }
+            case 2: {
+              heartbeat_interval_->setVisible(true);
+              heartbeat_content_->setVisible(true);
+              break;
+            }
             }
             const auto event = new QResizeEvent(drawerHeartBeat->size(),
                                                 drawerHeartBeat->size());
@@ -395,13 +473,13 @@ void SerialSetting::init() {
   heartbeat_content_->setVisible(false);
 
   // 滚动区域
-  QScrollArea* scroll = new QScrollArea(this);
+  QScrollArea *scroll = new QScrollArea(this);
   scroll->setFrameStyle(QFrame::NoFrame);
-  QWidget* scrollContent = new QWidget(scroll);
+  QWidget *scrollContent = new QWidget(scroll);
   // scr->setWidget(scrollContent);
-  //scr->setWidgetResizable(true);
+  // scr->setWidgetResizable(true);
 
-  Ui::TtVerticalLayout* scrollContentLayout =
+  Ui::TtVerticalLayout *scrollContentLayout =
       new Ui::TtVerticalLayout(scrollContent);
 
   scrollContentLayout->addWidget(drawerLinkSetting);
@@ -417,7 +495,7 @@ void SerialSetting::init() {
 
   main_layout_->addWidget(scroll);
 
-  for (auto* comboBox : comboBoxes) {
+  for (auto *comboBox : comboBoxes) {
     if (comboBox) {
       connect(comboBox,
               QOverload<int>::of(&Ui::TtComboBox::currentIndexChanged), this,
@@ -425,8 +503,8 @@ void SerialSetting::init() {
     }
   }
 
-  for (auto* lineEdit : lineEdits) {
-    if (lineEdit) {  // 确保指针有效
+  for (auto *lineEdit : lineEdits) {
+    if (lineEdit) { // 确保指针有效
       connect(lineEdit, &QLineEdit::textChanged, this,
               &SerialSetting::settingChanged);
     }
@@ -434,10 +512,10 @@ void SerialSetting::init() {
 
   connect(
       heartbeat_content_, &Ui::TtLabelLineEdit::currentTextChanged, this,
-      [this](const QString& text) {
+      [this](const QString &text) {
         if (heartbeat_send_type_->body()->currentIndex() == 1) {
           emit heartbeatContentChanged(heartbeat_content_->currentText());
-        } else if (heartbeat_send_type_->body()->currentIndex() == 1) {  // HEX
+        } else if (heartbeat_send_type_->body()->currentIndex() == 1) { // HEX
           emit heartbeatContentChanged(
               heartbeat_content_->currentText().toUtf8().toHex(' ').toUpper());
         }
@@ -455,11 +533,11 @@ void SerialSetting::connnectSignals() {
 
 void SerialSetting::refreshSerialCOMx() {}
 
-QString SerialSetting::matchingSerialCOMx(const QString& name) {
+QString SerialSetting::matchingSerialCOMx(const QString &name) {
 
   qDebug() << name.size();
   const auto serialPortInfos = QSerialPortInfo::availablePorts();
-  for (const QSerialPortInfo& portInfo : serialPortInfos) {
+  for (const QSerialPortInfo &portInfo : serialPortInfos) {
     // QRegularExpression regex(name);
     // QRegularExpressionMatch match = regex.match(portInfo.portName());
     // if (match.hasMatch()) {
@@ -469,7 +547,8 @@ QString SerialSetting::matchingSerialCOMx(const QString& name) {
     //   return portInfo.portName();
     // } else {
     //   // 没有匹配到
-    //   // 有可能是串口加载时, 存在这个串口, 但过了一段时间后, 当 user 打开串口时, 串口已经不存在
+    //   // 有可能是串口加载时, 存在这个串口, 但过了一段时间后, 当 user
+    //   打开串口时, 串口已经不存在
     //   // error
     //   return "";
     // }
@@ -525,4 +604,4 @@ QString SerialSetting::matchingSerialCOMx(const QString& name) {
   return QString();
 }
 
-}  // namespace Widget
+} // namespace Widget

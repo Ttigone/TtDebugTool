@@ -1,25 +1,17 @@
 #include "window_switcher.h"
 
-#include <ui/control/TtContentDialog.h>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QStackedLayout>
 #include <QToolButton>
 #include <QUuid>
+#include <ui/control/TtContentDialog.h>
 
 #include "ui/layout/vertical_layout.h"
 
 #include <window/frame_window.h>
 
 namespace Ui {
-
-QMap<TtProtocolRole::Role, int> TabManager::type_map_ = {
-    {TtProtocolRole::Serial, 0},       {TtProtocolRole::TcpClient, 0},
-    {TtProtocolRole::TcpServer, 0},    {TtProtocolRole::UdpClient, 0},
-    {TtProtocolRole::UdpServer, 0},    {TtProtocolRole::MqttClient, 0},
-    {TtProtocolRole::MqttBroker, 0},   {TtProtocolRole::ModbusClient, 0},
-    {TtProtocolRole::ModbusServer, 0}, {TtProtocolRole::BlueTeeth, 0},
-};
 
 QMap<TtProtocolRole::Role, QString> TabManager::type_icon_map_ = {
     {TtProtocolRole::Serial, ":/sys/unlink.svg"},
@@ -34,15 +26,11 @@ QMap<TtProtocolRole::Role, QString> TabManager::type_icon_map_ = {
     {TtProtocolRole::BlueTeeth, ":/sys/bluetooth-contact.svg"},
 };
 
-uint16_t TabManager::SpecialTypeNums(TtProtocolRole::Role role) {
-  return type_map_[role];
-}
-
 QString TabManager::SpecialTypeIcon(TtProtocolRole::Role role) {
   return type_icon_map_[role];
 }
 
-TabManager::TabManager(QWidget* defaultWidget, QWidget* parent)
+TabManager::TabManager(QWidget *defaultWidget, QWidget *parent)
     : QTabWidget(parent) {
   setTabBar(new ExtTabBar());
   setupCornerButton();
@@ -57,51 +45,29 @@ TabManager::TabManager(QWidget* defaultWidget, QWidget* parent)
 
   addNewTab(defaultWidget);
   saveState("C:/Users/cssss/Desktop/test.json");
-
-  // 连接关闭信号
-  // connect(this, &QTabWidget::tabCloseRequested, this,
-  //         [=](int index) { removeTab(index); });
-  // connect(this, &QTabWidget::tabCloseRequested, this,
-  //         &TabManager::handleTabClose);
-
-  //   // 设置关闭按钮样式
-  //   setStyleSheet(R"(
-  //     QTabBar::close-button {
-  //         image: url(:/sys/delete.svg);
-  //         subcontrol-position: right;
-  //         subcontrol-origin: padding;
-  //         margin-right: 4px;
-  //     }
-  //     QTabBar::close-button:hover {
-  //         image: url(:/sys/delete.svg);
-  //     }
-  //     QTabBar::close-button:pressed {
-  //         image: url(:/sys/link.svg);
-  //     }
-  // )");
   setupTabBar();
 }
 
-TabManager::~TabManager() {
-  //for (auto& widget : widgetInstances) {
-  //  if (widget) {
-  //    widget->deleteLater();
-  //  }
-  //}
-  // qDeleteAll(widgetInstances);
+TabManager::~TabManager(){
+    // for (auto& widget : widgetInstances) {
+    //  if (widget) {
+    //    widget->deleteLater();
+    //  }
+    //}
+    // qDeleteAll(widgetInstances);
 };
 
-void TabManager::addNewTab(const QString& title) {
+void TabManager::addNewTab(const QString &title) {
   // 总数量
   int tabIndex = count();
-  QWidget* defaultWidget = createDefaultWidget(tabIndex);
+  QWidget *defaultWidget = createDefaultWidget(tabIndex);
   // addTab(defaultWidget, "Tab " + QString::number(tabIndex + 1));
   addTab(defaultWidget, title);
   // setupCustomTabButton(tabIndex);
   // updateTabStyle(tabIndex);
 }
 
-void TabManager::addNewTab(QWidget* defaultWidget) {
+void TabManager::addNewTab(QWidget *defaultWidget) {
   // int tabIndex = count();
   // QWidget* defaultWidget = createDefaultWidget(tabIndex);
   QIcon icon(":/sys/unlink.svg");
@@ -109,7 +75,7 @@ void TabManager::addNewTab(QWidget* defaultWidget) {
   setupCustomTabButton(count() - 1);
 }
 
-void TabManager::addNewTab(QWidget* defaultWidget, const QString& title) {
+void TabManager::addNewTab(QWidget *defaultWidget, const QString &title) {
   // 创建默认的 widget1
   int tabIndex = count();
   // QWidget* defaultWidget = createDefaultWidget(tabIndex);
@@ -121,8 +87,8 @@ void TabManager::addNewTab(QWidget* defaultWidget, const QString& title) {
   // updateTabStyle(tabIndex);
 }
 
-void TabManager::addNewTab(QWidget* defaultWidget, const QIcon& icon,
-                           const QString& title) {
+void TabManager::addNewTab(QWidget *defaultWidget, const QIcon &icon,
+                           const QString &title) {
   int tabIndex = count();
   addTab(defaultWidget, icon, title);
   setupCustomTabButton(tabIndex);
@@ -130,47 +96,78 @@ void TabManager::addNewTab(QWidget* defaultWidget, const QIcon& icon,
 }
 
 void TabManager::registerWidget(TtProtocolRole::Role role,
-                                const WidgetFactory& factory,
-                                const QString& title) {
+                                const WidgetFactory &factory,
+                                const QString &title) {
   // widgetid 注册的窗口标识符 [2]
   widgetFactories[role] = factory;
   widgetTitles[role] = title;
 }
 
-void TabManager::switchToWidget(int tabIndex, TtProtocolRole::Role role) {
-  // 根据 id 切换目标 widget
-  // base::DetectRunningTime runtime;
-
-  // 切换
-  if (tabIndex < 0 || tabIndex >= count()) {
-    return;  // 无效的 Tab 索引
+void TabManager::switchByCreateWidget(int tabIndex, TtProtocolRole::Role role) {
+  if (tabIndex < 0 || tabIndex > count()) {
+    qDebug() << tabIndex;
+    qDebug() << "无效";
+    return; // 无效的 Tab 索引
   }
 
   if (!widgetFactories.contains(role)) {
     qDebug() << "no register";
-    return;  // 未注册的 Widget ID
+    return; // 未注册的 Widget ID
   }
 
   // 销毁当前 Widget
   // 实现原地操作
   // 根据 index 去索引 widget, 目标切换窗口!!! 点击的时候对应的 index
-  QWidget* currentWidget = widget(tabIndex);
+  QWidget *currentWidget = widget(tabIndex);
   if (currentWidget) {
     currentWidget->deleteLater();
   }
 
   // 创建新的 Widget
-  QWidget* newWidget = widgetFactories[role]();
+  QWidget *newWidget = widgetFactories[role]();
 
-  type_map_[role]++;
-
-  // qDebug() << runtime.elapseMilliseconds();
-  // 实例应当个性化
-  //widgetInstances[newWidget] = ;  // 存储原始指针
-  // 根据 uuid 标识
-  // 存储实例
   widgetInstances[QUuid::createUuid().toString()] = newWidget;
 
+  setTabText(tabIndex, widgetTitles[role]);
+  insertTab(tabIndex, newWidget, QIcon(SpecialTypeIcon(role)),
+            widgetTitles[role]);
+  setupCustomTabButton(tabIndex);
+  // updateTabStyle(tabIndex);
+  setCurrentIndex(tabIndex);
+}
+
+void TabManager::switchByAlreadyExistingWidget(int tabIndex,
+                                               const QString &uuid,
+                                               const QJsonObject &config,
+                                               TtProtocolRole::Role role) {
+  if (tabIndex < 0 || tabIndex > count()) {
+    qDebug() << tabIndex;
+    qDebug() << "无效";
+    return; // 无效的 Tab 索引
+  }
+
+  if (!widgetFactories.contains(role)) {
+    qDebug() << "no register";
+    return; // 未注册的 Widget ID
+  }
+
+  // 根据 index 去索引 widget, 目标切换窗口!!! 点击的时候对应的 index
+  QWidget *currentWidget = widget(tabIndex);
+  if (currentWidget) {
+    currentWidget->deleteLater();
+  }
+
+  qDebug() << "new by has uuid";
+
+  // 创建新的 Widget
+  // 这里需要设置对应的 config 配置
+  Window::FrameWindow *newWidget = widgetFactories[role]();
+  newWidget->setSetting(config);
+
+  qDebug() << "t1";
+
+  // 可以根据已经有的 uuid 设定
+  widgetInstances[uuid] = newWidget;
 
   // 设置 tab 的文本
   setTabText(tabIndex, widgetTitles[role]);
@@ -179,6 +176,7 @@ void TabManager::switchToWidget(int tabIndex, TtProtocolRole::Role role) {
   insertTab(tabIndex, newWidget, QIcon(SpecialTypeIcon(role)),
             widgetTitles[role]);
   setupCustomTabButton(tabIndex);
+  qDebug() << "t2";
   // updateTabStyle(tabIndex);
 
   // 显示当前正在操作的 tab
@@ -186,10 +184,9 @@ void TabManager::switchToWidget(int tabIndex, TtProtocolRole::Role role) {
   setCurrentIndex(tabIndex);
 }
 
-void TabManager::setupTabBar() {
-}
+void TabManager::setupTabBar() {}
 
-bool TabManager::saveState(const QString& filePath) const {
+bool TabManager::saveState(const QString &filePath) const {
   QJsonArray tabsArray;
 
   // 保存当前标签页
@@ -208,7 +205,7 @@ bool TabManager::saveState(const QString& filePath) const {
   return true;
 }
 
-bool TabManager::restoreState(const QString& filePath) {
+bool TabManager::restoreState(const QString &filePath) {
   // 将标签页的数据读取
   QFile file(filePath);
   if (!file.open(QIODevice::ReadOnly)) {
@@ -219,7 +216,7 @@ bool TabManager::restoreState(const QString& filePath) {
   QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
   if (doc.isArray()) {
     QJsonArray tabsArray = doc.array();
-    for (const auto& tabValue : tabsArray) {
+    for (const auto &tabValue : tabsArray) {
       deserializeTab(tabValue.toObject());
     }
     return true;
@@ -231,20 +228,38 @@ QString TabManager::getCurrentWidgetUUid() {
   return findWidget(currentWidget());
 }
 
-void TabManager::setTabIcon(int index, const QString& iconPath) {
+void TabManager::setTabIcon(int index, const QString &iconPath) {
   setTabIcon(index, QIcon(iconPath));
 }
 
-void TabManager::setTabIcon(int index, const QIcon& icon) {
+void TabManager::setTabIcon(int index, const QIcon &icon) {
   QTabWidget::setTabIcon(index, icon);
   updateTabStyle(index);
 }
 
-void TabManager::setTabTitle(const QString& title) {
+void TabManager::setTabTitle(const QString &title) {
   tabBar()->setTabText(currentIndex(), title);
 }
 
-QString TabManager::findWidget(QWidget* widget) {
+bool TabManager::isStoredInMem(const QString &index) {
+  // for (auto it = closedTabs_.begin())
+  for (auto it = closedTabs_.constBegin(); it != closedTabs_.end(); ++it) {
+    if (it->first == index) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool TabManager::isCurrentDisplayedPage(const QString &index) {
+  return widgetInstances.contains(index);
+}
+
+void TabManager::switchByPage(const QString &index) {
+  setCurrentWidget(widgetInstances.value(index));
+}
+
+QString TabManager::findWidget(QWidget *widget) {
   for (auto it = widgetInstances.cbegin(); it != widgetInstances.cend(); ++it) {
     if (it.value() == widget) {
       return it.key();
@@ -254,23 +269,17 @@ QString TabManager::findWidget(QWidget* widget) {
 }
 
 void TabManager::handleTabClose(int index) {
-  // 只保留正在工作的 widget, 没工作的直接 delete 掉
   if (widget(index)->objectName() == "SettingWidget") {
-    // SettingWidget 直接 delete
-    // qDebug() << "setting";
     handleTabCloseRequested(index);
     return;
   }
   // 先判断是否保存, 再判断是否 当前的状态
   // 先判断当前的工作状态, 处于开始工作状态, 以及无法改变了
-
-  FrameWindow* w = qobject_cast<FrameWindow*>(widget(index));
-  // if (w != nullptr && w->saveState()) {
-  // } else {
+  Window::FrameWindow *w = qobject_cast<Window::FrameWindow *>(widget(index));
   if (w != nullptr) {
     if (!w->saveState()) {
       qDebug() << "no saved";
-      TtContentDialog* dialog = new TtContentDialog(this);
+      TtContentDialog *dialog = new TtContentDialog(this);
       dialog->setLeftButtonText(tr("取消"));
       dialog->setRightButtonText(tr("确定"));
       dialog->setCenterText(tr("通讯链接配置已修改, 是否保存"));
@@ -291,10 +300,10 @@ void TabManager::handleTabClose(int index) {
         qDebug() << "保存最新变动";
         w->saveSetting();
         if (w->workState()) {
-          // 处于工作状态
-          // 保存
+          qDebug() << "save to mem";
           saveWorkingTabPageToMem(index);
         } else {
+          qDebug() << "close";
           handleTabCloseRequested(index);
         }
       });
@@ -360,8 +369,7 @@ void TabManager::handleTabClose(int index) {
 void TabManager::saveWorkingTabPageToMem(int index) {
   TabData info;
   info.title = tabText(index);
-  info.widget = widget(index);  // 存储 widget 界面
-  // info.widget.reset(widget(index));  // 存储 widget 界面
+  info.widget = widget(index); // 存储 widget 界面
   info.icon = tabIcon(index);
 
   QString removeWidgetUuid = findWidget(widget(index));
@@ -392,9 +400,7 @@ void TabManager::restoreClosedTabFromMem(struct TabData data) {
   // setCurrentIndex(index);
 }
 
-void TabManager::saveTabPageToDisk(int index) {
-  qDebug() << "保存到 disk";
-}
+void TabManager::saveTabPageToDisk(int index) { qDebug() << "保存到 disk"; }
 
 void TabManager::restoreClosedTabFromDisk() {}
 
@@ -412,24 +418,24 @@ QJsonObject TabManager::serializeTab(int index) const {
   tabObj["icon"] = tabIcon(index).name();
 
   // 如果widget支持序列化
-  QWidget* w = widget(index);
-  if (auto* serializable = dynamic_cast<ISerializable*>(w)) {
+  QWidget *w = widget(index);
+  if (auto *serializable = dynamic_cast<ISerializable *>(w)) {
     tabObj["state"] = QString(serializable->saveState().toBase64());
   }
 
   return tabObj;
 }
 
-void TabManager::deserializeTab(const QJsonObject& obj) {
+void TabManager::deserializeTab(const QJsonObject &obj) {
   QString title = obj["title"].toString();
   QString iconName = obj["icon"].toString();
 
-  QWidget* page = new QWidget(this);
+  QWidget *page = new QWidget(this);
   // 恢复widget状态
   if (obj.contains("state")) {
     QByteArray state =
         QByteArray::fromBase64(obj["state"].toString().toLatin1());
-    if (auto* serializable = dynamic_cast<ISerializable*>(page)) {
+    if (auto *serializable = dynamic_cast<ISerializable *>(page)) {
       serializable->restoreState(state);
     }
   }
@@ -437,28 +443,32 @@ void TabManager::deserializeTab(const QJsonObject& obj) {
   addTab(page, QIcon(iconName), title);
 }
 
-// void TabManager::handleButtonClicked(int tabIndex) {
-void TabManager::handleButtonClicked(int tabIndex, TtProtocolRole::Role role) {
-  // 假设点击按钮后切换到 widget2
-  //qDebug() << 
-  // TODO 信号只传递了要切换的 widgetid, 但是没有 tabindex !!!
-  switchToWidget(tabIndex, role);  // widgetId = 2 是 widget2
+// void TabManager::handleButtonClicked(int tabIndex, TtProtocolRole::Role role)
+// {
+void TabManager::sessionSwitchPage(int tabIndex, TtProtocolRole::Role role) {
+  // switchToWidget(tabIndex, role);  // widgetId = 2 是 widget2
+  switchByCreateWidget(tabIndex, role); // widgetId = 2 是 widget2
 }
 
-void TabManager::handleAddNewTab() {
-  addNewTab("新建立");
-}
+void TabManager::handleAddNewTab() { addNewTab("新建立"); }
 
 void TabManager::handleTabCloseRequested(int index) {
-  // if (count() <= 1)
-  //   return;  // 至少保留一个标签
+  qDebug() << "handle delete index: " << index;
+  // 关闭按钮的 close, 要从 widgetInstance 中删除掉
+  QWidget *widget = this->widget(index);
+  const QString uuid = findWidget(widget);
+  if (widgetInstances.contains(uuid)) {
+    widgetInstances.remove(uuid);
+  }
 
-  QWidget* widget = this->widget(index);
-  // 彻底删除
+  // 有问题, remove, 导致 多一个
   removeTab(index);
+
+  // widgetInstances.removeIf();
+  // widgetInstances.contains(findWidget(widget))
+  // 彻底删除
   if (widget) {
     emit widgetDeleted(widget);
-
     widget->disconnect();
     widget->setParent(nullptr);
     delete widget;
@@ -466,78 +476,62 @@ void TabManager::handleTabCloseRequested(int index) {
   }
 }
 
-void TabManager::removeUuidWidget(const QString& index) {
-  // 移除标签页
-  auto item = widgetInstances.value(index);
-  // qDebug() << "item: " << item;
-  // currentIndex();
-  auto i = indexOf(item);
-  // qDebug() << "index item: " << i;
-
-  // 获取与选项卡关联的 QWidget
-  auto* widget = QTabWidget::widget(i);
-  // qDebug() << "index item: " << widget;
-  if (widget) {
-    // 延迟删除 QWidget
-    widget->deleteLater();
+void TabManager::removeUuidWidget(const QString &index) {
+  if (widgetInstances.contains(index)) {
+    // 移除标签页
+    auto item = widgetInstances.value(index);
+    auto i = indexOf(item);
+    auto *widget = QTabWidget::widget(i);
+    if (widget) {
+      widget->disconnect();
+      widget->setParent(nullptr);
+      widget->deleteLater();
+    }
+    widgetInstances.remove(index);
+    removeTab(i);
   }
-
-  removeTab(i);
 }
 
-void TabManager::switchToOtherIndex(const QString& index) {
-  // 根据 uuid 索引
-  qDebug() << "get index" << index;
-  // uuid QWidget
-  // 切换, 以及复原
-  // 先查找是否被 remove
-  // 以下操作都是整个应用程序没有完全关闭，运行于内存的时候
-  // 持久化存储需要整个页面关闭
-  // 完整删除, 然后恢复
-  qDebug() << closedTabs_.size();
-
-  bool switchFlag = false;
-  // 切换
-  // 处于工作状态的才会保存
+void TabManager::switchByReadingMem(const QString &index,
+                                    TtProtocolRole::Role role) {
   for (auto it = closedTabs_.begin(); it != closedTabs_.end(); ++it) {
     qDebug() << it->first;
     if (it->first == index) {
-      qDebug() << "restore";
-      // 从内存中恢复
-      // restoreClosedTabFromMem(*it);
       restoreClosedTabFromMem(it->second);
       closedTabs_.erase(it);
-      switchFlag = true;
       break;
     }
   }
+}
 
-  if (!switchFlag) {
-    // 不是从 mem 恢复
-    qDebug() << "no find to create";
-    // restoreClosedTabFromDisk();
-  }
+void TabManager::switchByReadingDisk(const QString &index,
+                                     TtProtocolRole::Role role,
+                                     const QJsonObject &config) {
+  // 删除后, 在点击 button, 没有对应的窗口
+  // 处理点击左侧后, 不存在, 需要重新创建
+  // 初始时是有一个默认 widget, 所以 currentIndex = 0, 会切换当前
+  // 为什么还会进来 ?
+  qDebug() << "no find to create";
+  // qDebug() << "currentIndex: " << currentIndex();
+  // switchToWidget(currentIndex() + 1, role);
+  // 初始时不存在, 根据 已有的 uuid 创建特定表示窗口
 
-  // // 切换
-  // if (widgetInstances.contains(index)) {
-  //   setCurrentWidget(widgetInstances.value(index));
-  // }
+  qDebug() << "TEST1";
+  qDebug() << currentIndex() + 1;
+  switchByAlreadyExistingWidget(currentIndex() + 1, index, config, role);
+  qDebug() << "TEST2";
 }
 
 void TabManager::setupCustomTabButton(int index) {
   // 当前 index 的 closebutton
-  auto* closeButton = new TabCloseButton(this);
+  auto *closeButton = new TabCloseButton(this);
   tabBar()->setTabButton(index, QTabBar::RightSide, closeButton);
 
-  // connect(closeButton, &QToolButton::clicked, this, [this, index]() {
-  //   // qDebug() << "close";
-  //   qDebug() << "index close: " << index;
-  //   handleTabClose(index);
-  // });
   // 使用按钮找到当前索引，而不是使用固定索引
   connect(closeButton, &QToolButton::clicked, this, [this, closeButton]() {
     int currentIndex = getTabIndexFromButton(closeButton);
     if (currentIndex != -1) {
+      qDebug() << "delete index: " << currentIndex;
       handleTabClose(currentIndex);
     }
   });
@@ -589,19 +583,19 @@ void TabManager::setupCornerButton() {
   connect(add_button_, &QPushButton::clicked, this, &TabManager::requestNewTab);
 }
 
-QWidget* TabManager::createDefaultWidget(int tabIndex) {
+int TabManager::getTabIndexFromButton(QWidget *button) const {
+  QTabBar *bar = tabBar();
+  for (int i = 0; i < bar->count(); ++i) {
+    if (bar->tabButton(i, QTabBar::RightSide) == button) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+QWidget *TabManager::createDefaultWidget(int tabIndex) {
   // 新建 widget
-  QWidget* widget = new QWidget(this);
-  //// 布局
-  ////QVBoxLayout* layout = new QVBoxLayout(widget);
-  //Ui::VerticalLayout* layout = new VerticalLayout(widget);
-
-  //QPushButton* button = new QPushButton("Switch to Widget2", widget);
-  ////connect(button, &QPushButton::clicked, this,
-  ////        [this, tabIndex]() { handleButtonClicked(tabIndex); });
-
-  //layout->addWidget(button);
-  //widget->setLayout(layout);
+  QWidget *widget = new QWidget(this);
   return widget;
 }
 
@@ -625,4 +619,4 @@ QWidget* TabManager::createDefaultWidget(int tabIndex) {
 //   return widget;
 // }, "Widget3");
 
-}  // namespace Ui
+} // namespace Ui

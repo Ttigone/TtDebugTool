@@ -15,23 +15,23 @@ namespace Core {
 struct SerialPortConfiguration;
 } // namespace Core
 
-
 namespace Widget {
 
 class SerialSetting : public QWidget {
   Q_OBJECT
- public:
+public:
   SerialSetting(QWidget *parent = nullptr);
   ~SerialSetting();
 
-  void setOldSettings();
   Core::SerialPortConfiguration getSerialPortConfiguration();
   Core::SerialPortConfiguration defaultSerialPortConfiguration();
 
   void displayDefaultSetting();
-  const QJsonObject& getSerialSetting();
 
- signals:
+  void setOldSettings(const QJsonObject &config);
+  const QJsonObject &getSerialSetting();
+
+signals:
   void settingChanged();
   void showScriptSetting();
   void sendPackageMaxSizeChanged(uint16_t size);
@@ -39,7 +39,7 @@ class SerialSetting : public QWidget {
   void heartbeatInterval(uint32_t interval);
   void heartbeatContentChanged(QString content);
 
- public slots:
+public slots:
   void setSerialPortsName();
   void setSerialPortsBaudRate();
   void setSerialPortsDataBit();
@@ -50,50 +50,41 @@ class SerialSetting : public QWidget {
   void setControlState(bool state);
   quint32 getRefreshInterval();
 
- private:
+private:
   void init();
   void connnectSignals();
   void refreshSerialCOMx();
-  QString matchingSerialCOMx(const QString& name);
+  QString matchingSerialCOMx(const QString &name);
 
-  Ui::TtVerticalLayout* main_layout_;
+  Ui::TtVerticalLayout *main_layout_;
 
-  Ui::TtLabelBtnComboBox* serial_port_;
-  Ui::TtLabelComboBox* baud_rate_;
-  Ui::TtLabelComboBox* data_bit_;
-  Ui::TtLabelComboBox* parity_bit_;
-  Ui::TtLabelComboBox* stop_bit_;
-  Ui::TtLabelComboBox* flow_control_;
+  Ui::TtLabelBtnComboBox *serial_port_;
+  Ui::TtLabelComboBox *baud_rate_;
+  Ui::TtLabelComboBox *data_bit_;
+  Ui::TtLabelComboBox *parity_bit_;
+  Ui::TtLabelComboBox *stop_bit_;
+  Ui::TtLabelComboBox *flow_control_;
 
-  // QComboBox* serial_port_;
-  // QComboBox* baud_rate_;
-  // QComboBox* data_bit_;
-  // QComboBox* parity_bit_;
-  // QComboBox* stop_bit_;
-  // QComboBox* flow_control_;
+  Ui::TtLabelLineEdit *send_package_interval_;
+  Ui::TtLabelLineEdit *send_package_max_size_;
 
-  Ui::TtLabelLineEdit* send_package_interval_;
-  Ui::TtLabelLineEdit* send_package_max_size_;
+  Ui::TtLabelLineEdit *script_;
 
-  Ui::TtLabelLineEdit* script_;
+  Ui::TtLabelComboBox *framing_model_;
+  Ui::TtLabelComboBox *framing_timeout_;
+  Ui::TtLabelComboBox *framing_fixed_length_;
 
-  Ui::TtLabelComboBox* framing_model_;
-  Ui::TtLabelComboBox* framing_timeout_;
-  Ui::TtLabelComboBox* framing_fixed_length_;
+  Ui::TtLabelComboBox *line_break_;
 
-
-  Ui::TtLabelComboBox* line_break_;
-
-  Ui::TtLabelComboBox* heartbeat_send_type_;
-  Ui::TtLabelLineEdit* heartbeat_interval_;
-  Ui::TtLabelLineEdit* heartbeat_content_;
+  Ui::TtLabelComboBox *heartbeat_send_type_;
+  Ui::TtLabelLineEdit *heartbeat_interval_;
+  Ui::TtLabelLineEdit *heartbeat_content_;
 
   bool has_old_settings;
 
-  QJsonObject serial_save_config_;
+  QJsonObject config_;
 };
 
-} // namespace Window
-
+} // namespace Widget
 
 #endif // WINDOW_SERIAL_SETTING_H

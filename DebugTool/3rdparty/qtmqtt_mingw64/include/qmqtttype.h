@@ -4,7 +4,7 @@
 #ifndef QMQTTTYPE_H
 #define QMQTTTYPE_H
 
-#include <QtMqtt/qmqttglobal.h>
+#include <qmqttglobal.h>
 
 #include <QtCore/QDebug>
 #include <QtCore/QList>

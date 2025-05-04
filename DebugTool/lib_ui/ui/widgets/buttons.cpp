@@ -734,6 +734,14 @@ TtSpecialDeleteButton::TtSpecialDeleteButton(const QString& name,
           &TtSpecialDeleteButton::deleteRequest);
 }
 
+TtSpecialDeleteButton::~TtSpecialDeleteButton() {
+  qDebug() << "TtSpecialDeleteButton delete";
+}
+
+void TtSpecialDeleteButton::setChecked(bool checked) {
+  old_state_ = checked;
+  update();  // 触发重绘
+}
 
 void TtSpecialDeleteButton::paintEvent(QPaintEvent* event) {
   QPainter painter(this);

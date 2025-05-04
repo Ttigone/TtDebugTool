@@ -4,8 +4,8 @@
 #ifndef QMQTTSUBSCRIPTIONPROPERTIES_H
 #define QMQTTSUBSCRIPTIONPROPERTIES_H
 
-#include <QtMqtt/qmqttglobal.h>
-#include <QtMqtt/qmqtttype.h>
+#include <qmqttglobal.h>
+#include <qmqtttype.h>
 
 #include <QtCore/QHash>
 #include <QtCore/QObject>

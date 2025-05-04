@@ -10,16 +10,15 @@
 namespace Storage {
 
 class SettingsManager {
- public:
-  static SettingsManager& instance() {
+public:
+  static SettingsManager &instance() {
     static SettingsManager instance;
     return instance;
   }
 
-  void setTargetStoreFile(const QString& filePath) { file_path_ = filePath; }
+  void setTargetStoreFile(const QString &filePath) { file_path_ = filePath; }
 
   void saveSettings() {
-    // 不得再加锁了, 否则死锁
     QString targetFile = getConfigFilePath(file_path_);
     if (targetFile.isEmpty()) {
       qWarning() << "Invalid config file path";
@@ -42,7 +41,7 @@ class SettingsManager {
 
     // 将当前设置合并到现有内容中
     for (auto it = settings.begin(); it != settings.end(); ++it) {
-      existingSettings[it.key()] = it.value();  // 同名键会被覆盖
+      existingSettings[it.key()] = it.value(); // 同名键会被覆盖
     }
 
     QFile writeFile(targetFile);
@@ -57,7 +56,7 @@ class SettingsManager {
     writeFile.close();
   }
 
-  void loadSettings(const QString& filePath) {
+  void loadSettings(const QString &filePath) {
     QMutexLocker locker(&mutex);
 
     QFile file(filePath);
@@ -100,20 +99,20 @@ class SettingsManager {
     return historySettings;
   }
 
-  void setSetting(const QString& key, const QJsonValue& value);
+  void setSetting(const QString &key, const QJsonValue &value);
 
-  QJsonValue getSetting(const QString& key) const {
+  QJsonValue getSetting(const QString &key) const {
     QMutexLocker locker(&mutex);
     return settings.value(key);
   }
 
- private:
+private:
   SettingsManager() {}
   ~SettingsManager() {}
-  SettingsManager(const SettingsManager&) = delete;
-  SettingsManager& operator=(const SettingsManager&) = delete;
+  SettingsManager(const SettingsManager &) = delete;
+  SettingsManager &operator=(const SettingsManager &) = delete;
 
-  QString getConfigFilePath(const QString& filename) const {
+  QString getConfigFilePath(const QString &filename) const {
     // 获取当前可执行文件的路径
     QString appDirPath = QCoreApplication::applicationDirPath();
     // 创建 configs 目录路径
@@ -136,6 +135,6 @@ class SettingsManager {
   QJsonObject settings;
 };
 
-}  // namespace Storage
+} // namespace Storage
 
-#endif  // STORAGE_SETTING_MANAGER_H
+#endif // STORAGE_SETTING_MANAGER_H

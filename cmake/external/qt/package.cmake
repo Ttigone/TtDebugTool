@@ -15,7 +15,7 @@ find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS
     Concurrent
     OpenGL
     Core5Compat
-    Mqtt
+#    Mqtt
 )
 
 
@@ -35,6 +35,7 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS
     # Mqtt
 )
 
+#set(Qt6_Mqtt_DIR "")
 
 if(NOT Qt6OpenGL_FOUND)
     message(FATAL_ERROR "Qt6 OpenGL module not found!")

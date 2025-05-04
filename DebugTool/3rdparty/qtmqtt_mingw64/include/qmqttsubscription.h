@@ -4,9 +4,9 @@
 #ifndef QMQTTSUBSCRIPTION_H
 #define QMQTTSUBSCRIPTION_H
 
-#include <QtMqtt/qmqttglobal.h>
-#include <QtMqtt/qmqttmessage.h>
-#include <QtMqtt/qmqtttopicfilter.h>
+#include <qmqttglobal.h>
+#include <qmqttmessage.h>
+#include <qmqtttopicfilter.h>
 
 #include <QtCore/QObject>
 

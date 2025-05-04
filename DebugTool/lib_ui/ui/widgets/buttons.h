@@ -336,13 +336,10 @@ class Tt_EXPORT TtSpecialDeleteButton : public QWidget {
   explicit TtSpecialDeleteButton(const QString& name, const QString& icon_path,
                                  const QString& delete_path,
                                  QWidget* parent = nullptr);
-  ~TtSpecialDeleteButton() = default;
+  ~TtSpecialDeleteButton();
 
   // 在实现文件中添加
-  void setChecked(bool checked) {
-    old_state_ = checked;
-    update();  // 触发重绘
-  }
+  void setChecked(bool checked);
 
   void setTitle(const QString& title) { name_->setText(title); }
 

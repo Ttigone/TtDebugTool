@@ -13,6 +13,9 @@ endif()
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# 设置可执行文件的输出目录为构建目录的根目录
+#set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+
 get_filename_component(src_loc src REALPATH)
 get_filename_component(res_loc res REALPATH)
 
@@ -189,9 +192,18 @@ include_directories(src)
 include_directories(${third_party})
 
 if(MINGW)
-    list(APPEND CMAKE_PREFIX_PATH "{third_party}/qtmqtt_mingw64/lib/cmake")
-    find_package(Qt6Mqtt REQUIRED)
-    target_link_directories(${PROJECT_NAME} PRIVATE "${third_party}/qtmqtt_mingw64/lib")
+#    list(APPEND CMAKE_PREFIX_PATH "{third_party}/qtmqtt_mingw64/lib/cmake")
+#    message(STATUS "CMAKE_PREFIX_PATH extended with: ${third_party}/qtmqtt_mingw64/lib/cmake")
+#    find_package(Qt6Mqtt REQUIRED)
+#    message(STATUS "Qt6Mqtt found.")
+#    target_link_directories(${PROJECT_NAME} PRIVATE "${third_party}/qtmqtt_mingw64/lib")
+#    target_include_directories(${PROJECT_NAME} PUBLIC "${third_party}/qtmqtt_mingw64/include")
+#    target_link_libraries(${PROJECT_NAME} PRIVATE )
+#    message(STATUS "Linked Qt6::Mqtt to target ${PROJECT_NAME}")
+    target_include_directories(${PROJECT_NAME} PRIVATE ${third_party}/qtmqtt_mingw64/include)
+    target_link_directories(${PROJECT_NAME} PRIVATE ${third_party}/qtmqtt_mingw64/lib)
+    target_link_libraries(${PROJECT_NAME} PRIVATE Qt6Mqtt)
+#    target_link_libraries(${PROJECT_NAME} PRIVATE ${third_party}/qtmqtt_ming64/lib/libQt6Mqtt.a)
 endif()
 
 
@@ -211,7 +223,7 @@ PRIVATE
   QsLog
   qt-easy-logger
   # qcustomplot
-  ${third_party}/qtmqtt_mingw64/lib/libQt6Mqtt.a
+#  ${third_party}/qtmqtt_mingw64/lib/libQt6Mqtt.a
   # 使用的是系统的 opengl函数
   # -lopengl32 -lglu32
   Qt6::OpenGL          # Qt OpenGL 模块
@@ -222,6 +234,10 @@ PRIVATE
 # 查看链接的库
 get_target_property(LINK_LIBS ${PROJECT_NAME} LINK_LIBRARIES)
 message(STATUS "Libraries linked to MyExecutable: ${LINK_LIBS}")
+
+set_target_properties(${PROJECT_NAME} PROPERTIES
+        QT_QMAKE_EXECUTABLE_CONFIG resources_big
+)
 
 target_precompile_headers(${PROJECT_NAME} PRIVATE $<$<COMPILE_LANGUAGE:CXX,OBJCXX>:${src_loc}/pch.h>)
 

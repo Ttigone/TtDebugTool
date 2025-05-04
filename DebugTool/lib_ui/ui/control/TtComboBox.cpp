@@ -17,7 +17,7 @@ namespace Ui {
 
 Q_PROPERTY_CREATE_Q_CPP(TtComboBox, int, BorderRadius)
 
-TtComboBox::TtComboBox(QWidget* parent)
+TtComboBox::TtComboBox(QWidget *parent)
     : QComboBox(parent), d_ptr(new TtComboBoxPrivate) {
   Q_D(TtComboBox);
   d->q_ptr = this;
@@ -30,13 +30,13 @@ TtComboBox::TtComboBox(QWidget* parent)
   // d->comboBox_style_ = style::TtComboBoxStyle::instance();
   setStyle(d->comboBox_style_);
 
-  //调用view 让container初始化
+  // 调用view 让container初始化
   setView(new QListView(this));
-  QAbstractItemView* comboBoxView = this->view();
+  QAbstractItemView *comboBoxView = this->view();
   comboBoxView->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
-  TtScrollBar* scrollBar = new TtScrollBar(this);
+  TtScrollBar *scrollBar = new TtScrollBar(this);
   comboBoxView->setVerticalScrollBar(scrollBar);
-  TtScrollBar* floatVScrollBar = new TtScrollBar(scrollBar, comboBoxView);
+  TtScrollBar *floatVScrollBar = new TtScrollBar(scrollBar, comboBoxView);
   floatVScrollBar->setIsAnimation(true);
   comboBoxView->setAutoScroll(false);
   comboBoxView->setSelectionMode(QAbstractItemView::NoSelection);
@@ -44,14 +44,14 @@ TtComboBox::TtComboBox(QWidget* parent)
   comboBoxView->setStyleSheet(
       "#ElaComboBoxView{background-color:transparent;}");
   comboBoxView->setStyle(d->comboBox_style_);
-  QWidget* container = this->findChild<QFrame*>();
+  QWidget *container = this->findChild<QFrame *>();
   if (container && container->parent() == this) {
     container->setWindowFlags(Qt::Popup | Qt::FramelessWindowHint |
                               Qt::NoDropShadowWindowHint);
     container->setAttribute(Qt::WA_TranslucentBackground);
     container->setObjectName("TtComboBoxContainer");
     container->setStyle(d->comboBox_style_);
-    QLayout* layout = container->layout();
+    QLayout *layout = container->layout();
     while (layout->count()) {
       layout->takeAt(0);
     }
@@ -76,7 +76,7 @@ void TtComboBox::showPopup() {
   QComboBox::showPopup();
   qApp->setEffectEnabled(Qt::UI_AnimateCombo, oldAnimationEffects);
   if (count() > 0) {
-    QWidget* container = this->findChild<QFrame*>();
+    QWidget *container = this->findChild<QFrame *>();
     if (container) {
       int containerHeight = 0;
       if (count() >= maxVisibleItems()) {
@@ -86,14 +86,14 @@ void TtComboBox::showPopup() {
       }
       view()->resize(view()->width(), containerHeight - 8);
       container->move(container->x(), container->y() + 3);
-      QLayout* layout = container->layout();
+      QLayout *layout = container->layout();
       while (layout->count()) {
         layout->takeAt(0);
       }
-      QPropertyAnimation* fixedSizeAnimation =
+      QPropertyAnimation *fixedSizeAnimation =
           new QPropertyAnimation(container, "maximumHeight");
       connect(fixedSizeAnimation, &QPropertyAnimation::valueChanged, this,
-              [=](const QVariant& value) {
+              [=](const QVariant &value) {
                 container->setFixedHeight(value.toUInt());
               });
       fixedSizeAnimation->setStartValue(1);
@@ -102,7 +102,7 @@ void TtComboBox::showPopup() {
       fixedSizeAnimation->setDuration(400);
       fixedSizeAnimation->start(QAbstractAnimation::DeleteWhenStopped);
 
-      QPropertyAnimation* viewPosAnimation =
+      QPropertyAnimation *viewPosAnimation =
           new QPropertyAnimation(view(), "pos");
       connect(viewPosAnimation, &QPropertyAnimation::finished, this, [=]() {
         d->is_allow_hide_popup_ = true;
@@ -116,17 +116,17 @@ void TtComboBox::showPopup() {
       viewPosAnimation->setDuration(400);
       viewPosAnimation->start(QAbstractAnimation::DeleteWhenStopped);
     }
-    //指示器动画
-    QPropertyAnimation* rotateAnimation =
+    // 指示器动画
+    QPropertyAnimation *rotateAnimation =
         new QPropertyAnimation(d->comboBox_style_, "pExpandIconRotate");
     connect(rotateAnimation, &QPropertyAnimation::valueChanged, this,
-            [=](const QVariant& value) { update(); });
+            [=](const QVariant &value) { update(); });
     rotateAnimation->setDuration(300);
     rotateAnimation->setEasingCurve(QEasingCurve::InOutSine);
     rotateAnimation->setStartValue(d->comboBox_style_->getExpandIconRotate());
     rotateAnimation->setEndValue(-180);
     rotateAnimation->start(QAbstractAnimation::DeleteWhenStopped);
-    QPropertyAnimation* markAnimation =
+    QPropertyAnimation *markAnimation =
         new QPropertyAnimation(d->comboBox_style_, "pExpandMarkWidth");
     markAnimation->setDuration(300);
     markAnimation->setEasingCurve(QEasingCurve::InOutSine);
@@ -139,14 +139,14 @@ void TtComboBox::showPopup() {
 void TtComboBox::hidePopup() {
   Q_D(TtComboBox);
   if (d->is_allow_hide_popup_) {
-    QWidget* container = this->findChild<QFrame*>();
+    QWidget *container = this->findChild<QFrame *>();
     int containerHeight = container->height();
     if (container) {
-      QLayout* layout = container->layout();
+      QLayout *layout = container->layout();
       while (layout->count()) {
         layout->takeAt(0);
       }
-      QPropertyAnimation* viewPosAnimation =
+      QPropertyAnimation *viewPosAnimation =
           new QPropertyAnimation(view(), "pos");
       connect(viewPosAnimation, &QPropertyAnimation::finished, this, [=]() {
         layout->addWidget(view());
@@ -166,10 +166,10 @@ void TtComboBox::hidePopup() {
       viewPosAnimation->setEasingCurve(QEasingCurve::InCubic);
       viewPosAnimation->start(QAbstractAnimation::DeleteWhenStopped);
 
-      QPropertyAnimation* fixedSizeAnimation =
+      QPropertyAnimation *fixedSizeAnimation =
           new QPropertyAnimation(container, "maximumHeight");
       connect(fixedSizeAnimation, &QPropertyAnimation::valueChanged, this,
-              [=](const QVariant& value) {
+              [=](const QVariant &value) {
                 container->setFixedHeight(value.toUInt());
               });
       fixedSizeAnimation->setStartValue(container->height());
@@ -178,17 +178,17 @@ void TtComboBox::hidePopup() {
       fixedSizeAnimation->start(QAbstractAnimation::DeleteWhenStopped);
       d->is_allow_hide_popup_ = false;
     }
-    //指示器动画
-    QPropertyAnimation* rotateAnimation =
+    // 指示器动画
+    QPropertyAnimation *rotateAnimation =
         new QPropertyAnimation(d->comboBox_style_, "pExpandIconRotate");
     connect(rotateAnimation, &QPropertyAnimation::valueChanged, this,
-            [=](const QVariant& value) { update(); });
+            [=](const QVariant &value) { update(); });
     rotateAnimation->setDuration(300);
     rotateAnimation->setEasingCurve(QEasingCurve::InOutSine);
     rotateAnimation->setStartValue(d->comboBox_style_->getExpandIconRotate());
     rotateAnimation->setEndValue(0);
     rotateAnimation->start(QAbstractAnimation::DeleteWhenStopped);
-    QPropertyAnimation* markAnimation =
+    QPropertyAnimation *markAnimation =
         new QPropertyAnimation(d->comboBox_style_, "pExpandMarkWidth");
     markAnimation->setDuration(300);
     markAnimation->setEasingCurve(QEasingCurve::InOutSine);
@@ -198,12 +198,12 @@ void TtComboBox::hidePopup() {
   }
 }
 
-TtComboBoxPrivate::TtComboBoxPrivate(QObject* parent) {}
+TtComboBoxPrivate::TtComboBoxPrivate(QObject *parent) {}
 
 TtComboBoxPrivate::~TtComboBoxPrivate() {}
 
-TtLabelComboBox::TtLabelComboBox(Qt::AlignmentFlag flag, const QString& text,
-                                 QWidget* parent)
+TtLabelComboBox::TtLabelComboBox(Qt::AlignmentFlag flag, const QString &text,
+                                 QWidget *parent)
     : QWidget(parent) {
   combo_box_ = new TtComboBox(this);
 
@@ -211,53 +211,53 @@ TtLabelComboBox::TtLabelComboBox(Qt::AlignmentFlag flag, const QString& text,
   // 设置 tip
   label_->setToolTip(text);
 
-  QHBoxLayout* layout = new QHBoxLayout(this);
+  QHBoxLayout *layout = new QHBoxLayout(this);
   layout->setContentsMargins(QMargins());
   layout->setSpacing(5);
 
   switch (flag) {
-    case Qt::AlignLeft:
-      layout->addWidget(label_, 0);
-      layout->addWidget(combo_box_, 1);  // 添加拉伸因子
-      break;
-    case Qt::AlignRight:
-      layout->addStretch();
-      layout->addWidget(label_, 0);
-      layout->addWidget(combo_box_, 1);
-      break;
-    case Qt::AlignHCenter:
-      layout->addStretch();
-      layout->addWidget(label_, 0);
-      layout->addWidget(combo_box_, 1);
-      layout->addStretch();
-      break;
-    default:
-      layout->addWidget(label_, 0);
-      layout->addWidget(combo_box_, 1);
-      break;
+  case Qt::AlignLeft:
+    layout->addWidget(label_, 0);
+    layout->addWidget(combo_box_, 1); // 添加拉伸因子
+    break;
+  case Qt::AlignRight:
+    layout->addStretch();
+    layout->addWidget(label_, 0);
+    layout->addWidget(combo_box_, 1);
+    break;
+  case Qt::AlignHCenter:
+    layout->addStretch();
+    layout->addWidget(label_, 0);
+    layout->addWidget(combo_box_, 1);
+    layout->addStretch();
+    break;
+  default:
+    layout->addWidget(label_, 0);
+    layout->addWidget(combo_box_, 1);
+    break;
   }
-  //if (flag & Qt::AlignLeft) {
-  //  // 左
-  //  // layout->addStretch();
-  //  // layout->addWidget(label_, Qt::AlignLeft);
-  //  // layout->addWidget(combo_box_, Qt::AlignLeft);
-  //  // layout->addStretch();
-  //  layout->addWidget(label_);
-  //  // layout->addSpacerItem(new QSpacerItem(10, 10));
-  //  layout->addWidget(combo_box_);
-  //} else if (flag & Qt::AlignRight) {
+  // if (flag & Qt::AlignLeft) {
+  //   // 左
+  //   // layout->addStretch();
+  //   // layout->addWidget(label_, Qt::AlignLeft);
+  //   // layout->addWidget(combo_box_, Qt::AlignLeft);
+  //   // layout->addStretch();
+  //   layout->addWidget(label_);
+  //   // layout->addSpacerItem(new QSpacerItem(10, 10));
+  //   layout->addWidget(combo_box_);
+  // } else if (flag & Qt::AlignRight) {
 
   //} else if (flag & (Qt::AlignTop | Qt::AlignHCenter)) {
   //  // 水平居中
   //} else if (flag & (Qt::AlignTop | Qt::AlignLeft)) {
   //}
-  //setLayout(layout);
+  // setLayout(layout);
 
   connect(combo_box_, &TtComboBox::currentIndexChanged, this,
           &TtLabelComboBox::currentIndexChanged);
 }
 
-TtLabelComboBox::TtLabelComboBox(const QString& text, QWidget* parent)
+TtLabelComboBox::TtLabelComboBox(const QString &text, QWidget *parent)
     : TtLabelComboBox(Qt::AlignLeft, text, parent) {}
 
 TtLabelComboBox::~TtLabelComboBox() {
@@ -265,11 +265,9 @@ TtLabelComboBox::~TtLabelComboBox() {
   // delete label_;
 }
 
-TtComboBox* TtLabelComboBox::body() {
-  return combo_box_;
-}
+TtComboBox *TtLabelComboBox::body() { return combo_box_; }
 
-void TtLabelComboBox::addItem(const QString& atext, const QVariant& auserData) {
+void TtLabelComboBox::addItem(const QString &atext, const QVariant &auserData) {
   combo_box_->addItem(atext, auserData);
 }
 
@@ -285,13 +283,13 @@ QString TtLabelComboBox::itemText(int index) {
   return combo_box_->itemText(index);
 }
 
-QString TtLabelComboBox::currentText() {
-  return combo_box_->currentText();
+QString TtLabelComboBox::currentText() { return combo_box_->currentText(); }
+
+void TtLabelComboBox::setCurrentText(const QString &text) {
+  combo_box_->setCurrentText(text);
 }
 
-int TtLabelComboBox::count() {
-  return combo_box_->count();
-}
+int TtLabelComboBox::count() { return combo_box_->count(); }
 
 void TtLabelComboBox::shortCurrentItemText() {
   // 虚拟串口一样
@@ -304,11 +302,11 @@ void TtLabelComboBox::shortCurrentItemText() {
 }
 
 TtLabelBtnComboBox::TtLabelBtnComboBox(Qt::AlignmentFlag flag,
-                                       const QString& text,
-                                       const QString& image_path,
-                                       QWidget* parent)
+                                       const QString &text,
+                                       const QString &image_path,
+                                       QWidget *parent)
     : QWidget(parent) {
-  QHBoxLayout* layout = new QHBoxLayout(this);
+  QHBoxLayout *layout = new QHBoxLayout(this);
   part_ = new TtLabelComboBox(flag, text, this);
   auto refresh_btn = new Ui::TtSvgButton(":/sys/refresh-normal.svg", this);
   refresh_btn->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
@@ -322,10 +320,10 @@ TtLabelBtnComboBox::TtLabelBtnComboBox(Qt::AlignmentFlag flag,
   });
 }
 
-TtLabelBtnComboBox::TtLabelBtnComboBox(const QString& text, QWidget* parent)
+TtLabelBtnComboBox::TtLabelBtnComboBox(const QString &text, QWidget *parent)
     : QWidget(parent) {
   part_ = new TtLabelComboBox(text, this);
-  TtHorizontalLayout* layout = new TtHorizontalLayout(this);
+  TtHorizontalLayout *layout = new TtHorizontalLayout(this);
   auto refresh_btn = new Ui::TtSvgButton(":/sys/refresh-normal.svg", this);
   refresh_btn->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   refresh_btn->setColors(Qt::black, Qt::blue);
@@ -337,21 +335,17 @@ TtLabelBtnComboBox::TtLabelBtnComboBox(const QString& text, QWidget* parent)
   connect(part_, &TtLabelComboBox::currentIndexChanged, this,
           &TtLabelBtnComboBox::displayCurrentCOMx);
 
-  connect(refresh_btn, &Ui::TtSvgButton::clicked, [this]() {
-    emit clicked();
-  });
+  connect(refresh_btn, &Ui::TtSvgButton::clicked, [this]() { emit clicked(); });
 }
 
 TtLabelBtnComboBox::~TtLabelBtnComboBox() {}
 
-void TtLabelBtnComboBox::addItem(const QString& atext,
-                                 const QVariant& auserData) {
+void TtLabelBtnComboBox::addItem(const QString &atext,
+                                 const QVariant &auserData) {
   part_->addItem(atext, auserData);
 }
 
-TtComboBox* TtLabelBtnComboBox::body() {
-  return part_->body();
-}
+TtComboBox *TtLabelBtnComboBox::body() { return part_->body(); }
 
 QVariant TtLabelBtnComboBox::currentData(int role) {
   return part_->currentData(role);
@@ -365,16 +359,14 @@ QString TtLabelBtnComboBox::itemText(int index) {
   return part_->itemText(index);
 }
 
-QString TtLabelBtnComboBox::currentText() {
-  return part_->currentText();
+QString TtLabelBtnComboBox::currentText() { return part_->currentText(); }
+
+void Ui::TtLabelBtnComboBox::setCurrentText(const QString &text) {
+  part_->setCurrentText(text);
 }
 
-int TtLabelBtnComboBox::count() {
-  return part_->count();
-}
+int TtLabelBtnComboBox::count() { return part_->count(); }
 
-void TtLabelBtnComboBox::displayCurrentCOMx() {
-  part_->shortCurrentItemText();
-}
+void TtLabelBtnComboBox::displayCurrentCOMx() { part_->shortCurrentItemText(); }
 
-}  // namespace Ui
+} // namespace Ui

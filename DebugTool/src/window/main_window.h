@@ -14,7 +14,7 @@
 
 namespace QWK {
 class WidgetWindowAgent;
-}  // namespace QWK
+} // namespace QWK
 
 namespace Ui {
 class TextWidget;
@@ -25,17 +25,17 @@ class TtWidgetGroup;
 class SessionManager;
 class TabManager;
 class SettingWidget;
-}  // namespace Ui
+} // namespace Ui
 
 namespace Core {
 class SerialPortWorker;
-}  // namespace Core
+} // namespace Core
 
 class QtMaterialSnackbar;
 
 namespace Widget {
 // class SettingWidget;
-}  // namespace Widget
+} // namespace Widget
 
 namespace Window {
 
@@ -43,8 +43,8 @@ class FunctionSelectionWindow;
 
 class MainWindow : public QMainWindow {
   Q_OBJECT
- public:
-  explicit MainWindow(QWidget* parent = nullptr);
+public:
+  explicit MainWindow(QWidget *parent = nullptr);
   virtual ~MainWindow();
 
   enum Theme {
@@ -55,74 +55,79 @@ class MainWindow : public QMainWindow {
 
   void initLanguageMenu();
 
- signals:
+signals:
   void themeChanged();
 
- private slots:
+private slots:
   void closeWindow();
   void compileTsFilesFinished();
   void saveCsvFile();
+  void switchToOtherTabPage(const QString &uuid, const int &type);
 
- protected:
-  bool event(QEvent* event) override;
+protected:
+  bool event(QEvent *event) override;
 
- private:
+private:
   void installWindowAgent();
   void loadStyleSheet(Theme theme);
   void setLeftBar();
   void connectSignals();
   void registerTabWidget();
   void addDifferentConfiguration(TtFunctionalCategory::Category type,
-                                 const QString& title, const QString& uuid);
+                                 TtProtocolRole::Role role,
+                                 const QString &title, const QString &uuid);
 
-  QString extractLanguageName(const QString& qmFile);  // 解析语言后缀名
-  void changeLanguage(const QString& qmFile);          // 切换语言
+  QString extractLanguageName(const QString &qmFile); // 解析语言后缀名
+  void changeLanguage(const QString &qmFile);         // 切换语言
 
-  void saveLanguageSetting(const QString& language);  // 语言选项保存至配置文件
-  void restartApplication();                          // 重启应用
+  void saveLanguageSetting(const QString &language); // 语言选项保存至配置文件
+  void restartApplication();                         // 重启应用
 
-  void readingProjectConfiguration();
+  void readingProjectConfiguration(); // 读取全部配置
+  QJsonObject
+  getSpecificConfiguration(const QString index,
+                           TtProtocolRole::Role role); // 获取单个配置信息
 
   Theme currentTheme{};
 
-  QWidget* central_widget_;
+  QWidget *central_widget_;
   QPointer<QWK::WidgetWindowAgent> window_agent_;
-  Ui::TtHorizontalLayout* layout_;
+  Ui::TtHorizontalLayout *layout_;
 
   // 侧边弹出的菜单栏, 设置串口参数, 其他事项, 按钮组
-  QWidget* left_bar_;
+  QWidget *left_bar_;
   Ui::TtWidgetGroup *left_bar_logic_;
 
-  Ui::SessionManager* history_link_list_;
-  Ui::SessionManager* history_instruction_list_;
-  Ui::SessionManager* history_mock_list_;
+  Ui::SessionManager *history_link_list_;
+  Ui::SessionManager *history_instruction_list_;
+  Ui::SessionManager *history_mock_list_;
 
-  QVector<QVector<QWidget*>> stacked_;
+  QVector<QVector<QWidget *>> stacked_;
 
-  Ui::TtSvgButton* communication_connection_;
-  Ui::TtSvgButton* communication_instruction_;
-  Ui::TtSvgButton* realistic_simulation_;
-  Ui::TtSvgButton* setting_;
+  Ui::TtSvgButton *communication_connection_;
+  Ui::TtSvgButton *communication_instruction_;
+  Ui::TtSvgButton *realistic_simulation_;
+  Ui::TtSvgButton *setting_;
 
-  Ui::SettingWidget* setting_widget_ = nullptr;
+  Ui::SettingWidget *setting_widget_ = nullptr;
 
   // tab 页面
-  Ui::TabManager* tabWidget_;
+  Ui::TabManager *tabWidget_;
 
-  Window::FunctionSelectionWindow* function_select_;
+  Window::FunctionSelectionWindow *function_select_;
 
   // 弹出的 widget
   // 要赋值父对象, 这个父对象也就是 canves
   // 弹出的 widget 的左侧应该在 left_bar_ 的右侧对齐
-  Ui::PopWidget* communication_connection_widget;
+  Ui::PopWidget *communication_connection_widget;
 
-  Ui::WidgetGroup* buttonGroup;
+  Ui::WidgetGroup *buttonGroup;
 
-  QTranslator* translator_ = nullptr;
+  QTranslator *translator_ = nullptr;
 
   QString savedLanguage_;
 };
 
-}  // namespace Window
+} // namespace Window
 
-#endif  // WINDOW_MAIN_WINDOW_H
+#endif // WINDOW_MAIN_WINDOW_H

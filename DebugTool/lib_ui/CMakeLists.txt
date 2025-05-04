@@ -12,8 +12,8 @@ set(CMAKE_AUTOMOC ON)
 option(TTLIBUI_LIBRARY_BUILD_STATIC_LIB "Build static library." OFF)
 
 # 设置输出路径
-set(LIB_UI_OUT_ROOT "${CMAKE_BINARY_DIR}/${PROJECT_NAME}")
-
+set(LIB_UI_OUT_ROOT ${CMAKE_BINARY_DIR}/${PROJECT_NAME})
+#set(LIB_UI_OUT_ROOT ${CMAKE_BINARY_DIR})
 
 add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 add_definitions(-DTTLIBUI_LIBRARY) # 在库项目中定义 TTLIBUI_LIBRARY

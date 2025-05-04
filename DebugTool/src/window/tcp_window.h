@@ -4,6 +4,9 @@
 #include <Qsci/qsciscintilla.h>
 
 #include "Def.h"
+// #include "frame_window.h"
+#include "ui/widgets/window_switcher.h"
+#include "window/frame_window.h"
 
 QT_BEGIN_NAMESPACE
 class QStackedWidget;
@@ -21,72 +24,83 @@ class TtLineEdit;
 
 class TtChatView;
 class TtChatMessageModel;
-}  // namespace Ui
+} // namespace Ui
 
 namespace Widget {
 class TcpServerSetting;
 class TcpClientSetting;
-}  // namespace Widget
+} // namespace Widget
 
 namespace Core {
 class TcpServer;
 class TcpClient;
-}  // namespace Core
+} // namespace Core
 
 namespace Window {
 
-class TcpWindow : public QWidget {
+class TcpWindow : public FrameWindow, public Ui::TabManager::ISerializable {
   Q_OBJECT
- public:
+public:
   explicit TcpWindow(TtProtocolType::ProtocolRole role,
-                     QWidget* parent = nullptr);
+                     QWidget *parent = nullptr);
 
   QString getTitle() const;
   QJsonObject getConfiguration() const;
 
- signals:
-  void requestSaveConfig();
-  void requestSendMessage(const QByteArray& data);
+  bool workState() const override;
+  bool saveState() override;
+  void setSaveState(bool state) override;
+  void saveSetting() override;
+  void setSetting(const QJsonObject &config) override;
 
- private slots:
+signals:
+  void requestSaveConfig();
+  void requestSendMessage(const QByteArray &data);
+
+protected:
+  // 实现序列化接口
+  QByteArray saveState() const override;
+  bool restoreState(const QByteArray &state) override;
+
+private slots:
   void switchToEditMode();
   void switchToDisplayMode();
   void updateServerStatus();
-  void onDataReceived(const QByteArray& data);
+  void onDataReceived(const QByteArray &data);
 
- private:
+private:
   void init();
   void connectSignals();
 
-  Ui::TtVerticalLayout* main_layout_;
+  Ui::TtVerticalLayout *main_layout_;
 
-  Ui::TtNormalLabel* title_;
-  Ui::TtSvgButton* modify_title_btn_;
-  Ui::TtSvgButton* save_btn_;
-  Ui::TtSvgButton* on_off_btn_;
+  Ui::TtNormalLabel *title_;
+  Ui::TtSvgButton *modify_title_btn_;
+  Ui::TtSvgButton *save_btn_;
+  Ui::TtSvgButton *on_off_btn_;
 
-  Ui::TtChatView* message_view_;
-  Ui::TtChatMessageModel* message_model_;
+  Ui::TtChatView *message_view_;
+  Ui::TtChatMessageModel *message_model_;
 
-  Ui::TtTableWidget* instruction_table_;
+  Ui::TtTableWidget *instruction_table_;
 
-  Core::TcpClient* tcp_client_{nullptr};
-  Core::TcpServer* tcp_server_{nullptr};
+  Core::TcpClient *tcp_client_{nullptr};
+  Core::TcpServer *tcp_server_{nullptr};
 
-  Widget::TcpServerSetting* tcp_server_setting_{nullptr};
-  Widget::TcpClientSetting* tcp_client_setting_{nullptr};
+  Widget::TcpServerSetting *tcp_server_setting_{nullptr};
+  Widget::TcpClientSetting *tcp_client_setting_{nullptr};
 
   Ui::TtNormalLabel *send_byte;
   Ui::TtNormalLabel *recv_byte;
   quint64 send_byte_count = 0;
   quint64 recv_byte_count = 0;
 
-  QsciScintilla* editor;
+  QsciScintilla *editor;
 
-  QWidget* original_widget_{nullptr};
-  QWidget* edit_widget_{nullptr};
-  Ui::TtLineEdit* title_edit_{nullptr};
-  QStackedWidget* stack_{nullptr};
+  QWidget *original_widget_{nullptr};
+  QWidget *edit_widget_{nullptr};
+  Ui::TtLineEdit *title_edit_{nullptr};
+  QStackedWidget *stack_{nullptr};
 
   bool tcp_opened_{false};
 
@@ -96,5 +110,4 @@ class TcpWindow : public QWidget {
 
 } // namespace Window
 
-
-#endif  // TCP_WINDOW_H
+#endif // TCP_WINDOW_H

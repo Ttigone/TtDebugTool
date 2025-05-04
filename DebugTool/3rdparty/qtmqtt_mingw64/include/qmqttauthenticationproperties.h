@@ -4,13 +4,13 @@
 #ifndef QMQTTAUTHENTICATIONPROPERTIES_H
 #define QMQTTAUTHENTICATIONPROPERTIES_H
 
-#include <QtMqtt/qmqttglobal.h>
-#include <QtMqtt/qmqtttype.h>
+#include <qmqttglobal.h>
+#include <qmqtttype.h>
 
-#include <QtCore/QHash>
-#include <QtCore/QObject>
-#include <QtCore/QSharedDataPointer>
-#include <QtCore/QString>
+#include <QHash>
+#include <QObject>
+#include <QSharedDataPointer>
+#include <QString>
 
 QT_BEGIN_NAMESPACE
 

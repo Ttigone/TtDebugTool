@@ -30,8 +30,9 @@
 
 namespace Window {
 
-MqttWindow::MqttWindow(TtProtocolType::ProtocolRole role, QWidget* parent)
-    : QWidget(parent), role_(role) {
+MqttWindow::MqttWindow(TtProtocolType::ProtocolRole role, QWidget *parent)
+    // : QWidget(parent), role_(role) {
+    : FrameWindow(parent), role_(role) {
   opened_ = false;
   mqtt_client_ = new Core::MqttClient;
   connect(mqtt_client_, &Core::MqttClient::connected, [this]() {
@@ -45,32 +46,42 @@ MqttWindow::MqttWindow(TtProtocolType::ProtocolRole role, QWidget* parent)
     on_off_btn_->setChecked(false);
   });
   connect(mqtt_client_, &Core::MqttClient::errorOccurred,
-          [this](const QString& error) {
+          [this](const QString &error) {
             Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""), error, 1500,
                                     this);
             on_off_btn_->setEnabled(true);
             on_off_btn_->setChecked(false);
           });
   connect(mqtt_client_, &Core::MqttClient::dataReceived,
-          [this](const QString& data) { qDebug() << "get: " << data; });
+          [this](const QString &data) { qDebug() << "get: " << data; });
 
   init();
 }
 
 MqttWindow::~MqttWindow() {}
 
-QJsonObject MqttWindow::getConfiguration() const {
-  return config_;
-}
+QJsonObject MqttWindow::getConfiguration() const { return config_; }
 
-QString MqttWindow::getTitle() const {
-  return title_->text();
-}
+bool MqttWindow::workState() const {}
+
+bool MqttWindow::saveState() {}
+
+void MqttWindow::setSaveState(bool state) {}
+
+void MqttWindow::saveSetting() {}
+
+void MqttWindow::setSetting(const QJsonObject &config) {}
+
+QByteArray MqttWindow::saveState() const {}
+
+bool MqttWindow::restoreState(const QByteArray &state) {}
+
+QString MqttWindow::getTitle() const { return title_->text(); }
 
 void MqttWindow::switchToEditMode() {
-  QGraphicsOpacityEffect* effect = new QGraphicsOpacityEffect(title_edit_);
+  QGraphicsOpacityEffect *effect = new QGraphicsOpacityEffect(title_edit_);
   title_edit_->setGraphicsEffect(effect);
-  QPropertyAnimation* anim = new QPropertyAnimation(effect, "opacity");
+  QPropertyAnimation *anim = new QPropertyAnimation(effect, "opacity");
   anim->setDuration(300);
   anim->setStartValue(0);
   anim->setEndValue(1);
@@ -81,7 +92,7 @@ void MqttWindow::switchToEditMode() {
   // 显示 edit 模式
   stack_->setCurrentWidget(edit_widget_);
   // 获取焦点
-  title_edit_->setFocus();  // 自动聚焦输入框
+  title_edit_->setFocus(); // 自动聚焦输入框
 }
 
 void MqttWindow::switchToDisplayMode() {
@@ -103,7 +114,7 @@ void MqttWindow::init() {
 
   // 创建原始界面
   original_widget_ = new QWidget(this);
-  Ui::TtHorizontalLayout* tmpl = new Ui::TtHorizontalLayout(original_widget_);
+  Ui::TtHorizontalLayout *tmpl = new Ui::TtHorizontalLayout(original_widget_);
   tmpl->addSpacerItem(new QSpacerItem(10, 10));
   tmpl->addWidget(title_, 0, Qt::AlignLeft);
   tmpl->addSpacerItem(new QSpacerItem(10, 10));
@@ -114,7 +125,7 @@ void MqttWindow::init() {
   edit_widget_ = new QWidget(this);
   title_edit_ = new Ui::TtLineEdit(this);
 
-  Ui::TtHorizontalLayout* edit_layout =
+  Ui::TtHorizontalLayout *edit_layout =
       new Ui::TtHorizontalLayout(edit_widget_);
   edit_layout->addSpacerItem(new QSpacerItem(10, 10));
   edit_layout->addWidget(title_edit_);
@@ -130,14 +141,14 @@ void MqttWindow::init() {
   connect(modify_title_btn_, &Ui::TtSvgButton::clicked, this,
           &MqttWindow::switchToEditMode);
 
-  Ui::TtHorizontalLayout* tmpP1 = new Ui::TtHorizontalLayout;
+  Ui::TtHorizontalLayout *tmpP1 = new Ui::TtHorizontalLayout;
   tmpP1->addWidget(stack_);
 
-  Ui::TtHorizontalLayout* tmpAll = new Ui::TtHorizontalLayout;
+  Ui::TtHorizontalLayout *tmpAll = new Ui::TtHorizontalLayout;
 
   // 保存 lambda 表达式
   auto handleSave = [this]() {
-    //qDebug() << "失去";
+    // qDebug() << "失去";
     if (!title_edit_->text().isEmpty()) {
       switchToDisplayMode();
     } else {
@@ -147,7 +158,7 @@ void MqttWindow::init() {
 
   connect(title_edit_, &QLineEdit::editingFinished, this, handleSave);
 
-  Ui::TtHorizontalLayout* tmpl2 = new Ui::TtHorizontalLayout;
+  Ui::TtHorizontalLayout *tmpl2 = new Ui::TtHorizontalLayout;
   // 保存按钮
   save_btn_ = new Ui::TtSvgButton(":/sys/save_cfg.svg", this);
   save_btn_->setSvgSize(18, 18);
@@ -172,25 +183,25 @@ void MqttWindow::init() {
 
   main_layout_->addLayout(tmpAll);
 
-  QSplitter* mainSplitter = new QSplitter;
+  QSplitter *mainSplitter = new QSplitter;
   mainSplitter->setOrientation(Qt::Horizontal);
 
-  QWidget* topLevelWidget = new QWidget(this);
-  QVBoxLayout* layout = new QVBoxLayout(topLevelWidget);
+  QWidget *topLevelWidget = new QWidget(this);
+  QVBoxLayout *layout = new QVBoxLayout(topLevelWidget);
 
   // 在 QWidget 内部嵌入一个 QMainWindow
-  QMainWindow* embeddedMainWindow = new QMainWindow();
-  embeddedMainWindow->setWindowFlags(Qt::Widget);  // 确保没有窗口装饰
-  QDockWidget* dock = new QDockWidget(tr("订阅"), embeddedMainWindow);
+  QMainWindow *embeddedMainWindow = new QMainWindow();
+  embeddedMainWindow->setWindowFlags(Qt::Widget); // 确保没有窗口装饰
+  QDockWidget *dock = new QDockWidget(tr("订阅"), embeddedMainWindow);
   dock->setAllowedAreas(Qt::AllDockWidgetAreas);
   dock->setFeatures(QDockWidget::DockWidgetMovable |
                     QDockWidget::DockWidgetFloatable);
 
-  QWidget* cont = new QWidget(embeddedMainWindow);
-  Ui::TtVerticalLayout* cont_layout = new Ui::TtVerticalLayout(cont);
+  QWidget *cont = new QWidget(embeddedMainWindow);
+  Ui::TtVerticalLayout *cont_layout = new Ui::TtVerticalLayout(cont);
   message_view_ = new Ui::TtChatView(cont);
   message_view_->setResizeMode(QListView::Adjust);
-  message_view_->setUniformItemSizes(false);  // 允许每个项具有不同的大小
+  message_view_->setUniformItemSizes(false); // 允许每个项具有不同的大小
   message_view_->setMouseTracking(true);
   message_view_->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
   cont_layout->addWidget(message_view_, 1);
@@ -198,11 +209,11 @@ void MqttWindow::init() {
   message_view_->setModel(message_model_);
   message_view_->scrollToBottom();
 
-  QWidget* sendSetting = new QWidget(cont);
-  Ui::TtVerticalLayout* sendSettingLayout =
+  QWidget *sendSetting = new QWidget(cont);
+  Ui::TtVerticalLayout *sendSettingLayout =
       new Ui::TtVerticalLayout(sendSetting);
 
-  Ui::TtHorizontalLayout* propertyLayout = new Ui::TtHorizontalLayout();
+  Ui::TtHorizontalLayout *propertyLayout = new Ui::TtHorizontalLayout();
   fomat_ = new Ui::TtComboBox(sendSetting);
   fomat_->addItem("JSON");
   fomat_->addItem("Base64");
@@ -258,9 +269,9 @@ void MqttWindow::init() {
   subscripition_list_ = new Ui::SubscripitionManager(this);
   subscripition_list_->setContextMenuPolicy(Qt::CustomContextMenu);
   connect(subscripition_list_, &QListView::customContextMenuRequested,
-          [this](const QPoint& pos) {
+          [this](const QPoint &pos) {
             QMenu menu;
-            QAction* deleteAction = menu.addAction("删除订阅");
+            QAction *deleteAction = menu.addAction("删除订阅");
             connect(deleteAction, &QAction::triggered, [this, pos]() {
               QModelIndex index = subscripition_list_->indexAt(pos);
               model->removeRow(index.row());
@@ -269,13 +280,13 @@ void MqttWindow::init() {
           });
 
   for (int i = 0; i < 3; i++) {
-    QStandardItem* item = new QStandardItem(QString("项目 %1").arg(i));
+    QStandardItem *item = new QStandardItem(QString("项目 %1").arg(i));
     model->appendRow(item);
   }
 
   subscripition_list_->setModel(model);
 
-  QItemSelectionModel* selectionModel = subscripition_list_->selectionModel();
+  QItemSelectionModel *selectionModel = subscripition_list_->selectionModel();
   QModelIndex firstIndex = model->index(0, 0);
 
   dock->setWidget(subscripition_list_);
@@ -336,9 +347,9 @@ void MqttWindow::connectSignals() {
     //     // "输入框不能为空，请填写完整信息。", 3000, this);
     //     "输入框不能为空，请填写完整信息。", 3000, this);
     emit requestSaveConfig();
-    //qDebug() << cfg_.obj;
-    // 配置文件保存到文件中
-    // 当前的 tabWidget 匹配对应的 QJsonObject
+    // qDebug() << cfg_.obj;
+    //  配置文件保存到文件中
+    //  当前的 tabWidget 匹配对应的 QJsonObject
   });
 
   connect(meta_btn_, &Ui::TtTextButton::clicked,
@@ -355,7 +366,7 @@ void MqttWindow::connectSignals() {
 
   connect(subscripition_widget,
           &Widget::SubscripitionWidget::saveConfigToManager,
-          [this](const QByteArray& config) {
+          [this](const QByteArray &config) {
             if (!config.isEmpty()) {
               QDataStream stream(config);
               QString topic, qos, color, alias, identifier, noLocal,
@@ -365,7 +376,7 @@ void MqttWindow::connectSignals() {
               qDebug() << topic << qos << color << alias << identifier
                        << noLocal << retainAsPublished << retainHandling;
 
-              QStandardItem* item = new QStandardItem(QString(topic));
+              QStandardItem *item = new QStandardItem(QString(topic));
               item->setData(config, Qt::UserRole);
               model->appendRow(item);
               mqtt_client_->subscribe(topic);
@@ -402,8 +413,8 @@ void MqttWindow::connectSignals() {
           });
 }
 
-void updateButtonPosition(QsciScintilla* scrollArea, QPushButton* sendButton) {
-  const int margin = 10;  // 边距
+void updateButtonPosition(QsciScintilla *scrollArea, QPushButton *sendButton) {
+  const int margin = 10; // 边距
 
   // 获取视口（viewport）的几何区域
   QRect viewportRect = scrollArea->viewport()->geometry();
@@ -419,4 +430,4 @@ void updateButtonPosition(QsciScintilla* scrollArea, QPushButton* sendButton) {
   sendButton->raise();
 }
 
-}  // namespace Window
+} // namespace Window

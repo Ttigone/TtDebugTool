@@ -18,6 +18,10 @@ get_filename_component(third_party "DebugTool/3rdparty" REALPATH)
 
 # message(STATUS "Using compiler: ${CMAKE_CXX_COMPILER_ID} version: ${CMAKE_CXX_COMPILER_VERSION}")
 
+set(CMAKE_PREFIX_PATH "D:/qt/qt6/6.6.3/mingw_64")
+set(QT_DIR "D:/qt/qt6/6.6.3/mingw_64/lib/cmake/Qt6")
+
+
 include(cmake/external/qt/package.cmake)
 
 # set(desktop_app_skip_libs

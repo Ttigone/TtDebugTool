@@ -4,13 +4,13 @@
 #ifndef QTMQTTCLIENT_H
 #define QTMQTTCLIENT_H
 
-#include <QtMqtt/qmqttglobal.h>
-#include <QtMqtt/qmqttauthenticationproperties.h>
-#include <QtMqtt/qmqttconnectionproperties.h>
-#include <QtMqtt/qmqttpublishproperties.h>
-#include <QtMqtt/qmqttsubscription.h>
-#include <QtMqtt/qmqttsubscriptionproperties.h>
-#include <QtMqtt/qmqtttopicfilter.h>
+#include <qmqttglobal.h>
+#include <qmqttauthenticationproperties.h>
+#include <qmqttconnectionproperties.h>
+#include <qmqttpublishproperties.h>
+#include <qmqttsubscription.h>
+#include <qmqttsubscriptionproperties.h>
+#include <qmqtttopicfilter.h>
 
 #include <QtCore/QIODevice>
 #include <QtCore/QObject>

@@ -26,8 +26,9 @@
 
 namespace Window {
 
-TcpWindow::TcpWindow(TtProtocolType::ProtocolRole role, QWidget* parent)
-    : QWidget(parent), role_(role) {
+TcpWindow::TcpWindow(TtProtocolType::ProtocolRole role, QWidget *parent)
+    // : QWidget(parent), role_(role) {
+    : FrameWindow(parent), role_(role) {
 
   init();
 
@@ -43,7 +44,7 @@ TcpWindow::TcpWindow(TtProtocolType::ProtocolRole role, QWidget* parent)
     connect(tcp_client_, &Core::TcpClient::dataReceived, this,
             &TcpWindow::onDataReceived);
     connect(tcp_client_, &Core::TcpClient::errorOccurred, this,
-            [this](const QString& error) {
+            [this](const QString &error) {
               Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""), error,
                                       1500, this);
               on_off_btn_->setChecked(false);
@@ -55,7 +56,7 @@ TcpWindow::TcpWindow(TtProtocolType::ProtocolRole role, QWidget* parent)
     connect(tcp_server_, &Core::TcpServer::serverStopped, this,
             &TcpWindow::updateServerStatus);
     connect(tcp_server_, &Core::TcpServer::errorOccurred,
-            [this](const QString& err) {
+            [this](const QString &err) {
               QMessageBox::critical(this, tr("错误"), err);
             });
     connect(tcp_server_, &Core::TcpServer::dataReceived, this,
@@ -64,18 +65,45 @@ TcpWindow::TcpWindow(TtProtocolType::ProtocolRole role, QWidget* parent)
   connectSignals();
 }
 
-QJsonObject TcpWindow::getConfiguration() const {
-  return config_;
+QJsonObject TcpWindow::getConfiguration() const { return config_; }
+
+bool TcpWindow::workState() const { return tcp_opened_; }
+
+bool TcpWindow::saveState() { return saved_; }
+
+void TcpWindow::setSaveState(bool state) { saved_ = state; }
+
+void TcpWindow::setSetting(const QJsonObject &config) {}
+
+void TcpWindow::saveSetting() {
+  config_.insert("Type", TtFunctionalCategory::Communication);
+  config_.insert("WindowTitile", title_->text());
+  if (role_ == TtProtocolType::Client) {
+    config_.insert("TcpClientSetting",
+                   tcp_client_setting_->getTcpClientSetting());
+  } else if (role_ == TtProtocolType::Server) {
+    config_.insert("TcpServerSetting",
+                   tcp_server_setting_->getTcpServerSetting());
+  }
+  config_.insert("InstructionTable", instruction_table_->getTableRecord());
+  Ui::TtMessageBar::success(TtMessageBarType::Top, "", tr("保存成功"), 1500,
+                            this);
+  saved_ = true;
+  emit requestSaveConfig();
 }
 
-QString TcpWindow::getTitle() const {
-  return title_->text();
+QByteArray TcpWindow::saveState() const {
+  // return saved_;
 }
+
+bool TcpWindow::restoreState(const QByteArray &state) {}
+
+QString TcpWindow::getTitle() const { return title_->text(); }
 
 void TcpWindow::switchToEditMode() {
-  QGraphicsOpacityEffect* effect = new QGraphicsOpacityEffect(title_edit_);
+  QGraphicsOpacityEffect *effect = new QGraphicsOpacityEffect(title_edit_);
   title_edit_->setGraphicsEffect(effect);
-  QPropertyAnimation* anim = new QPropertyAnimation(effect, "opacity");
+  QPropertyAnimation *anim = new QPropertyAnimation(effect, "opacity");
   anim->setDuration(300);
   anim->setStartValue(0);
   anim->setEndValue(1);
@@ -86,18 +114,19 @@ void TcpWindow::switchToEditMode() {
   // 显示 edit 模式
   stack_->setCurrentWidget(edit_widget_);
   // 获取焦点
-  title_edit_->setFocus();  // 自动聚焦输入框
+  title_edit_->setFocus(); // 自动聚焦输入框
 }
 
 void TcpWindow::switchToDisplayMode() {
-  //QGraphicsOpacityEffect* effect = new QGraphicsOpacityEffect(original_widget_);
-  //original_widget_->setGraphicsEffect(effect);
-  //QPropertyAnimation* anim = new QPropertyAnimation(effect, "opacity");
-  //anim->setDuration(300);
-  //anim->setStartValue(0);
-  //anim->setEndValue(1);
-  //anim->start(QAbstractAnimation::DeleteWhenStopped);
-  // 切换显示模式
+  // QGraphicsOpacityEffect* effect = new
+  // QGraphicsOpacityEffect(original_widget_);
+  // original_widget_->setGraphicsEffect(effect);
+  // QPropertyAnimation* anim = new QPropertyAnimation(effect, "opacity");
+  // anim->setDuration(300);
+  // anim->setStartValue(0);
+  // anim->setEndValue(1);
+  // anim->start(QAbstractAnimation::DeleteWhenStopped);
+  //  切换显示模式
   title_->setText(title_edit_->text());
   stack_->setCurrentWidget(original_widget_);
 }
@@ -109,14 +138,14 @@ void TcpWindow::updateServerStatus() {
   qDebug() << text;
 }
 
-void TcpWindow::onDataReceived(const QByteArray& data) {
+void TcpWindow::onDataReceived(const QByteArray &data) {
   qDebug() << "Received data:" << data;
   recv_byte_count += data.size();
   auto tmp = new Ui::TtChatMessage();
   tmp->setContent(data);
   tmp->setOutgoing(false);
   tmp->setBubbleColor(QColor("#0ea5e9"));
-  QList<Ui::TtChatMessage*> list;
+  QList<Ui::TtChatMessage *> list;
   list.append(tmp);
   message_model_->appendMessages(list);
   recv_byte->setText(QString("接收字节数: %1 B").arg(recv_byte_count));
@@ -139,7 +168,7 @@ void TcpWindow::init() {
 
   // 创建原始界面
   original_widget_ = new QWidget(this);
-  Ui::TtHorizontalLayout* tmpl = new Ui::TtHorizontalLayout(original_widget_);
+  Ui::TtHorizontalLayout *tmpl = new Ui::TtHorizontalLayout(original_widget_);
   tmpl->addSpacerItem(new QSpacerItem(10, 10));
   tmpl->addWidget(title_, 0, Qt::AlignLeft);
   tmpl->addSpacerItem(new QSpacerItem(10, 10));
@@ -150,7 +179,8 @@ void TcpWindow::init() {
   edit_widget_ = new QWidget(this);
   title_edit_ = new Ui::TtLineEdit(this);
 
-  Ui::TtHorizontalLayout* edit_layout = new Ui::TtHorizontalLayout(edit_widget_);
+  Ui::TtHorizontalLayout *edit_layout =
+      new Ui::TtHorizontalLayout(edit_widget_);
   edit_layout->addSpacerItem(new QSpacerItem(10, 10));
   edit_layout->addWidget(title_edit_);
   edit_layout->addStretch();
@@ -165,14 +195,14 @@ void TcpWindow::init() {
   connect(modify_title_btn_, &Ui::TtSvgButton::clicked, this,
           &TcpWindow::switchToEditMode);
 
-  Ui::TtHorizontalLayout* tmpP1 = new Ui::TtHorizontalLayout;
+  Ui::TtHorizontalLayout *tmpP1 = new Ui::TtHorizontalLayout;
   tmpP1->addWidget(stack_);
 
-  Ui::TtHorizontalLayout* tmpAll = new Ui::TtHorizontalLayout;
+  Ui::TtHorizontalLayout *tmpAll = new Ui::TtHorizontalLayout;
 
   // 保存 lambda 表达式
   auto handleSave = [this]() {
-    //qDebug() << "失去";
+    // qDebug() << "失去";
     if (!title_edit_->text().isEmpty()) {
       switchToDisplayMode();
     } else {
@@ -182,7 +212,7 @@ void TcpWindow::init() {
 
   connect(title_edit_, &QLineEdit::editingFinished, this, handleSave);
 
-  Ui::TtHorizontalLayout* tmpl2 = new Ui::TtHorizontalLayout;
+  Ui::TtHorizontalLayout *tmpl2 = new Ui::TtHorizontalLayout;
   // 保存按钮
   save_btn_ = new Ui::TtSvgButton(":/sys/save_cfg.svg", this);
   save_btn_->setSvgSize(18, 18);
@@ -203,23 +233,23 @@ void TcpWindow::init() {
   main_layout_->addLayout(tmpAll);
 
   // 左右分隔器
-  QSplitter* mainSplitter = new QSplitter;
+  QSplitter *mainSplitter = new QSplitter;
   mainSplitter->setOrientation(Qt::Horizontal);
 
   // 上方功能按钮
-  QWidget* chose_function = new QWidget;
-  Ui::TtHorizontalLayout* chose_function_layout = new Ui::TtHorizontalLayout;
+  QWidget *chose_function = new QWidget;
+  Ui::TtHorizontalLayout *chose_function_layout = new Ui::TtHorizontalLayout;
   chose_function_layout->setSpacing(5);
   chose_function->setLayout(chose_function_layout);
 
   chose_function_layout->addStretch();
-  Ui::TtSvgButton* clear_history =
+  Ui::TtSvgButton *clear_history =
       new Ui::TtSvgButton(":/sys/trash.svg", chose_function);
   clear_history->setSvgSize(18, 18);
 
-  //auto bgr = new CustomButtonGroup(chose_function);
-  // 选择 text/hex
-  //chose_function_layout->addWidget(bgr);
+  // auto bgr = new CustomButtonGroup(chose_function);
+  //  选择 text/hex
+  // chose_function_layout->addWidget(bgr);
 
   // 清除历史按钮
   chose_function_layout->addWidget(clear_history);
@@ -227,35 +257,35 @@ void TcpWindow::init() {
   // 中间的弹簧
 
   // 上下分隔器
-  QSplitter* VSplitter = new QSplitter;
+  QSplitter *VSplitter = new QSplitter;
   VSplitter->setOrientation(Qt::Vertical);
   VSplitter->setContentsMargins(QMargins());
   // VSplitter->setSizes();
 
   // 上方选择功能以及信息框
-  QWidget* cont = new QWidget;
-  Ui::TtVerticalLayout* cont_layout = new Ui::TtVerticalLayout(cont);
+  QWidget *cont = new QWidget;
+  Ui::TtVerticalLayout *cont_layout = new Ui::TtVerticalLayout(cont);
 
   message_view_ = new Ui::TtChatView(cont);
   message_view_->setResizeMode(QListView::Adjust);
-  message_view_->setUniformItemSizes(false);  // 允许每个项具有不同的大小
+  message_view_->setUniformItemSizes(false); // 允许每个项具有不同的大小
   message_view_->setMouseTracking(true);
   message_view_->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
   cont_layout->addWidget(chose_function);
   cont_layout->addWidget(message_view_);
 
   message_model_ = new Ui::TtChatMessageModel;
-  QList<Ui::TtChatMessage*> list;
+  QList<Ui::TtChatMessage *> list;
 
   message_view_->setModel(message_model_);
   message_view_->scrollToBottom();
 
-  QWidget* bottomAll = new QWidget;
-  Ui::TtVerticalLayout* bottomAllLayout = new Ui::TtVerticalLayout(bottomAll);
+  QWidget *bottomAll = new QWidget;
+  Ui::TtVerticalLayout *bottomAllLayout = new Ui::TtVerticalLayout(bottomAll);
 
   // 下方自定义指令
-  QWidget* tabs_and_count = new QWidget(this);
-  Ui::TtHorizontalLayout* tacLayout = new Ui::TtHorizontalLayout();
+  QWidget *tabs_and_count = new QWidget(this);
+  Ui::TtHorizontalLayout *tacLayout = new Ui::TtHorizontalLayout();
   tabs_and_count->setLayout(tacLayout);
 
   auto m_tabs = new QtMaterialTabs;
@@ -278,14 +308,14 @@ void TcpWindow::init() {
   tacLayout->addWidget(send_byte);
   tacLayout->addWidget(recv_byte);
 
-  QStackedLayout* layout = new QStackedLayout;
+  QStackedLayout *layout = new QStackedLayout;
   layout->setContentsMargins(QMargins());
   layout->setSpacing(0);
-  QWidget* basicWidget = new QWidget(this);
+  QWidget *basicWidget = new QWidget(this);
   basicWidget->setLayout(layout);
 
-  QWidget* messageEdit = new QWidget(basicWidget);
-  QVBoxLayout* messageEditLayout = new QVBoxLayout;
+  QWidget *messageEdit = new QWidget(basicWidget);
+  QVBoxLayout *messageEditLayout = new QVBoxLayout;
   messageEdit->setLayout(messageEditLayout);
   messageEditLayout->setContentsMargins(3, 3, 3, 3);
   messageEditLayout->setSpacing(0);
@@ -299,19 +329,19 @@ void TcpWindow::init() {
 
   messageEditLayout->addWidget(editor);
 
-  QWidget* bottomBtnWidget = new QWidget(messageEdit);
+  QWidget *bottomBtnWidget = new QWidget(messageEdit);
   bottomBtnWidget->setMinimumHeight(40);
-  Ui::TtHorizontalLayout* bottomBtnWidgetLayout = new Ui::TtHorizontalLayout;
+  Ui::TtHorizontalLayout *bottomBtnWidgetLayout = new Ui::TtHorizontalLayout;
   bottomBtnWidgetLayout->setContentsMargins(QMargins());
   bottomBtnWidgetLayout->setSpacing(0);
   bottomBtnWidget->setLayout(bottomBtnWidgetLayout);
 
-  QtMaterialRadioButton* choseText = new QtMaterialRadioButton(bottomBtnWidget);
-  QtMaterialRadioButton* choseHex = new QtMaterialRadioButton(bottomBtnWidget);
+  QtMaterialRadioButton *choseText = new QtMaterialRadioButton(bottomBtnWidget);
+  QtMaterialRadioButton *choseHex = new QtMaterialRadioButton(bottomBtnWidget);
   choseText->setText("TEXT");
   choseHex->setText("HEX");
 
-  QtMaterialFlatButton* sendBtn = new QtMaterialFlatButton(bottomBtnWidget);
+  QtMaterialFlatButton *sendBtn = new QtMaterialFlatButton(bottomBtnWidget);
   sendBtn->setIcon(QIcon(":/sys/send.svg"));
   bottomBtnWidgetLayout->addWidget(choseText);
   bottomBtnWidgetLayout->addWidget(choseHex);
@@ -326,9 +356,8 @@ void TcpWindow::init() {
   layout->addWidget(instruction_table_);
   layout->setCurrentIndex(0);
 
-  connect(m_tabs, &QtMaterialTabs::currentChanged, [this, layout](int index) {
-    layout->setCurrentIndex(index);
-  });
+  connect(m_tabs, &QtMaterialTabs::currentChanged,
+          [this, layout](int index) { layout->setCurrentIndex(index); });
 
   bottomAllLayout->addWidget(tabs_and_count);
   bottomAllLayout->addWidget(basicWidget);
@@ -379,7 +408,7 @@ void TcpWindow::init() {
     tmp->setContent(data);
     tmp->setOutgoing(true);
     tmp->setBubbleColor(QColor("#DCF8C6"));
-    QList<Ui::TtChatMessage*> list;
+    QList<Ui::TtChatMessage *> list;
     list.append(tmp);
     message_model_->appendMessages(list);
 
@@ -395,25 +424,19 @@ void TcpWindow::init() {
 }
 
 void TcpWindow::connectSignals() {
-  connect(save_btn_, &Ui::TtSvgButton::clicked, [this]() {
-    config_.insert("WindowTitile", title_->text());
-    if (role_ == TtProtocolType::Client) {
-      config_.insert("TcpClientSetting",
-                     tcp_client_setting_->getTcpClientSetting());
-    } else if (role_ == TtProtocolType::Server) {
-      config_.insert("TcpServerSetting",
-                     tcp_server_setting_->getTcpServerSetting());
-    }
-    config_.insert("InstructionTable", instruction_table_->getTableRecord());
-    // Ui::TtMessageBar::success(
-    //     TtMessageBarType::Top, "警告",
-    //     // "输入框不能为空，请填写完整信息。", 3000, this);
-    //     "输入框不能为空，请填写完整信息。", 3000, this);
-    emit requestSaveConfig();
-    //qDebug() << cfg_.obj;
-    // 配置文件保存到文件中
-    // 当前的 tabWidget 匹配对应的 QJsonObject
-  });
+  // connect(save_btn_, &Ui::TtSvgButton::clicked, [this]() {
+  //   config_.insert("WindowTitile", title_->text());
+  //   if (role_ == TtProtocolType::Client) {
+  //     config_.insert("TcpClientSetting",
+  //                    tcp_client_setting_->getTcpClientSetting());
+  //   } else if (role_ == TtProtocolType::Server) {
+  //     config_.insert("TcpServerSetting",
+  //                    tcp_server_setting_->getTcpServerSetting());
+  //   }
+  //   config_.insert("InstructionTable", instruction_table_->getTableRecord());
+  //   emit requestSaveConfig();
+  // });
+  connect(save_btn_, &Ui::TtSvgButton::clicked, this, &TcpWindow::saveSetting);
 }
 
-}  // namespace Window
+} // namespace Window

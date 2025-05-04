@@ -1,10 +1,10 @@
 #ifndef GLOBAL_DEF_H
 #define GLOBAL_DEF_H
 
-//枚举类导出  兼容QT5低版本
+// 枚举类导出  兼容QT5低版本
 #if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
-#define Q_BEGIN_ENUM_CREATE_SRC(CLASS) \
-  namespace CLASS {                    \
+#define Q_BEGIN_ENUM_CREATE_SRC(CLASS)                                         \
+  namespace CLASS {                                                            \
   Q_NAMESPACE
 // Q_NAMESPACE_EXPORT(Tt_EXPORT)
 
@@ -13,21 +13,23 @@
 #define Q_ENUM_CREATE(CLASS) Q_ENUM_NS(CLASS)
 
 #else
-#define Q_BEGIN_ENUM_CREATE(CLASS) \
-  class CLASS : public QObject {   \
-    Q_OBJECT                       \
-   public:
+#define Q_BEGIN_ENUM_CREATE(CLASS)                                             \
+  class CLASS : public QObject {                                               \
+    Q_OBJECT                                                                   \
+  public:
 
-#define Q_END_ENUM_CREATE(CLASS) \
- private:                        \
-  Q_DISABLE_COPY(CLASS)          \
-  }                              \
+#define Q_END_ENUM_CREATE(CLASS)                                               \
+private:                                                                       \
+  Q_DISABLE_COPY(CLASS)                                                        \
+  }                                                                            \
   ;
 
 #define Q_ENUM_CREATE(CLASS) Q_ENUM(CLASS)
 #endif
 
-const QString serialPrefix = "Serial+";  // Define the prefix
+const QString serialPrefix = "Serial+"; // Define the prefix
+// const QString serialPrefix = "Tcp+";  // Define the prefix
+// const QString serialPrefix = "Serial+";  // Define the prefix
 
 Q_BEGIN_ENUM_CREATE_SRC(TtProtocolRole)
 enum Role {
@@ -80,4 +82,4 @@ enum Type {
 Q_ENUM_CREATE(Type)
 Q_END_ENUM_CREATE(TtModbusRegisterType)
 
-#endif  // GLOBAL_DEF_H
+#endif // GLOBAL_DEF_H

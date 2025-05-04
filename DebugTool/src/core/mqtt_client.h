@@ -4,8 +4,10 @@
 #include <QObject>
 
 // #include <qtmqtt/include/qmqttclient.h>
-#include <QtMqtt/QMqttClient>
-#include <QtMqtt/QMqttPublishProperties>
+// #include <QtMqtt/QMqttClient>
+// #include <QtMqtt/QMqttPublishProperties>
+// #include "qtmqtt_mingw64/include/qmqttclient.h"
+#include "qmqttclient.h"
 
 #include "Def.h"
 

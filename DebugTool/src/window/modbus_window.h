@@ -42,7 +42,7 @@ class ModbusMaster;
 namespace Window {
 
 // class ModbusWindow : public QWidget {
-class ModbusWindow : public FrameWindow, public Ui::TabManager::ISerializable {
+class ModbusWindow : public FrameWindow, public Ui::TabWindow::ISerializable {
   Q_OBJECT
 public:
   enum class RegisterType {

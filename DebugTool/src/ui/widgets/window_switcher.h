@@ -24,6 +24,8 @@ class FrameWindow;
 
 namespace Ui {
 
+class TabWindow;
+
 class TabCloseButton : public QToolButton {
   Q_OBJECT
 public:
@@ -62,6 +64,7 @@ class ExtTabBar : public QTabBar {
 
 public:
   explicit ExtTabBar(QWidget *parent = nullptr) : QTabBar(parent) {
+    setMouseTracking(false);
     setMovable(true);
     setUsesScrollButtons(true);
     setDrawBase(false);
@@ -72,29 +75,44 @@ public:
 signals:
   void addTabRequested();
 
-protected:
-  // void dragEnterEvent(QDragEnterEvent* event) {
-  //   if (event->mimeData()->hasUrls())
-  //     event->acceptProposedAction();
-  //   else
-  //     event->ignore();
-  // }
-  // void dropEvent(QDropEvent* event) {
-  //   const QMimeData* mimeData = event->mimeData();
-  //   if (mimeData->hasUrls()) {
-  //     for (const QUrl& url : mimeData->urls()) {
-  //       // emit openFileRequest(url.toLocalFile(), tabAt(event->pos()));
-  //     }
-  //     event->acceptProposedAction();
-  //   } else {
-  //     event->ignore();
-  //   }
-  // }
-
 private:
 };
 
-class TabManager : public QTabWidget {
+class TabWindowManager : public QObject {
+  Q_OBJECT
+
+public:
+  static TabWindowManager *instance();
+
+  // 存储多个 QTabWidget
+  QList<TabWindow *> windows() const;
+
+  TabWindow *currentWindow() const;
+  QWidget *currentWidget() const;
+
+signals:
+  void tabCloseRequested(QWidget *widget, TabWindow *window);
+
+protected:
+  void addWindow(TabWindow *window);
+  void removeWindow(TabWindow *window);
+
+  TabWindow *possibleWindow(TabWindow *currentWindow,
+                            QPoint globalPos = QCursor::pos());
+
+private:
+  void activateWindow(QWindow *window);
+  void requestCloseTab(int index);
+
+private:
+  using QObject::QObject;
+  TabWindowManager();
+
+  friend class TabWindow;
+  QList<TabWindow *> windows_;
+};
+
+class TabWindow : public QTabWidget {
   Q_OBJECT
 
 public:
@@ -111,8 +129,8 @@ public:
 
   static QString SpecialTypeIcon(TtProtocolRole::Role role);
 
-  explicit TabManager(QWidget *defalue_widget, QWidget *parent = nullptr);
-  ~TabManager() override;
+  explicit TabWindow(QWidget *defalue_widget, QWidget *parent = nullptr);
+  ~TabWindow() override;
 
   void addNewTab(const QString &title = "");
   void addNewTab(QWidget *defaultWidget);
@@ -132,8 +150,6 @@ public:
   void switchByAlreadyExistingWidget(
       int tabIndex, const QString &uuid, const QJsonObject &config,
       TtProtocolRole::Role role); // 存有 uuid 的历史窗口
-
-  void setupTabBar();
 
   // 序列化支持
   bool saveState(const QString &filePath) const;
@@ -167,9 +183,11 @@ public slots:
   void handleTabCloseRequested(int index); // 删除 Page
   void removeUuidWidget(const QString &index);
 
+protected:
+  bool eventFilter(QObject *watched, QEvent *event) override;
+
 private:
   struct TabData;
-
   void setupCustomTabButton(int index);
   void updateTabStyle(int index); // 样式表
   void setupCornerButton();       // 右上角的 button
@@ -209,6 +227,12 @@ private:
   QMap<QString, QWidget *> widgetInstances;          // Widget 实例
 
   static QMap<TtProtocolRole::Role, QString> type_icon_map_;
+
+private:
+  bool is_moving_ = false;
+  bool ignore_mouse_event_ = false;
+  TabWindow *moving_window_ = nullptr;
+  QPoint mouse_delta_;
 };
 
 /*

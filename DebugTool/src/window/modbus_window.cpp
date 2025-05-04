@@ -56,7 +56,8 @@ QByteArray ModbusWindow::saveState() const {}
 bool ModbusWindow::restoreState(const QByteArray &state) {}
 
 bool ModbusWindow::workState() const {
-  // return modu
+  // return open
+  return false;
 }
 
 bool ModbusWindow::saveState() { return saved_; }

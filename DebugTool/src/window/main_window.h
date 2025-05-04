@@ -23,7 +23,8 @@ class PopWidget;
 class TtSvgButton;
 class TtWidgetGroup;
 class SessionManager;
-class TabManager;
+// class TabManager;
+class TabWindow;
 class SettingWidget;
 } // namespace Ui
 
@@ -112,7 +113,8 @@ private:
   Ui::SettingWidget *setting_widget_ = nullptr;
 
   // tab 页面
-  Ui::TabManager *tabWidget_;
+  // Ui::TabManager *tabWidget_;
+  Ui::TabWindow *tabWidget_;
 
   Window::FunctionSelectionWindow *function_select_;
 

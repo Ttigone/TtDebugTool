@@ -70,7 +70,7 @@ private:
 };
 
 // class MqttWindow : public QWidget {
-class MqttWindow : public FrameWindow, public Ui::TabManager::ISerializable {
+class MqttWindow : public FrameWindow, public Ui::TabWindow::ISerializable {
   Q_OBJECT
 public:
   explicit MqttWindow(TtProtocolType::ProtocolRole role,

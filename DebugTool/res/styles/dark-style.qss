@@ -156,11 +156,7 @@ MainWindow[custom-style=true] {
 */
 
 QListView {
-    /*border: 1px solid #636363;*/
     border: 0px;
-    /*selection-background-color: #4D4D4D;*/
-    /*selection-color: #F0F0F0;*/
-    /*background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 #4D4D4D, stop:1 #292929);*/
     outline:0px;
 }
 
@@ -171,7 +167,7 @@ QListWidget:focus
 
 
 QSplitter::handle {
-    background-color: #404142;
+    background-color: #ccc;
     width: 1px;
     height: 1px;
     margin: 1px;
@@ -182,10 +178,47 @@ QSplitter::handle:hover {
 }
 
 QSplitter::handle:pressed {
-    background-color: white;
+    background-color: #3C3C3C;
 }
 
 QTabWidget::pane {
+    border-top: 1px solid #ccc;
+    border-left: 1px solid #ccc;
+    border-right: none;
+    border-bottom: none;
+}
+
+QTabWidget {
+    background: transparent;
+}
+
+/* 尝试隐藏或设置角落区域的样式 */
+QTabWidget::corner-widget {
+    border: none;
+    background: transparent; /* 或者设置为与 TabBar 一致的颜色 */
+}
+
+/* 普通未选中的标签样式 */
+QTabBar::tab {
+    background: transparent;
+    padding: 6px 12px;
+    border-top: 1px solid #ccc;
+    border-left: 1px solid #ccc;
+
+    border-right: none;
+    border-bottom: none;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+}
+/* 选中标签高亮 */
+QTabBar::tab:selected {
+    background: #3C3C3C;
 
 }
+/* 鼠标悬停效果（可选） */
+QTabBar::tab:hover {
+   background: #505050;
+}
+
+
 

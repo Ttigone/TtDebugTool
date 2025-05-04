@@ -38,7 +38,7 @@ class TcpClient;
 
 namespace Window {
 
-class TcpWindow : public FrameWindow, public Ui::TabManager::ISerializable {
+class TcpWindow : public FrameWindow, public Ui::TabWindow::ISerializable {
   Q_OBJECT
 public:
   explicit TcpWindow(TtProtocolType::ProtocolRole role,

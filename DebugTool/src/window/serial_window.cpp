@@ -62,6 +62,9 @@ SerialWindow::SerialWindow(QWidget *parent)
           &SerialWindow::showErrorMessage);
 
   worker_thread_->start();
+
+  // 初始化完成
+  qDebug() << "SerialWindow 初始化完成: " << this;
 }
 
 SerialWindow::~SerialWindow() {
@@ -131,29 +134,30 @@ bool SerialWindow::saveState() {
 
 void SerialWindow::setSaveState(bool state) { saved_ = state; }
 
-// void SerialWindow::getSetting() {
 void SerialWindow::saveSetting() {
-  // qDebug() << "saving setting";
+  qDebug() << "saving setting";
   config_.insert("Type", TtFunctionalCategory::Communication);
   config_.insert("WindowTitle", title_->text());
   config_.insert("SerialSetting", serial_setting_->getSerialSetting());
   config_.insert("InstructionTable", instruction_table_->getTableRecord());
-  Ui::TtMessageBar::success(TtMessageBarType::Top, "", tr("保存成功"), 1500,
+  Ui::TtMessageBar::success(TtMessageBarType::Top, tr(""), tr("保存成功"), 1500,
                             this);
   saved_ = true;
-  emit requestSaveConfig();
   qDebug() << "save yes";
+  emit requestSaveConfig();
 }
 
 void SerialWindow::setSetting(const QJsonObject &config) {
+  qDebug() << "串口创建";
   // 解析 config
   title_->setText(config.value("WindowTitle").toString(tr("未读取正确的标题")));
+  qDebug() << "串口设置完成1";
   serial_setting_->setOldSettings(
       config.value("SerialSetting").toObject(QJsonObject()));
-
-  Ui::TtMessageBar::success(TtMessageBarType::Top, "", tr("读取配置成功"), 1500,
-                            this);
-  // config_.value("SerialSetting").toObject();
+  qDebug() << "串口设置完成2";
+  Ui::TtMessageBar::success(TtMessageBarType::Top, tr(""), tr("读取配置成功"),
+                            1500, this);
+  qDebug() << "串口设置完成3";
 }
 
 void SerialWindow::switchToEditMode() {

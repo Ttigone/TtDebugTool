@@ -40,7 +40,7 @@ class UdpClient;
 namespace Window {
 
 // class UdpWindow : public QWidget {
-class UdpWindow : public FrameWindow, public Ui::TabManager::ISerializable {
+class UdpWindow : public FrameWindow, public Ui::TabWindow::ISerializable {
   Q_OBJECT
 public:
   explicit UdpWindow(TtProtocolType::ProtocolRole role,

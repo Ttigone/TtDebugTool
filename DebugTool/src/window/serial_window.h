@@ -57,7 +57,7 @@ class SerialPortWorker;
 namespace Window {
 
 // class SerialWindow : public QWidget, public Ui::TabManager::ISerializable {
-class SerialWindow : public FrameWindow, public Ui::TabManager::ISerializable {
+class SerialWindow : public FrameWindow, public Ui::TabWindow::ISerializable {
   Q_OBJECT
 public:
   enum class MsgType { TEXT = 0x01, HEX = 0x02 };
@@ -74,8 +74,8 @@ public:
   bool saveState() override;
   void setSaveState(bool state) override;
 
-  void saveSetting() override;
-  void setSetting(const QJsonObject &config) override;
+  Q_INVOKABLE void saveSetting() override;
+  Q_INVOKABLE void setSetting(const QJsonObject &config) override;
 
 signals:
   void requestSaveConfig();

@@ -1,5 +1,18 @@
-#ifndef UI_WINDOW_SWITCHER_H
-#define UI_WINDOW_SWITCHER_H
+/*
+  This file is part of KDToolBox.
+
+  SPDX-FileCopyrightText: 2020 Klarälvdalens Datakonsult AB, a KDAB Group
+  company <info@kdab.com> Author: Nicolas Arnaud-Cormos
+  <nicolas.arnaud-cormos@kdab.com>
+
+  SPDX-License-Identifier: MIT
+*/
+
+#ifndef TABWINDOW_H
+#define TABWINDOW_H
+
+#include <QCursor>
+#include <QTabWidget>
 
 #include <QMap>
 #include <QMouseEvent>
@@ -22,8 +35,9 @@ namespace Window {
 class FrameWindow;
 } // namespace Window
 
-namespace Ui {
-
+QT_BEGIN_NAMESPACE
+class QWindow;
+QT_END_NAMESPACE
 class TabWindow;
 
 class TabCloseButton : public QToolButton {
@@ -59,32 +73,12 @@ protected:
   void leaveEvent(QEvent *event) override { QToolButton::leaveEvent(event); }
 };
 
-class ExtTabBar : public QTabBar {
-  Q_OBJECT
-
-public:
-  explicit ExtTabBar(QWidget *parent = nullptr) : QTabBar(parent) {
-    setMouseTracking(false);
-    setMovable(true);
-    setUsesScrollButtons(true);
-    setDrawBase(false);
-    setExpanding(false);
-    setElideMode(Qt::ElideRight);
-  }
-
-signals:
-  void addTabRequested();
-
-private:
-};
-
 class TabWindowManager : public QObject {
   Q_OBJECT
 
 public:
   static TabWindowManager *instance();
 
-  // 存储多个 QTabWidget
   QList<TabWindow *> windows() const;
 
   TabWindow *currentWindow() const;
@@ -112,29 +106,19 @@ private:
   TabWindowManager();
 
   friend class TabWindow;
-  QList<TabWindow *> windows_;
+  QList<TabWindow *> m_windows;
   TabWindow *m_root = nullptr;
 };
 
 class TabWindow : public QTabWidget {
   Q_OBJECT
 public:
-  // 定义序列化接口
-  class ISerializable {
-  public:
-    virtual ~ISerializable() = default;
-    virtual QByteArray saveState() const = 0;
-    virtual bool restoreState(const QByteArray &state) = 0;
-  };
+  explicit TabWindow(QWidget *parent = nullptr);
+  ~TabWindow();
 
-  // using WidgetFactory = std::function<QWidget*()>;
   using WidgetFactory = std::function<Window::FrameWindow *()>;
 
   static QString SpecialTypeIcon(TtProtocolRole::Role role);
-
-  explicit TabWindow(QWidget *parent = nullptr);
-  // explicit TabWindow(QWidget *defalue_widget, QWidget *parent = nullptr);
-  ~TabWindow();
 
   void addNewTab(const QString &title = "");
   void addNewTab(QWidget *defaultWidget);
@@ -155,10 +139,6 @@ public:
       int tabIndex, const QString &uuid, const QJsonObject &config,
       TtProtocolRole::Role role); // 存有 uuid 的历史窗口
 
-  // 序列化支持
-  bool saveState(const QString &filePath) const;
-  bool restoreState(const QString &filePath);
-
   QString getCurrentWidgetUUid();
 
   void setTabIcon(int index, const QString &iconPath);
@@ -175,21 +155,20 @@ public:
   void switchByReadingDisk(const QString &index, TtProtocolRole::Role role,
                            const QJsonObject &config); // 切换 Page
 
+protected:
+  bool eventFilter(QObject *object, QEvent *event) override;
+  void closeEvent(QCloseEvent *event) override;
+
 signals:
   void newTabRequested(); // 新建标签信号
   void requestNewTab();
   void widgetDeleted(QWidget *widget);
 
 public slots:
-  // void handleButtonClicked(int tabIndex, TtProtocolRole::Role role);
   void sessionSwitchPage(int tabIndex, TtProtocolRole::Role role);
   void handleAddNewTab();                  // 添加标签
   void handleTabCloseRequested(int index); // 删除 Page
   void removeUuidWidget(const QString &index);
-
-protected:
-  bool eventFilter(QObject *watched, QEvent *event) override;
-  void closeEvent(QCloseEvent *event) override;
 
 private:
   struct TabData;
@@ -226,52 +205,26 @@ private:
   const int maxClosedTabs_ = 10;
   QPoint dragStartPosition_;
 
-  QHash<TtProtocolRole::Role, WidgetFactory>
-      widgetFactories; // Widget 工厂函数映射
+  static QHash<TtProtocolRole::Role, WidgetFactory>
+      widgetFactories; // Widget 工厂函数映射 一个类共享
+
   QHash<TtProtocolRole::Role, QString> widgetTitles; // Widget 标题映射
   QMap<QString, QWidget *> widgetInstances;          // Widget 实例
 
   static QMap<TtProtocolRole::Role, QString> type_icon_map_;
 
 private:
-  // bool is_moving_ = false;
-  // bool ignore_mouse_event_ = false;
-  // TabWindow *moving_window_ = nullptr;
-  // QPoint mouse_delta_;
+  bool m_dragging = false;
   bool m_isMoving = false;
   bool m_ignoreMouseEvent = false;
   TabWindow *m_movingWindow = nullptr;
   QPoint m_mouseDelta;
+  TabWindow *m_origin = nullptr;
+  TabWindow *m_dragWnd = nullptr;
+  QPoint m_mouseOffset;
+  const int DETACH_THRESHOLD = 20;
+  bool m_pressing = false;
+  QPoint m_pressPos;
 };
 
-/*
-// 标签页实现示例
-class CustomTabPage : public QWidget, public TabManager::ISerializable {
-  Q_OBJECT
- public:
-  explicit CustomTabPage(QWidget* parent = nullptr);
-
-  // 实现序列化接口
-  QByteArray saveState() const override {
-    QByteArray state;
-    QDataStream stream(&state, QIODevice::WriteOnly);
-    // 保存需要的数据
-    stream << someData_;
-    return state;
-  }
-
-  bool restoreState(const QByteArray& state) override {
-    QDataStream stream(state);
-    // 恢复数据
-    stream >> someData_;
-    return true;
-  }
-
- private:
-  QString someData_;
-};
-*/
-
-} // namespace Ui
-
-#endif // UI_WINDOW_SWITCHER_H
+#endif // TABWINDOW_H

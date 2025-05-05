@@ -9,6 +9,7 @@
 #include <ui/control/buttonbox/TtButtonBox.h>
 #include <ui/layout/horizontal_layout.h>
 #include <ui/layout/vertical_layout.h>
+#include <ui/widgets/tabwindow.h>
 
 #include "Def.h"
 
@@ -46,7 +47,7 @@ class MainWindow : public QMainWindow {
   Q_OBJECT
 public:
   explicit MainWindow(QWidget *parent = nullptr);
-  virtual ~MainWindow();
+  ~MainWindow();
 
   enum Theme {
     Dark,
@@ -67,6 +68,7 @@ private slots:
 
 protected:
   bool event(QEvent *event) override;
+  void closeEvent(QCloseEvent *event) override;
 
 private:
   void installWindowAgent();
@@ -114,7 +116,8 @@ private:
 
   // tab 页面
   // Ui::TabManager *tabWidget_;
-  Ui::TabWindow *tabWidget_;
+  // Ui::TabWindow *tabWidget_;
+  TabWindow *tabWidget_;
 
   Window::FunctionSelectionWindow *function_select_;
 

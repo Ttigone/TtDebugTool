@@ -8,10 +8,7 @@
 
 namespace Ui {
 
-SettingWidget::SettingWidget(QWidget* parent) : QWidget(parent) {
-  init();
-
-}
+SettingWidget::SettingWidget(QWidget *parent) : QWidget(parent) { init(); }
 
 SettingWidget::~SettingWidget() {
   // qDebug() << "delete SettingWidget";
@@ -27,9 +24,11 @@ void SettingWidget::init() {
   // QWidget* basicWidget = new QWidget(this);
   layout_ = new TtVerticalLayout(this);
 
+  // QFontDialog fontDialog;
+
   // QLabel info;
   // info.setText();
-  QTextBrowser* infoBroswer = new QTextBrowser;
+  QTextBrowser *infoBroswer = new QTextBrowser;
   infoBroswer->setOpenExternalLinks(true);
   infoBroswer->setOpenLinks(true);
   // 设置HTML内容
@@ -72,14 +71,14 @@ void SettingWidget::init() {
     dialog_->deleteLater();
   });
 
-
   connect(downloader_, &Core::Downloader::errorOccurred, this,
-          [this](const QString& error) { qDebug() << error; });
+          [this](const QString &error) { qDebug() << error; });
   connect(downloader_, &Core::Downloader::downloadProgress, this,
           &SettingWidget::downloadProgress);
-  // connect(downloader_, &Core::Downloader::available, ui->newDownloadButton, &QPushButton::setEnabled);
+  // connect(downloader_, &Core::Downloader::available, ui->newDownloadButton,
+  // &QPushButton::setEnabled);
   connect(downloader_, &Core::Downloader::running, progress_bar_,
           &QProgressBar::setVisible);
 }
 
-}  // namespace Ui
+} // namespace Ui

@@ -13,7 +13,7 @@ namespace Ui {
 class WindowBarPrivate {
   Q_DECLARE_PUBLIC(WindowBar)
 
- public:
+public:
   WindowBarPrivate();
   virtual ~WindowBarPrivate();
 
@@ -24,10 +24,19 @@ class WindowBarPrivate {
   bool auto_icon_ = false;
   QHBoxLayout *layout_;
 
+  // enum WindowBarItem : int {
+  //   IconButton,
+  //   MenuWidget,
+  //   TitleLabel,
+  //   MinimumButton,
+  //   MaxinumButton,
+  //   CloseButton,
+  // };
   enum WindowBarItem : int {
     IconButton,
     MenuWidget,
     TitleLabel,
+    TopButton,
     MinimumButton,
     MaxinumButton,
     CloseButton,
@@ -42,11 +51,10 @@ class WindowBarPrivate {
 
   inline void insertDefaultSpace(int index);
 
- private:
+private:
   Q_DISABLE_COPY(WindowBarPrivate)
-
 };
 
 } // namespace Ui
 
-#endif  // WINDOWBAR_P_H
+#endif // WINDOWBAR_P_H

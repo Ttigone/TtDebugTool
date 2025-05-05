@@ -57,6 +57,8 @@ class SerialPortWorker;
 namespace Window {
 
 // class SerialWindow : public QWidget, public Ui::TabManager::ISerializable {
+// class SerialWindow : public FrameWindow, public Ui::TabWindow::ISerializable
+// {
 class SerialWindow : public FrameWindow, public Ui::TabWindow::ISerializable {
   Q_OBJECT
 public:

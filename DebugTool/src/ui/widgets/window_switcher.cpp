@@ -6,6 +6,7 @@
 #include <QStackedLayout>
 #include <QToolButton>
 #include <QUuid>
+#include <QWindow>
 #include <ui/control/TtContentDialog.h>
 
 #include "ui/layout/vertical_layout.h"
@@ -52,39 +53,49 @@ QString TabWindow::SpecialTypeIcon(TtProtocolRole::Role role) {
   return type_icon_map_[role];
 }
 
-TabWindow::TabWindow(QWidget *defaultWidget, QWidget *parent)
-    : QTabWidget(parent) {
-  setMouseTracking(false);
+TabWindow::TabWindow(QWidget *parent) : QTabWidget(parent) {
   Q_ASSERT(TabWindowManager::instance());
-  // 添加的是整个 QTabWidget ???
   TabWindowManager::instance()->addWindow(this);
-
   // setTabBar(new ExtTabBar());
   // 处理的是 tabbar 的事件
   tabBar()->installEventFilter(this);
-  tabBar()->setMouseTracking(false);
 
   setMovable(true);
   setDocumentMode(true);
   setFocusPolicy(Qt::NoFocus);
-
-  // setupCornerButton();
-
-  // setTabBarAutoHide(true);
-
-  // addNewTab(defaultWidget);
-  // saveState("C:/Users/cssss/Desktop/test.json");
 }
 
-TabWindow::~TabWindow(){
-    // 析构, 移出实例
-    // TabWindowManager::instance()->removeWindow(this);
-    // for (auto& widget : widgetInstances) {
-    //  if (widget) {
-    //    widget->deleteLater();
-    //  }
-    //}
-    // qDeleteAll(widgetInstances);
+// TabWindow::TabWindow(QWidget *defaultWidget, QWidget *parent)
+//     : QTabWidget(parent) {
+//   Q_ASSERT(TabWindowManager::instance());
+//   // 添加的是整个 QTabWidget ???
+//   TabWindowManager::instance()->addWindow(this);
+
+//   // setTabBar(new ExtTabBar());
+//   // 处理的是 tabbar 的事件
+//   tabBar()->installEventFilter(this);
+
+//   setMovable(true);
+//   setDocumentMode(true);
+//   setFocusPolicy(Qt::NoFocus);
+
+//   // setupCornerButton();
+
+//   // setTabBarAutoHide(true);
+
+//   // addNewTab(defaultWidget);
+//   // saveState("C:/Users/cssss/Desktop/test.json");
+// }
+
+TabWindow::~TabWindow() {
+  // for (auto& widget : widgetInstances) {
+  //  if (widget) {
+  //    widget->deleteLater();
+  //  }
+  //}
+  // qDeleteAll(widgetInstances);
+  qDebug() << "析构函数" << this;
+  TabWindowManager::instance()->removeWindow(this);
 };
 
 void TabWindow::addNewTab(const QString &title) {
@@ -530,107 +541,230 @@ void TabWindow::removeUuidWidget(const QString &index) {
   }
 }
 
-bool TabWindow::eventFilter(QObject *watched, QEvent *event) {
-  if (watched != tabBar()) {
-    return QTabWidget::eventFilter(watched, event);
-  }
+// bool TabWindow::eventFilter(QObject *object, QEvent *event) {
+//   if (object != tabBar()) {
+//     return QTabWidget::eventFilter(object, event);
+//   }
+
+//   switch (event->type()) {
+//   case QEvent::MouseMove: {
+//     qDebug() << "mouse move";
+//     if (m_ignoreMouseEvent) {
+//       qDebug() << "ignoe";
+//       return true;
+//     }
+//     auto mouseEvent = static_cast<QMouseEvent *>(event);
+
+//     auto sendFakeEvent = [mouseEvent](QObject *receiver, QEvent::Type type) {
+//       if (!receiver) {
+//         return;
+//       }
+//       QMouseEvent newEvent(type, mouseEvent->pos(), Qt::LeftButton,
+//                            mouseEvent->buttons(), mouseEvent->modifiers());
+//       QCoreApplication::sendEvent(receiver, &newEvent);
+//     };
+
+//     if (m_isMoving) {
+//       qDebug() << "inside";
+//       if (m_movingWindow) {
+//         auto globalPos = QCursor::pos();
+//         auto window = TabWindowManager::instance()->possibleWindow(
+//             m_movingWindow, globalPos);
+//         if (window) {
+//           // re-attach
+//           const auto pos = window->mapFromGlobal(globalPos);
+//           const int index = tabBar()->tabAt(pos);
+//           const auto w = m_movingWindow->widget(0);
+//           const auto text = m_movingWindow->tabText(0);
+//           window->raise();
+//           window->activateWindow();
+//           window->setCurrentIndex(window->insertTab(index, w, text));
+//           m_movingWindow->deleteLater();
+//           m_movingWindow = nullptr;
+//           m_isMoving = false;
+//           m_ignoreMouseEvent = true;
+//           sendFakeEvent(object, QEvent::MouseButtonRelease);
+//           sendFakeEvent(window->tabBar(), QEvent::MouseButtonPress);
+//         } else {
+//           auto newPos = globalPos - m_mouseDelta;
+//           m_movingWindow->move(newPos);
+//           qDebug() << "this moving";
+//         }
+//         return true;
+//       }
+//     } else {
+//       qDebug() << "no move";
+//       auto r = tabBar()->rect();
+//       if (tabBar()->count() == 1 ||
+//           distance(r, mouseEvent->pos()) > DISTANCE_TO_DETACH) {
+
+//         // 清理旧窗口
+//         if (m_movingWindow && m_movingWindow != this) {
+//           m_movingWindow->deleteLater();
+//           m_movingWindow = nullptr;
+//         }
+
+//         sendFakeEvent(object, QEvent::MouseButtonRelease);
+//         qDebug() << "fake";
+
+//         m_isMoving = true;
+//         const int index = currentIndex();
+
+//         auto tabRect = tabBar()->tabRect(index);
+//         m_mouseDelta = tabRect.center() - tabRect.topLeft() +
+//                        (geometry().topLeft() - pos());
+
+//         if (tabBar()->count() >= 2) {
+//           // m_movingWindow = new TabWindow;
+//           // m_movingWindow = new TabWindow(nullptr);
+//           m_movingWindow = new TabWindow();
+//           const auto w = widget(index);
+//           const auto text = tabText(index);
+//           const auto icon = tabIcon(index);
+//           m_movingWindow->setGeometry(rect());
+//           const auto globalPos = QCursor::pos();
+//           m_movingWindow->move(globalPos.x() + 100, globalPos.y() + 100);
+//           // BUG: it would be better to add the tab before showing, but on
+//           // Windows with poor openGL driver, there is actually a crash when
+//           the
+//           // tab is a QQuickWidget
+//           m_movingWindow->show();
+//           m_movingWindow->addTab(w, icon, text);
+//         } else {
+//           m_movingWindow = this;
+//         }
+//         return true;
+//       }
+//     }
+//     break;
+//   }
+//   case QEvent::MouseButtonRelease:
+//     m_isMoving = false;
+//     m_movingWindow = nullptr;
+//     m_ignoreMouseEvent = false;
+//     break;
+//   case QEvent::MouseButtonPress:
+//     m_ignoreMouseEvent = false;
+//     break;
+//   default:
+//     // Remove warning
+//     break;
+//   }
+//   return QTabWidget::eventFilter(object, event);
+// }
+
+bool TabWindow::eventFilter(QObject *object, QEvent *event) {
+  if (object != tabBar())
+    return QTabWidget::eventFilter(object, event);
+
   switch (event->type()) {
   case QEvent::MouseMove: {
-    qDebug() << "mouse move";
-    if (ignore_mouse_event_) {
-      qDebug() << "ignoe";
+    if (m_ignoreMouseEvent)
       return true;
-    }
-    auto mouseEvent = static_cast<QMouseEvent *>(event);
 
-    // 发送鼠标左键按钮下的事件
-    auto sendFakeEvent = [mouseEvent](QObject *receiver, QEvent::Type type) {
-      QMouseEvent newEvent(type, mouseEvent->pos(), Qt::LeftButton,
-                           mouseEvent->buttons(), mouseEvent->modifiers());
-      QCoreApplication::sendEvent(receiver, &newEvent);
+    auto mouseEvent = static_cast<QMouseEvent *>(event);
+    auto sendFake = [&](QObject *recv, QEvent::Type t) {
+      QMouseEvent e(t, mouseEvent->pos(), Qt::LeftButton, mouseEvent->buttons(),
+                    mouseEvent->modifiers());
+      QCoreApplication::sendEvent(recv, &e);
     };
 
-    if (is_moving_) {
-      qDebug() << "inside";
-      if (moving_window_) {
-        auto globalPos = QCursor::pos();
-        auto window = TabWindowManager::instance()->possibleWindow(
-            moving_window_, globalPos);
-        if (window) {
-          // re-attach
-          const auto pos = window->mapFromGlobal(globalPos);
-          const int index = tabBar()->tabAt(pos);
-          const auto w = moving_window_->widget(0);
-          const auto text = moving_window_->tabText(0);
-          window->raise();
-          window->activateWindow();
-          window->setCurrentIndex(window->insertTab(index, w, text));
-          moving_window_->deleteLater();
-          moving_window_ = nullptr;
-          is_moving_ = false;
-          ignore_mouse_event_ = true;
-          sendFakeEvent(watched, QEvent::MouseButtonRelease);
-          sendFakeEvent(window->tabBar(), QEvent::MouseButtonPress);
-        } else {
-          // 总是响应
-          auto newPos = globalPos - mouse_delta_;
-          qDebug() << "moving window: " << moving_window_;
-          moving_window_->move(newPos);
-          qDebug() << "this mode";
-        }
-        return true;
-      }
-    } else {
-      qDebug() << "no move";
-      // tabbar的 矩形
-      auto r = tabBar()->rect();
-      if (tabBar()->count() == 1 ||
-          distance(r, mouseEvent->pos()) > DISTANCE_TO_DETACH) {
-        sendFakeEvent(watched, QEvent::MouseButtonRelease);
-
-        qDebug() << "this moveing";
-        qDebug() << "moving_window" << moving_window_;
-        is_moving_ = true;
-        const int index = currentIndex();
-
-        auto tabRect = tabBar()->tabRect(index);
-        mouse_delta_ = tabRect.center() - tabRect.topLeft() +
+    if (!m_isMoving) {
+      QRect r = tabBar()->rect();
+      bool detach = (tabBar()->count() > 1 &&
+                     distance(r, mouseEvent->pos()) > DISTANCE_TO_DETACH);
+      if (detach) {
+        sendFake(object, QEvent::MouseButtonRelease);
+        m_isMoving = true;
+        int idx = currentIndex();
+        auto tabRect = tabBar()->tabRect(idx);
+        m_mouseDelta = tabRect.center() - tabRect.topLeft() +
                        (geometry().topLeft() - pos());
 
         if (tabBar()->count() >= 2) {
-          moving_window_ = new TabWindow(nullptr);
-          const auto w = widget(index);
-          const auto text = tabText(index);
-          const auto icon = tabIcon(index);
-          moving_window_->setGeometry(rect());
-          const auto globalPos = QCursor::pos();
-          moving_window_->move(globalPos.x() + 100, globalPos.y() + 100);
-          // BUG: it would be better to add the tab before showing, but on
-          // Windows with poor openGL driver, there is actually a crash when the
-          // tab is a QQuickWidget
-          moving_window_->show();
-          moving_window_->addTab(w, icon, text);
+          m_movingWindow = new TabWindow;
+          QWidget *w = widget(idx);
+          QIcon icon = tabIcon(idx);
+          QString txt = tabText(idx);
+          m_movingWindow->setGeometry(rect());
+          m_movingWindow->move(QCursor::pos() + QPoint(100, 100));
+          m_movingWindow->show();
+          m_movingWindow->addTab(w, icon, txt);
         } else {
-          moving_window_ = this;
+          m_movingWindow = this;
         }
+        return true;
+      }
+    } else if (m_movingWindow) {
+      QPoint gpos = QCursor::pos();
+      //
+      auto target =
+          TabWindowManager::instance()->possibleWindow(m_movingWindow, gpos);
+      if (target) {
+        // 合并逻辑（支持单标签重合并）
+        if (m_movingWindow->count() == 1) {
+          // 只能够处于 moving 的才有效果
+          qDebug() << "只有一个标签的 window";
+          QWidget *w = m_movingWindow->widget(0);
+          QIcon icon = m_movingWindow->tabIcon(0);
+          QString txt = m_movingWindow->tabText(0);
+          QPoint posIn = target->tabBar()->mapFromGlobal(gpos);
+          int insertIdx = target->tabBar()->tabAt(posIn);
+          if (insertIdx < 0)
+            insertIdx = target->count();
+          target->insertTab(insertIdx, w, icon, txt);
+          target->setCurrentIndex(insertIdx);
+          m_movingWindow->deleteLater();
+        }
+        m_movingWindow = nullptr;
+        m_isMoving = false;
+        m_ignoreMouseEvent = true;
+        QMouseEvent fakePress(QEvent::MouseButtonPress,
+                              target->tabBar()->mapFromGlobal(gpos),
+                              Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+        QCoreApplication::sendEvent(target->tabBar(), &fakePress);
+        return true;
+      } else {
+        // 普通拖动
+        QPoint newPos = gpos - m_mouseDelta;
+        m_movingWindow->move(newPos);
         return true;
       }
     }
     break;
   }
   case QEvent::MouseButtonRelease:
-    is_moving_ = false;
-    moving_window_ = nullptr;
-    ignore_mouse_event_ = false;
+    m_isMoving = false;
+    m_movingWindow = nullptr;
+    m_ignoreMouseEvent = false;
     break;
   case QEvent::MouseButtonPress:
-    ignore_mouse_event_ = false;
+    m_ignoreMouseEvent = false;
     break;
   default:
-    // Remove warning
     break;
   }
-  return QTabWidget::eventFilter(watched, event);
+  return QTabWidget::eventFilter(object, event);
+}
+
+void TabWindow::closeEvent(QCloseEvent *event) {
+  TabWindow *dest = TabWindowManager::instance()->rootWindow();
+  if (dest && dest != this) {
+    int countTabs = count();
+    for (int i = 0; i < countTabs; ++i) {
+      QWidget *w = widget(0);
+      QIcon ic = tabIcon(0);
+      QString txt = tabText(0);
+      removeTab(0);
+      dest->addTab(w, ic, txt);
+    }
+  }
+  if (count() == 0) {
+    event->accept();
+    deleteLater();
+    return;
+  }
+  QTabWidget::closeEvent(event);
 }
 
 void TabWindow::switchByReadingMem(const QString &index,
@@ -761,6 +895,13 @@ QWidget *TabWindowManager::currentWidget() const {
   return nullptr;
 }
 
+TabWindow *TabWindowManager::rootWindow() const { return m_root; }
+
+void TabWindowManager::setRootWindow(TabWindow *root) {
+  m_root = root;
+  addWindow(root);
+}
+
 void TabWindowManager::addWindow(TabWindow *window) {
   windows_.append(window);
   // 关联 QTabWidget 的 tab 关闭
@@ -772,28 +913,65 @@ void TabWindowManager::removeWindow(TabWindow *window) {
   windows_.removeOne(window);
 }
 
-TabWindow *TabWindowManager::possibleWindow(TabWindow *currentWindow,
-                                            QPoint globalPos) {
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-  for (auto tabWindow : std::as_const(windows_))
-#else
-  for (auto tabWindow : qAsConst(m_windows))
-#endif
-  {
-    if (tabWindow == currentWindow)
+// TabWindow *TabWindowManager::possibleWindow(TabWindow *currentWindow,
+//                                             QPoint globalPos) {
+// #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+//   for (auto tabWindow : std::as_const(windows_))
+// #else
+//   for (auto tabWindow : qAsConst(m_windows))
+// #endif
+//   {
+//     if (tabWindow == currentWindow)
+//       continue;
+//     // Get the possible drop rectangle, which is the rectangle at the top
+//     // containing the tabbar
+//     if (tabWindow->frameGeometry().contains(globalPos)) {
+//       auto pos = tabWindow->tabBar()->mapFromGlobal(globalPos);
+//       auto r = tabWindow->tabBar()->rect();
+//       r.setWidth(tabWindow->rect().width());
+//       if (r.contains(pos))
+//         return tabWindow;
+//       return nullptr;
+//     }
+//   }
+//   return nullptr;
+// }
+
+TabWindow *TabWindowManager::possibleWindow(TabWindow *src, QPoint globalPos) {
+  // qDebug() << src << m_root;
+  // for (TabWindow *w : windows_) {
+  //   if (w == src) {
+  //     continue;
+  //   }
+  //   QWindow *top = w->windowHandle();
+  //   if (!top) {
+  //     continue;
+  //   }
+  //   if (top->frameGeometry().contains(globalPos)) {
+  //     QPoint pos = w->tabBar()->mapFromGlobal(globalPos);
+  //     QRect bar = w->tabBar()->rect();
+  //     bar.setWidth(w->width());
+  //     if (bar.contains(pos)) {
+  //       return w;
+  //     }
+  //   }
+  // }
+  // qDebug() << "无存在的窗口";
+  // return nullptr;
+  for (TabWindow *w : windows_) {
+    if (w == src) {
       continue;
-    // Get the possible drop rectangle, which is the rectangle at the top
-    // containing the tabbar
-    if (tabWindow->frameGeometry().contains(globalPos)) {
-      auto pos = tabWindow->tabBar()->mapFromGlobal(globalPos);
-      auto r = tabWindow->tabBar()->rect();
-      r.setWidth(tabWindow->rect().width());
-      if (r.contains(pos))
-        return tabWindow;
-      return nullptr;
     }
+    QRect widgetRect = w->geometry();
+    qDebug() << "widget Rect: " << widgetRect;
+    if (!widgetRect.contains(globalPos)) {
+      continue;
+    }
+    // 将全局坐标转换为标签栏的局部坐标
+    QPoint posInTabBar = w->tabBar()->mapFromGlobal(globalPos);
+    QRect tabBarRect = w->tabBar()->rect();
+    tabBarRect.setWidth(w->width()); // 扩展标签栏宽度
   }
-  return nullptr;
 }
 
 void TabWindowManager::activateWindow(QWindow *window) {

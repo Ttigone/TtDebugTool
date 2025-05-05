@@ -2,16 +2,14 @@
 #include "ui/window/title/windowbar_p.h"
 
 #include <QAbstractButton>
-#include <QLabel>
-#include <QHBoxLayout>
-#include <QLocale>
 #include <QEvent>
-
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QLocale>
 
 namespace Ui {
 
-WindowBarPrivate::WindowBarPrivate() {
-};
+WindowBarPrivate::WindowBarPrivate(){};
 
 WindowBarPrivate::~WindowBarPrivate() = default;
 
@@ -31,11 +29,11 @@ void WindowBarPrivate::init() {
   q->setLayout(layout_);
 }
 
-inline QWidget* WindowBarPrivate::widgetAt(int index) const {
+inline QWidget *WindowBarPrivate::widgetAt(int index) const {
   return layout_->itemAt(index)->widget();
 }
 
-void WindowBarPrivate::setWidgetAt(int index, QWidget* widget) {
+void WindowBarPrivate::setWidgetAt(int index, QWidget *widget) {
   auto priWidget = layout_->takeAt(index)->widget();
   if (priWidget) {
     priWidget->deleteLater();
@@ -47,7 +45,7 @@ void WindowBarPrivate::setWidgetAt(int index, QWidget* widget) {
   }
 }
 
-QWidget* WindowBarPrivate::takeWidgetAt(int index) {
+QWidget *WindowBarPrivate::takeWidgetAt(int index) {
   auto item = layout_->itemAt(index);
   auto priWidget = item->widget();
   if (priWidget) {
@@ -62,17 +60,17 @@ inline void WindowBarPrivate::insertDefaultSpace(int index) {
   layout_->insertSpacerItem(index, new QSpacerItem(0, 0));
 }
 
-WindowBar::WindowBar(QWidget* parent)
+WindowBar::WindowBar(QWidget *parent)
     : WindowBar(*new WindowBarPrivate(), parent) {}
 
 WindowBar::~WindowBar() = default;
 
-QMenuBar* WindowBar::menuBar() const {
+QMenuBar *WindowBar::menuBar() const {
   Q_D(const WindowBar);
-  return qobject_cast<QMenuBar*>(d->widgetAt(WindowBarPrivate::MenuWidget));
+  return qobject_cast<QMenuBar *>(d->widgetAt(WindowBarPrivate::MenuWidget));
 }
 
-void WindowBar::setMenuBar(QMenuBar* menuBar) {
+void WindowBar::setMenuBar(QMenuBar *menuBar) {
   Q_D(WindowBar);
   auto pri = takeMenuBar();
   if (pri) {
@@ -85,12 +83,12 @@ void WindowBar::setMenuBar(QMenuBar* menuBar) {
   menuBar->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Minimum);
 }
 
-QLabel* WindowBar::titleLabel() const {
+QLabel *WindowBar::titleLabel() const {
   Q_D(const WindowBar);
-  return qobject_cast<QLabel*>(d->widgetAt(WindowBarPrivate::TitleLabel));
+  return qobject_cast<QLabel *>(d->widgetAt(WindowBarPrivate::TitleLabel));
 }
 
-void WindowBar::setTitleLabel(QLabel* label) {
+void WindowBar::setTitleLabel(QLabel *label) {
   Q_D(WindowBar);
   auto pri = takeTitleLabel();
   if (pri) {
@@ -106,13 +104,13 @@ void WindowBar::setTitleLabel(QLabel* label) {
   label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
 }
 
-QAbstractButton* WindowBar::iconButton() const {
+QAbstractButton *WindowBar::iconButton() const {
   Q_D(const WindowBar);
-  return qobject_cast<QAbstractButton*>(
+  return qobject_cast<QAbstractButton *>(
       d->widgetAt(WindowBarPrivate::IconButton));
 }
 
-void WindowBar::setIconButton(QAbstractButton* btn) {
+void WindowBar::setIconButton(QAbstractButton *btn) {
   Q_D(WindowBar);
   auto pri = takeIconButton();
   if (pri) {
@@ -128,13 +126,32 @@ void WindowBar::setIconButton(QAbstractButton* btn) {
   btn->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
 }
 
-QAbstractButton* WindowBar::minButton() const {
+QAbstractButton *WindowBar::topButton() const {
   Q_D(const WindowBar);
-  return qobject_cast<QAbstractButton*>(
+  return qobject_cast<QAbstractButton *>(
+      d->widgetAt(WindowBarPrivate::TopButton));
+}
+
+void WindowBar::setTopButton(QAbstractButton *btn) {
+  Q_D(WindowBar);
+  auto pri = takeTopButton();
+  if (pri) {
+    pri->deleteLater();
+  }
+  if (!btn) {
+    return;
+  }
+  d->setWidgetAt(WindowBarPrivate::TopButton, btn);
+  connect(btn, &QAbstractButton::clicked, this, &WindowBar::topRequest);
+}
+
+QAbstractButton *WindowBar::minButton() const {
+  Q_D(const WindowBar);
+  return qobject_cast<QAbstractButton *>(
       d->widgetAt(WindowBarPrivate::MinimumButton));
 }
 
-void WindowBar::setMinButton(QAbstractButton* btn) {
+void WindowBar::setMinButton(QAbstractButton *btn) {
   Q_D(WindowBar);
   auto pri = takeMinButton();
   if (pri) {
@@ -147,13 +164,13 @@ void WindowBar::setMinButton(QAbstractButton* btn) {
   connect(btn, &QAbstractButton::clicked, this, &WindowBar::minimizeRequested);
 }
 
-QAbstractButton* WindowBar::maxButton() const {
+QAbstractButton *WindowBar::maxButton() const {
   Q_D(const WindowBar);
-  return qobject_cast<QAbstractButton*>(
+  return qobject_cast<QAbstractButton *>(
       d->widgetAt(WindowBarPrivate::MaxinumButton));
 }
 
-void WindowBar::setMaxButton(QAbstractButton* btn) {
+void WindowBar::setMaxButton(QAbstractButton *btn) {
   Q_D(WindowBar);
   auto pri = takeMaxButton();
   if (pri) {
@@ -166,13 +183,13 @@ void WindowBar::setMaxButton(QAbstractButton* btn) {
   connect(btn, &QAbstractButton::clicked, this, &WindowBar::maximizeRequested);
 }
 
-QAbstractButton* WindowBar::closeButton() const {
+QAbstractButton *WindowBar::closeButton() const {
   Q_D(const WindowBar);
-  return qobject_cast<QAbstractButton*>(
+  return qobject_cast<QAbstractButton *>(
       d->widgetAt(WindowBarPrivate::CloseButton));
 }
 
-void WindowBar::setCloseButton(QAbstractButton* btn) {
+void WindowBar::setCloseButton(QAbstractButton *btn) {
   Q_D(WindowBar);
   auto pri = takeCloseButton();
   if (pri) {
@@ -185,48 +202,55 @@ void WindowBar::setCloseButton(QAbstractButton* btn) {
   connect(btn, &QAbstractButton::clicked, this, &WindowBar::closeRequested);
 }
 
-QMenuBar* WindowBar::takeMenuBar() {
+QMenuBar *WindowBar::takeMenuBar() {
   Q_D(WindowBar);
-  return qobject_cast<QMenuBar*>(d->takeWidgetAt(WindowBarPrivate::MenuWidget));
+  return qobject_cast<QMenuBar *>(
+      d->takeWidgetAt(WindowBarPrivate::MenuWidget));
 }
 
-QLabel* WindowBar::takeTitleLabel() {
+QLabel *WindowBar::takeTitleLabel() {
   Q_D(WindowBar);
-  return qobject_cast<QLabel*>(d->takeWidgetAt(WindowBarPrivate::TitleLabel));
+  return qobject_cast<QLabel *>(d->takeWidgetAt(WindowBarPrivate::TitleLabel));
 }
 
-QAbstractButton* WindowBar::takeIconButton() {
+QAbstractButton *WindowBar::takeIconButton() {
   Q_D(WindowBar);
-  return qobject_cast<QAbstractButton*>(
+  return qobject_cast<QAbstractButton *>(
       d->takeWidgetAt(WindowBarPrivate::IconButton));
 }
 
-QAbstractButton* WindowBar::takeMinButton() {
+QAbstractButton *Ui::WindowBar::takeTopButton() {
   Q_D(WindowBar);
-  return qobject_cast<QAbstractButton*>(
+  return qobject_cast<QAbstractButton *>(
+      d->takeWidgetAt(WindowBarPrivate::TopButton));
+}
+
+QAbstractButton *WindowBar::takeMinButton() {
+  Q_D(WindowBar);
+  return qobject_cast<QAbstractButton *>(
       d->takeWidgetAt(WindowBarPrivate::MinimumButton));
 }
 
-QAbstractButton* WindowBar::takeMaxButton() {
+QAbstractButton *WindowBar::takeMaxButton() {
   Q_D(WindowBar);
-  return qobject_cast<QAbstractButton*>(
+  return qobject_cast<QAbstractButton *>(
       d->takeWidgetAt(WindowBarPrivate::MaxinumButton));
 }
 
-QAbstractButton* WindowBar::takeCloseButton() {
+QAbstractButton *WindowBar::takeCloseButton() {
   Q_D(WindowBar);
-  return qobject_cast<QAbstractButton*>(
+  return qobject_cast<QAbstractButton *>(
       d->takeWidgetAt(WindowBarPrivate::CloseButton));
 }
 
-QWidget* WindowBar::hostWidget() const {
+QWidget *WindowBar::hostWidget() const {
   Q_D(const WindowBar);
   return d->w_;
 }
 
-void WindowBar::setHostWidget(QWidget* w) {
+void WindowBar::setHostWidget(QWidget *w) {
   Q_D(WindowBar);
-  QWidget* pri = d->w_;
+  QWidget *pri = d->w_;
   if (pri) {
     pri->removeEventFilter(this);
   }
@@ -256,46 +280,46 @@ void WindowBar::setIconFollowWindow(bool value) {
   d->auto_icon_ = value;
 }
 
-bool WindowBar::eventFilter(QObject* obj, QEvent* event) {
+bool WindowBar::eventFilter(QObject *obj, QEvent *event) {
   Q_D(WindowBar);
   auto w = d->w_;
   if (obj == w) {
-    QAbstractButton* iconBtn = iconButton();
-    QLabel* label = titleLabel();
-    QAbstractButton* maxBtn = maxButton();
+    QAbstractButton *iconBtn = iconButton();
+    QLabel *label = titleLabel();
+    QAbstractButton *maxBtn = maxButton();
     switch (event->type()) {
-      case QEvent::WindowIconChange: {
-        if (d_ptr->auto_icon_ && iconBtn) {
-          iconBtn->setIcon(w->windowIcon());
-          iconChanged(w->windowIcon());
-        }
-        break;
+    case QEvent::WindowIconChange: {
+      if (d_ptr->auto_icon_ && iconBtn) {
+        iconBtn->setIcon(w->windowIcon());
+        iconChanged(w->windowIcon());
       }
-      case QEvent::WindowTitleChange: {
-        if (d_ptr->auto_title_ && label) {
-          label->setText(w->windowTitle());
-          titleChanged(w->windowTitle());
-        }
-        break;
+      break;
+    }
+    case QEvent::WindowTitleChange: {
+      if (d_ptr->auto_title_ && label) {
+        label->setText(w->windowTitle());
+        titleChanged(w->windowTitle());
       }
-      case QEvent::WindowStateChange: {
-        if (maxBtn) {
-          maxBtn->setChecked(w->isMaximized());
-        }
-        break;
+      break;
+    }
+    case QEvent::WindowStateChange: {
+      if (maxBtn) {
+        maxBtn->setChecked(w->isMaximized());
       }
-      default:
-        break;
+      break;
+    }
+    default:
+      break;
     }
   }
   return QWidget::eventFilter(obj, event);
 }
 
-void WindowBar::titleChanged(const QString& text) { Q_UNUSED(text) }
+void WindowBar::titleChanged(const QString &text) { Q_UNUSED(text) }
 
-void WindowBar::iconChanged(const QIcon& icon) { Q_UNUSED(icon) }
+void WindowBar::iconChanged(const QIcon &icon) { Q_UNUSED(icon) }
 
-WindowBar::WindowBar(WindowBarPrivate& d, QWidget* parent)
+WindowBar::WindowBar(WindowBarPrivate &d, QWidget *parent)
     : QFrame(parent), d_ptr(&d) {
   // Public Class Point of Private Class is assigned to the Public Class Point
   d.q_ptr = this;
@@ -303,4 +327,4 @@ WindowBar::WindowBar(WindowBarPrivate& d, QWidget* parent)
   d.init();
 }
 
-}  // namespace Ui
+} // namespace Ui

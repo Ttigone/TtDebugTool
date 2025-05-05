@@ -30,8 +30,26 @@ Ui--WindowBar>QAbstractButton[system-button=true] {
     background-color: transparent;
 }
 
+Ui--WindowBar>QAbstractButton#top-button {
+    qproperty-iconNormal: url(":/window-bar/to-top.svg");
+    qproperty-iconSize: 12px 12px;
+}
+
+Ui--WindowBar>QAbstractButton#top-button:hover,
+Ui--WindowBar>QAbstractButton#top-button:pressed {
+    background-color: rgba(255, 255, 255, 15%);
+}
+
+Ui--WindowBar>QAbstractButton#top-button:checked {
+    background-color: #4CAF50;  /* 绿色背景 */
+    color: white;               /* 白色文字 */
+    border: 2px solid #3e8e41;  /* 深绿色边框 */
+}
+
+
 Ui--WindowBar>QAbstractButton#min-button {
     qproperty-iconNormal: url(":/window-bar/minimize.svg");
+    qproperty-iconChecked: url(":/window-bar/restore.svg");
     qproperty-iconSize: 12px 12px;
 }
 
@@ -181,6 +199,7 @@ QSplitter::handle:pressed {
     background-color: #3C3C3C;
 }
 
+/*
 QTabWidget::pane {
     border-top: 1px solid #ccc;
     border-left: 1px solid #ccc;
@@ -189,7 +208,7 @@ QTabWidget::pane {
 }
 
 QTabWidget {
-    background: transparent;
+    background: red;
 }
 
 /* 尝试隐藏或设置角落区域的样式 */
@@ -210,15 +229,12 @@ QTabBar::tab {
     border-top-left-radius: 4px;
     border-top-right-radius: 4px;
 }
+*/
+
+/*
 /* 选中标签高亮 */
 QTabBar::tab:selected {
     background: #3C3C3C;
 
 }
-/* 鼠标悬停效果（可选） */
-QTabBar::tab:hover {
-   background: #505050;
-}
-
-
-
+*/

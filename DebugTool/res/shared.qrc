@@ -7,5 +7,6 @@
         <file>window-bar/minimize.svg</file>
         <file>window-bar/more-line.svg</file>
         <file>window-bar/restore.svg</file>
+        <file>window-bar/to-top.svg</file>
     </qresource>
 </RCC>

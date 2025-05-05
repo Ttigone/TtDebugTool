@@ -1,17 +1,17 @@
 #ifndef WINDOW_WINDOWBAR_H
 #define WINDOW_WINDOWBAR_H
 
-#include <QFrame>
-#include <QMenuBar>
 #include <QAbstractButton>
+#include <QFrame>
 #include <QLabel>
+#include <QMenuBar>
 
-//QT_BEGIN_NAMESPACE
-//class QFrame;
-//class QMenuBar;
-//class QAbstractButton;
-//class QLabel;
-//QT_END_NAMESPACE
+// QT_BEGIN_NAMESPACE
+// class QFrame;
+// class QMenuBar;
+// class QAbstractButton;
+// class QLabel;
+// QT_END_NAMESPACE
 #include "ui/Def.h"
 
 namespace Ui {
@@ -22,7 +22,7 @@ class Tt_EXPORT WindowBar : public QFrame {
   Q_OBJECT
   Q_DECLARE_PRIVATE(WindowBar)
 
- public:
+public:
   explicit WindowBar(QWidget *parent = nullptr);
   ~WindowBar();
 
@@ -34,6 +34,9 @@ class Tt_EXPORT WindowBar : public QFrame {
 
   QAbstractButton *iconButton() const;
   void setIconButton(QAbstractButton *btn);
+
+  QAbstractButton *topButton() const;
+  void setTopButton(QAbstractButton *btn);
 
   QAbstractButton *minButton() const;
   void setMinButton(QAbstractButton *btn);
@@ -48,6 +51,7 @@ class Tt_EXPORT WindowBar : public QFrame {
   QLabel *takeTitleLabel();
 
   QAbstractButton *takeIconButton();
+  QAbstractButton *takeTopButton();
   QAbstractButton *takeMinButton();
   QAbstractButton *takeMaxButton();
   QAbstractButton *takeCloseButton();
@@ -61,19 +65,19 @@ class Tt_EXPORT WindowBar : public QFrame {
   bool iconFollowWindow() const;
   void setIconFollowWindow(bool value);
 
-  // Q_SIGNALS:
- signals:
+signals:
+  void topRequest(bool top = false);
   void minimizeRequested();
   void maximizeRequested(bool max = false);
   void closeRequested();
 
- protected:
+protected:
   bool eventFilter(QObject *obj, QEvent *event) override;
 
   virtual void titleChanged(const QString &text);
   virtual void iconChanged(const QIcon &icon);
 
- protected:
+protected:
   WindowBar(WindowBarPrivate &d, QWidget *parent = nullptr);
 
   QScopedPointer<WindowBarPrivate> d_ptr;
@@ -81,4 +85,4 @@ class Tt_EXPORT WindowBar : public QFrame {
 
 } // namespace Ui
 
-#endif  // WINDOW_WINDOWBAR_H
+#endif // WINDOW_WINDOWBAR_H

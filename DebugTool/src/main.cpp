@@ -1,20 +1,24 @@
+#include "qt-easy-logger-main/logger.h"
 #include <QApplication>
 #include <QTextCodec>
-#include "qt-easy-logger-main/logger.h"
 
 #include "lang/translation_manager.h"
 #include "storage/configs_manager.h"
 #include "storage/setting_manager.h"
+// #include "ui/widgets/window_switcher.h"
+#include "ui/widgets/tabwindow.h"
 #include "window/main_window.h"
+#include <ui/widgets/tabwindow.h>
+#include <ui/widgets/window_switcher.h>
 
 // 编译器版本为 6.5.3 时, 调整宽度和高度时, 控件会改变布局, qwindowkit bug
 // 编译器 < 6.5.3 or 编译器 > 6.6.2
 
 #if (!WIN32)
-#include <Windows.h>
-#include <dbghelp.h>
 #include <QSettings>
 #include <QTranslator>
+#include <Windows.h>
+#include <dbghelp.h>
 // 异常捕获函数
 // LONG ApplicationCrashHandler(EXCEPTION_POINTERS* pException) {
 
@@ -53,78 +57,45 @@
 
 #endif
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
   QApplication app(argc, argv);
 
-  qInstallMessageHandler(h::Logger::messageHandler);  // 启用功能
+  qInstallMessageHandler(h::Logger::messageHandler); // 启用功能
 
   // 注册表使用
-  QCoreApplication::setApplicationName(
-      QStringLiteral("TtDebugTool"));  // 程序名
+  QCoreApplication::setApplicationName(QStringLiteral("TtDebugTool")); // 程序名
   QCoreApplication::setOrganizationName(
-      QStringLiteral("C3H3_Ttigone"));  // 组织名
+      QStringLiteral("C3H3_Ttigone")); // 组织名
 
   // 主应用字体
   QFontDatabase::addApplicationFont(":/font/iconfont.ttf");
 
-  // 语言切换
-  // 读取命令行参数中的语言设置
-  // QString language;
-  // QStringList args = QApplication::arguments();
-  // int langIndex = args.indexOf("--lang");
-  // if (langIndex != -1 && langIndex + 1 < args.size()) {
-  //   language = args.at(langIndex + 1);
-  // } else {
-  //   // 从配置文件读取默认语言
-  //   QSettings settings("MyCompany", "MyApp");
-  //   language = settings.value("Language", "en_US").toString();
-  // }
-
-  // 加载对应的翻译文件
-  // QTranslator translator;
-  // if (translator.load(":/translations/" + language + ".qm")) {
-  //   app.installTranslator(&translator);
-  // }
-
-  // QTranslator translator;
-
-  Storage::TtConfigsManager& configManager =
+  Storage::TtConfigsManager &configManager =
       Storage::TtConfigsManager::instance();
   configManager.setTargetStoreFile("config.ini");
 
-  // QSettings settings(app.applicationDirPath() + "config.ini");
-  // 注册表读取
-  // QString curLang = settings.value("Language", "TtDebugTool_zh.qm").toString();
   QString curLang =
       configManager.getConfigVaule("Language", "TtDebugTool_zh.qm").toString();
   bool suss = false;
-  // 英文
-  qDebug() << curLang;
+  // qDebug() << curLang;
 
-  // 语言加载路径
-  // 加载的文件, 从那个地方去加载 ?
   QString fr = QApplication::applicationDirPath() + "/translations/";
-  // QString fr = "F:/MyProject/DebugTool/DebugTool/res/language/";
-  // QString fr = "F:/MyProject/DebugTool/DebugTool/res/language/";
   if (curLang == "TtDebugTool_zh.qm") {
     qDebug() << "zh";
-    // suss = translator.load(fr + "TtDebugTool_zh.qm");
-    // suss = Lang::TtTranslationManager
     Lang::TtTranslationManager::instance().setLanguage(fr, "TtDebugTool_zh.qm");
   } else {
     qDebug() << "en";
-    // suss = translator.load(fr + "TtDebugTool_en.qm");
     Lang::TtTranslationManager::instance().setLanguage(fr, "TtDebugTool_en.qm");
   }
   // 设置全局字体
-  QFont font(":/font/roboto/Roboto-Black.ttf", 10);  // 微软雅黑，10号字体
+  QFont font(":/font/roboto/Roboto-Black.ttf", 10); // 微软雅黑，10号字体
   app.setFont(font);
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
   // 适用精确缩放
   // bug, 导致 QComboBox 不能正常工作, 同时字体发虚
   // 以下的作用是取消分辨率
-  //QGuiApplication::setHighDpiScaleFactorRoundingPolicy(
+  // QGuiApplication::setHighDpiScaleFactorRoundingPolicy(
   //    Qt::HighDpiScaleFactorRoundingPolicy::Floor);
 #elif (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
   QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
@@ -135,8 +106,8 @@ int main(int argc, char* argv[]) {
 
 #if defined(Q_OS_WIN) && (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
   // setDarkBorderToWindow(); // 仅在 Windows 下调用
-  //const auto osName = QSysInfo::prettyProductName();
-  //if (osName.startsWith("Windows 10") || osName.startsWith("Windows 11")) {
+  // const auto osName = QSysInfo::prettyProductName();
+  // if (osName.startsWith("Windows 10") || osName.startsWith("Windows 11")) {
   //  // 风格
   //  //QApplication::setStyle("fusion");
   //}
@@ -158,22 +129,24 @@ int main(int argc, char* argv[]) {
 
   QCoreApplication::setAttribute(Qt::AA_DontCreateNativeWidgetSiblings);
 
+  QApplication::setQuitOnLastWindowClosed(true);
+
   QString filePath = "config.json";
-  Storage::SettingsManager& settingsManager =
+  Storage::SettingsManager &settingsManager =
       Storage::SettingsManager::instance();
   settingsManager.setTargetStoreFile(filePath);
   settingsManager.saveSettings();
 
-// #if (WIN32)
-//   //注冊异常捕获函数
-//   // SetUnhandledExceptionFilter(
-//   // (LPTOP_LEVEL_EXCEPTION_FILTER)ApplicationCrashHandler);
-//   SetUnhandledExceptionFilter((LPTOP_LEVEL_EXCEPTION_FILTER)ExceptionHandler);
-// #endif
+  // #if (WIN32)
+  //   //注冊异常捕获函数
+  //   // SetUnhandledExceptionFilter(
+  //   // (LPTOP_LEVEL_EXCEPTION_FILTER)ApplicationCrashHandler);
+  //   SetUnhandledExceptionFilter((LPTOP_LEVEL_EXCEPTION_FILTER)ExceptionHandler);
+  // #endif
 
+  Window::MainWindow AppWindow;
 
-  Window::MainWindow w;
-  w.show();
+  AppWindow.show();
 
   return app.exec();
 }

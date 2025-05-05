@@ -28,6 +28,7 @@
 #include <ui/widgets/labels.h>
 #include <ui/widgets/message_bar.h>
 #include <ui/widgets/widget_group.h>
+#include <ui/widgets/window_switcher.h>
 
 #include <ui/window/title/window_button.h>
 #include <ui/window/title/windowbar.h>
@@ -96,351 +97,396 @@ static inline void emulateLeaveEvent(QWidget *widget) {
   });
 }
 
-MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), central_widget_(new QWidget(this)) {
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 
   // // qDebug() << "MainWindow constructor thread:" <<
   // QThread::currentThread();
   // // statusBar()->addWidget(new Ui::TtSvgButton());
+
   window_agent_ = new QWK::WidgetWindowAgent(this);
-  // installWindowAgent();
+  installWindowAgent();
   setProperty("TtBaseClassName", "TtMainWindow");
   setObjectName("TtMainWindow");
   resize(980, 720);
-
-  // window_agent_->centralize();
-
-  // layout_ = new Ui::TtHorizontalLayout;
-  // central_widget_->setLayout(layout_);
-  // central_widget_->setProperty("TtBaseClassName", "CentralWidget");
-  // central_widget_->setObjectName("CentralWidget");
-  // setCentralWidget(central_widget_);
-
-  // setAttribute(Qt::WA_DontCreateNativeAncestors);
-  //  拖拽右边时, 会出现宽度影响高度的情况
-
+  window_agent_->centralize();
   setWindowTitle(tr("TtDebugTool"));
 
+  layout_ = new Ui::TtHorizontalLayout;
+  central_widget_ = new QWidget(this);
+  central_widget_->setLayout(layout_);
+  central_widget_->setProperty("TtBaseClassName", "CentralWidget");
+  central_widget_->setObjectName("CentralWidget");
+  setCentralWidget(central_widget_);
+
+  // setAttribute(Qt::WA_DontCreateNativeAncestors);
   loadStyleSheet(Theme::Dark);
 
-  // setLeftBar();
+  setLeftBar();
+  function_select_ = new FunctionSelectionWindow();
 
-  // function_select_ = new FunctionSelectionWindow();
-
-  tabWidget_ = new Ui::TabWindow(this);
-  // tabWidget_->addTab()
-  tabWidget_->addTab(new QWidget, QStringLiteral("Tab 1"));
-  tabWidget_->addTab(new QWidget, QStringLiteral("Tab 2"));
-  tabWidget_->addTab(new QWidget, QStringLiteral("Tab 3"));
-  setCentralWidget(tabWidget_);
+  tabWidget_ = new TabWindow(this);
+  tabWidget_->addNewTab(function_select_);
+  TabWindowManager::instance()->setRootWindow(tabWidget_);
 
   // // 容纳一定了 widget, 以供外部切换, 直接存放 widget, 而非设定
-  // auto test = new Window::PopUpWindow();
+  auto test = new Window::PopUpWindow();
 
-  // QSplitter *mainSplitter = new QSplitter(this);
-  // mainSplitter->addWidget(test);
-  // test->setMinimumWidth(1);
-  // mainSplitter->addWidget(tabWidget_);
+  QSplitter *mainSplitter = new QSplitter(this);
+  mainSplitter->addWidget(test);
+  test->setMinimumWidth(1);
+  mainSplitter->addWidget(tabWidget_);
 
-  // mainSplitter->setStretchFactor(0, 1);
-  // mainSplitter->setStretchFactor(1, 3);
+  mainSplitter->setStretchFactor(0, 1);
+  mainSplitter->setStretchFactor(1, 3);
 
-  // mainSplitter->setCollapsible(0, true);
-  // mainSplitter->setCollapsible(1, false);
-  // // 创建 AnimatedDrawer 控制器
-  // Ui::TtAnimatedDrawer *controller =
-  //     new Ui::TtAnimatedDrawer(mainSplitter, test, tabWidget_, this);
+  mainSplitter->setCollapsible(0, true);
+  mainSplitter->setCollapsible(1, false);
+  // 创建 AnimatedDrawer 控制器
+  Ui::TtAnimatedDrawer *controller =
+      new Ui::TtAnimatedDrawer(mainSplitter, test, tabWidget_, this);
 
-  // {
-  //   QWidget *linkList = new QWidget;
-  //   auto linkListLayout = new QGridLayout(linkList);
+  {
+    QWidget *linkList = new QWidget;
+    auto linkListLayout = new QGridLayout(linkList);
 
-  //   Ui::TtNormalLabel *title = new Ui::TtNormalLabel(tr("连接列表"),
-  //   linkList);
+    Ui::TtNormalLabel *title = new Ui::TtNormalLabel(tr("连接列表"), linkList);
 
-  //   QWidget *btnWidget = new QWidget(linkList);
-  //   Ui::TtHorizontalLayout *btnWidgetLayout =
-  //       new Ui::TtHorizontalLayout(btnWidget);
-  //   Ui::TtSvgButton *addBtn =
-  //       new Ui::TtSvgButton(":/sys/plus-circle.svg", btnWidget); // 刷新
-  //   addBtn->setSvgSize(QSize(18, 18));
-  //   Ui::TtSvgButton *refreshBtn =
-  //       new Ui::TtSvgButton(":/sys/refresh-normal.svg", btnWidget); // 新建
-  //   refreshBtn->setEnableHoldToCheck(true);
-  //   refreshBtn->setSvgSize(QSize(18, 18));
-  //   refreshBtn->setColors(Qt::black, Qt::blue);
-  //   btnWidgetLayout->addWidget(addBtn);
-  //   btnWidgetLayout->addSpacerItem(new QSpacerItem(5, 0));
-  //   btnWidgetLayout->addWidget(refreshBtn);
+    QWidget *btnWidget = new QWidget(linkList);
+    Ui::TtHorizontalLayout *btnWidgetLayout =
+        new Ui::TtHorizontalLayout(btnWidget);
+    Ui::TtSvgButton *addBtn =
+        new Ui::TtSvgButton(":/sys/plus-circle.svg", btnWidget); // 刷新
+    addBtn->setSvgSize(QSize(18, 18));
+    Ui::TtSvgButton *refreshBtn =
+        new Ui::TtSvgButton(":/sys/refresh-normal.svg", btnWidget); // 新建
+    refreshBtn->setEnableHoldToCheck(true);
+    refreshBtn->setSvgSize(QSize(18, 18));
+    refreshBtn->setColors(Qt::black, Qt::blue);
+    btnWidgetLayout->addWidget(addBtn);
+    btnWidgetLayout->addSpacerItem(new QSpacerItem(5, 0));
+    btnWidgetLayout->addWidget(refreshBtn);
 
-  //   linkListLayout->addWidget(title, 0, 0, Qt::AlignTop);
-  //   linkListLayout->addWidget(btnWidget, 0, 1, Qt::AlignRight);
-  //   Ui::TtNormalLabel *displayInfo = new Ui::TtNormalLabel();
-  //   displayInfo->setPixmap(
-  //       QPixmap::fromImage(QImage(":/sys/tmp.png").scaled(88, 88)));
-  //   Ui::TtNormalLabel *displayWords =
-  //       new Ui::TtNormalLabel(tr("暂时没有可用的连接"));
-  //   auto addLinkBtn = new QPushButton(tr("新建连接"));
-  //   addLinkBtn->setMinimumSize(100, 28);
-  //   auto original_widget_ = new QWidget();
-  //   Ui::TtVerticalLayout *tmpl = new Ui::TtVerticalLayout(original_widget_);
-  //   tmpl->addStretch();
-  //   tmpl->addSpacerItem(new QSpacerItem(0, 20));
-  //   tmpl->addWidget(displayWords, 0, Qt::AlignHCenter);
-  //   tmpl->addWidget(addLinkBtn, 0, Qt::AlignHCenter);
-  //   tmpl->addStretch();
-  //   history_link_list_ = new Ui::SessionManager();
-  //   history_link_list_->setSelectionMode(QAbstractItemView::NoSelection);
-  //   auto stack_ = new QStackedWidget(linkList);
-  //   stack_->addWidget(original_widget_);
-  //   stack_->addWidget(history_link_list_);
-  //   linkListLayout->addWidget(stack_, 1, 0, 1, 2);
-  //   connect(history_link_list_->model(), &QAbstractItemModel::rowsInserted,
-  //           [=](const QModelIndex &parent, int first, int last) {
-  //             if (history_link_list_->count() == 1) { // 从0变为1
-  //               stack_->setCurrentIndex(1);
-  //             }
-  //           });
-  //   connect(history_link_list_->model(), &QAbstractItemModel::rowsRemoved,
-  //           [=](const QModelIndex &parent, int first, int last) {
-  //             if (history_link_list_->count() == 0) { // 从1变为0
-  //               stack_->setCurrentIndex(0);
-  //             }
-  //           });
-  //   connect(addLinkBtn, &QPushButton::clicked, [this, controller]() {
-  //     FunctionSelectionWindow *test2 = new FunctionSelectionWindow();
-  //     tabWidget_->addNewTab(test2, tr("新建连接"));
-  //     QObject::connect(test2, &FunctionSelectionWindow::switchRequested,
-  //                      [this](TtProtocolRole::Role role) {
-  //                        tabWidget_->sessionSwitchPage(
-  //                            tabWidget_->currentIndex(), role);
-  //                      });
-  //     tabWidget_->setCurrentWidget(test2);
-  //   });
-  //   connect(addBtn, &Ui::TtSvgButton::clicked, [this, controller]() {
-  //     FunctionSelectionWindow *test2 = new FunctionSelectionWindow();
-  //     tabWidget_->addNewTab(test2, tr("新建连接"));
-  //     QObject::connect(test2, &FunctionSelectionWindow::switchRequested,
-  //                      [this](TtProtocolRole::Role role) {
-  //                        tabWidget_->sessionSwitchPage(
-  //                            tabWidget_->currentIndex(), role);
-  //                      });
-  //     tabWidget_->setCurrentWidget(test2);
-  //   });
-  //   connect(refreshBtn, &Ui::TtSvgButton::clicked, [this, controller]() {
-  //     Ui::TtMessageBar::information(TtMessageBarType::Top, "无",
-  //                                   tr("连接列表已刷新"), 1000, this);
-  //   });
-  //   test->addPairedWidget(0, linkList);
-  // }
+    linkListLayout->addWidget(title, 0, 0, Qt::AlignTop);
+    linkListLayout->addWidget(btnWidget, 0, 1, Qt::AlignRight);
+    Ui::TtNormalLabel *displayInfo = new Ui::TtNormalLabel();
+    displayInfo->setPixmap(
+        QPixmap::fromImage(QImage(":/sys/tmp.png").scaled(88, 88)));
+    Ui::TtNormalLabel *displayWords =
+        new Ui::TtNormalLabel(tr("暂时没有可用的连接"));
+    auto addLinkBtn = new QPushButton(tr("新建连接"));
+    addLinkBtn->setMinimumSize(100, 28);
+    auto original_widget_ = new QWidget();
+    Ui::TtVerticalLayout *tmpl = new Ui::TtVerticalLayout(original_widget_);
+    tmpl->addStretch();
+    tmpl->addSpacerItem(new QSpacerItem(0, 20));
+    tmpl->addWidget(displayWords, 0, Qt::AlignHCenter);
+    tmpl->addWidget(addLinkBtn, 0, Qt::AlignHCenter);
+    tmpl->addStretch();
+    history_link_list_ = new Ui::SessionManager();
+    history_link_list_->setSelectionMode(QAbstractItemView::NoSelection);
+    auto stack_ = new QStackedWidget(linkList);
+    stack_->addWidget(original_widget_);
+    stack_->addWidget(history_link_list_);
+    linkListLayout->addWidget(stack_, 1, 0, 1, 2);
+    connect(history_link_list_->model(), &QAbstractItemModel::rowsInserted,
+            [=](const QModelIndex &parent, int first, int last) {
+              if (history_link_list_->count() == 1) { // 从0变为1
+                stack_->setCurrentIndex(1);
+              }
+            });
+    connect(history_link_list_->model(), &QAbstractItemModel::rowsRemoved,
+            [=](const QModelIndex &parent, int first, int last) {
+              if (history_link_list_->count() == 0) { // 从1变为0
+                stack_->setCurrentIndex(0);
+              }
+            });
+    connect(addLinkBtn, &QPushButton::clicked, [this, controller]() {
+      // 此处新建的 tabWidget_
+      FunctionSelectionWindow *test2 = new FunctionSelectionWindow();
+      tabWidget_->addNewTab(test2, tr("新建连接"));
+      // 这里点击 test2, 是在初始的 TabWindow 中使用对应的切换界面函数
+      QObject::connect(
+          test2, &FunctionSelectionWindow::switchRequested, test2,
+          [this, test2](TtProtocolRole::Role role) {
+            // tabWidget_->sessionSwitchPage(
+            //     // 根据当前的 index 切换
+            //     tabWidget_->currentIndex(), role);
+            // 使用 parent
+            if (test2) {
+              qDebug() << "test2: " << test2;
+              if (test2->parentWidget()) {
+                qDebug() << "test2 parentWidget: " << test2->parentWidget();
+                auto *parent1 = test2->parentWidget();
 
-  // {
-  //   QWidget *instructionList = new QWidget;
-  //   instructionList->setObjectName("instructionList");
-  //   auto instructionListLayout = new QGridLayout(instructionList);
+                while (parent1) {
+                  if (auto *tabWindow = qobject_cast<TabWindow *>(parent1)) {
+                    // 能够找到
+                    qDebug() << "find: " << tabWindow;
+                    tabWindow->sessionSwitchPage(tabWindow->currentIndex(),
+                                                 role);
+                    return;
+                  }
+                  parent1 = parent1->parentWidget();
+                }
 
-  //   Ui::TtNormalLabel *title =
-  //       new Ui::TtNormalLabel(tr("指令"), instructionList);
+                // auto *tabWindow =
+                //     qobject_cast<TabWindow *>(test2->parentWidget());
+                // qDebug() << tabWindow;
+                // 找不到
+                // if (tabWindow) {
+                //   tabWindow->sessionSwitchPage(
+                //       // 根据当前的 index 切换
+                //       tabWindow->currentIndex(), role);
+                // }
+              }
+            }
+            // tabWidget_->sessionSwitchPage(
+            //     // 根据当前的 index 切换
+            //     tabWidget_->currentIndex(), role);
+          });
+      tabWidget_->setCurrentWidget(test2);
+    });
+    connect(addBtn, &Ui::TtSvgButton::clicked, [this, controller]() {
+      // 添加一个 btn
+      FunctionSelectionWindow *test2 = new FunctionSelectionWindow();
+      tabWidget_->addNewTab(test2, tr("新建连接"));
+      QObject::connect(test2, &FunctionSelectionWindow::switchRequested,
+                       [this](TtProtocolRole::Role role) {
+                         tabWidget_->sessionSwitchPage(
+                             tabWidget_->currentIndex(), role);
+                       });
+      tabWidget_->setCurrentWidget(test2);
+    });
+    connect(refreshBtn, &Ui::TtSvgButton::clicked, [this, controller]() {
+      Ui::TtMessageBar::information(TtMessageBarType::Top, "无",
+                                    tr("连接列表已刷新"), 1000, this);
+    });
+    test->addPairedWidget(0, linkList);
+  }
 
-  //   QWidget *btnWidget = new QWidget(instructionList);
-  //   Ui::TtHorizontalLayout *btnWidgetLayout =
-  //       new Ui::TtHorizontalLayout(btnWidget);
-  //   Ui::TtSvgButton *addBtn =
-  //       new Ui::TtSvgButton(":/sys/plus-circle.svg", btnWidget);
-  //   addBtn->setSvgSize(QSize(18, 18));
-  //   Ui::TtSvgButton *refreshBtn =
-  //       new Ui::TtSvgButton(":/sys/refresh-normal.svg", btnWidget);
-  //   refreshBtn->setSvgSize(QSize(18, 18));
-  //   refreshBtn->setColors(Qt::black, Qt::blue);
-  //   refreshBtn->setEnableHoldToCheck(true);
-  //   btnWidgetLayout->addWidget(addBtn);
-  //   btnWidgetLayout->addSpacerItem(new QSpacerItem(5, 0));
-  //   btnWidgetLayout->addWidget(refreshBtn);
+  {
+    QWidget *instructionList = new QWidget;
+    instructionList->setObjectName("instructionList");
+    auto instructionListLayout = new QGridLayout(instructionList);
 
-  //   instructionListLayout->addWidget(title, 0, 0, Qt::AlignTop);
-  //   instructionListLayout->addWidget(btnWidget, 0, 1, Qt::AlignRight);
+    Ui::TtNormalLabel *title =
+        new Ui::TtNormalLabel(tr("指令"), instructionList);
 
-  //   // Ui::TtNormalLabel* imla = new Ui::TtNormalLabel();
-  //   // imla->setPixmap(QPixmap::fromImage(QImage(":/sys/tmp.png").scaled(88,
-  //   // 88))); il->addStretch(); il->addWidget(imla, 0, Qt::AlignCenter);
+    QWidget *btnWidget = new QWidget(instructionList);
+    Ui::TtHorizontalLayout *btnWidgetLayout =
+        new Ui::TtHorizontalLayout(btnWidget);
+    Ui::TtSvgButton *addBtn =
+        new Ui::TtSvgButton(":/sys/plus-circle.svg", btnWidget);
+    addBtn->setSvgSize(QSize(18, 18));
+    Ui::TtSvgButton *refreshBtn =
+        new Ui::TtSvgButton(":/sys/refresh-normal.svg", btnWidget);
+    refreshBtn->setSvgSize(QSize(18, 18));
+    refreshBtn->setColors(Qt::black, Qt::blue);
+    refreshBtn->setEnableHoldToCheck(true);
+    btnWidgetLayout->addWidget(addBtn);
+    btnWidgetLayout->addSpacerItem(new QSpacerItem(5, 0));
+    btnWidgetLayout->addWidget(refreshBtn);
 
-  //   Ui::TtNormalLabel *displayWords = new
-  //   Ui::TtNormalLabel(tr("指令列表未空")); auto addLinkBtn = new
-  //   QPushButton(tr("新建指令")); addLinkBtn->resize(100, 28);
+    instructionListLayout->addWidget(title, 0, 0, Qt::AlignTop);
+    instructionListLayout->addWidget(btnWidget, 0, 1, Qt::AlignRight);
 
-  //   auto original_widget_ = new QWidget();
-  //   Ui::TtVerticalLayout *tmpl = new Ui::TtVerticalLayout(original_widget_);
-  //   tmpl->addStretch();
-  //   tmpl->addSpacerItem(new QSpacerItem(0, 20));
-  //   tmpl->addWidget(displayWords, 0, Qt::AlignHCenter);
-  //   tmpl->addWidget(addLinkBtn, 0, Qt::AlignHCenter);
-  //   tmpl->addStretch();
-  //   history_instruction_list_ = new Ui::SessionManager();
-  //   history_instruction_list_->setSelectionMode(QAbstractItemView::NoSelection);
-  //   auto stack_ = new QStackedWidget(instructionList);
-  //   stack_->addWidget(original_widget_);
-  //   stack_->addWidget(history_instruction_list_);
-  //   instructionListLayout->addWidget(stack_, 1, 0, 1, 2);
-  //   connect(history_instruction_list_->model(),
-  //           &QAbstractItemModel::rowsInserted,
-  //           [=](const QModelIndex &parent, int first, int last) {
-  //             if (history_instruction_list_->count() == 1) { // 从0变为1
-  //               stack_->setCurrentIndex(1);
-  //             }
-  //           });
-  //   connect(history_instruction_list_->model(),
-  //           &QAbstractItemModel::rowsRemoved,
-  //           [=](const QModelIndex &parent, int first, int last) {
-  //             if (history_instruction_list_->count() == 0) { // 从1变为0
-  //               stack_->setCurrentIndex(0);
-  //             }
-  //           });
-  //   connect(addLinkBtn, &QPushButton::clicked, [this, controller]() {
-  //     Window::InstructionWindow *instruction = new Window::InstructionWindow;
-  //     tabWidget_->addNewTab(instruction, tr("未命名的指令"));
-  //     tabWidget_->setCurrentWidget(instruction);
-  //   });
-  //   connect(addBtn, &Ui::TtSvgButton::clicked, [this, controller]() {
-  //     Window::InstructionWindow *instruction = new Window::InstructionWindow;
-  //     tabWidget_->addNewTab(instruction, tr("未命名的指令"));
-  //     tabWidget_->setCurrentWidget(instruction);
-  //   });
-  //   connect(refreshBtn, &Ui::TtSvgButton::clicked, [this, controller]() {
-  //     Ui::TtMessageBar::information(TtMessageBarType::Top, "无",
-  //                                   tr("连接列表已刷新"), 1000);
-  //   });
-  //   test->addPairedWidget(1, instructionList);
-  // }
+    // Ui::TtNormalLabel* imla = new Ui::TtNormalLabel();
+    // imla->setPixmap(QPixmap::fromImage(QImage(":/sys/tmp.png").scaled(88,
+    // 88))); il->addStretch(); il->addWidget(imla, 0, Qt::AlignCenter);
 
-  // {
-  //   QWidget *mockList = new QWidget;
-  //   mockList->setObjectName("mockList");
-  //   auto mockListLayout = new QGridLayout(mockList);
+    Ui::TtNormalLabel *displayWords = new Ui::TtNormalLabel(tr("指令列表未空"));
+    auto addLinkBtn = new QPushButton(tr("新建指令"));
+    addLinkBtn->resize(100, 28);
 
-  //   Ui::TtNormalLabel *title = new Ui::TtNormalLabel(tr("模拟"), mockList);
+    auto original_widget_ = new QWidget();
+    Ui::TtVerticalLayout *tmpl = new Ui::TtVerticalLayout(original_widget_);
+    tmpl->addStretch();
+    tmpl->addSpacerItem(new QSpacerItem(0, 20));
+    tmpl->addWidget(displayWords, 0, Qt::AlignHCenter);
+    tmpl->addWidget(addLinkBtn, 0, Qt::AlignHCenter);
+    tmpl->addStretch();
+    history_instruction_list_ = new Ui::SessionManager();
+    history_instruction_list_->setSelectionMode(QAbstractItemView::NoSelection);
+    auto stack_ = new QStackedWidget(instructionList);
+    stack_->addWidget(original_widget_);
+    stack_->addWidget(history_instruction_list_);
+    instructionListLayout->addWidget(stack_, 1, 0, 1, 2);
+    connect(history_instruction_list_->model(),
+            &QAbstractItemModel::rowsInserted,
+            [=](const QModelIndex &parent, int first, int last) {
+              if (history_instruction_list_->count() == 1) { // 从0变为1
+                stack_->setCurrentIndex(1);
+              }
+            });
+    connect(history_instruction_list_->model(),
+            &QAbstractItemModel::rowsRemoved,
+            [=](const QModelIndex &parent, int first, int last) {
+              if (history_instruction_list_->count() == 0) { // 从1变为0
+                stack_->setCurrentIndex(0);
+              }
+            });
+    connect(addLinkBtn, &QPushButton::clicked, [this, controller]() {
+      Window::InstructionWindow *instruction = new Window::InstructionWindow;
+      tabWidget_->addNewTab(instruction, tr("未命名的指令"));
+      tabWidget_->setCurrentWidget(instruction);
+    });
+    connect(addBtn, &Ui::TtSvgButton::clicked, [this, controller]() {
+      Window::InstructionWindow *instruction = new Window::InstructionWindow;
+      tabWidget_->addNewTab(instruction, tr("未命名的指令"));
+      tabWidget_->setCurrentWidget(instruction);
+    });
+    connect(refreshBtn, &Ui::TtSvgButton::clicked, [this, controller]() {
+      Ui::TtMessageBar::information(TtMessageBarType::Top, "无",
+                                    tr("连接列表已刷新"), 1000);
+    });
+    test->addPairedWidget(1, instructionList);
+  }
 
-  //   QWidget *btnWidget = new QWidget(mockList);
-  //   Ui::TtHorizontalLayout *btnWidgetLayout =
-  //       new Ui::TtHorizontalLayout(btnWidget);
-  //   // // 以下两个会消失
-  //   Ui::TtSvgButton *addBtn =
-  //       new Ui::TtSvgButton(":/sys/plus-circle.svg", btnWidget); // 刷新
-  //   addBtn->setSvgSize(QSize(18, 18));
-  //   Ui::TtSvgButton *refreshBtn =
-  //       new Ui::TtSvgButton(":/sys/refresh-normal.svg", btnWidget); // 新建
-  //   refreshBtn->setSvgSize(QSize(18, 18));
-  //   refreshBtn->setColors(Qt::black, Qt::blue);
-  //   btnWidgetLayout->addWidget(addBtn);
-  //   btnWidgetLayout->addSpacerItem(new QSpacerItem(5, 0));
-  //   btnWidgetLayout->addWidget(refreshBtn);
+  {
+    QWidget *mockList = new QWidget;
+    mockList->setObjectName("mockList");
+    auto mockListLayout = new QGridLayout(mockList);
 
-  //   mockListLayout->addWidget(title, 0, 0, Qt::AlignTop);
-  //   mockListLayout->addWidget(btnWidget, 0, 1, Qt::AlignRight);
+    Ui::TtNormalLabel *title = new Ui::TtNormalLabel(tr("模拟"), mockList);
 
-  //   // 首页界面
-  //   // 显示的图片
-  //   Ui::TtNormalLabel *displayInfo = new Ui::TtNormalLabel();
-  //   displayInfo->setPixmap(
-  //       QPixmap::fromImage(QImage(":/sys/tmp.png").scaled(88, 88)));
+    QWidget *btnWidget = new QWidget(mockList);
+    Ui::TtHorizontalLayout *btnWidgetLayout =
+        new Ui::TtHorizontalLayout(btnWidget);
+    // // 以下两个会消失
+    Ui::TtSvgButton *addBtn =
+        new Ui::TtSvgButton(":/sys/plus-circle.svg", btnWidget); // 刷新
+    addBtn->setSvgSize(QSize(18, 18));
+    Ui::TtSvgButton *refreshBtn =
+        new Ui::TtSvgButton(":/sys/refresh-normal.svg", btnWidget); // 新建
+    refreshBtn->setSvgSize(QSize(18, 18));
+    refreshBtn->setColors(Qt::black, Qt::blue);
+    btnWidgetLayout->addWidget(addBtn);
+    btnWidgetLayout->addSpacerItem(new QSpacerItem(5, 0));
+    btnWidgetLayout->addWidget(refreshBtn);
 
-  //   // 图片底下的文字
-  //   Ui::TtNormalLabel *displayWords =
-  //       new Ui::TtNormalLabel(tr("没有可用的模拟服务"));
-  //   // 点击后在 tab 弹出一个 新 tab, 用于设置
-  //   auto addLinkBtn = new QPushButton(tr("新建连接"));
-  //   addLinkBtn->setMinimumSize(100, 28);
+    mockListLayout->addWidget(title, 0, 0, Qt::AlignTop);
+    mockListLayout->addWidget(btnWidget, 0, 1, Qt::AlignRight);
 
-  //   // 创建原始界面
-  //   auto original_widget_ = new QWidget();
-  //   Ui::TtVerticalLayout *tmpl = new Ui::TtVerticalLayout(original_widget_);
-  //   tmpl->addStretch();
-  //   tmpl->addSpacerItem(new QSpacerItem(0, 20));
-  //   tmpl->addWidget(displayWords, 0, Qt::AlignHCenter);
-  //   tmpl->addWidget(addLinkBtn, 0, Qt::AlignHCenter);
-  //   tmpl->addStretch();
+    // 首页界面
+    // 显示的图片
+    Ui::TtNormalLabel *displayInfo = new Ui::TtNormalLabel();
+    displayInfo->setPixmap(
+        QPixmap::fromImage(QImage(":/sys/tmp.png").scaled(88, 88)));
 
-  //   // 存储历史保存设置
-  //   history_mock_list_ = new Ui::SessionManager();
-  //   history_mock_list_->setSelectionMode(QAbstractItemView::NoSelection);
+    // 图片底下的文字
+    Ui::TtNormalLabel *displayWords =
+        new Ui::TtNormalLabel(tr("没有可用的模拟服务"));
+    // 点击后在 tab 弹出一个 新 tab, 用于设置
+    auto addLinkBtn = new QPushButton(tr("新建连接"));
+    addLinkBtn->setMinimumSize(100, 28);
 
-  //   // 使用堆叠布局
-  //   auto stack_ = new QStackedWidget(mockList);
-  //   stack_->addWidget(original_widget_);
-  //   stack_->addWidget(history_mock_list_);
+    // 创建原始界面
+    auto original_widget_ = new QWidget();
+    Ui::TtVerticalLayout *tmpl = new Ui::TtVerticalLayout(original_widget_);
+    tmpl->addStretch();
+    tmpl->addSpacerItem(new QSpacerItem(0, 20));
+    tmpl->addWidget(displayWords, 0, Qt::AlignHCenter);
+    tmpl->addWidget(addLinkBtn, 0, Qt::AlignHCenter);
+    tmpl->addStretch();
 
-  //   mockListLayout->addWidget(stack_, 1, 0, 1, 2);
+    // 存储历史保存设置
+    history_mock_list_ = new Ui::SessionManager();
+    history_mock_list_->setSelectionMode(QAbstractItemView::NoSelection);
 
-  //   // 监听 model 的行数变化
-  //   connect(history_mock_list_->model(), &QAbstractItemModel::rowsInserted,
-  //           [=](const QModelIndex &parent, int first, int last) {
-  //             if (history_mock_list_->count() == 1) { // 从0变为1
-  //               stack_->setCurrentIndex(1);
-  //             }
-  //           });
-  //   connect(history_mock_list_->model(), &QAbstractItemModel::rowsRemoved,
-  //           [=](const QModelIndex &parent, int first, int last) {
-  //             if (history_mock_list_->count() == 0) { // 从1变为0
-  //               stack_->setCurrentIndex(0);
-  //             }
-  //           });
-  //   connect(addLinkBtn, &QPushButton::clicked, [this, controller]() {
-  //     SimulateFunctionSelectionWindow *simulate =
-  //         new SimulateFunctionSelectionWindow();
-  //     tabWidget_->addNewTab(simulate, tr("创建模拟器"));
-  //     QObject::connect(
-  //         simulate, &SimulateFunctionSelectionWindow::switchRequested,
-  //         [this](TtProtocolRole::Role role) {
-  //           tabWidget_->sessionSwitchPage(tabWidget_->currentIndex(), role);
-  //         });
-  //     tabWidget_->setCurrentWidget(simulate);
-  //   });
-  //   connect(addBtn, &Ui::TtSvgButton::clicked, [this, controller]() {
-  //     SimulateFunctionSelectionWindow *simulate =
-  //         new SimulateFunctionSelectionWindow();
-  //     tabWidget_->addNewTab(simulate, tr("创建模拟器"));
-  //     QObject::connect(
-  //         simulate, &SimulateFunctionSelectionWindow::switchRequested,
-  //         [this](TtProtocolRole::Role role) {
-  //           tabWidget_->sessionSwitchPage(tabWidget_->currentIndex(), role);
-  //         });
-  //     tabWidget_->setCurrentWidget(simulate);
-  //   });
+    // 使用堆叠布局
+    auto stack_ = new QStackedWidget(mockList);
+    stack_->addWidget(original_widget_);
+    stack_->addWidget(history_mock_list_);
 
-  //   test->addPairedWidget(2, mockList);
-  // }
+    mockListLayout->addWidget(stack_, 1, 0, 1, 2);
 
-  // registerTabWidget();
+    // 监听 model 的行数变化
+    connect(history_mock_list_->model(), &QAbstractItemModel::rowsInserted,
+            [=](const QModelIndex &parent, int first, int last) {
+              if (history_mock_list_->count() == 1) { // 从0变为1
+                stack_->setCurrentIndex(1);
+              }
+            });
+    connect(history_mock_list_->model(), &QAbstractItemModel::rowsRemoved,
+            [=](const QModelIndex &parent, int first, int last) {
+              if (history_mock_list_->count() == 0) { // 从1变为0
+                stack_->setCurrentIndex(0);
+              }
+            });
+    connect(addLinkBtn, &QPushButton::clicked, [this, controller]() {
+      SimulateFunctionSelectionWindow *simulate =
+          new SimulateFunctionSelectionWindow();
+      tabWidget_->addNewTab(simulate, tr("创建模拟器"));
+      QObject::connect(
+          simulate, &SimulateFunctionSelectionWindow::switchRequested,
+          [this](TtProtocolRole::Role role) {
+            tabWidget_->sessionSwitchPage(tabWidget_->currentIndex(), role);
+          });
+      tabWidget_->setCurrentWidget(simulate);
+    });
+    connect(addBtn, &Ui::TtSvgButton::clicked, [this, controller]() {
+      SimulateFunctionSelectionWindow *simulate =
+          new SimulateFunctionSelectionWindow();
+      tabWidget_->addNewTab(simulate, tr("创建模拟器"));
+      QObject::connect(
+          simulate, &SimulateFunctionSelectionWindow::switchRequested,
+          [this](TtProtocolRole::Role role) {
+            tabWidget_->sessionSwitchPage(tabWidget_->currentIndex(), role);
+          });
+      tabWidget_->setCurrentWidget(simulate);
+    });
 
-  // // 左边栏
-  // layout_->addWidget(left_bar_, 0, Qt::AlignLeft);
+    test->addPairedWidget(2, mockList);
+  }
 
-  // layout_->addWidget(mainSplitter);
+  registerTabWidget();
 
-  // connect(left_bar_logic_, &Ui::TtWidgetGroup::widgetClicked,
-  //         [test, controller](int index) {
-  //           // 打开
-  //           if (controller->targetDrawerVisible()) {
-  //             // 重复
-  //             if (!test->switchToWidget(index)) {
-  //               controller->closeDrawer();
-  //             }
-  //           } else {
-  //             test->switchToWidget(index);
-  //             controller->openDrawer();
-  //           }
-  //         });
+  // 左边栏
+  layout_->addWidget(left_bar_, 0, Qt::AlignLeft);
 
-  // buttonGroup = new Ui::WidgetGroup(this);
+  layout_->addWidget(mainSplitter);
 
-  // connectSignals();
+  connect(left_bar_logic_, &Ui::TtWidgetGroup::widgetClicked,
+          [test, controller](int index) {
+            // 打开
+            if (controller->targetDrawerVisible()) {
+              // 重复
+              if (!test->switchToWidget(index)) {
+                controller->closeDrawer();
+              }
+            } else {
+              test->switchToWidget(index);
+              controller->openDrawer();
+            }
+          });
 
-  // initLanguageMenu();
+  buttonGroup = new Ui::WidgetGroup(this);
+
+  connectSignals();
+
+  initLanguageMenu();
   // readingProjectConfiguration();
 
-  // qDebug() << "MainWindow Success";
+  qDebug() << "MainWindow Success";
 }
 
-MainWindow::~MainWindow() {}
+MainWindow::~MainWindow() {
+  qDebug() << "Mainwindow :析构";
+  // tabWidget_->close();
+  // tabWidget_->deleteLater();
+
+  // 先关闭所有 TabWindow
+  // auto manager = TabWindowManager::instance();
+  // for (auto w : manager->windows()) {
+  //   w->close(); // 触发 TabWindow 的 closeEvent
+  // }
+
+  // // 再执行默认关闭逻辑
+  // QMainWindow::closeEvent(event);
+
+  // // 强制退出应用
+  // QApplication::quit();
+}
 
 void MainWindow::initLanguageMenu() {
   // 指定 .ts 文件路径，搜索获取 .ts 文件列表
@@ -515,40 +561,39 @@ void MainWindow::closeWindow() {
 }
 
 void MainWindow::compileTsFilesFinished() {
-  // QMenuBar *menuBar =
-  //     qobject_cast<Ui::WindowBar *>(window_agent_->titleBar())->menuBar();
-  // QActionGroup *actionGroup = new QActionGroup(this);
-  // actionGroup->setExclusive(true);
-  // // 固定插入到最后
-  // QMenu *languageMenu = menuBar->addMenu(tr("语言"));
-  // // 搜索获取 .qm 文件列表 qmFiles
-  // QDir languageDir("F:/MyProject/DebugTool/DebugTool/res/language/");
-  // if (!languageDir.exists()) {
-  //   qWarning() << "Language directory not exists!";
-  //   return;
-  // }
+  QMenuBar *menuBar =
+      qobject_cast<Ui::WindowBar *>(window_agent_->titleBar())->menuBar();
+  QActionGroup *actionGroup = new QActionGroup(this);
+  actionGroup->setExclusive(true);
+  // 固定插入到最后
+  QMenu *languageMenu = menuBar->addMenu(tr("语言"));
+  // 搜索获取 .qm 文件列表 qmFiles
+  QDir languageDir("F:/MyProject/DebugTool/DebugTool/res/language/");
+  if (!languageDir.exists()) {
+    qWarning() << "Language directory not exists!";
+    return;
+  }
 
-  // QString currentLoadedFile =
-  //     Lang::TtTranslationManager::instance().currentLanguage();
-  // qDebug() << currentLoadedFile;
-  // // 搜索 .qm
-  // QStringList qmFiles = languageDir.entryList(QStringList("*.qm"),
-  // QDir::Files);
-  // // 动态生成语言菜单
-  // for (const QString &qmFile : qmFiles) {
-  //   QString languageName = extractLanguageName(qmFile); // 解析语言名称
-  //   QAction *action = new QAction(languageName, this);
-  //   action->setCheckable(true);
-  //   languageMenu->addAction(action);
-  //   actionGroup->addAction(action);
-  //   qDebug() << qmFile;
-  //   if (currentLoadedFile == qmFile) {
-  //     action->setChecked(true);
-  //   }
-  //   connect(action, &QAction::triggered, this,
-  //           [this, qmFile]() { changeLanguage(qmFile); });
-  // }
-  // // qDebug() <<
+  QString currentLoadedFile =
+      Lang::TtTranslationManager::instance().currentLanguage();
+  qDebug() << currentLoadedFile;
+  // 搜索 .qm
+  QStringList qmFiles = languageDir.entryList(QStringList("*.qm"), QDir::Files);
+  // 动态生成语言菜单
+  for (const QString &qmFile : qmFiles) {
+    QString languageName = extractLanguageName(qmFile); // 解析语言名称
+    QAction *action = new QAction(languageName, this);
+    action->setCheckable(true);
+    languageMenu->addAction(action);
+    actionGroup->addAction(action);
+    qDebug() << qmFile;
+    if (currentLoadedFile == qmFile) {
+      action->setChecked(true);
+    }
+    connect(action, &QAction::triggered, this,
+            [this, qmFile]() { changeLanguage(qmFile); });
+  }
+  // qDebug() <<
 }
 
 void MainWindow::saveCsvFile() {
@@ -567,17 +612,17 @@ void MainWindow::switchToOtherTabPage(const QString &uuid, const int &type) {
   // 需要 role
   // 不是根据 index 切换, 而是特定的 uuid, 如果 tabwidget 不存在 uuid,
   // 那么新建立 tab, 应当传递 uuid
-  if (tabWidget_->isCurrentDisplayedPage(uuid)) {
-    tabWidget_->switchByPage(uuid);
-  } else if (tabWidget_->isStoredInMem(uuid)) {
-    tabWidget_->switchByReadingMem(uuid,
-                                   static_cast<TtProtocolRole::Role>(type));
-  } else {
-    tabWidget_->switchByReadingDisk(
-        uuid, static_cast<TtProtocolRole::Role>(type),
-        getSpecificConfiguration(uuid,
-                                 static_cast<TtProtocolRole::Role>(type)));
-  }
+  // if (tabWidget_->isCurrentDisplayedPage(uuid)) {
+  //   tabWidget_->switchByPage(uuid);
+  // } else if (tabWidget_->isStoredInMem(uuid)) {
+  //   tabWidget_->switchByReadingMem(uuid,
+  //                                  static_cast<TtProtocolRole::Role>(type));
+  // } else {
+  //   tabWidget_->switchByReadingDisk(
+  //       uuid, static_cast<TtProtocolRole::Role>(type),
+  //       getSpecificConfiguration(uuid,
+  //                                static_cast<TtProtocolRole::Role>(type)));
+  // }
 }
 
 bool MainWindow::event(QEvent *event) {
@@ -598,11 +643,6 @@ bool MainWindow::event(QEvent *event) {
     }
     break;
   }
-  case QEvent::Close: {
-    // 写入文件
-    Storage::SettingsManager::instance().saveSettings();
-    break;
-  }
 
   default:
     break;
@@ -610,8 +650,24 @@ bool MainWindow::event(QEvent *event) {
   return QMainWindow::event(event);
 }
 
+void MainWindow::closeEvent(QCloseEvent *event) {
+  // 写入文件
+  Storage::SettingsManager::instance().saveSettings();
+  // 先关闭所有 TabWindow
+  auto manager = TabWindowManager::instance();
+  for (auto w : manager->windows()) {
+    w->close(); // 触发 TabWindow 的 closeEvent
+  }
+
+  // 再执行默认关闭逻辑
+  QMainWindow::closeEvent(event);
+
+  // 强制退出应用
+  QApplication::quit();
+}
+
 void MainWindow::installWindowAgent() {
-  // window_agent_->setup(this);
+  window_agent_->setup(this);
 
   // 2. Construct your title bar
   auto menuBar = [this]() {
@@ -639,9 +695,15 @@ void MainWindow::installWindowAgent() {
     // edit->addAction(new QAction(tr("Undo(&U)"), menuBar));
     // edit->addAction(new QAction(tr("Redo(&R)"), menuBar));
 
-    auto help = new QMenu(tr("帮助(&H)"), menuBar);
-    help->addAction(new QAction(tr("关于 Qt"), menuBar));
-    help->addAction(new QAction(tr("联系作者"), menuBar));
+    // 创建帮助菜单
+    QMenu *helpMenu = menuBar->addMenu(tr("&Help"));
+    QAction *aboutQtAction = new QAction(tr("关于 Qt"), menuBar);
+    helpMenu->addAction(aboutQtAction);
+    connect(aboutQtAction, &QAction::triggered, qApp, &QApplication::aboutQt);
+    // 添加"关于应用"选项
+    // QAction *aboutAction = helpMenu->addAction(tr("&About Application"));
+    // connect(aboutAction, &QAction::triggered, this, &MainWindow::about);
+    // helpMenu->addAction(new QAction(tr("联系作者"), menuBar));
 
     // Theme action
     // auto darkAction = new QAction(tr("Enable dark theme"), menuBar);
@@ -768,7 +830,7 @@ void MainWindow::installWindowAgent() {
 #endif
 
     menuBar->addMenu(file);
-    menuBar->addMenu(help);
+    menuBar->addMenu(helpMenu);
     // menuBar->addMenu(edit);
     // menuBar->addMenu(settings);
     return menuBar;
@@ -785,10 +847,11 @@ void MainWindow::installWindowAgent() {
   iconButton->setObjectName(QStringLiteral("icon-button"));
   iconButton->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
 
-  auto putOnTopButton = new Ui::WindowbarButton();
-  putOnTopButton->setObjectName(QStringLiteral("put-to-top-button"));
-  putOnTopButton->setProperty("system-button", true);
-  putOnTopButton->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+  auto topButton = new Ui::WindowbarButton();
+  topButton->setCheckable(true);
+  topButton->setObjectName(QStringLiteral("top-button"));
+  topButton->setProperty("system-button", true);
+  topButton->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
 
   auto minButton = new Ui::WindowbarButton();
   minButton->setObjectName(QStringLiteral("min-button"));
@@ -810,6 +873,7 @@ void MainWindow::installWindowAgent() {
   auto windowBar = new Ui::WindowBar();
 #ifndef Q_OS_MAC
   windowBar->setIconButton(iconButton);
+  windowBar->setTopButton(topButton);
   windowBar->setMinButton(minButton);
   windowBar->setMaxButton(maxButton);
   windowBar->setCloseButton(closeButton);
@@ -826,6 +890,7 @@ void MainWindow::installWindowAgent() {
   window_agent_->setSystemButton(QWK::WindowAgentBase::Close, closeButton);
 #endif
   window_agent_->setHitTestVisible(menuBar, true);
+  window_agent_->setHitTestVisible(topButton, true);
 
 #ifdef Q_OS_MAC
   windowAgent->setSystemButtonAreaCallback([](const QSize &size) {
@@ -858,10 +923,29 @@ void MainWindow::installWindowAgent() {
             close();
           });
 
+  connect(windowBar, &Ui::WindowBar::topRequest, this, [this](bool top) {
+    auto *window = this->windowHandle();
+
+    if (window) {
+#ifdef Q_OS_WIN
+      HWND hwnd = reinterpret_cast<HWND>(window->winId());
+      if (top) {
+        ::SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+      } else {
+        ::SetWindowPos(hwnd, HWND_NOTOPMOST, 0, 0, 0, 0,
+                       SWP_NOMOVE | SWP_NOSIZE);
+      }
+#else
+        window->setFlag(Qt::WindowStaysOnTopHint, top);
+#endif
+    }
+  });
+
   connect(windowBar, &Ui::WindowBar::minimizeRequested, this,
           &QWidget::showMinimized);
   connect(windowBar, &Ui::WindowBar::maximizeRequested, this,
           [this, maxButton](bool max) {
+            qDebug() << "max:" << max;
             if (max) {
               showMaximized();
             } else {
@@ -875,6 +959,8 @@ void MainWindow::installWindowAgent() {
             emulateLeaveEvent(maxButton);
           });
   // connect(windowBar, &Ui::WindowBar::closeRequested, this, &QWidget::close);
+
+  // connect()
 
   connect(windowBar, &Ui::WindowBar::closeRequested, this, [this]() {
     Ui::TtContentDialog *dialog = new Ui::TtContentDialog(
@@ -939,8 +1025,7 @@ void MainWindow::loadStyleSheet(Theme theme) {
   QFile qss(":/theme/dark-style.qss");
   qss.open(QIODevice::ReadOnly | QIODevice::Text);
   setStyleSheet(QString::fromUtf8(qss.readAll()));
-  Q_EMIT themeChanged();
-  emit themeChanged();
+  // emit themeChanged();
 }
 
 void MainWindow::setLeftBar() {
@@ -994,12 +1079,14 @@ void MainWindow::connectSignals() {
   connect(history_link_list_, &Ui::SessionManager::uuidsChanged, buttonGroup,
           &Ui::WidgetGroup::updateUuid);
   connect(history_link_list_, &Ui::SessionManager::uuidsChanged, tabWidget_,
-          &Ui::TabWindow::removeUuidWidget);
+          // &Ui::TabWindow::removeUuidWidget);
+          &TabWindow::removeUuidWidget);
 
   connect(history_mock_list_, &Ui::SessionManager::uuidsChanged, buttonGroup,
           &Ui::WidgetGroup::updateUuid);
   connect(history_mock_list_, &Ui::SessionManager::uuidsChanged, tabWidget_,
-          &Ui::TabWindow::removeUuidWidget);
+          // &Ui::TabWindow::removeUuidWidget);
+          &TabWindow::removeUuidWidget);
 
   connect(function_select_, &FunctionSelectionWindow::switchRequested,
           [this](TtProtocolRole::Role role) {
@@ -1020,7 +1107,8 @@ void MainWindow::connectSignals() {
   connect(buttonGroup, &Ui::WidgetGroup::currentIndexChanged, this,
           &MainWindow::switchToOtherTabPage);
 
-  connect(tabWidget_, &Ui::TabWindow::requestNewTab, this, [this]() {
+  // connect(tabWidget_, &Ui::TabWindow::requestNewTab, this, [this]() {
+  connect(tabWidget_, &TabWindow::requestNewTab, this, [this]() {
     AllFunctionSelectionWindow *all = new AllFunctionSelectionWindow();
     tabWidget_->addNewTab(all, tr("选择功能"));
     QObject::connect(all, &AllFunctionSelectionWindow::switchRequested,
@@ -1031,7 +1119,8 @@ void MainWindow::connectSignals() {
     tabWidget_->setCurrentWidget(all);
   });
   connect(
-      tabWidget_, &Ui::TabWindow::widgetDeleted, this,
+      // tabWidget_, &Ui::TabWindow::widgetDeleted, this,
+      tabWidget_, &TabWindow::widgetDeleted, this,
       [this](QWidget *deleteWidget) {
         // 如果被删除的是保存的widget，则置空指针
         if (setting_widget_ == deleteWidget) {
@@ -1043,6 +1132,7 @@ void MainWindow::connectSignals() {
 
 void MainWindow::registerTabWidget() {
   // 注册 串口窗口
+  // tabWidget 分离出去了
   tabWidget_->registerWidget(
       TtProtocolRole::Serial,
       [this]() {

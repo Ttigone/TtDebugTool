@@ -109,6 +109,8 @@ void SerialSetting::setOldSettings(const QJsonObject &config) {
   }
   QJsonObject linkSetting = config.value("LinkSetting").toObject();
   QString portName = linkSetting.value("PortName").toString();
+  // 读取错误, 没有读取到正确的 port
+  qDebug() << "port" << portName;
   quint64 baud = linkSetting.value("BaudRate").toInteger();
   int dataBits = linkSetting.value("DataBits").toInt();
   int parity = linkSetting.value("ParityBit").toInt();
@@ -121,12 +123,6 @@ void SerialSetting::setOldSettings(const QJsonObject &config) {
   QString type = heartBeat.value("Type").toString();
   QJsonObject framing = config.value("Framing").toObject();
   QString lineFeed = framing.value("LineFeed").toString();
-
-  // serial_port_->body()->setCurrentText(portName);
-  // baud_rate_->body()->setCurrentText(QString::number(baud));
-  // data_bit_->body()->setCurrentText(QString::number(dataBits));
-  // parity_bit_->body()->setCurrentText(QString::number());
-  // stop_bit_->body()->setCurrentText(QString::number(stopBit));
 
   // 设置串口名
   for (int i = 0; i < serial_port_->body()->count(); ++i) {
@@ -175,6 +171,7 @@ void SerialSetting::setOldSettings(const QJsonObject &config) {
       break;
     }
   }
+  qDebug() << "success set serial setting";
 
   // 初始化的时候, 是读取了默认的配置, 现在需要设置为当前的 历史配置
 }

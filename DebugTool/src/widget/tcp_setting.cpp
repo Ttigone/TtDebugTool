@@ -1,29 +1,29 @@
 ﻿#include "widget/tcp_setting.h"
 
+#include <QNetworkInterface>
 #include <ui/control/TtComboBox.h>
 #include <ui/control/TtLineEdit.h>
 #include <ui/layout/vertical_layout.h>
 #include <ui/widgets/collapsible_panel.h>
-#include <QNetworkInterface>
 
 #include "core/tcp_client.h"
 #include "core/tcp_server.h"
 
 namespace Widget {
-TcpServerSetting::TcpServerSetting(QWidget* parent) : QWidget(parent) {
+TcpServerSetting::TcpServerSetting(QWidget *parent) : QWidget(parent) {
 
   main_layout_ = new QVBoxLayout(this);
 
-  QWidget* linkConfig = new QWidget;
-  Ui::TtVerticalLayout* linkConfigLayout = new Ui::TtVerticalLayout(linkConfig);
+  QWidget *linkConfig = new QWidget;
+  Ui::TtVerticalLayout *linkConfigLayout = new Ui::TtVerticalLayout(linkConfig);
   host_ = new Ui::TtLabelComboBox(tr("主机: "), linkConfig);
   port_ = new Ui::TtLabelLineEdit(tr("端口: "), linkConfig);
   linkConfigLayout->addWidget(host_);
   linkConfigLayout->addWidget(port_);
-  Ui::Drawer* drawer1 = new Ui::Drawer(tr("TCP 连接"), linkConfig);
+  Ui::Drawer *drawer1 = new Ui::Drawer(tr("TCP 连接"), linkConfig);
 
-  QWidget* framingWidget = new QWidget;
-  Ui::TtVerticalLayout* framingWidgetLayout =
+  QWidget *framingWidget = new QWidget;
+  Ui::TtVerticalLayout *framingWidgetLayout =
       new Ui::TtVerticalLayout(framingWidget);
   framing_model_ = new Ui::TtLabelComboBox(tr("模式: "));
   framing_model_->addItem(tr("无"));
@@ -34,25 +34,25 @@ TcpServerSetting::TcpServerSetting(QWidget* parent) : QWidget(parent) {
   framingWidgetLayout->addWidget(framing_model_);
   framingWidgetLayout->addWidget(framing_timeout_);
   framingWidgetLayout->addWidget(framing_fixed_length_);
-  Ui::Drawer* drawer2 = new Ui::Drawer(tr("分帧"), framingWidget);
+  Ui::Drawer *drawer2 = new Ui::Drawer(tr("分帧"), framingWidget);
   connect(framing_model_, &Ui::TtLabelComboBox::currentIndexChanged,
           [this, drawer2](int index) {
             switch (index) {
-              case 0: {
-                framing_timeout_->setVisible(false);
-                framing_fixed_length_->setVisible(false);
-                break;
-              }
-              case 1: {
-                framing_timeout_->setVisible(true);
-                framing_fixed_length_->setVisible(false);
-                break;
-              }
-              case 2: {
-                framing_timeout_->setVisible(false);
-                framing_fixed_length_->setVisible(true);
-                break;
-              }
+            case 0: {
+              framing_timeout_->setVisible(false);
+              framing_fixed_length_->setVisible(false);
+              break;
+            }
+            case 1: {
+              framing_timeout_->setVisible(true);
+              framing_fixed_length_->setVisible(false);
+              break;
+            }
+            case 2: {
+              framing_timeout_->setVisible(false);
+              framing_fixed_length_->setVisible(true);
+              break;
+            }
             }
             const auto event =
                 new QResizeEvent(drawer2->size(), drawer2->size());
@@ -64,14 +64,14 @@ TcpServerSetting::TcpServerSetting(QWidget* parent) : QWidget(parent) {
 
   retransmission_ = new Ui::TtLabelBtnComboBox(tr("目标: "));
   retransmission_->addItem(tr("无"));
-  Ui::Drawer* drawer3 = new Ui::Drawer(tr("转发"), retransmission_);
+  Ui::Drawer *drawer3 = new Ui::Drawer(tr("转发"), retransmission_);
 
-  QScrollArea* scroll = new QScrollArea(this);
+  QScrollArea *scroll = new QScrollArea(this);
   scroll->setFrameStyle(QFrame::NoFrame);
   scroll->setWidgetResizable(true);
-  QWidget* scrollContent = new QWidget(scroll);
+  QWidget *scrollContent = new QWidget(scroll);
 
-  Ui::TtVerticalLayout* scrollContentLayout =
+  Ui::TtVerticalLayout *scrollContentLayout =
       new Ui::TtVerticalLayout(scrollContent);
   scrollContentLayout->addWidget(drawer1, 0, Qt::AlignTop);
   scrollContentLayout->addWidget(drawer2);
@@ -95,7 +95,7 @@ Core::TcpServerConfiguration TcpServerSetting::getTcpServerConfiguration() {
   return cfg;
 }
 
-const QJsonObject& TcpServerSetting::getTcpServerSetting() {
+const QJsonObject &TcpServerSetting::getTcpServerSetting() {
   auto config = getTcpServerConfiguration();
   QJsonObject linkSetting;
   linkSetting.insert("SelfHost", QJsonValue(config.host));
@@ -117,25 +117,82 @@ const QJsonObject& TcpServerSetting::getTcpServerSetting() {
   return tcp_server_save_config_;
 }
 
+void TcpServerSetting::setOldSettings(const QJsonObject &config) {
+  if (config.isEmpty()) {
+    return;
+  }
+  QJsonObject linkSetting = config.value("LinkSetting").toObject();
+  QString selfHost = linkSetting.value("SelfHost").toString();
+  QString selfPort = linkSetting.value("SelfPort").toString();
+
+  QJsonObject framing = config.value("Framing").toObject();
+  QString model = framing.value("Model").toString();
+  QString timeout = framing.value("Timeout").toString();
+  QString fixedLength = framing.value("FixedLength").toString();
+
+  QJsonObject retransmission = config.value("Retransmission").toObject();
+  QString lineFeed = retransmission.value("Target").toString();
+
+  // 宏配置
+
+  // 设置串口名
+  for (int i = 0; i < host_->body()->count(); ++i) {
+    if (host_->body()->itemData(i).toString() == selfHost) {
+      host_->body()->setCurrentIndex(i);
+      break;
+    }
+  }
+  port_->setText(selfPort);
+
+  for (int i = 0; i < framing_model_->body()->count(); ++i) {
+    if (framing_model_->body()->itemData(i).toString() == model) {
+      framing_model_->body()->setCurrentIndex(i);
+      break;
+    }
+  }
+
+  for (int i = 0; i < framing_timeout_->body()->count(); ++i) {
+    if (framing_timeout_->body()->itemData(i).toString() == timeout) {
+      framing_timeout_->body()->setCurrentIndex(i);
+      break;
+    }
+  }
+
+  for (int i = 0; i < framing_fixed_length_->body()->count(); ++i) {
+    if (framing_fixed_length_->body()->itemData(i).toString() == fixedLength) {
+      framing_fixed_length_->body()->setCurrentIndex(i);
+      break;
+    }
+  }
+  // for (int i = 0; i < framing_model_->body()->count(); ++i) {
+  //   if (framing_model_->body()->itemData(i).toString() == model) {
+  //     framing_model_->body()->setCurrentIndex(i);
+  //     break;
+  //   }
+  // }
+}
+
+const QJsonObject &TcpServerSetting::getSerialSetting() {}
+
 void TcpServerSetting::setHost() {}
 
 void TcpServerSetting::setPort() {}
 
 void TcpServerSetting::setHostAddress() {
   QList<QHostAddress> ipAddresses = QNetworkInterface::allAddresses();
-  for (const QHostAddress& address : ipAddresses) {
+  for (const QHostAddress &address : ipAddresses) {
     host_->addItem(address.toString());
   }
   host_->body()->model()->sort(0);
   host_->body()->setCurrentIndex(0);
 }
 
-TcpClientSetting::TcpClientSetting(QWidget* parent) : QWidget(parent) {
+TcpClientSetting::TcpClientSetting(QWidget *parent) : QWidget(parent) {
 
   main_layout_ = new QVBoxLayout(this);
 
-  QWidget* linkConfig = new QWidget;
-  Ui::TtVerticalLayout* linkConfigLayout = new Ui::TtVerticalLayout(linkConfig);
+  QWidget *linkConfig = new QWidget;
+  Ui::TtVerticalLayout *linkConfigLayout = new Ui::TtVerticalLayout(linkConfig);
   target_host_ = new Ui::TtLabelComboBox(tr("地址: "), linkConfig);
   target_port_ = new Ui::TtLabelLineEdit(tr("端口: "), linkConfig);
   self_host_ = new Ui::TtLabelLineEdit(tr("本地地址: "), linkConfig);
@@ -148,10 +205,10 @@ TcpClientSetting::TcpClientSetting(QWidget* parent) : QWidget(parent) {
   linkConfigLayout->addWidget(self_host_);
   linkConfigLayout->addWidget(self_port_);
   linkConfigLayout->addWidget(send_packet_interval_);
-  Ui::Drawer* drawer1 = new Ui::Drawer(tr("连接设置"), linkConfig);
+  Ui::Drawer *drawer1 = new Ui::Drawer(tr("连接设置"), linkConfig);
 
-  QWidget* framingWidget = new QWidget;
-  Ui::TtVerticalLayout* framingWidgetLayout =
+  QWidget *framingWidget = new QWidget;
+  Ui::TtVerticalLayout *framingWidgetLayout =
       new Ui::TtVerticalLayout(framingWidget);
   framing_model_ = new Ui::TtLabelComboBox(tr("模式: "));
   framing_model_->addItem(tr("无"));
@@ -162,25 +219,25 @@ TcpClientSetting::TcpClientSetting(QWidget* parent) : QWidget(parent) {
   framingWidgetLayout->addWidget(framing_model_);
   framingWidgetLayout->addWidget(framing_timeout_);
   framingWidgetLayout->addWidget(framing_fixed_length_);
-  Ui::Drawer* drawer2 = new Ui::Drawer(tr("分帧"), framingWidget);
+  Ui::Drawer *drawer2 = new Ui::Drawer(tr("分帧"), framingWidget);
   connect(framing_model_, &Ui::TtLabelComboBox::currentIndexChanged,
           [this, drawer2](int index) {
             switch (index) {
-              case 0: {
-                framing_timeout_->setVisible(false);
-                framing_fixed_length_->setVisible(false);
-                break;
-              }
-              case 1: {
-                framing_timeout_->setVisible(true);
-                framing_fixed_length_->setVisible(false);
-                break;
-              }
-              case 2: {
-                framing_timeout_->setVisible(false);
-                framing_fixed_length_->setVisible(true);
-                break;
-              }
+            case 0: {
+              framing_timeout_->setVisible(false);
+              framing_fixed_length_->setVisible(false);
+              break;
+            }
+            case 1: {
+              framing_timeout_->setVisible(true);
+              framing_fixed_length_->setVisible(false);
+              break;
+            }
+            case 2: {
+              framing_timeout_->setVisible(false);
+              framing_fixed_length_->setVisible(true);
+              break;
+            }
             }
             const auto event =
                 new QResizeEvent(drawer2->size(), drawer2->size());
@@ -192,14 +249,14 @@ TcpClientSetting::TcpClientSetting(QWidget* parent) : QWidget(parent) {
 
   retransmission_ = new Ui::TtLabelBtnComboBox(tr("目标: "));
   retransmission_->addItem(tr("无"));
-  Ui::Drawer* drawer3 = new Ui::Drawer(tr("转发"), retransmission_);
+  Ui::Drawer *drawer3 = new Ui::Drawer(tr("转发"), retransmission_);
 
-  QScrollArea* scroll = new QScrollArea(this);
+  QScrollArea *scroll = new QScrollArea(this);
   scroll->setFrameStyle(QFrame::NoFrame);
   scroll->setWidgetResizable(true);
-  QWidget* scrollContent = new QWidget(scroll);
+  QWidget *scrollContent = new QWidget(scroll);
 
-  Ui::TtVerticalLayout* scrollContentLayout =
+  Ui::TtVerticalLayout *scrollContentLayout =
       new Ui::TtVerticalLayout(scrollContent);
   scrollContentLayout->addWidget(drawer1, 0, Qt::AlignTop);
   scrollContentLayout->addWidget(drawer2);
@@ -215,14 +272,13 @@ TcpClientSetting::TcpClientSetting(QWidget* parent) : QWidget(parent) {
 TcpClientSetting::~TcpClientSetting() {}
 
 Core::TcpClientConfiguration TcpClientSetting::getTcpClientConfiguration() {
-  Core::TcpClientConfiguration cfg(target_host_->body()->currentText(),
-                                   target_port_->body()->text(),
-                                   self_host_->body()->text(),
-                                   self_port_->body()->text());
+  Core::TcpClientConfiguration cfg(
+      target_host_->body()->currentText(), target_port_->body()->text(),
+      self_host_->body()->text(), self_port_->body()->text());
   return cfg;
 }
 
-const QJsonObject& TcpClientSetting::getTcpClientSetting() {
+const QJsonObject &TcpClientSetting::getTcpClientSetting() {
   auto config = getTcpClientConfiguration();
   QJsonObject linkSetting;
   linkSetting.insert("TargetHost", QJsonValue(config.target_host));
@@ -246,13 +302,44 @@ const QJsonObject& TcpClientSetting::getTcpClientSetting() {
   return tcp_client_save_config_;
 }
 
+void TcpClientSetting::setOldSettings(const QJsonObject &config) {
+  if (config.isEmpty()) {
+    return;
+  }
+  QJsonObject linkSetting = config.value("LinkSetting").toObject();
+  QString targetHost = linkSetting.value("TargetHost").toString();
+  QString targetPort = linkSetting.value("TargetPort").toString();
+  QString selfHost = linkSetting.value("SelfHost").toString();
+  QString selfPort = linkSetting.value("SelfPort").toString();
+
+  QJsonObject framing = config.value("Framing").toObject();
+  QString model = framing.value("Model").toString();
+  QString timeout = framing.value("Timeout").toString();
+  QString fixedLength = framing.value("FixedLength").toString();
+
+  QJsonObject retransmission = config.value("Retransmission").toObject();
+  QString lineFeed = retransmission.value("Target").toString();
+
+  // 目标端口
+  for (int i = 0; i < target_host_->body()->count(); ++i) {
+    if (target_host_->body()->itemData(i).toString() == targetHost) {
+      target_host_->body()->setCurrentIndex(i);
+      break;
+    }
+  }
+
+  target_port_->setText(targetPort);
+  self_host_->setText(selfHost);
+  self_port_->setText(selfPort);
+}
+
 void TcpClientSetting::setHostAddress() {
   QList<QHostAddress> ipAddresses = QNetworkInterface::allAddresses();
-  for (const QHostAddress& address : ipAddresses) {
+  for (const QHostAddress &address : ipAddresses) {
     target_host_->addItem(address.toString());
   }
   target_host_->body()->model()->sort(0);
   target_host_->body()->setCurrentIndex(0);
 }
 
-}  // namespace Widget
+} // namespace Widget

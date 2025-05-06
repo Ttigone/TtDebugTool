@@ -38,7 +38,8 @@ class TcpClient;
 
 namespace Window {
 
-class TcpWindow : public FrameWindow, public Ui::TabWindow::ISerializable {
+// class TcpWindow : public FrameWindow, public Ui::TabWindow::ISerializable {
+class TcpWindow : public FrameWindow {
   Q_OBJECT
 public:
   explicit TcpWindow(TtProtocolType::ProtocolRole role,
@@ -50,17 +51,13 @@ public:
   bool workState() const override;
   bool saveState() override;
   void setSaveState(bool state) override;
-  void saveSetting() override;
-  void setSetting(const QJsonObject &config) override;
+
+  Q_INVOKABLE void saveSetting() override;
+  Q_INVOKABLE void setSetting(const QJsonObject &config) override;
 
 signals:
   void requestSaveConfig();
   void requestSendMessage(const QByteArray &data);
-
-protected:
-  // 实现序列化接口
-  QByteArray saveState() const override;
-  bool restoreState(const QByteArray &state) override;
 
 private slots:
   void switchToEditMode();

@@ -57,13 +57,38 @@ bool UdpWindow::workState() const { return opened_; }
 
 bool UdpWindow::saveState() { return saved_; }
 
-void UdpWindow::setSaveState(bool state) {}
+void UdpWindow::setSaveState(bool state) { saved_ = state; }
 
-void UdpWindow::saveSetting() {}
+void UdpWindow::saveSetting() {
+  qDebug() << "udp saving setting";
+  config_.insert("Type", TtFunctionalCategory::Communication);
+  config_.insert("WindowTitle", title_->text());
+  if (role_ == TtProtocolType::Client) {
+    config_.insert("UdpClientSetting",
+                   udp_client_setting_->getUdpClientSetting());
+  } else if (role_ == TtProtocolType::Server) {
+    config_.insert("UdpServerSetting",
+                   udp_server_setting_->getUdpServerSetting());
+  }
+  config_.insert("InstructionTable", instruction_table_->getTableRecord());
+  Ui::TtMessageBar::success(TtMessageBarType::Top, tr(""), tr("保存成功"), 1500,
+                            this);
+  saved_ = true;
+  emit requestSaveConfig();
+}
 
-void UdpWindow::setSetting(const QJsonObject &config) {}
-QByteArray UdpWindow::saveState() const {}
-bool UdpWindow::restoreState(const QByteArray &state) {}
+void UdpWindow::setSetting(const QJsonObject &config) {
+  title_->setText(config.value("WindowTitle").toString(tr("未读取正确的标题")));
+  if (role_ == TtProtocolType::Client) {
+    udp_client_setting_->setOldSettings(
+        config.value("UdpClientSetting").toObject(QJsonObject()));
+  } else if (role_ == TtProtocolType::Server) {
+    udp_server_setting_->setOldSettings(
+        config.value("UdpServerSetting").toObject(QJsonObject()));
+  }
+  Ui::TtMessageBar::success(TtMessageBarType::Top, tr(""), tr("读取配置成功"),
+                            1500, this);
+}
 
 QString UdpWindow::getTitle() const { return title_->text(); }
 

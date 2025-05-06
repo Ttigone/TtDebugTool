@@ -41,8 +41,9 @@ class ModbusMaster;
 
 namespace Window {
 
-// class ModbusWindow : public QWidget {
-class ModbusWindow : public FrameWindow, public Ui::TabWindow::ISerializable {
+// class ModbusWindow : public FrameWindow, public Ui::TabWindow::ISerializable
+// {
+class ModbusWindow : public FrameWindow {
   Q_OBJECT
 public:
   enum class RegisterType {
@@ -67,11 +68,6 @@ public:
 
 signals:
   void requestSaveConfig();
-
-protected:
-  // 实现序列化接口
-  QByteArray saveState() const override;
-  bool restoreState(const QByteArray &state) override;
 
 private slots:
   void switchToEditMode();

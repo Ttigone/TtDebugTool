@@ -39,8 +39,7 @@ class UdpClient;
 
 namespace Window {
 
-// class UdpWindow : public QWidget {
-class UdpWindow : public FrameWindow, public Ui::TabWindow::ISerializable {
+class UdpWindow : public FrameWindow {
   Q_OBJECT
 public:
   explicit UdpWindow(TtProtocolType::ProtocolRole role,
@@ -53,16 +52,11 @@ public:
   bool saveState() override;
   void setSaveState(bool state) override;
 
-  void saveSetting() override;
-  void setSetting(const QJsonObject &config) override;
+  Q_INVOKABLE void saveSetting() override;
+  Q_INVOKABLE void setSetting(const QJsonObject &config) override;
 
 signals:
   void requestSaveConfig();
-
-protected:
-  // 实现序列化接口
-  QByteArray saveState() const override;
-  bool restoreState(const QByteArray &state) override;
 
 private slots:
   void switchToEditMode();
@@ -76,12 +70,10 @@ private:
 
   Ui::TtVerticalLayout *main_layout_;
 
-  Ui::TtNormalLabel *title_; // 名称
-  // Ui::TtImageButton* modify_title_btn_;  // 修改连接名称
+  Ui::TtNormalLabel *title_;          // 名称
   Ui::TtSvgButton *modify_title_btn_; // 修改连接名称
-  // Ui::TtImageButton* save_btn_;          // 保存连接记录
-  Ui::TtSvgButton *save_btn_;   // 保存连接记录
-  Ui::TtSvgButton *on_off_btn_; // 开启 or 关闭
+  Ui::TtSvgButton *save_btn_;         // 保存连接记录
+  Ui::TtSvgButton *on_off_btn_;       // 开启 or 关闭
 
   Ui::TtChatView *message_view_;
   Ui::TtChatMessageModel *message_model_;

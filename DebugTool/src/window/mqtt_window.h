@@ -70,7 +70,8 @@ private:
 };
 
 // class MqttWindow : public QWidget {
-class MqttWindow : public FrameWindow, public Ui::TabWindow::ISerializable {
+// class MqttWindow : public FrameWindow, public Ui::TabWindow::ISerializable {
+class MqttWindow : public FrameWindow {
   Q_OBJECT
 public:
   explicit MqttWindow(TtProtocolType::ProtocolRole role,
@@ -89,11 +90,6 @@ public:
 
 signals:
   void requestSaveConfig();
-
-protected:
-  // 实现序列化接口
-  QByteArray saveState() const override;
-  bool restoreState(const QByteArray &state) override;
 
 private slots:
   void switchToEditMode();

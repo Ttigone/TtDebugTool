@@ -72,10 +72,6 @@ void MqttWindow::saveSetting() {}
 
 void MqttWindow::setSetting(const QJsonObject &config) {}
 
-QByteArray MqttWindow::saveState() const {}
-
-bool MqttWindow::restoreState(const QByteArray &state) {}
-
 QString MqttWindow::getTitle() const { return title_->text(); }
 
 void MqttWindow::switchToEditMode() {

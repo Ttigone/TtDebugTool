@@ -52,8 +52,6 @@ ModbusWindow::~ModbusWindow() {}
 QString ModbusWindow::getTitle() const { return title_->text(); }
 
 QJsonObject ModbusWindow::getConfiguration() const { return config_; }
-QByteArray ModbusWindow::saveState() const {}
-bool ModbusWindow::restoreState(const QByteArray &state) {}
 
 bool ModbusWindow::workState() const {
   // return open

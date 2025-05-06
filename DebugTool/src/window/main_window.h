@@ -65,6 +65,8 @@ private slots:
   void compileTsFilesFinished();
   void saveCsvFile();
   void switchToOtherTabPage(const QString &uuid, const int &type);
+  void addSelectToolPage();
+  void addSelectAllToolPage();
 
 protected:
   bool event(QEvent *event) override;

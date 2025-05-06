@@ -56,14 +56,10 @@ class SerialPortWorker;
 
 namespace Window {
 
-// class SerialWindow : public QWidget, public Ui::TabManager::ISerializable {
-// class SerialWindow : public FrameWindow, public Ui::TabWindow::ISerializable
-// {
-class SerialWindow : public FrameWindow, public Ui::TabWindow::ISerializable {
+class SerialWindow : public FrameWindow {
   Q_OBJECT
 public:
   enum class MsgType { TEXT = 0x01, HEX = 0x02 };
-  // enum class
 
   explicit SerialWindow(QWidget *parent = nullptr);
   ~SerialWindow();
@@ -82,12 +78,8 @@ public:
 signals:
   void requestSaveConfig();
 
-protected:
-  // 实现序列化接口
-  QByteArray saveState() const override;
-  bool restoreState(const QByteArray &state) override;
-
 private slots:
+  // 最原始的发送
   void sendMessageToPort();
   void sendMessageToPort(const QString &data);
   void sendMessageToPort(const QString &data, const int &times);
@@ -108,11 +100,11 @@ private:
                       const QByteArray &blob);
   void handleDialogData(const QString &label, quint16 channel,
                         const QByteArray &blob);
-
+  // void sendMessage(const QByteArray &data);
+  void showMessage(const QString &data, bool out = true);
+  void sendMessage(const QString &data, MsgType type = MsgType::TEXT);
   void parseBuffer();                                        // 解析数据
   void processFrame(quint8 type, const QByteArray &payload); // 解析帧
-
-  // bool saved_ = false;
 
   Ui::TtVerticalLayout *main_layout_;
 
@@ -133,10 +125,10 @@ private:
 
   Widget::SerialSetting *serial_setting_;
 
-  Ui::TtNormalLabel *send_byte;
-  Ui::TtNormalLabel *recv_byte;
-  quint64 send_byte_count = 0;
-  quint64 recv_byte_count = 0;
+  Ui::TtNormalLabel *send_byte_;
+  Ui::TtNormalLabel *recv_byte_;
+  quint64 send_byte_count_ = 0;
+  quint64 recv_byte_count_ = 0;
 
   QsciScintilla *editor;
 

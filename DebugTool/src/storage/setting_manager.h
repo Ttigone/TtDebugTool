@@ -54,6 +54,7 @@ public:
       qWarning() << "Write error:" << writeFile.errorString();
     }
     writeFile.close();
+    qDebug() << "write success";
   }
 
   void loadSettings(const QString &filePath) {

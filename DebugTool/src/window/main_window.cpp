@@ -200,63 +200,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
                 stack_->setCurrentIndex(0);
               }
             });
-    connect(addLinkBtn, &QPushButton::clicked, [this, controller]() {
-      // 此处新建的 tabWidget_
-      FunctionSelectionWindow *test2 = new FunctionSelectionWindow();
-      tabWidget_->addNewTab(test2, tr("新建连接"));
-      // 这里点击 test2, 是在初始的 TabWindow 中使用对应的切换界面函数
-      QObject::connect(
-          test2, &FunctionSelectionWindow::switchRequested, test2,
-          [this, test2](TtProtocolRole::Role role) {
-            // tabWidget_->sessionSwitchPage(
-            //     // 根据当前的 index 切换
-            //     tabWidget_->currentIndex(), role);
-            // 使用 parent
-            if (test2) {
-              qDebug() << "test2: " << test2;
-              if (test2->parentWidget()) {
-                qDebug() << "test2 parentWidget: " << test2->parentWidget();
-                auto *parent1 = test2->parentWidget();
+    connect(addLinkBtn, &QPushButton::clicked, this,
+            &MainWindow::addSelectToolPage);
+    connect(addBtn, &Ui::TtSvgButton::clicked, this,
+            &MainWindow::addSelectToolPage);
 
-                while (parent1) {
-                  if (auto *tabWindow = qobject_cast<TabWindow *>(parent1)) {
-                    // 能够找到
-                    qDebug() << "find: " << tabWindow;
-                    tabWindow->sessionSwitchPage(tabWindow->currentIndex(),
-                                                 role);
-                    return;
-                  }
-                  parent1 = parent1->parentWidget();
-                }
-
-                // auto *tabWindow =
-                //     qobject_cast<TabWindow *>(test2->parentWidget());
-                // qDebug() << tabWindow;
-                // 找不到
-                // if (tabWindow) {
-                //   tabWindow->sessionSwitchPage(
-                //       // 根据当前的 index 切换
-                //       tabWindow->currentIndex(), role);
-                // }
-              }
-            }
-            // tabWidget_->sessionSwitchPage(
-            //     // 根据当前的 index 切换
-            //     tabWidget_->currentIndex(), role);
-          });
-      tabWidget_->setCurrentWidget(test2);
-    });
-    connect(addBtn, &Ui::TtSvgButton::clicked, [this, controller]() {
-      // 添加一个 btn
-      FunctionSelectionWindow *test2 = new FunctionSelectionWindow();
-      tabWidget_->addNewTab(test2, tr("新建连接"));
-      QObject::connect(test2, &FunctionSelectionWindow::switchRequested,
-                       [this](TtProtocolRole::Role role) {
-                         tabWidget_->sessionSwitchPage(
-                             tabWidget_->currentIndex(), role);
-                       });
-      tabWidget_->setCurrentWidget(test2);
-    });
     connect(refreshBtn, &Ui::TtSvgButton::clicked, [this, controller]() {
       Ui::TtMessageBar::information(TtMessageBarType::Top, "无",
                                     tr("连接列表已刷新"), 1000, this);
@@ -465,7 +413,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
   connectSignals();
 
   initLanguageMenu();
-  // readingProjectConfiguration();
+  readingProjectConfiguration();
 
   qDebug() << "MainWindow Success";
 }
@@ -608,21 +556,72 @@ void MainWindow::saveCsvFile() {
 }
 
 void MainWindow::switchToOtherTabPage(const QString &uuid, const int &type) {
-  // 根据 uuid 去切换
-  // 需要 role
+  // bug 移动出去后, 没了都应的 切换
   // 不是根据 index 切换, 而是特定的 uuid, 如果 tabwidget 不存在 uuid,
-  // 那么新建立 tab, 应当传递 uuid
-  // if (tabWidget_->isCurrentDisplayedPage(uuid)) {
-  //   tabWidget_->switchByPage(uuid);
-  // } else if (tabWidget_->isStoredInMem(uuid)) {
-  //   tabWidget_->switchByReadingMem(uuid,
-  //                                  static_cast<TtProtocolRole::Role>(type));
-  // } else {
-  //   tabWidget_->switchByReadingDisk(
-  //       uuid, static_cast<TtProtocolRole::Role>(type),
-  //       getSpecificConfiguration(uuid,
-  //                                static_cast<TtProtocolRole::Role>(type)));
-  // }
+  qDebug() << "switch uuid" << uuid;
+  // 有可能不是当前的 tabwidget 了
+  if (tabWidget_->isCurrentDisplayedPage(uuid)) {
+    qDebug() << "display";
+    // 第一个
+    tabWidget_->switchByPage(uuid);
+  } else if (tabWidget_->isStoredInMem(uuid)) {
+    tabWidget_->switchByReadingMem(uuid,
+                                   static_cast<TtProtocolRole::Role>(type));
+  } else {
+    tabWidget_->switchByReadingDisk(
+        uuid, static_cast<TtProtocolRole::Role>(type),
+        getSpecificConfiguration(uuid,
+                                 static_cast<TtProtocolRole::Role>(type)));
+  }
+  // 后面运行的 ???
+  qDebug() << "switch sussccess";
+}
+
+void MainWindow::addSelectToolPage() {
+  FunctionSelectionWindow *selectTool = new FunctionSelectionWindow();
+  tabWidget_->addNewTab(selectTool, tr("新建连接"));
+  // 这里点击 test2, 是在初始的 TabWindow 中使用对应的切换界面函数
+  QObject::connect(
+      selectTool, &FunctionSelectionWindow::switchRequested, selectTool,
+      [this, selectTool](TtProtocolRole::Role role) {
+        if (selectTool) {
+          if (selectTool->parentWidget()) {
+            auto *parent = selectTool->parentWidget();
+
+            while (parent) {
+              if (auto *tabWindow = qobject_cast<TabWindow *>(parent)) {
+                tabWindow->sessionSwitchPage(tabWindow->currentIndex(), role);
+                return;
+              }
+              parent = parent->parentWidget();
+            }
+          }
+        }
+      });
+  tabWidget_->setCurrentWidget(selectTool);
+}
+
+void MainWindow::addSelectAllToolPage() {
+  AllFunctionSelectionWindow *selectAllTool = new AllFunctionSelectionWindow();
+  tabWidget_->addNewTab(selectAllTool, tr("新建连接"));
+  QObject::connect(
+      selectAllTool, &AllFunctionSelectionWindow::switchRequested,
+      selectAllTool, [this, selectAllTool](TtProtocolRole::Role role) {
+        if (selectAllTool) {
+          if (selectAllTool->parentWidget()) {
+            auto *parent = selectAllTool->parentWidget();
+
+            while (parent) {
+              if (auto *tabWindow = qobject_cast<TabWindow *>(parent)) {
+                tabWindow->sessionSwitchPage(tabWindow->currentIndex(), role);
+                return;
+              }
+              parent = parent->parentWidget();
+            }
+          }
+        }
+      });
+  tabWidget_->setCurrentWidget(selectAllTool);
 }
 
 bool MainWindow::event(QEvent *event) {
@@ -651,6 +650,7 @@ bool MainWindow::event(QEvent *event) {
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {
+  // 关闭所有窗口
   // 写入文件
   Storage::SettingsManager::instance().saveSettings();
   // 先关闭所有 TabWindow
@@ -1024,7 +1024,8 @@ void MainWindow::loadStyleSheet(Theme theme) {
   //                             : QStringLiteral(":/light-style.qss"));
   QFile qss(":/theme/dark-style.qss");
   qss.open(QIODevice::ReadOnly | QIODevice::Text);
-  setStyleSheet(QString::fromUtf8(qss.readAll()));
+  qApp->setStyleSheet(QString::fromUtf8(qss.readAll()));
+  // setStyleSheet(QString::fromUtf8(qss.readAll()));
   // emit themeChanged();
 }
 
@@ -1107,17 +1108,8 @@ void MainWindow::connectSignals() {
   connect(buttonGroup, &Ui::WidgetGroup::currentIndexChanged, this,
           &MainWindow::switchToOtherTabPage);
 
-  // connect(tabWidget_, &Ui::TabWindow::requestNewTab, this, [this]() {
-  connect(tabWidget_, &TabWindow::requestNewTab, this, [this]() {
-    AllFunctionSelectionWindow *all = new AllFunctionSelectionWindow();
-    tabWidget_->addNewTab(all, tr("选择功能"));
-    QObject::connect(all, &AllFunctionSelectionWindow::switchRequested,
-                     [this](TtProtocolRole::Role role) {
-                       tabWidget_->sessionSwitchPage(tabWidget_->currentIndex(),
-                                                     role);
-                     });
-    tabWidget_->setCurrentWidget(all);
-  });
+  connect(tabWidget_, &TabWindow::requestNewTab, this,
+          &MainWindow::addSelectAllToolPage);
   connect(
       // tabWidget_, &Ui::TabWindow::widgetDeleted, this,
       tabWidget_, &TabWindow::widgetDeleted, this,
@@ -1187,21 +1179,24 @@ void MainWindow::registerTabWidget() {
         // qDebug() << "Create SerialWindow: " << runtime.elapseMilliseconds();
         connect(serial, &Window::SerialWindow::requestSaveConfig,
                 [this, serial]() {
+                  // 多次响应, 会出现问题
+                  //  有思索
                   // 获取当前窗口的独特值(uuid), 是否已经保存到 listwidget,
-                  addDifferentConfiguration(TtFunctionalCategory::Communication,
-                                            TtProtocolRole::Serial,
-                                            serial->getTitle(),
-                                            tabWidget_->getCurrentWidgetUUid());
-                  tabWidget_->setTabTitle(serial->getTitle());
+                  // addDifferentConfiguration(TtFunctionalCategory::Communication,
+                  //                           TtProtocolRole::Serial,
+                  //                           serial->getTitle(),
+                  //                           tabWidget_->getCurrentWidgetUUid());
+                  // tabWidget_->setTabTitle(serial->getTitle());
                   // 直接保存到本地
                   // 从磁盘读取，又从磁盘写入, 怎么区分 ?
                   // 重新开启应用时, 从磁盘读取内容, 有 uuid, 则不需要创建
                   // 直接保存到磁盘
-                  Storage::SettingsManager::instance().setSetting(
-                      "Serial+" + tabWidget_->getCurrentWidgetUUid(),
-                      serial->getConfiguration());
-                  Ui::TtMessageBar::success(TtMessageBarType::Top, "",
-                                            tr("保存成功"), 1000);
+                  // Storage::SettingsManager::instance().setSetting(
+                  //     "Serial+" + tabWidget_->getCurrentWidgetUUid(),
+                  //     serial->getConfiguration());
+
+                  // Ui::TtMessageBar::success(TtMessageBarType::Top, "",
+                  //                           tr("保存成功"), 1000);
                   qDebug() << "save sucess";
                   // 追加的形式
                 });
@@ -1583,17 +1578,20 @@ QJsonObject MainWindow::getSpecificConfiguration(const QString index,
                                                  TtProtocolRole::Role role) {
   const auto configs =
       Storage::SettingsManager::instance().getHistorySettings();
-  // qDebug() << configMappingTable.value(role);
+  qDebug() << "find: index" << index;
   auto prefix = configMappingTable.value(role);
   for (const QString &key : configs.keys()) {
     if (key.startsWith(prefix)) {
+      // bug uuid 没有的查找不到
       // 找到对应的开头, 读取 uuid
       QString uuid = key.sliced(prefix.length());
       qDebug() << "Found Entry - Type:" << prefix << ", UUID:" << uuid;
-      QJsonValue value = configs.value(key);
-      if (value.isObject()) {
-        // QJsonObject obj = value.toObject();
-        return value.toObject();
+      if (uuid == index) {
+        QJsonValue value = configs.value(key);
+        if (value.isObject()) {
+          // QJsonObject obj = value.toObject();
+          return value.toObject();
+        }
       }
     }
   }

@@ -73,7 +73,18 @@ bool TcpWindow::saveState() { return saved_; }
 
 void TcpWindow::setSaveState(bool state) { saved_ = state; }
 
-void TcpWindow::setSetting(const QJsonObject &config) {}
+void TcpWindow::setSetting(const QJsonObject &config) {
+  title_->setText(config.value("WindowTitle").toString(tr("未读取正确的标题")));
+  if (role_ == TtProtocolType::Client) {
+    tcp_client_setting_->setOldSettings(
+        config.value("TcpClientSetting").toObject(QJsonObject()));
+  } else if (role_ == TtProtocolType::Server) {
+    tcp_server_setting_->setOldSettings(
+        config.value("TcpClientSetting").toObject(QJsonObject()));
+  }
+  Ui::TtMessageBar::success(TtMessageBarType::Top, tr(""), tr("读取配置成功"),
+                            1500, this);
+}
 
 void TcpWindow::saveSetting() {
   config_.insert("Type", TtFunctionalCategory::Communication);
@@ -91,12 +102,6 @@ void TcpWindow::saveSetting() {
   saved_ = true;
   emit requestSaveConfig();
 }
-
-QByteArray TcpWindow::saveState() const {
-  // return saved_;
-}
-
-bool TcpWindow::restoreState(const QByteArray &state) {}
 
 QString TcpWindow::getTitle() const { return title_->text(); }
 

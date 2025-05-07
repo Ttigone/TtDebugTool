@@ -27,9 +27,13 @@ private:                                                                       \
 #define Q_ENUM_CREATE(CLASS) Q_ENUM(CLASS)
 #endif
 
-const QString serialPrefix = "Serial+"; // Define the prefix
-// const QString serialPrefix = "Tcp+";  // Define the prefix
-// const QString serialPrefix = "Serial+";  // Define the prefix
+const QString SerialPrefix = "Serial+";       // Define the prefix
+const QString TcpClientPrefix = "TcpClient+"; // Define the prefix
+const QString TcpServerPrefix = "TcpServer+"; // Define the prefix
+const QString UdpClientPrefix = "UdpClient+"; // Define the prefix
+const QString UdpServerPrefix = "UdpServer+"; // Define the prefix
+const QString MqttPrefix = "MQTT+";           // Define the prefix
+const QString ModbusPrefix = "Modbus+";       // Define the prefix
 
 Q_BEGIN_ENUM_CREATE_SRC(TtProtocolRole)
 enum Role {

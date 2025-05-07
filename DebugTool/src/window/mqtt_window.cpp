@@ -64,13 +64,33 @@ QJsonObject MqttWindow::getConfiguration() const { return config_; }
 
 bool MqttWindow::workState() const {}
 
-bool MqttWindow::saveState() {}
+bool MqttWindow::saveState() { return saved_; }
 
-void MqttWindow::setSaveState(bool state) {}
+void MqttWindow::setSaveState(bool state) { saved_ = state; }
 
-void MqttWindow::saveSetting() {}
+void MqttWindow::saveSetting() {
+  // 操作 config_
+  // 保存还是有 bug
+  config_.insert("Type", TtFunctionalCategory::Communication);
+  config_.insert("WindowTitle", title_->text());
+  config_.insert("MqttSetting", mqtt_client_setting_->getMqttClientSetting());
+  // config_.insert("Meta");
+  saved_ = true;
+  emit requestSaveConfig();
+}
 
-void MqttWindow::setSetting(const QJsonObject &config) {}
+void MqttWindow::setSetting(const QJsonObject &config) {
+  title_->setText(config.value("WindowTitle").toString(tr("未读取正确的标题")));
+  if (role_ == TtProtocolType::Client) {
+    config_.insert("Type", TtFunctionalCategory::Communication);
+    mqtt_client_setting_->setOldSettings(
+        config.value("TcpClientSetting").toObject(QJsonObject()));
+  } else if (role_ == TtProtocolType::Server) {
+    config_.insert("Type", TtFunctionalCategory::Simulate);
+    // tcp_server_setting_->setOldSettings(
+    //     config.value("TcpClientSetting").toObject(QJsonObject()));
+  }
+}
 
 QString MqttWindow::getTitle() const { return title_->text(); }
 
@@ -328,25 +348,7 @@ void MqttWindow::connectSignals() {
     }
   });
 
-  connect(save_btn_, &Ui::TtSvgButton::clicked, [this]() {
-    config_.insert("WindowTitile", title_->text());
-    if (role_ == TtProtocolType::Client) {
-      config_.insert("UdpClientSetting",
-                     mqtt_client_setting_->getMqttClientSetting());
-    } else if (role_ == TtProtocolType::Server) {
-      // config_.insert("UdpServerSetting",
-      //                mqtt_->getUdpServerSetting());
-    }
-    // config_.insert("InstructionTable", instruction_table_->getTableRecord());
-    // Ui::TtMessageBar::success(
-    //     TtMessageBarType::Top, "警告",
-    //     // "输入框不能为空，请填写完整信息。", 3000, this);
-    //     "输入框不能为空，请填写完整信息。", 3000, this);
-    emit requestSaveConfig();
-    // qDebug() << cfg_.obj;
-    //  配置文件保存到文件中
-    //  当前的 tabWidget 匹配对应的 QJsonObject
-  });
+  connect(save_btn_, &Ui::TtSvgButton::clicked, this, &MqttWindow::saveSetting);
 
   connect(meta_btn_, &Ui::TtTextButton::clicked,
           [this]() { mask_widget_->show(meta_widget_); });
@@ -363,6 +365,7 @@ void MqttWindow::connectSignals() {
   connect(subscripition_widget,
           &Widget::SubscripitionWidget::saveConfigToManager,
           [this](const QByteArray &config) {
+            // 解码
             if (!config.isEmpty()) {
               QDataStream stream(config);
               QString topic, qos, color, alias, identifier, noLocal,

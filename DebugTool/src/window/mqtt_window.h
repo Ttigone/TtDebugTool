@@ -69,8 +69,6 @@ private:
   QPushButton *m_button;
 };
 
-// class MqttWindow : public QWidget {
-// class MqttWindow : public FrameWindow, public Ui::TabWindow::ISerializable {
 class MqttWindow : public FrameWindow {
   Q_OBJECT
 public:

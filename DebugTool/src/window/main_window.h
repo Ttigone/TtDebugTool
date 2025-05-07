@@ -89,9 +89,12 @@ private:
   void restartApplication();                         // 重启应用
 
   void readingProjectConfiguration(); // 读取全部配置
-  QJsonObject
-  getSpecificConfiguration(const QString index,
-                           TtProtocolRole::Role role); // 获取单个配置信息
+  // 根据 uuid 获取单独的 配置信息
+  QJsonObject getSpecificConfiguration(const QString index,
+                                       TtProtocolRole::Role role);
+
+  void processConfigsByType(const QHash<QString, QJsonObject> &configs,
+                            TtProtocolRole::Role protocolRole);
 
   Theme currentTheme{};
 

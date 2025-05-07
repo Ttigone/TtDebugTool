@@ -129,21 +129,21 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
   TabWindowManager::instance()->setRootWindow(tabWidget_);
 
   // // 容纳一定了 widget, 以供外部切换, 直接存放 widget, 而非设定
-  auto test = new Window::PopUpWindow();
+  auto *leftPopUp = new Window::PopUpWindow();
 
   QSplitter *mainSplitter = new QSplitter(this);
-  mainSplitter->addWidget(test);
-  test->setMinimumWidth(1);
+  mainSplitter->addWidget(leftPopUp);
+  leftPopUp->setMinimumWidth(1);
   mainSplitter->addWidget(tabWidget_);
 
-  mainSplitter->setStretchFactor(0, 1);
-  mainSplitter->setStretchFactor(1, 3);
+  mainSplitter->setStretchFactor(0, 2);
+  mainSplitter->setStretchFactor(1, 1);
 
   mainSplitter->setCollapsible(0, true);
   mainSplitter->setCollapsible(1, false);
   // 创建 AnimatedDrawer 控制器
   Ui::TtAnimatedDrawer *controller =
-      new Ui::TtAnimatedDrawer(mainSplitter, test, tabWidget_, this);
+      new Ui::TtAnimatedDrawer(mainSplitter, leftPopUp, tabWidget_, this);
 
   {
     QWidget *linkList = new QWidget;
@@ -209,7 +209,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
       Ui::TtMessageBar::information(TtMessageBarType::Top, "无",
                                     tr("连接列表已刷新"), 1000, this);
     });
-    test->addPairedWidget(0, linkList);
+    leftPopUp->addPairedWidget(0, linkList);
   }
 
   {
@@ -237,10 +237,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 
     instructionListLayout->addWidget(title, 0, 0, Qt::AlignTop);
     instructionListLayout->addWidget(btnWidget, 0, 1, Qt::AlignRight);
-
-    // Ui::TtNormalLabel* imla = new Ui::TtNormalLabel();
-    // imla->setPixmap(QPixmap::fromImage(QImage(":/sys/tmp.png").scaled(88,
-    // 88))); il->addStretch(); il->addWidget(imla, 0, Qt::AlignCenter);
 
     Ui::TtNormalLabel *displayWords = new Ui::TtNormalLabel(tr("指令列表未空"));
     auto addLinkBtn = new QPushButton(tr("新建指令"));
@@ -287,7 +283,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
       Ui::TtMessageBar::information(TtMessageBarType::Top, "无",
                                     tr("连接列表已刷新"), 1000);
     });
-    test->addPairedWidget(1, instructionList);
+    leftPopUp->addPairedWidget(1, instructionList);
   }
 
   {
@@ -324,7 +320,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     // 图片底下的文字
     Ui::TtNormalLabel *displayWords =
         new Ui::TtNormalLabel(tr("没有可用的模拟服务"));
-    // 点击后在 tab 弹出一个 新 tab, 用于设置
     auto addLinkBtn = new QPushButton(tr("新建连接"));
     addLinkBtn->setMinimumSize(100, 28);
 
@@ -384,7 +379,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
       tabWidget_->setCurrentWidget(simulate);
     });
 
-    test->addPairedWidget(2, mockList);
+    leftPopUp->addPairedWidget(2, mockList);
   }
 
   registerTabWidget();
@@ -395,15 +390,15 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
   layout_->addWidget(mainSplitter);
 
   connect(left_bar_logic_, &Ui::TtWidgetGroup::widgetClicked,
-          [test, controller](int index) {
+          [leftPopUp, controller](int index) {
             // 打开
             if (controller->targetDrawerVisible()) {
               // 重复
-              if (!test->switchToWidget(index)) {
+              if (!leftPopUp->switchToWidget(index)) {
                 controller->closeDrawer();
               }
             } else {
-              test->switchToWidget(index);
+              leftPopUp->switchToWidget(index);
               controller->openDrawer();
             }
           });
@@ -556,15 +551,19 @@ void MainWindow::saveCsvFile() {
 }
 
 void MainWindow::switchToOtherTabPage(const QString &uuid, const int &type) {
-  // bug 移动出去后, 没了都应的 切换
   // 不是根据 index 切换, 而是特定的 uuid, 如果 tabwidget 不存在 uuid,
   qDebug() << "switch uuid" << uuid;
   // 有可能不是当前的 tabwidget 了
   if (tabWidget_->isCurrentDisplayedPage(uuid)) {
+    // 关闭后, 处于运作的窗口, 被保存在 close 中, 那么实例中的应当移除
+    // 处于展示 ? 错误的
     qDebug() << "display";
+    // 卡到这里进程崩溃
     // 第一个
     tabWidget_->switchByPage(uuid);
+    qDebug() << "switch ok";
   } else if (tabWidget_->isStoredInMem(uuid)) {
+    // 传入 uuid
     tabWidget_->switchByReadingMem(uuid,
                                    static_cast<TtProtocolRole::Role>(type));
   } else {
@@ -573,7 +572,6 @@ void MainWindow::switchToOtherTabPage(const QString &uuid, const int &type) {
         getSpecificConfiguration(uuid,
                                  static_cast<TtProtocolRole::Role>(type)));
   }
-  // 后面运行的 ???
   qDebug() << "switch sussccess";
 }
 
@@ -1111,10 +1109,8 @@ void MainWindow::connectSignals() {
   connect(tabWidget_, &TabWindow::requestNewTab, this,
           &MainWindow::addSelectAllToolPage);
   connect(
-      // tabWidget_, &Ui::TabWindow::widgetDeleted, this,
       tabWidget_, &TabWindow::widgetDeleted, this,
       [this](QWidget *deleteWidget) {
-        // 如果被删除的是保存的widget，则置空指针
         if (setting_widget_ == deleteWidget) {
           setting_widget_ = nullptr;
         }
@@ -1182,23 +1178,22 @@ void MainWindow::registerTabWidget() {
                   // 多次响应, 会出现问题
                   //  有思索
                   // 获取当前窗口的独特值(uuid), 是否已经保存到 listwidget,
-                  // addDifferentConfiguration(TtFunctionalCategory::Communication,
-                  //                           TtProtocolRole::Serial,
-                  //                           serial->getTitle(),
-                  //                           tabWidget_->getCurrentWidgetUUid());
-                  // tabWidget_->setTabTitle(serial->getTitle());
+                  addDifferentConfiguration(TtFunctionalCategory::Communication,
+                                            TtProtocolRole::Serial,
+                                            serial->getTitle(),
+                                            tabWidget_->getCurrentWidgetUUid());
+                  tabWidget_->setTabTitle(serial->getTitle());
                   // 直接保存到本地
                   // 从磁盘读取，又从磁盘写入, 怎么区分 ?
                   // 重新开启应用时, 从磁盘读取内容, 有 uuid, 则不需要创建
                   // 直接保存到磁盘
-                  // Storage::SettingsManager::instance().setSetting(
-                  //     "Serial+" + tabWidget_->getCurrentWidgetUUid(),
-                  //     serial->getConfiguration());
+                  Storage::SettingsManager::instance().setSetting(
+                      "Serial+" + tabWidget_->getCurrentWidgetUUid(),
+                      serial->getConfiguration());
 
-                  // Ui::TtMessageBar::success(TtMessageBarType::Top, "",
-                  //                           tr("保存成功"), 1000);
+                  Ui::TtMessageBar::success(TtMessageBarType::Top, "",
+                                            tr("保存成功"), 1000, this);
                   qDebug() << "save sucess";
-                  // 追加的形式
                 });
         return serial;
       },
@@ -1360,8 +1355,13 @@ void MainWindow::addDifferentConfiguration(TtFunctionalCategory::Category type,
                                            TtProtocolRole::Role role,
                                            const QString &title,
                                            const QString &uuid) {
+  // 有问题
+  // button 是创建了
+  // 每个按钮的 icon 有各自的配对
+  // 但是标签页的 icon 与 leftbar 的 icon 配置
   Ui::TtSpecialDeleteButton *button = new Ui::TtSpecialDeleteButton(
       title, ":/sys/displayport.svg", ":/sys/delete.svg", this);
+  qDebug() << button->parent();
 
   switch (type) {
   case TtFunctionalCategory::Communication: {
@@ -1378,7 +1378,6 @@ void MainWindow::addDifferentConfiguration(TtFunctionalCategory::Category type,
   default:
     break;
   }
-  qDebug() << static_cast<int>(role);
   buttonGroup->addButton(uuid, static_cast<int>(role), button);
 }
 
@@ -1484,94 +1483,71 @@ void MainWindow::restartApplication() {
 }
 
 void MainWindow::readingProjectConfiguration() {
-  // 显示到对应的 session 中
-  // 怎么区分不同的 session 呢 ?
-  // 只有初始化的时候, 才会响应 点击不同的 leftbar, 读取对应的 uuid
   // base::DetectRunningTime timer;
+  // qDebug() << timer.elapseMilliseconds();
   const auto configs =
       Storage::SettingsManager::instance().getHistorySettings();
-  // qDebug() << timer.elapseMilliseconds();
 
-  // switch serialPrefix
-  // 遍历 key
-  for (const QString &key : configs.keys()) {
-    if (key.startsWith(serialPrefix)) {
-      QString entryType = "Serial";
+  // 创建三个哈希表来存储不同前缀的配置，以UUID为键
+  QHash<QString, QJsonObject> serialConfigs;
+  QHash<QString, QJsonObject> tcpClientConfigs;
+  QHash<QString, QJsonObject> tcpServerConfigs;
+  QHash<QString, QJsonObject> udpClientConfigs;
+  QHash<QString, QJsonObject> udpServerConfigs;
+  QHash<QString, QJsonObject> mqttConfigs;
+  QHash<QString, QJsonObject> modbusConfigs;
 
-      QString uuid = key.sliced(serialPrefix.length());
-      qDebug() << "Found Entry - Type:" << entryType << ", UUID:" << uuid;
+  // 使用迭代器高效遍历
+  for (auto it = configs.constBegin(); it != configs.constEnd(); ++it) {
+    const QString &key = it.key();
 
-      QJsonValue value = configs.value(key);
-      if (value.isObject()) {
-        // 先查找 type
-        QJsonObject obj = value.toObject();
-        QJsonValue typeValue = obj.value("Type");
-
-        TtFunctionalCategory::Category retrievedCategory =
-            TtFunctionalCategory::None; // 提供一个默认值，以防出错
-        // 是数字类型
-        if (typeValue.isDouble()) {
-          int value = typeValue.toInt(-1);
-          // 有效范围内
-          if (value >= TtFunctionalCategory::Communication &&
-              value <= TtFunctionalCategory::Simulate) {
-            // 4. 静态转换为枚举类型
-            retrievedCategory =
-                static_cast<TtFunctionalCategory::Category>(value);
-            qDebug() << "成功取回枚举值:" << retrievedCategory;
-          } else {
-            qWarning() << "从 JSON 取回的整数值" << value
-                       << "不在 TtFunctionalCategory::Category 的有效范围内。";
-          }
-        }
-        switch (retrievedCategory) {
-        // 读取后, 怎么给到对应的 window ???
-        case TtFunctionalCategory::Communication:
-          // if (obj.contains("SerialSetting")) {
-          //   QJsonObject serialSetting =
-          //   obj.value("SerialSetting").toObject();
-
-          //   if (serialSetting.contains("LinkSetting")) {
-          //     QJsonObject linkSetting =
-          //         serialSetting.value("LinkSetting").toObject();
-          //     quint64 baud = linkSetting.value("BaudRate").toInteger();
-          //     QString portName = linkSetting.value("PortName").toString();
-          //     int dataBits = linkSetting.value("DataBits").toInt();
-          //     int stopBit = linkSetting.value("StopBits").toInt();
-          //   }
-          //   if (serialSetting.contains("Heartbeat")) {
-          //     QJsonObject heartBeat =
-          //         serialSetting.value("Heartbeat").toObject();
-          //     QString content = heartBeat.value("Content").toString();
-          //     QString interval = heartBeat.value("Interval").toString();
-          //     QString type = heartBeat.value("Type").toString();
-          //   }
-          //   if (serialSetting.contains("Framing")) {
-          //     QJsonObject framing =
-          //     serialSetting.value("Framing").toObject(); QString lineFeed =
-          //     framing.value("LineFeed").toString();
-          //   }
-          // }
-          // 获取 uuid
-          // 这里只是添加了对应的 button, 实际配置没有处理
-          addDifferentConfiguration(retrievedCategory, TtProtocolRole::Serial,
-                                    obj.value("WindowTitle").toString(), uuid);
-          qDebug() << "处理 Communication 类型";
-          // 能够恢复
-          break;
-        case TtFunctionalCategory::Instruction:
-          qDebug() << "处理 Instruction 类型";
-          break;
-        case TtFunctionalCategory::Simulate:
-          qDebug() << "处理 Simulate 类型";
-          break;
-        default:
-          qDebug() << "未知的类型";
-          break;
-        }
+    // 使用引用避免创建临时字符串
+    if (key.startsWith(SerialPrefix)) {
+      // uuid
+      QString uuid = key.mid(SerialPrefix.length());
+      if (!uuid.isEmpty() && it.value().isObject()) {
+        // 配置项
+        serialConfigs[uuid] = it.value().toObject();
+      }
+    } else if (key.startsWith(TcpClientPrefix)) {
+      QString uuid = key.mid(TcpClientPrefix.length());
+      if (!uuid.isEmpty() && it.value().isObject()) {
+        tcpClientConfigs[uuid] = it.value().toObject();
+      }
+    } else if (key.startsWith(UdpClientPrefix)) {
+      QString uuid = key.mid(UdpClientPrefix.length());
+      if (!uuid.isEmpty() && it.value().isObject()) {
+        udpClientConfigs[uuid] = it.value().toObject();
+      }
+    } else if (key.startsWith(TcpServerPrefix)) {
+      QString uuid = key.mid(TcpServerPrefix.length());
+      if (!uuid.isEmpty() && it.value().isObject()) {
+        tcpServerConfigs[uuid] = it.value().toObject();
+      }
+    } else if (key.startsWith(UdpServerPrefix)) {
+      QString uuid = key.mid(UdpServerPrefix.length());
+      if (!uuid.isEmpty() && it.value().isObject()) {
+        udpServerConfigs[uuid] = it.value().toObject();
+      }
+    } else if (key.startsWith(MqttPrefix)) {
+      QString uuid = key.mid(MqttPrefix.length());
+      if (!uuid.isEmpty() && it.value().isObject()) {
+        mqttConfigs[uuid] = it.value().toObject();
+      }
+    } else if (key.startsWith(ModbusPrefix)) {
+      QString uuid = key.mid(UdpServerPrefix.length());
+      if (!uuid.isEmpty() && it.value().isObject()) {
+        modbusConfigs[uuid] = it.value().toObject();
       }
     }
   }
+  processConfigsByType(serialConfigs, TtProtocolRole::Serial);
+  processConfigsByType(tcpClientConfigs, TtProtocolRole::TcpClient);
+  processConfigsByType(tcpServerConfigs, TtProtocolRole::TcpServer);
+  processConfigsByType(udpClientConfigs, TtProtocolRole::UdpClient);
+  processConfigsByType(udpServerConfigs, TtProtocolRole::UdpServer);
+  processConfigsByType(mqttConfigs, TtProtocolRole::MqttClient);
+  processConfigsByType(modbusConfigs, TtProtocolRole::ModbusClient);
 }
 
 QJsonObject MainWindow::getSpecificConfiguration(const QString index,
@@ -1585,7 +1561,7 @@ QJsonObject MainWindow::getSpecificConfiguration(const QString index,
       // bug uuid 没有的查找不到
       // 找到对应的开头, 读取 uuid
       QString uuid = key.sliced(prefix.length());
-      qDebug() << "Found Entry - Type:" << prefix << ", UUID:" << uuid;
+      // qDebug() << "Found Entry - Type:" << prefix << ", UUID:" << uuid;
       if (uuid == index) {
         QJsonValue value = configs.value(key);
         if (value.isObject()) {
@@ -1596,6 +1572,35 @@ QJsonObject MainWindow::getSpecificConfiguration(const QString index,
     }
   }
   return QJsonObject();
+}
+
+void MainWindow::processConfigsByType(
+    const QHash<QString, QJsonObject> &configs,
+    TtProtocolRole::Role protocolRole) {
+
+  // 不同类型的配置项
+  // uuid, config
+  for (auto it = configs.constBegin(); it != configs.constEnd(); ++it) {
+    qDebug() << "uuid";
+    const QString &uuid = it.key();      // uuid
+    const QJsonObject &obj = it.value(); // obj
+
+    // 分开不同的 leftbar
+    // 获取功能分类
+    QJsonValue typeValue = obj.value("Type");
+    TtFunctionalCategory::Category category = TtFunctionalCategory::None;
+
+    if (typeValue.isDouble()) {
+      int value = typeValue.toInt(-1);
+      if (value >= TtFunctionalCategory::Communication &&
+          value <= TtFunctionalCategory::Simulate) {
+        category = static_cast<TtFunctionalCategory::Category>(value);
+      }
+    }
+    // 这里值解析了 WindowTitle 属性
+    addDifferentConfiguration(category, protocolRole,
+                              obj.value("WindowTitle").toString(), uuid);
+  }
 }
 
 } // namespace Window

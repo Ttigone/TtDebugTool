@@ -10,7 +10,7 @@
 
 namespace Widget {
 
-MqttClientSetting::MqttClientSetting(QWidget* parent) : QWidget(parent) {
+MqttClientSetting::MqttClientSetting(QWidget *parent) : QWidget(parent) {
   init();
 }
 
@@ -18,19 +18,19 @@ MqttClientSetting::~MqttClientSetting() {}
 
 Core::MqttClientConfiguration MqttClientSetting::getMqttClientConfiguration() {
   return Core::MqttClientConfiguration(
-      link_->currentText(), port_->currentText(), clien_id_->currentText(),
+      link_->currentText(), port_->currentText(), client_id_->currentText(),
       protocol_version_->body()->currentData().value<TtMqttProcotol::Version>(),
       user_->currentText(), password_->currentText(),
       link_timeout_->currentText(), hold_timeout_->currentText(),
       reconnection_period_->currentText(), clear_conversation_->isChecked());
 }
 
-const QJsonObject& MqttClientSetting::getMqttClientSetting() {
+const QJsonObject &MqttClientSetting::getMqttClientSetting() {
   auto config = getMqttClientConfiguration();
   QJsonObject linkSetting;
   linkSetting.insert("Link", QJsonValue(config.link));
   linkSetting.insert("Port", QJsonValue(config.port));
-  linkSetting.insert("ClienId", QJsonValue(config.clien_id));
+  linkSetting.insert("ClientId", QJsonValue(config.clien_id));
   linkSetting.insert("Version", QJsonValue(config.version));
   linkSetting.insert("User", QJsonValue(config.user));
   linkSetting.insert("PassWord", QJsonValue(config.password));
@@ -46,18 +46,57 @@ const QJsonObject& MqttClientSetting::getMqttClientSetting() {
   testament.insert("Load", QJsonValue(load_->currentText()));
   testament.insert("QoS", QJsonValue(qos_->currentText()));
   testament.insert("Retain", QJsonValue(retain_->isCheckable()));
-  mqtt_client_save_config_.insert("Testment", QJsonValue(testament));
+  mqtt_client_save_config_.insert("Testament", QJsonValue(testament));
   return mqtt_client_save_config_;
+}
+
+void MqttClientSetting::setOldSettings(const QJsonObject &config) {
+  if (config.isEmpty()) {
+    return;
+  }
+  QJsonObject linkSetting = config.value("LinkSetting").toObject();
+  QString link = linkSetting.value("Link").toString();
+  QString port = linkSetting.value("Port").toString();
+  QString clientId = linkSetting.value("ClientId").toString();
+  int version = linkSetting.value("Version").toInt();
+  QString user = linkSetting.value("User").toString();
+  QString passWord = linkSetting.value("PassWord").toString();
+  QString linkTimeout = linkSetting.value("LinkTimeout").toString();
+  QString holdTimeout = linkSetting.value("HoldTimeout").toString();
+  QString reconnectionPeriod =
+      linkSetting.value("ReconnectionPeriod").toString();
+  bool clearConversation = linkSetting.value("ClearConversation").toBool();
+
+  QJsonObject testament = config.value("Testament").toObject();
+  QString topic = testament.value("Topic").toString();
+  QString load = testament.value("Load").toString();
+  QString qos = testament.value("QoS").toString();
+  QString retain = testament.value("Retain").toString();
+
+  link_->setText(link);
+  port_->setText(port);
+  client_id_->setText(clientId);
+  for (int i = 0; i < protocol_version_->body()->count(); ++i) {
+    if (protocol_version_->body()->itemData(i).toInt() == version) {
+      protocol_version_->body()->setCurrentIndex(i);
+    }
+  }
+  user_->setText(user);
+  password_->setText(passWord);
+  link_timeout_->setText(linkTimeout);
+  hold_timeout_->setText(holdTimeout);
+  reconnection_period_->setText(reconnectionPeriod);
+  clear_conversation_->setChecked(clearConversation);
 }
 
 void MqttClientSetting::init() {
   main_layout_ = new Ui::TtVerticalLayout(this);
 
-  QWidget* linkConfig = new QWidget(this);
-  Ui::TtVerticalLayout* linkConfigLayout = new Ui::TtVerticalLayout(linkConfig);
+  QWidget *linkConfig = new QWidget(this);
+  Ui::TtVerticalLayout *linkConfigLayout = new Ui::TtVerticalLayout(linkConfig);
   link_ = new Ui::TtLabelLineEdit(tr("链接:"), linkConfig);
   port_ = new Ui::TtLabelLineEdit(tr("端口:"), linkConfig);
-  clien_id_ = new Ui::TtLabelLineEdit(tr("客户端 ID:"), linkConfig);
+  client_id_ = new Ui::TtLabelLineEdit(tr("客户端 ID:"), linkConfig);
   protocol_version_ = new Ui::TtLabelComboBox(tr("协议版本:"), linkConfig);
   user_ = new Ui::TtLabelLineEdit(tr("用户名:"), linkConfig);
   password_ = new Ui::TtLabelLineEdit(tr("密码:"), linkConfig);
@@ -67,7 +106,7 @@ void MqttClientSetting::init() {
   clear_conversation_ = new Ui::TtCheckBox(tr("清楚会话"), linkConfig);
   linkConfigLayout->addWidget(link_);
   linkConfigLayout->addWidget(port_);
-  linkConfigLayout->addWidget(clien_id_);
+  linkConfigLayout->addWidget(client_id_);
   linkConfigLayout->addWidget(protocol_version_);
   linkConfigLayout->addWidget(user_);
   linkConfigLayout->addWidget(password_);
@@ -76,10 +115,10 @@ void MqttClientSetting::init() {
   linkConfigLayout->addWidget(reconnection_period_);
   linkConfigLayout->addWidget(clear_conversation_);
   setProtocolVersion();
-  Ui::Drawer* drawer1 = new Ui::Drawer(tr("连接设置"), linkConfig);
+  Ui::Drawer *drawer1 = new Ui::Drawer(tr("连接设置"), linkConfig);
 
-  QWidget* testamentWidget = new QWidget;
-  Ui::TtVerticalLayout* testamentWidgetLayout =
+  QWidget *testamentWidget = new QWidget;
+  Ui::TtVerticalLayout *testamentWidgetLayout =
       new Ui::TtVerticalLayout(testamentWidget);
   topic_ = new Ui::TtLabelLineEdit(tr("主题:"), testamentWidget);
   load_ = new Ui::TtLabelLineEdit(tr("负载:"), testamentWidget);
@@ -90,14 +129,14 @@ void MqttClientSetting::init() {
   testamentWidgetLayout->addWidget(qos_);
   testamentWidgetLayout->addWidget(retain_);
   setQoS();
-  Ui::Drawer* drawer2 = new Ui::Drawer(tr("遗嘱"), testamentWidget);
+  Ui::Drawer *drawer2 = new Ui::Drawer(tr("遗嘱"), testamentWidget);
 
   // 滚动区域
-  QScrollArea* scr = new QScrollArea(this);
+  QScrollArea *scr = new QScrollArea(this);
   scr->setFrameStyle(QFrame::NoFrame);
-  QWidget* scrollContent = new QWidget(scr);
+  QWidget *scrollContent = new QWidget(scr);
 
-  Ui::TtVerticalLayout* lascr = new Ui::TtVerticalLayout(scrollContent);
+  Ui::TtVerticalLayout *lascr = new Ui::TtVerticalLayout(scrollContent);
 
   lascr->addWidget(drawer1, 0, Qt::AlignTop);
   lascr->addWidget(drawer2);
@@ -131,4 +170,4 @@ void MqttClientSetting::setQoS() {
   qos_->addItem("2");
 }
 
-}  // namespace Widget
+} // namespace Widget

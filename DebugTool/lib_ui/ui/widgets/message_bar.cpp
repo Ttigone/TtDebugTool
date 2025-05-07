@@ -23,7 +23,7 @@ void TtMessageBar::success(TtMessageBarType::PositionPolicy policy,
     for (auto widget : widgetList) {
       // 通过属性获取类名
       // 主窗口 MainWindow
-      if (widget->property("TtBaseClassName").toString() == "TtWindow") {
+      if (widget->property("TtBaseClassName").toString() == "TtMainWindow") {
         parent = widget;
       }
     }

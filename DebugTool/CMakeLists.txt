@@ -193,18 +193,9 @@ include_directories(src)
 include_directories(${third_party})
 
 if(MINGW)
-#    list(APPEND CMAKE_PREFIX_PATH "{third_party}/qtmqtt_mingw64/lib/cmake")
-#    message(STATUS "CMAKE_PREFIX_PATH extended with: ${third_party}/qtmqtt_mingw64/lib/cmake")
-#    find_package(Qt6Mqtt REQUIRED)
-#    message(STATUS "Qt6Mqtt found.")
-#    target_link_directories(${PROJECT_NAME} PRIVATE "${third_party}/qtmqtt_mingw64/lib")
-#    target_include_directories(${PROJECT_NAME} PUBLIC "${third_party}/qtmqtt_mingw64/include")
-#    target_link_libraries(${PROJECT_NAME} PRIVATE )
-#    message(STATUS "Linked Qt6::Mqtt to target ${PROJECT_NAME}")
     target_include_directories(${PROJECT_NAME} PRIVATE ${third_party}/qtmqtt_mingw64/include)
     target_link_directories(${PROJECT_NAME} PRIVATE ${third_party}/qtmqtt_mingw64/lib)
     target_link_libraries(${PROJECT_NAME} PRIVATE Qt6Mqtt)
-#    target_link_libraries(${PROJECT_NAME} PRIVATE ${third_party}/qtmqtt_ming64/lib/libQt6Mqtt.a)
 endif()
 
 

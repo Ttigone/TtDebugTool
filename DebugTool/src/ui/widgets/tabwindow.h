@@ -173,17 +173,15 @@ public slots:
 private:
   struct TabData;
   void setupCustomTabButton(int index);
-  void updateTabStyle(int index); // 样式表
-  void setupCornerButton();       // 右上角的 button
+  void setupCornerButton(); // 右上角的 button
   int getTabIndexFromButton(QWidget *button) const;
   QWidget *createDefaultWidget(int tabIndex); // 初始化默认的 widget1
   QString findWidget(QWidget *widget);
   void handleTabClose(int index);
 
   void saveWorkingTabPageToMem(int index); // 保存正在工作的 page 到 Mem 中
-  void
-  restoreClosedTabFromMem(struct TabData data); // 从内存中恢复最近关闭的标签页
-
+  // 从内存中恢复最近关闭的标签页
+  void restoreClosedTabFromMem(const QString &index, struct TabData data);
   void saveTabPageToDisk(int index); // 保存配置 page 到磁盘中
   void restoreClosedTabFromDisk();   // 从本地中恢复标签页
 

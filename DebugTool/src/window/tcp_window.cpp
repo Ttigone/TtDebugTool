@@ -74,16 +74,20 @@ bool TcpWindow::saveState() { return saved_; }
 void TcpWindow::setSaveState(bool state) { saved_ = state; }
 
 void TcpWindow::setSetting(const QJsonObject &config) {
+  // 模拟是服务端
   title_->setText(config.value("WindowTitle").toString(tr("未读取正确的标题")));
   if (role_ == TtProtocolType::Client) {
+    config_.insert("Type", TtFunctionalCategory::Communication);
     tcp_client_setting_->setOldSettings(
         config.value("TcpClientSetting").toObject(QJsonObject()));
   } else if (role_ == TtProtocolType::Server) {
+    config_.insert("Type", TtFunctionalCategory::Simulate);
     tcp_server_setting_->setOldSettings(
         config.value("TcpClientSetting").toObject(QJsonObject()));
   }
+  saved_ = true;
   Ui::TtMessageBar::success(TtMessageBarType::Top, tr(""), tr("读取配置成功"),
-                            1500, this);
+                            1500);
 }
 
 void TcpWindow::saveSetting() {
@@ -97,8 +101,6 @@ void TcpWindow::saveSetting() {
                    tcp_server_setting_->getTcpServerSetting());
   }
   config_.insert("InstructionTable", instruction_table_->getTableRecord());
-  Ui::TtMessageBar::success(TtMessageBarType::Top, "", tr("保存成功"), 1500,
-                            this);
   saved_ = true;
   emit requestSaveConfig();
 }

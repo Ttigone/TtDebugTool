@@ -60,19 +60,18 @@ bool UdpWindow::saveState() { return saved_; }
 void UdpWindow::setSaveState(bool state) { saved_ = state; }
 
 void UdpWindow::saveSetting() {
-  qDebug() << "udp saving setting";
   config_.insert("Type", TtFunctionalCategory::Communication);
   config_.insert("WindowTitle", title_->text());
   if (role_ == TtProtocolType::Client) {
+    config_.insert("Type", TtFunctionalCategory::Communication);
     config_.insert("UdpClientSetting",
                    udp_client_setting_->getUdpClientSetting());
   } else if (role_ == TtProtocolType::Server) {
+    config_.insert("Type", TtFunctionalCategory::Simulate);
     config_.insert("UdpServerSetting",
                    udp_server_setting_->getUdpServerSetting());
   }
   config_.insert("InstructionTable", instruction_table_->getTableRecord());
-  Ui::TtMessageBar::success(TtMessageBarType::Top, tr(""), tr("保存成功"), 1500,
-                            this);
   saved_ = true;
   emit requestSaveConfig();
 }
@@ -86,8 +85,9 @@ void UdpWindow::setSetting(const QJsonObject &config) {
     udp_server_setting_->setOldSettings(
         config.value("UdpServerSetting").toObject(QJsonObject()));
   }
+  saved_ = true;
   Ui::TtMessageBar::success(TtMessageBarType::Top, tr(""), tr("读取配置成功"),
-                            1500, this);
+                            1500);
 }
 
 QString UdpWindow::getTitle() const { return title_->text(); }
@@ -421,25 +421,7 @@ void UdpWindow::init() {
 }
 
 void UdpWindow::connectSignals() {
-  connect(save_btn_, &Ui::TtSvgButton::clicked, [this]() {
-    config_.insert("WindowTitile", title_->text());
-    if (role_ == TtProtocolType::Client) {
-      config_.insert("UdpClientSetting",
-                     udp_client_setting_->getUdpClientSetting());
-    } else if (role_ == TtProtocolType::Server) {
-      config_.insert("UdpServerSetting",
-                     udp_server_setting_->getUdpServerSetting());
-    }
-    config_.insert("InstructionTable", instruction_table_->getTableRecord());
-    // Ui::TtMessageBar::success(
-    //     TtMessageBarType::Top, "警告",
-    //     // "输入框不能为空，请填写完整信息。", 3000, this);
-    //     "输入框不能为空，请填写完整信息。", 3000, this);
-    emit requestSaveConfig();
-    // qDebug() << cfg_.obj;
-    //  配置文件保存到文件中
-    //  当前的 tabWidget 匹配对应的 QJsonObject
-  });
+  connect(save_btn_, &Ui::TtSvgButton::clicked, this, &UdpWindow::saveSetting);
 }
 
 } // namespace Window

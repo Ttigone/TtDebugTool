@@ -109,8 +109,6 @@ void SerialSetting::setOldSettings(const QJsonObject &config) {
   }
   QJsonObject linkSetting = config.value("LinkSetting").toObject();
   QString portName = linkSetting.value("PortName").toString();
-  // 读取错误, 没有读取到正确的 port
-  qDebug() << "port" << portName;
   quint64 baud = linkSetting.value("BaudRate").toInteger();
   int dataBits = linkSetting.value("DataBits").toInt();
   int parity = linkSetting.value("ParityBit").toInt();
@@ -171,9 +169,6 @@ void SerialSetting::setOldSettings(const QJsonObject &config) {
       break;
     }
   }
-  qDebug() << "success set serial setting";
-
-  // 初始化的时候, 是读取了默认的配置, 现在需要设置为当前的 历史配置
 }
 
 const QJsonObject &SerialSetting::getSerialSetting() {
@@ -289,7 +284,6 @@ void SerialSetting::init() {
 
   QList<QComboBox *> comboBoxes;
   QList<QLineEdit *> lineEdits;
-  // QList<QLineEdit *> line
 
   QWidget *serialConfigWidget = new QWidget(this);
   serial_port_ = new Ui::TtLabelBtnComboBox(tr("串口:"), serialConfigWidget);
@@ -471,10 +465,9 @@ void SerialSetting::init() {
 
   // 滚动区域
   QScrollArea *scroll = new QScrollArea(this);
+  // scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   scroll->setFrameStyle(QFrame::NoFrame);
   QWidget *scrollContent = new QWidget(scroll);
-  // scr->setWidget(scrollContent);
-  // scr->setWidgetResizable(true);
 
   Ui::TtVerticalLayout *scrollContentLayout =
       new Ui::TtVerticalLayout(scrollContent);

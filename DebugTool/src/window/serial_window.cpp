@@ -135,30 +135,23 @@ bool SerialWindow::saveState() {
 void SerialWindow::setSaveState(bool state) { saved_ = state; }
 
 void SerialWindow::saveSetting() {
-  qDebug() << "serial saving setting";
-  // 保存还是有 bug
   config_.insert("Type", TtFunctionalCategory::Communication);
   config_.insert("WindowTitle", title_->text());
   config_.insert("SerialSetting", serial_setting_->getSerialSetting());
   config_.insert("InstructionTable", instruction_table_->getTableRecord());
-  // 提示有有问题
-  // Ui::TtMessageBar::success(TtMessageBarType::Top, tr(""), tr("保存成功"),
-  // 1500,
-  //                           this);
   saved_ = true;
+  // 支持保存到了 config_ 中,
   emit requestSaveConfig();
-  qDebug() << "serial saving yes";
 }
 
 void SerialWindow::setSetting(const QJsonObject &config) {
-  // 后面才会调用, 使用了 invoke, 有问题
-  qDebug() << "Seiral set setting";
+  // 设置后
   title_->setText(config.value("WindowTitle").toString(tr("未读取正确的标题")));
   serial_setting_->setOldSettings(
       config.value("SerialSetting").toObject(QJsonObject()));
-  // Ui::TtMessageBar::success(TtMessageBarType::Top, tr(""),
-  // tr("读取配置成功"), 1500, this);
-  qDebug() << "Seiral set yes";
+  saved_ = true; // 初始时 saved_ 为真
+  Ui::TtMessageBar::success(TtMessageBarType::Top, tr(""), tr("读取配置成功"),
+                            1500);
 }
 
 void SerialWindow::switchToEditMode() {
@@ -1074,20 +1067,20 @@ void SerialWindow::init() {
   terminalButton->setSvgSize(18, 18);
   terminalButton->setColors(Qt::black, Qt::blue);
 
-  qDebug() << "terminal: " << terminalButton;
+  // qDebug() << "terminal: " << terminalButton;
   // leftBtn->setEnableHoldToCheck(true);
   Ui::TtSvgButton *chatButton =
       new Ui::TtSvgButton(":/sys/chat.svg", twoBtnForGroup);
   chatButton->setSvgSize(18, 18);
   chatButton->setColors(Qt::black, Qt::blue);
-  qDebug() << "chat: " << chatButton;
+  // qDebug() << "chat: " << chatButton;
   // rightBtn->setEnableHoldToCheck(true);
 
   Ui::TtSvgButton *graphBtn =
       new Ui::TtSvgButton(":/sys/graph-up.svg", twoBtnForGroup);
   graphBtn->setSvgSize(18, 18);
   graphBtn->setColors(Qt::black, Qt::blue);
-  qDebug() << "graph: " << graphBtn;
+  // qDebug() << "graph: " << graphBtn;
 
   layouttest->addWidget(terminalButton);
   layouttest->addWidget(chatButton);
@@ -1431,16 +1424,18 @@ void SerialWindow::init() {
   VSplitter->addWidget(contentWidget);
   VSplitter->addWidget(bottomAll);
 
-  // 左右分区
   mainSplitter->addWidget(VSplitter);
   serial_setting_ = new Widget::SerialSetting;
   mainSplitter->addWidget(serial_setting_);
-  mainSplitter->setSizes(QList<int>() << 500 << 200);
+  mainSplitter->setSizes(QList<int>() << 500 << 300);
+  mainSplitter->setCollapsible(0, false);
+  mainSplitter->setCollapsible(1, true);
+
+  mainSplitter->setStretchFactor(1, 1);
+  mainSplitter->setStretchFactor(1, 3);
 
   // 主界面是左右分隔
   main_layout_->addWidget(mainSplitter);
-
-  // qDebug() << "Create SerialWindow: " << runtime.elapseMilliseconds();
 
   send_package_timer_ = new QTimer(this);
   send_package_timer_->setInterval(0);

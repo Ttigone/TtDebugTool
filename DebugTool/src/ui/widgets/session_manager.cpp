@@ -4,7 +4,7 @@
 
 namespace Ui {
 
-SessionManager::SessionManager(QWidget* parent) : QListWidget(parent) {
+SessionManager::SessionManager(QWidget *parent) : QListWidget(parent) {
   // setSpacing(5);
   // 禁用水平滚动条
   setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -17,27 +17,26 @@ SessionManager::SessionManager(QWidget* parent) : QListWidget(parent) {
   setSelectionMode(QAbstractItemView::NoSelection);
 }
 
-bool SessionManager::addAdaptiveWidget(const QString& title,
-                                       const QString& uuid, QWidget* widget) {
+bool SessionManager::addAdaptiveWidget(const QString &title,
+                                       const QString &uuid, QWidget *widget) {
   if (uuids_.contains(uuid)) {
     // 保存记录的功能
     // 更新标题
-    Ui::TtSpecialDeleteButton* button =
-        qobject_cast<Ui::TtSpecialDeleteButton*>(
+    Ui::TtSpecialDeleteButton *button =
+        qobject_cast<Ui::TtSpecialDeleteButton *>(
             itemWidget(uuids_.value(uuid)));
     button->setTitle(title);
-    // qDebug() << "已经存在了";
     return false;
   }
-  QListWidgetItem* item = new QListWidgetItem(this);
+  QListWidgetItem *item = new QListWidgetItem(this);
   int contentWidth = contentsRect().width();
   item->setSizeHint(QSize(contentWidth, widget->sizeHint().height())
                         .shrunkBy(QMargins(3, 3, 3, 3)));
   addItem(item);
   setItemWidget(item, widget);
 
-  Ui::TtSpecialDeleteButton* button =
-      qobject_cast<Ui::TtSpecialDeleteButton*>(widget);
+  Ui::TtSpecialDeleteButton *button =
+      qobject_cast<Ui::TtSpecialDeleteButton *>(widget);
 
   // uuids_.append(uuid, item);
   uuids_.insert(uuid, item);
@@ -48,8 +47,8 @@ bool SessionManager::addAdaptiveWidget(const QString& title,
             qDebug() << "delete" << uuid;
             auto item = uuids_.value(uuid);
             // indexFromItem(item);
-            setItemWidget(item, nullptr);  // 移除 widget
-            delete item;                   // 删除项
+            setItemWidget(item, nullptr); // 移除 widget
+            delete item;                  // 删除项
             uuids_.remove(uuid);
             // emit
             // 通知 tabwidget, 删除对应的存储
@@ -60,10 +59,10 @@ bool SessionManager::addAdaptiveWidget(const QString& title,
   return true;
 }
 
-void SessionManager::updateItemSize(QListWidgetItem* item) {
+void SessionManager::updateItemSize(QListWidgetItem *item) {
   if (!item)
     return;
-  QWidget* widget = itemWidget(item);
+  QWidget *widget = itemWidget(item);
   if (!widget)
     return;
 
@@ -79,4 +78,4 @@ void SessionManager::updateAllItemSizes() {
   }
 }
 
-}  // namespace Ui
+} // namespace Ui

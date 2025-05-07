@@ -111,33 +111,7 @@ void TabWindowManager::removeWindow(TabWindow *window) {
   // m_windows.removeOne(window);
 }
 
-// TabWindow *TabWindowManager::possibleWindow(TabWindow *currentWindow,
-//                                             QPoint globalPos) {
-//   for (auto w : m_windows) {
-//     if (w == currentWindow) {
-//       continue;
-//     }
-//     // 使用 QWidget 的几何区域（不含窗口装饰）
-//     QRect widgetRect = w->geometry();
-//     if (!widgetRect.contains(globalPos))
-//       continue;
-
-//     // 将全局坐标转换为目标窗口标签栏的局部坐标
-//     QPoint posInTabBar = w->tabBar()->mapFromGlobal(globalPos);
-//     QRect tabBarRect = w->tabBar()->rect();
-
-//     // 扩展标签栏区域宽度至窗口宽度（某些样式下标签栏可能未占满宽度）
-//     tabBarRect.setWidth(w->width());
-
-//     if (tabBarRect.contains(posInTabBar)) {
-//       return w;
-//     }
-//   }
-//   return nullptr;
-// }
-
 TabWindow *TabWindowManager::possibleWindow(TabWindow *src, QPoint globalPos) {
-  // qDebug() << src << m_root;
   for (TabWindow *w : m_windows) {
     if (w == src) {
       continue;
@@ -155,7 +129,6 @@ TabWindow *TabWindowManager::possibleWindow(TabWindow *src, QPoint globalPos) {
       }
     }
   }
-  // qDebug() << "无存在的窗口";
   return nullptr;
 }
 
@@ -195,18 +168,6 @@ TabWindow::TabWindow(QWidget *parent) : QTabWidget(parent) {
   Q_ASSERT(TabWindowManager::instance());
   TabWindowManager::instance()->addWindow(this);
   tabBar()->installEventFilter(this);
-
-  // this->setStyleSheet(
-  //     "QTabWidget::pane { border-top: 1px solid #ccc; border-left: 1px solid
-  //     "
-  //     "#ccc; border-right: none; border-bottom: none; }  QTabWidget { "
-  //     "background: #f0f0f0; } "
-  //     "QTabBar::tab { background: #f0f0f0; padding: 6px 12px; border-top: "
-  //     "1px solid #ccc; border-left: 1px solid #ccc;  border-right: none; "
-  //     "border-bottom: none; border-top-left-radius: 4px; "
-  //     "border-top-right-radius: 4px; } ");
-
-  // 为整个 TabWidget 设置样式，特别是 corner-widget 部分
 
   setMovable(true);
   setDocumentMode(true);
@@ -507,41 +468,23 @@ void TabWindow::switchByAlreadyExistingWidget(int tabIndex, const QString &uuid,
     currentWidget->deleteLater();
   }
 
-  qDebug() << "new by has uuid";
+  // qDebug() << "new by has uuid";
 
-  // 创建新的 Widget
   // 这里需要设置对应的 config 配置
   Window::FrameWindow *newWidget = widgetFactories[role]();
-  // 以上构造函数都完成了
 
-  qDebug() << newWidget;
   if (newWidget) {
     // 设置
     // 必须异步调用
     newWidget->setSetting(config);
-    // QMetaObject::invokeMethod(newWidget, "setSetting", Qt::QueuedConnection,
-    //                           Q_ARG(const QJsonObject &, config));
-    // QMetaObject::invokeMethod(newWidget, "setSetting", Qt::QueuedConnection,
-    //                           Q_ARG(const QJsonObject &, config));
-    // newWidget->setSetting(config);
-
-    // qDebug() << "t1";
 
     // 可以根据已经有的 uuid 设定
     widgetInstances[uuid] = newWidget;
 
-    // 设置 tab 的文本
-    setTabText(tabIndex, widgetTitles[role]);
-    // 向 tabIndex 所有的 tab 界面设置界面 newWidget, title 为对应索引值
-    // 设置图标
     insertTab(tabIndex, newWidget, QIcon(SpecialTypeIcon(role)),
-              widgetTitles[role]);
-    setupCustomTabButton(tabIndex);
-    // qDebug() << "t2";
-    // updateTabStyle(tabIndex);
+              config.value("WindowTitle").toString(widgetTitles[role]));
 
-    // 显示当前正在操作的 tab
-    // 重复创建 串口时, 发现会跳到之前已经创建好的
+    setupCustomTabButton(tabIndex);
     setCurrentIndex(tabIndex);
   } else {
     qDebug() << "error to create widget";
@@ -552,21 +495,11 @@ QString TabWindow::getCurrentWidgetUUid() {
   return findWidget(currentWidget());
 }
 
-void TabWindow::setTabIcon(int index, const QString &iconPath) {
-  setTabIcon(index, QIcon(iconPath));
-}
-
-void TabWindow::setTabIcon(int index, const QIcon &icon) {
-  QTabWidget::setTabIcon(index, icon);
-  updateTabStyle(index);
-}
-
 void TabWindow::setTabTitle(const QString &title) {
   tabBar()->setTabText(currentIndex(), title);
 }
 
 bool TabWindow::isStoredInMem(const QString &index) {
-  // for (auto it = closedTabs_.begin())
   for (auto it = closedTabs_.constBegin(); it != closedTabs_.end(); ++it) {
     if (it->first == index) {
       return true;
@@ -576,18 +509,17 @@ bool TabWindow::isStoredInMem(const QString &index) {
 }
 
 bool TabWindow::isCurrentDisplayedPage(const QString &index) {
-  // 创建后才挪动出去的
-  // 所以能够找到
   return widgetInstances.contains(index);
 }
 
 void TabWindow::switchByPage(const QString &index) {
-  // 获取 TabWindowManage 的全部实例
+  // 获取 TabWindowManage 的全部实例, 切换
   auto *findWidget = widgetInstances.value(index);
-  qDebug() << "findWidget: " << findWidget;
-
+  if (!findWidget) {
+    return;
+  }
+  // qDebug() << "findWidget: " << findWidget;
   TabWindow *foundTabWindow = nullptr;
-
   for (auto *tabWindow : TabWindowManager::instance()->windows()) {
     int count = tabWindow->count();
     // 遍历所有标签页
@@ -597,8 +529,6 @@ void TabWindow::switchByPage(const QString &index) {
       if (page == findWidget) {
         qDebug() << "find";
         foundTabWindow = tabWindow;
-        // tabWindow->raise();
-        // 其他的 lower
         tabWindow->setCurrentWidget(page);
         break;
       }
@@ -617,17 +547,17 @@ void TabWindow::switchByPage(const QString &index) {
 
     foundTabWindow->raise();
   } else {
-    qDebug() << "没有 tabwindow";
+    // qDebug() << "没有 tabwindow";
   }
-  // setCurrentWidget(widgetInstances.value(index));
 }
 
 void TabWindow::switchByReadingMem(const QString &index,
                                    TtProtocolRole::Role role) {
+  qDebug() << "reading in mem";
   for (auto it = closedTabs_.begin(); it != closedTabs_.end(); ++it) {
     qDebug() << it->first;
     if (it->first == index) {
-      restoreClosedTabFromMem(it->second);
+      restoreClosedTabFromMem(index, it->second);
       closedTabs_.erase(it);
       break;
     }
@@ -637,20 +567,14 @@ void TabWindow::switchByReadingMem(const QString &index,
 void TabWindow::switchByReadingDisk(const QString &index,
                                     TtProtocolRole::Role role,
                                     const QJsonObject &config) {
-  // 删除后, 在点击 button, 没有对应的窗口
-  // 处理点击左侧后, 不存在, 需要重新创建
-  // 初始时是有一个默认 widget, 所以 currentIndex = 0, 会切换当前
-  // 为什么还会进来 ?
-  qDebug() << "create by disk";
-  // qDebug() << "currentIndex: " << currentIndex();
-  // switchToWidget(currentIndex() + 1, role);
   // 初始时不存在, 根据 已有的 uuid 创建特定表示窗口
-  qDebug() << "switch uuid: " << index;
+  // qDebug() << "create by disk";
+  // qDebug() << "switch uuid: " << index;
 
-  qDebug() << "TEST1";
-  qDebug() << currentIndex() + 1;
+  // qDebug() << "TEST1";
+  // qDebug() << currentIndex() + 1;
   switchByAlreadyExistingWidget(currentIndex() + 1, index, config, role);
-  qDebug() << "TEST2";
+  // qDebug() << "TEST2";
 }
 
 void TabWindow::sessionSwitchPage(int tabIndex, TtProtocolRole::Role role) {
@@ -713,33 +637,10 @@ void TabWindow::setupCustomTabButton(int index) {
   connect(closeButton, &QToolButton::clicked, this, [this, closeButton]() {
     int currentIndex = getTabIndexFromButton(closeButton);
     if (currentIndex != -1) {
-      qDebug() << "delete index: " << currentIndex;
+      // qDebug() << "delete index: " << currentIndex;
       handleTabClose(currentIndex);
     }
   });
-}
-
-void TabWindow::updateTabStyle(int index) {
-  // // 设置tab的样式
-  // QString style = R"(
-  //       QTabBar::tab {
-  //           padding: 4px;
-  //           padding-left: 8px;
-  //           padding-right: 8px;
-  //           margin-right: 2px;
-  //           border: none;
-  //           background: transparent;
-  //           min-width: 80px;
-  //       }
-  //       QTabBar::tab:hover {
-  //           background: rgba(0, 0, 0, 0.1);
-  //       }
-  //       QTabBar::tab:selected {
-  //           background: rgba(0, 0, 0, 0.15);
-  //       }
-  //   )";
-
-  // tabBar()->setStyleSheet(style);
 }
 
 void TabWindow::setupCornerButton() {
@@ -820,8 +721,8 @@ void TabWindow::handleTabClose(int index) {
       connect(dialog, &Ui::TtContentDialog::rightButtonClicked, this, [&]() {
         dialog->accept();
         qDebug() << "保存最新变动";
-        // 保存
-        QMetaObject::invokeMethod(w, "saveSetting", Qt::QueuedConnection);
+        w->saveSetting();
+        // 主动保存能成功
         if (w->workState()) {
           qDebug() << "save to mem";
           saveWorkingTabPageToMem(index);
@@ -833,6 +734,7 @@ void TabWindow::handleTabClose(int index) {
       dialog->exec();
       delete dialog;
     } else {
+      // 直接处于保存状态
       qDebug() << "save";
       if (w->workState()) {
         saveWorkingTabPageToMem(index);
@@ -895,20 +797,22 @@ void TabWindow::saveWorkingTabPageToMem(int index) {
   info.widget = widget(index); // 存储 widget 界面
   info.icon = tabIcon(index);
 
+  // 获取 uuid
   QString removeWidgetUuid = findWidget(widget(index));
   qDebug() << "remove uuid" << removeWidgetUuid;
-  // 保存到 closedTabs_
+  widgetInstances.remove(removeWidgetUuid);
   closedTabs_.prepend(qMakePair((removeWidgetUuid), info));
   removeTab(index);
   qDebug() << "保存到 mem";
 }
 
-void TabWindow::restoreClosedTabFromMem(struct TabData data) {
+void TabWindow::restoreClosedTabFromMem(const QString &index,
+                                        struct TabData data) {
   qDebug() << "restore mem";
-  // // 恢复 添加到最后
-  // addNewTab(data.second.widget, data.second.title);
+  // 那么 实例中也许要添加对应的信息, 不然没办法切换
+  widgetInstances[index] = data.widget;
+  // icon 消失
   addNewTab(data.widget, data.title);
-  // addNewTab(data.widget.data(), data.title);
   // 切换到复原的 tab
   setCurrentIndex(count() - 1);
 

@@ -17,6 +17,7 @@ struct SerialPortConfiguration;
 
 namespace Widget {
 
+// 添加一个打开 drawer 的信号, 检测 当前的 widget 宽度, 外部使用改变
 class SerialSetting : public QWidget {
   Q_OBJECT
 public:
@@ -30,6 +31,9 @@ public:
 
   void setOldSettings(const QJsonObject &config);
   const QJsonObject &getSerialSetting();
+
+signals:
+  void drawerStateChanged(bool state);
 
 signals:
   void settingChanged();

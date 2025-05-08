@@ -154,6 +154,10 @@ void SerialWindow::setSetting(const QJsonObject &config) {
                             1500);
 }
 
+bool SerialWindow::eventFilter(QObject *watched, QEvent *event) {
+  return SerialWindow::eventFilter(watched, event);
+}
+
 void SerialWindow::switchToEditMode() {
   QGraphicsOpacityEffect *effect = new QGraphicsOpacityEffect(title_edit_);
   title_edit_->setGraphicsEffect(effect);
@@ -1050,8 +1054,8 @@ void SerialWindow::init() {
   main_layout_->addLayout(tmpAll);
 
   // 左右分隔器
-  QSplitter *mainSplitter = new QSplitter;
-  mainSplitter->setOrientation(Qt::Horizontal);
+  main_splitter_ = new QSplitter;
+  main_splitter_->setOrientation(Qt::Horizontal);
 
   // 上方功能按钮
   QWidget *chose_function = new QWidget;
@@ -1424,18 +1428,18 @@ void SerialWindow::init() {
   VSplitter->addWidget(contentWidget);
   VSplitter->addWidget(bottomAll);
 
-  mainSplitter->addWidget(VSplitter);
+  main_splitter_->addWidget(VSplitter);
   serial_setting_ = new Widget::SerialSetting;
-  mainSplitter->addWidget(serial_setting_);
-  mainSplitter->setSizes(QList<int>() << 500 << 300);
-  mainSplitter->setCollapsible(0, false);
-  mainSplitter->setCollapsible(1, true);
+  main_splitter_->addWidget(serial_setting_);
+  main_splitter_->setSizes(QList<int>() << 500 << 220);
+  main_splitter_->setCollapsible(0, false);
+  main_splitter_->setCollapsible(1, true);
 
-  mainSplitter->setStretchFactor(1, 1);
-  mainSplitter->setStretchFactor(1, 3);
+  main_splitter_->setStretchFactor(0, 3);
+  main_splitter_->setStretchFactor(1, 2);
 
   // 主界面是左右分隔
-  main_layout_->addWidget(mainSplitter);
+  main_layout_->addWidget(main_splitter_);
 
   send_package_timer_ = new QTimer(this);
   send_package_timer_->setInterval(0);
@@ -1527,6 +1531,12 @@ void SerialWindow::connectSignals() {
           });
   connect(serial_setting_, &Widget::SerialSetting::settingChanged, this,
           [this]() { saved_ = false; });
+  connect(serial_setting_, &Widget::SerialSetting::drawerStateChanged, this,
+          [this](bool state) {
+            // drawer 打开与关闭
+            // QList<int> sizes = main_splitter_->sizes();
+            // qDebug() << sizes[1];
+          });
 
   connect(send_package_timer_, &QTimer::timeout, this, [this] {
     // 此处发送显示 渲染有问题

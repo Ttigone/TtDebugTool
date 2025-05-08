@@ -1,24 +1,24 @@
 #include "TtContentDialog.h"
 #include "TtContentDialog_p.h"
 
-#include <ui/control/TtTextButton.h>
 #include <QApplication>
 #include <QCloseEvent>
 #include <QScreen>
+#include <ui/control/TtTextButton.h>
 
 namespace Ui {
 
-TtContentDialog::TtContentDialog(QWidget* parent)
+TtContentDialog::TtContentDialog(QWidget *parent)
     : Ui::TtContentDialog(LayoutSelection::TWO_OPTIONS, parent) {}
 
-TtContentDialog::TtContentDialog(LayoutSelection layout, QWidget* parent)
+TtContentDialog::TtContentDialog(LayoutSelection layout, QWidget *parent)
     : QDialog(parent), d_ptr(new TtContentDialogPrivate) {
   Q_D(TtContentDialog);
   // 透明背景
   setAttribute(Qt::WA_TranslucentBackground);
   d->q_ptr = this;
-  QList<QWidget*> widgetList = QApplication::topLevelWidgets();
-  QWidget* mainWindow = nullptr;
+  QList<QWidget *> widgetList = QApplication::topLevelWidgets();
+  QWidget *mainWindow = nullptr;
   for (auto widget : widgetList) {
     if (widget->property("TtBaseClassName").toString() == "TtMainWindow") {
       mainWindow = widget;
@@ -26,7 +26,7 @@ TtContentDialog::TtContentDialog(LayoutSelection layout, QWidget* parent)
     }
   }
   if (mainWindow) {
-    d->main_window_ = mainWindow;  // 保存父窗口
+    d->main_window_ = mainWindow; // 保存父窗口
     d->_shadowWidget = new QWidget(mainWindow);
     d->_shadowWidget->move(0, 0);
     d->_shadowWidget->setFixedSize(mainWindow->size());
@@ -99,7 +99,7 @@ TtContentDialog::TtContentDialog(LayoutSelection layout, QWidget* parent)
     });
 
     d->_centralWidget = new QWidget(this);
-    QHBoxLayout* centralVLayout = new QHBoxLayout(d->_centralWidget);
+    QHBoxLayout *centralVLayout = new QHBoxLayout(d->_centralWidget);
     centralVLayout->setContentsMargins(9, 15, 9, 20);
     QLabel iconLabel;
     iconLabel.setPixmap(QPixmap(":/icon/icon/info-circle.svg"));
@@ -156,7 +156,7 @@ TtContentDialog::TtContentDialog(LayoutSelection layout, QWidget* parent)
 
     d->_centralWidget = new QWidget(this);
 
-    QHBoxLayout* centralVLayout = new QHBoxLayout(d->_centralWidget);
+    QHBoxLayout *centralVLayout = new QHBoxLayout(d->_centralWidget);
     centralVLayout->setContentsMargins(9, 15, 9, 20);
     QLabel iconLabel;
     iconLabel.setPixmap(QPixmap(":/icon/icon/info-circle.svg"));
@@ -201,7 +201,7 @@ TtContentDialog::~TtContentDialog() {
     animation_ = nullptr;
   }
   // 查找并停止所有子动画
-  const auto animations = findChildren<QPropertyAnimation*>();
+  const auto animations = findChildren<QPropertyAnimation *>();
   for (auto anim : animations) {
     anim->stop();
     anim->deleteLater();
@@ -222,31 +222,63 @@ void TtContentDialog::onMiddleButtonClicked() {}
 
 void TtContentDialog::onRightButtonClicked() {}
 
-void TtContentDialog::setCentralWidget(QWidget* centralWidget) {
+void TtContentDialog::setCentralWidget(QWidget *centralWidget) {
   Q_D(TtContentDialog);
-  d->_mainLayout->takeAt(0);
-  d->_mainLayout->takeAt(0);
-  delete d->_centralWidget;
-  d->_mainLayout->addWidget(centralWidget);
-  d->_mainLayout->addLayout(d->_buttonLayout);
+  // d->_mainLayout->takeAt(0);
+  // d->_mainLayout->takeAt(0);
+  // delete d->_centralWidget;
+  // d->_mainLayout->addWidget(centralWidget);
+  // d->_mainLayout->addLayout(d->_buttonLayout);
+
+  // // 清除原有内容但不删除部件
+  // if (d->_centralWidget) {
+  //   d->_mainLayout->removeWidget(d->_centralWidget);
+  //   // 是否会造成内存泄漏 ???
+  //   d->_centralWidget->setParent(nullptr); // 解除父子关系
+  // }
+
+  // // 添加新部件
+  // d->_centralWidget = centralWidget;
+  // if (centralWidget) {
+  //   d->_mainLayout->insertWidget(0, centralWidget);
+  // }
+
+  // 清除原有容器但不删除用户部件
+  if (d->_centralContainer) {
+    d->_mainLayout->removeWidget(d->_centralContainer);
+    d->_centralContainer->layout()->removeWidget(
+        d->_centralWidget);                // 移出用户部件
+    d->_centralWidget->setParent(nullptr); // 解除父子关系
+    delete d->_centralContainer;           // 仅删除容器
+  }
+
+  // 创建新容器包裹用户部件
+  d->_centralContainer = new QWidget(this);
+  QVBoxLayout *containerLayout = new QVBoxLayout(d->_centralContainer);
+  containerLayout->setContentsMargins(0, 0, 0, 0);
+  containerLayout->addWidget(centralWidget);
+
+  // 将容器添加到对话框布局
+  d->_mainLayout->insertWidget(0, d->_centralContainer);
+  d->_centralWidget = centralWidget; // 仅记录指针，不管理内存
 }
 
-void TtContentDialog::setLeftButtonText(const QString& text) {
+void TtContentDialog::setLeftButtonText(const QString &text) {
   Q_D(TtContentDialog);
   d->_leftButton->setText(text);
 }
 
-void TtContentDialog::setMiddleButtonText(const QString& text) {
+void TtContentDialog::setMiddleButtonText(const QString &text) {
   Q_D(TtContentDialog);
   d->_middleButton->setText(text);
 }
 
-void TtContentDialog::setRightButtonText(const QString& text) {
+void TtContentDialog::setRightButtonText(const QString &text) {
   Q_D(TtContentDialog);
   d->_rightButton->setText(text);
 }
 
-void Ui::TtContentDialog::setCenterText(const QString& text) {
+void Ui::TtContentDialog::setCenterText(const QString &text) {
   Q_D(TtContentDialog);
   d->content_->setText(text);
 }
@@ -256,7 +288,7 @@ void TtContentDialog::setEnablePointOnMouse(bool enable) {
   d->enable_point_on_mouse_ = enable;
 }
 
-void TtContentDialog::paintEvent(QPaintEvent* event) {
+void TtContentDialog::paintEvent(QPaintEvent *event) {
   Q_D(TtContentDialog);
   QPainter painter(this);
   painter.save();
@@ -266,9 +298,9 @@ void TtContentDialog::paintEvent(QPaintEvent* event) {
                        ? Qt::white
                        : QColor(0x2B, 0x2B, 0x2B));
 
-  painter.drawRoundedRect(rect(), 8, 8);  // 统一使用8px圆角半径
-                                          // // / 背景绘制
-                                          //  painter.drawRect(rect());
+  painter.drawRoundedRect(rect(), 8, 8); // 统一使用8px圆角半径
+                                         // // / 背景绘制
+                                         //  painter.drawRect(rect());
 
   // 按钮栏背景绘制
   painter.setBrush(d->_themeMode == TtThemeType::ThemeMode::Light
@@ -279,7 +311,7 @@ void TtContentDialog::paintEvent(QPaintEvent* event) {
   painter.restore();
 }
 
-void TtContentDialog::showEvent(QShowEvent* event) {
+void TtContentDialog::showEvent(QShowEvent *event) {
   Q_D(TtContentDialog);
   QDialog::showEvent(event);
 
@@ -290,7 +322,7 @@ void TtContentDialog::showEvent(QShowEvent* event) {
   }
 }
 
-void TtContentDialog::closeEvent(QCloseEvent* event) {
+void TtContentDialog::closeEvent(QCloseEvent *event) {
   if (isModal() && !property("closing").toBool()) {
     setProperty("closing", true);
     // 根据用户是 accept 还是 reject，可以用 sender() 来判断，或默认 accept
@@ -307,9 +339,9 @@ void TtContentDialog::closeEvent(QCloseEvent* event) {
   }
   setProperty("closing", true);
 
-  QPointer<TtContentDialog> self(this);  // 弱引用, 避免悬空访问
+  QPointer<TtContentDialog> self(this); // 弱引用, 避免悬空访问
 
-  QPropertyAnimation* closeAnim = new QPropertyAnimation(this, "windowOpacity");
+  QPropertyAnimation *closeAnim = new QPropertyAnimation(this, "windowOpacity");
   closeAnim->setDuration(200);
   closeAnim->setStartValue(1.0);
   closeAnim->setEndValue(0.0);
@@ -322,7 +354,7 @@ void TtContentDialog::closeEvent(QCloseEvent* event) {
       }
     }
   });
-  event->ignore();  // 阻止立即关闭
+  event->ignore(); // 阻止立即关闭
 
   // 禁用交互，防止在动画期间操作
   setAttribute(Qt::WA_TransparentForMouseEvents, true);
@@ -332,11 +364,11 @@ void TtContentDialog::closeEvent(QCloseEvent* event) {
 
   Q_D(TtContentDialog);
   if (d->_shadowWidget) {
-    d->_shadowWidget->hide();  // 或者也加个动画
+    d->_shadowWidget->hide(); // 或者也加个动画
   }
 }
 
-bool TtContentDialog::eventFilter(QObject* obj, QEvent* event) {
+bool TtContentDialog::eventFilter(QObject *obj, QEvent *event) {
   Q_D(TtContentDialog);
   if (event->type() == QEvent::Resize && obj == d->main_window_) {
     if (d->_shadowWidget) {
@@ -366,7 +398,7 @@ void TtContentDialog::adjustPosition() {
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
   // 当前父窗口所在的屏幕
-  QScreen* screen = QGuiApplication::screenAt(targetCenter);
+  QScreen *screen = QGuiApplication::screenAt(targetCenter);
   if (screen) {
     screenGeo = screen->availableGeometry();
   } else {
@@ -377,8 +409,9 @@ void TtContentDialog::adjustPosition() {
   screenGeo = QApplication::desktop()->availableGeometry(this);
 #endif
 
-  // const int finalX = qBound(screenGeo.left(), x, screenGeo.right() - width());
-  // const int finalY = qBound(screenGeo.top(), y, screenGeo.bottom() - height());
+  // const int finalX = qBound(screenGeo.left(), x, screenGeo.right() -
+  // width()); const int finalY = qBound(screenGeo.top(), y, screenGeo.bottom()
+  // - height());
   const int finalX = qBound(screenGeo.left(), targetCenter.x() - width() / 2,
                             screenGeo.right() - width());
   const int finalY = qBound(screenGeo.top(), targetCenter.y() - height() / 2,
@@ -395,29 +428,29 @@ void TtContentDialog::startShowAnimation() {
   this->ensurePolished();
   this->adjustSize();
 
-  const QSize finalSize = size();          // 自身的显示大小
-  const QPoint mousePos = QCursor::pos();  // 全局坐标
-  const QPoint targetPos = this->pos();    // 本窗口
+  const QSize finalSize = size();         // 自身的显示大小
+  const QPoint mousePos = QCursor::pos(); // 全局坐标
+  const QPoint targetPos = this->pos();   // 本窗口
 
   setGeometry(QRect(mousePos, QSize(1, 1)));
-  setWindowOpacity(0.0);  // 透明状态
+  setWindowOpacity(0.0); // 透明状态
 
   // if (animation_) {
 
   // }
 
   // 创建动画组
-  QParallelAnimationGroup* group = new QParallelAnimationGroup(this);
+  QParallelAnimationGroup *group = new QParallelAnimationGroup(this);
 
   // 缩放动画（带弹性效果） 几何变化
-  QPropertyAnimation* scaleAnim = new QPropertyAnimation(this, "geometry");
+  QPropertyAnimation *scaleAnim = new QPropertyAnimation(this, "geometry");
   scaleAnim->setDuration(200);
   scaleAnim->setStartValue(QRect(mousePos, QSize(1, 1)));
   scaleAnim->setEndValue(QRect(targetPos, finalSize));
   scaleAnim->setEasingCurve(QEasingCurve::OutBack);
 
   // 淡入动画  透明度
-  QPropertyAnimation* fadeAnim = new QPropertyAnimation(this, "windowOpacity");
+  QPropertyAnimation *fadeAnim = new QPropertyAnimation(this, "windowOpacity");
   fadeAnim->setDuration(150);
   fadeAnim->setStartValue(0.0);
   fadeAnim->setEndValue(1.0);
@@ -430,7 +463,7 @@ void TtContentDialog::startShowAnimation() {
   connect(group, &QAnimationGroup::finished, [=]() {
     // 显示动画完成, dialog 接收鼠标事件
     setAttribute(Qt::WA_TransparentForMouseEvents, false);
-    activateWindow();  // 确保获得焦点
+    activateWindow(); // 确保获得焦点
   });
 
   // 禁用初始交互
@@ -447,7 +480,8 @@ void TtContentDialog::startShowAnimation() {
 
   //   // 计算目标位置（带边界检查）
   //   QRect parentGeo = d->main_window_->frameGeometry();
-  //   QPoint targetPos = parentGeo.center() - QPoint(width() / 2, height() / 2);
+  //   QPoint targetPos = parentGeo.center() - QPoint(width() / 2, height() /
+  //   2);
 
   //   QRect screenGeo;
   //   // 边界检查
@@ -465,7 +499,8 @@ void TtContentDialog::startShowAnimation() {
   //   // QRect screenGeo = QApplication::desktop()->availableGeometry(this);
 
   //   targetPos.setX(
-  //       qMax(screenGeo.left(), qMin(targetPos.x(), screenGeo.right() - width())));
+  //       qMax(screenGeo.left(), qMin(targetPos.x(), screenGeo.right() -
+  //       width())));
   //   targetPos.setY(qMax(screenGeo.top(),
   //                       qMin(targetPos.y(), screenGeo.bottom() - height())));
 
@@ -503,7 +538,8 @@ void TtContentDialog::startShowAnimation() {
 
   //   // 连接动画结束信号
   //   connect(group, &QAnimationGroup::finished,
-  //           [=]() { setAttribute(Qt::WA_TransparentForMouseEvents, false); });
+  //           [=]() { setAttribute(Qt::WA_TransparentForMouseEvents, false);
+  //           });
 
   //   // 启动动画前禁用鼠标事件
   //   setAttribute(Qt::WA_TransparentForMouseEvents, true);
@@ -512,9 +548,9 @@ void TtContentDialog::startShowAnimation() {
   //   show();
 }
 
-TtContentDialogPrivate::TtContentDialogPrivate(QObject* parent)
+TtContentDialogPrivate::TtContentDialogPrivate(QObject *parent)
     : QObject(parent) {}
 
 TtContentDialogPrivate::~TtContentDialogPrivate() {}
 
-}  // namespace Ui
+} // namespace Ui

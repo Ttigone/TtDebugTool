@@ -136,8 +136,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
   leftPopUp->setMinimumWidth(1);
   mainSplitter->addWidget(tabWidget_);
 
-  mainSplitter->setStretchFactor(0, 2);
-  mainSplitter->setStretchFactor(1, 1);
+  mainSplitter->setStretchFactor(0, 1);
+  mainSplitter->setStretchFactor(1, 3);
 
   mainSplitter->setCollapsible(0, true);
   mainSplitter->setCollapsible(1, false);
@@ -561,7 +561,7 @@ void MainWindow::switchToOtherTabPage(const QString &uuid, const int &type) {
     // 卡到这里进程崩溃
     // 第一个
     tabWidget_->switchByPage(uuid);
-    qDebug() << "switch ok";
+    qDebug() << "ok";
   } else if (tabWidget_->isStoredInMem(uuid)) {
     // 传入 uuid
     tabWidget_->switchByReadingMem(uuid,
@@ -1241,6 +1241,7 @@ void MainWindow::registerTabWidget() {
       },
       tr("未命名 UDP 连接"));
   tabWidget_->registerWidget(
+      // 有问题, 会影响主窗口的变化
       TtProtocolRole::MqttClient,
       [this]() {
         Window::MqttWindow *mqttClient =
@@ -1255,9 +1256,12 @@ void MainWindow::registerTabWidget() {
                   Storage::SettingsManager::instance().setSetting(
                       "MqttClient+" + tabWidget_->getCurrentWidgetUUid(),
                       mqttClient->getConfiguration());
+
                   Ui::TtMessageBar::success(TtMessageBarType::Top, "",
                                             tr("保存成功"), 1000, this);
                 });
+        // bug
+        qDebug() << "create";
         return mqttClient;
       },
       tr("未命名的 MQTT 客户端"));

@@ -25,6 +25,7 @@
 #include "ui/widgets/window_switcher.h"
 
 class SerialPlot;
+class QSplitter;
 
 namespace Ui {
 
@@ -78,6 +79,9 @@ public:
 signals:
   void requestSaveConfig();
 
+protected:
+  bool eventFilter(QObject *watched, QEvent *event) override;
+
 private slots:
   // 最原始的发送
   void sendMessageToPort();
@@ -122,6 +126,8 @@ private:
   bool serial_port_opened = false;
   QThread *worker_thread_ = nullptr;
   Core::SerialPortWorker *serial_port_;
+
+  QSplitter *main_splitter_;
 
   Widget::SerialSetting *serial_setting_;
 

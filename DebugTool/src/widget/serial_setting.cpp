@@ -284,6 +284,7 @@ void SerialSetting::init() {
 
   QList<QComboBox *> comboBoxes;
   QList<QLineEdit *> lineEdits;
+  QList<Ui::TtDrawer *> drawers;
 
   QWidget *serialConfigWidget = new QWidget(this);
   serial_port_ = new Ui::TtLabelBtnComboBox(tr("串口:"), serialConfigWidget);
@@ -341,6 +342,7 @@ void SerialSetting::init() {
   Ui::TtDrawer *drawerLinkSetting = new Ui::TtDrawer(
       tr("连接设置"), ":/sys/chevron-double-up.svg",
       ":/sys/chevron-double-down.svg", linkSettingWidget, false, this);
+  drawers << drawerLinkSetting;
 
   QWidget *scriptWidget = new QWidget;
   Ui::TtVerticalLayout *scriptWidgetLayout =
@@ -377,6 +379,8 @@ void SerialSetting::init() {
       tr("分帧"), ":/sys/chevron-double-up.svg",
       ":/sys/chevron-double-down.svg", framingWidget, false, this);
 
+  drawers << drawerFraming;
+
   connect(framing_model_, &Ui::TtLabelComboBox::currentIndexChanged,
           [this, drawerFraming](int index) {
             switch (index) {
@@ -412,6 +416,8 @@ void SerialSetting::init() {
       tr("换行"), ":/sys/chevron-double-up.svg",
       ":/sys/chevron-double-down.svg", line_break_, false, this);
 
+  drawers << drawerLineBreak;
+
   QWidget *heartbeatWidget = new QWidget;
   Ui::TtVerticalLayout *heartbeatWidgetLayout =
       new Ui::TtVerticalLayout(heartbeatWidget);
@@ -435,6 +441,8 @@ void SerialSetting::init() {
   Ui::TtDrawer *drawerHeartBeat = new Ui::TtDrawer(
       tr("心跳"), ":/sys/chevron-double-up.svg",
       ":/sys/chevron-double-down.svg", heartbeatWidget, false, this);
+
+  drawers << drawerHeartBeat;
 
   connect(heartbeat_send_type_, &Ui::TtLabelComboBox::currentIndexChanged,
           [this, heartbeatWidget, drawerHeartBeat](int index) {
@@ -467,6 +475,7 @@ void SerialSetting::init() {
   QScrollArea *scroll = new QScrollArea(this);
   // scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   scroll->setFrameStyle(QFrame::NoFrame);
+  scroll->setWidgetResizable(true);
   QWidget *scrollContent = new QWidget(scroll);
 
   Ui::TtVerticalLayout *scrollContentLayout =
@@ -497,6 +506,13 @@ void SerialSetting::init() {
     if (lineEdit) { // 确保指针有效
       connect(lineEdit, &QLineEdit::textChanged, this,
               &SerialSetting::settingChanged);
+    }
+  }
+
+  for (auto *drawer : drawers) {
+    if (drawer) {
+      connect(drawer, &Ui::TtDrawer::drawerStateChanged, this,
+              &SerialSetting::drawerStateChanged);
     }
   }
 

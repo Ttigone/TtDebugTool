@@ -21,6 +21,7 @@
 #include <ui/widgets/message_bar.h>
 
 #include "core/mqtt_client.h"
+#include "ui/control/TtContentDialog.h"
 #include "ui/widgets/subscripition_manager.h"
 #include "widget/mqtt_meta_setting_widget.h"
 #include "widget/mqtt_setting.h"
@@ -31,7 +32,6 @@
 namespace Window {
 
 MqttWindow::MqttWindow(TtProtocolType::ProtocolRole role, QWidget *parent)
-    // : QWidget(parent), role_(role) {
     : FrameWindow(parent), role_(role) {
   opened_ = false;
   mqtt_client_ = new Core::MqttClient;
@@ -62,7 +62,7 @@ MqttWindow::~MqttWindow() {}
 
 QJsonObject MqttWindow::getConfiguration() const { return config_; }
 
-bool MqttWindow::workState() const {}
+bool MqttWindow::workState() const { return opened_; }
 
 bool MqttWindow::saveState() { return saved_; }
 
@@ -74,7 +74,8 @@ void MqttWindow::saveSetting() {
   config_.insert("Type", TtFunctionalCategory::Communication);
   config_.insert("WindowTitle", title_->text());
   config_.insert("MqttSetting", mqtt_client_setting_->getMqttClientSetting());
-  // config_.insert("Meta");
+  // meta 信息
+  config_.insert("MetaSetting", subscripition_widget->getMetaSetting());
   saved_ = true;
   emit requestSaveConfig();
 }
@@ -90,6 +91,8 @@ void MqttWindow::setSetting(const QJsonObject &config) {
     // tcp_server_setting_->setOldSettings(
     //     config.value("TcpClientSetting").toObject(QJsonObject()));
   }
+  subscripition_widget->setOldSettings(
+      config.value("MetaSetting").toObject(QJsonObject()));
 }
 
 QString MqttWindow::getTitle() const { return title_->text(); }
@@ -125,29 +128,31 @@ void MqttWindow::init() {
   }
 
   // 编辑命名按钮
-  modify_title_btn_ = new Ui::TtSvgButton(":/sys/edit_name.svg", this);
+  modify_title_btn_ = new Ui::TtSvgButton(":/sys/edit.svg", this);
   modify_title_btn_->setSvgSize(18, 18);
 
-  // 创建原始界面
+  // 修改遍体的界面
   original_widget_ = new QWidget(this);
-  Ui::TtHorizontalLayout *tmpl = new Ui::TtHorizontalLayout(original_widget_);
-  tmpl->addSpacerItem(new QSpacerItem(10, 10));
-  tmpl->addWidget(title_, 0, Qt::AlignLeft);
-  tmpl->addSpacerItem(new QSpacerItem(10, 10));
-  tmpl->addWidget(modify_title_btn_);
-  tmpl->addStretch();
+  // 原有的展示布局
+  Ui::TtHorizontalLayout *originalWidgetLayout =
+      new Ui::TtHorizontalLayout(original_widget_);
+  originalWidgetLayout->addSpacerItem(new QSpacerItem(10, 10));
+  originalWidgetLayout->addWidget(title_, 0, Qt::AlignLeft);
+  originalWidgetLayout->addSpacerItem(new QSpacerItem(10, 10));
+  originalWidgetLayout->addWidget(modify_title_btn_);
+  originalWidgetLayout->addStretch();
 
   // 创建编辑界面
   edit_widget_ = new QWidget(this);
   title_edit_ = new Ui::TtLineEdit(this);
-
-  Ui::TtHorizontalLayout *edit_layout =
+  // 编辑界面布局
+  Ui::TtHorizontalLayout *editWidgetLayout =
       new Ui::TtHorizontalLayout(edit_widget_);
-  edit_layout->addSpacerItem(new QSpacerItem(10, 10));
-  edit_layout->addWidget(title_edit_);
-  edit_layout->addStretch();
+  editWidgetLayout->addSpacerItem(new QSpacerItem(10, 10));
+  editWidgetLayout->addWidget(title_edit_);
+  editWidgetLayout->addStretch();
 
-  // 使用堆叠布局
+  // 栈窗口去切换显示与编辑页面
   stack_ = new QStackedWidget(this);
   stack_->setMaximumHeight(40);
   stack_->addWidget(original_widget_);
@@ -157,14 +162,14 @@ void MqttWindow::init() {
   connect(modify_title_btn_, &Ui::TtSvgButton::clicked, this,
           &MqttWindow::switchToEditMode);
 
-  Ui::TtHorizontalLayout *tmpP1 = new Ui::TtHorizontalLayout;
-  tmpP1->addWidget(stack_);
+  // 水平布局
+  Ui::TtHorizontalLayout *stackLayout = new Ui::TtHorizontalLayout;
+  stackLayout->addWidget(stack_);
 
-  Ui::TtHorizontalLayout *tmpAll = new Ui::TtHorizontalLayout;
+  // 总布局
+  Ui::TtHorizontalLayout *topLayout = new Ui::TtHorizontalLayout;
 
-  // 保存 lambda 表达式
   auto handleSave = [this]() {
-    // qDebug() << "失去";
     if (!title_edit_->text().isEmpty()) {
       switchToDisplayMode();
     } else {
@@ -174,7 +179,8 @@ void MqttWindow::init() {
 
   connect(title_edit_, &QLineEdit::editingFinished, this, handleSave);
 
-  Ui::TtHorizontalLayout *tmpl2 = new Ui::TtHorizontalLayout;
+  // 右侧水平栏的按钮
+  Ui::TtHorizontalLayout *operationButtonLayout = new Ui::TtHorizontalLayout;
   // 保存按钮
   save_btn_ = new Ui::TtSvgButton(":/sys/save_cfg.svg", this);
   save_btn_->setSvgSize(18, 18);
@@ -189,47 +195,67 @@ void MqttWindow::init() {
   subscriptionBtn->setColors(Qt::black, Qt::blue);
   subscriptionBtn->setText(tr("订阅"));
 
-  tmpl2->addWidget(subscriptionBtn);
-  tmpl2->addWidget(save_btn_);
-  tmpl2->addWidget(on_off_btn_, 0, Qt::AlignRight);
-  tmpl2->addSpacerItem(new QSpacerItem(10, 10));
+  operationButtonLayout->addWidget(subscriptionBtn);
+  operationButtonLayout->addWidget(save_btn_);
+  // 缺少
+  operationButtonLayout->addWidget(on_off_btn_, 0, Qt::AlignRight);
+  operationButtonLayout->addSpacerItem(new QSpacerItem(10, 10));
 
-  tmpAll->addLayout(tmpP1);
-  tmpAll->addLayout(tmpl2);
+  // 初始显示有点问题
+  topLayout->addLayout(stackLayout);
+  topLayout->addLayout(operationButtonLayout);
 
-  main_layout_->addLayout(tmpAll);
+  // 添加单独的一个上层操作
+  main_layout_->addLayout(topLayout);
 
+  // 左右
+  // 左右的展示
   QSplitter *mainSplitter = new QSplitter;
   mainSplitter->setOrientation(Qt::Horizontal);
 
-  QWidget *topLevelWidget = new QWidget(this);
-  QVBoxLayout *layout = new QVBoxLayout(topLevelWidget);
+  // QWidget *topLevelWidget = new QWidget(this);
+  // QVBoxLayout *layout = new QVBoxLayout(topLevelWidget);
 
-  // 在 QWidget 内部嵌入一个 QMainWindow
-  QMainWindow *embeddedMainWindow = new QMainWindow();
+  // 左侧的窗口是大的 QMainWindow
+  QMainWindow *embeddedMainWindow = new QMainWindow(mainSplitter);
   embeddedMainWindow->setWindowFlags(Qt::Widget); // 确保没有窗口装饰
   QDockWidget *dock = new QDockWidget(tr("订阅"), embeddedMainWindow);
   dock->setAllowedAreas(Qt::AllDockWidgetAreas);
   dock->setFeatures(QDockWidget::DockWidgetMovable |
                     QDockWidget::DockWidgetFloatable);
 
-  QWidget *cont = new QWidget(embeddedMainWindow);
-  Ui::TtVerticalLayout *cont_layout = new Ui::TtVerticalLayout(cont);
-  message_view_ = new Ui::TtChatView(cont);
+  // 创建一个容器 Widget
+  // QWidget *containerWidget = new QWidget(topLevelWidget);
+  QWidget *containerWidget = new QWidget(this);
+  QVBoxLayout *mainLayout = new QVBoxLayout(containerWidget);
+  mainLayout->setContentsMargins(0, 0, 0, 0);
+
+  embeddedMainWindow->setCentralWidget(containerWidget);
+
+  QWidget *messageView = new QWidget(containerWidget);
+  Ui::TtHorizontalLayout *messageViewLayout =
+      new Ui::TtHorizontalLayout(messageView);
+  message_view_ = new Ui::TtChatView(messageView);
   message_view_->setResizeMode(QListView::Adjust);
   message_view_->setUniformItemSizes(false); // 允许每个项具有不同的大小
   message_view_->setMouseTracking(true);
   message_view_->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
-  cont_layout->addWidget(message_view_, 1);
   message_model_ = new Ui::TtChatMessageModel;
   message_view_->setModel(message_model_);
   message_view_->scrollToBottom();
 
-  QWidget *sendSetting = new QWidget(cont);
+  messageViewLayout->addWidget(message_view_);
+
+  // QWidget *sendSetting = new QWidget(messageView);
+  QWidget *sendSetting = new QWidget(containerWidget);
   Ui::TtVerticalLayout *sendSettingLayout =
       new Ui::TtVerticalLayout(sendSetting);
 
+  // 属性设置布局
+  //  操作的水平布局
   Ui::TtHorizontalLayout *propertyLayout = new Ui::TtHorizontalLayout();
+  // 测试
+  propertyLayout->setContentsMargins(100, 0, 0, 0);
   fomat_ = new Ui::TtComboBox(sendSetting);
   fomat_->addItem("JSON");
   fomat_->addItem("Base64");
@@ -247,6 +273,7 @@ void MqttWindow::init() {
   propertyLayout->addWidget(meta_btn_);
   propertyLayout->addStretch();
 
+  // 发送的底部
   send_topic_ = new Ui::TtLineEdit(sendSetting);
   editor = new QsciScintilla(sendSetting);
   editor->setWrapMode(QsciScintilla::WrapWord);
@@ -256,32 +283,26 @@ void MqttWindow::init() {
   editor->setMarginType(1, QsciScintilla::NumberMargin);
   editor->setFrameStyle(QFrame::NoFrame);
 
+  sendSettingLayout->addLayout(propertyLayout);
+  sendSettingLayout->addWidget(send_topic_);
+  sendSettingLayout->addWidget(editor);
+
+  // 放置到 editor 中
   send_btn_ = new QtMaterialFlatButton(tr("发送"), editor);
   // sendBtn->setBaseOpacity(100); // 前景色的透明度
   send_btn_->setBackgroundMode(Qt::OpaqueMode);
   send_btn_->setBackgroundColor(Qt::gray);
   send_btn_->setForegroundColor(Qt::green);
   send_btn_->setRole(Material::Primary);
-
   send_btn_->setIcon(QIcon(":/sys/send.svg"));
   editor->viewport()->installEventFilter(
       new ScrollAreaEventFilter(editor, send_btn_, sendSetting));
   const auto event = new QResizeEvent(editor->size(), editor->size());
   QCoreApplication::postEvent(editor->viewport(), event);
 
-  sendSettingLayout->addLayout(propertyLayout);
-  sendSettingLayout->addWidget(send_topic_);
-  sendSettingLayout->addWidget(editor);
-
-  cont_layout->addWidget(sendSetting, 0, Qt::AlignBottom);
-
-  // updateButtonPosition(editor, sendBtn);
-
-  // QWidget* basicWidget = new QWidget;
-  // Ui::TtVerticalLayout* basicWidgetLayout =
-  //     new Ui::TtVerticalLayout(basicWidget);
-
   model = new QStandardItemModel;
+  // list 列表存储 放到 view 的右侧
+  // 右侧管理 订阅列表
   subscripition_list_ = new Ui::SubscripitionManager(this);
   subscripition_list_->setContextMenuPolicy(Qt::CustomContextMenu);
   connect(subscripition_list_, &QListView::customContextMenuRequested,
@@ -299,28 +320,29 @@ void MqttWindow::init() {
     QStandardItem *item = new QStandardItem(QString("项目 %1").arg(i));
     model->appendRow(item);
   }
-
   subscripition_list_->setModel(model);
-
   QItemSelectionModel *selectionModel = subscripition_list_->selectionModel();
   QModelIndex firstIndex = model->index(0, 0);
 
+  // dock widget
+  dock->setWidget(subscripition_list_);
   dock->setWidget(subscripition_list_);
   dock->resize(200, embeddedMainWindow->height());
-
   embeddedMainWindow->addDockWidget(Qt::RightDockWidgetArea, dock);
-  embeddedMainWindow->setCentralWidget(cont);
 
-  layout->addWidget(embeddedMainWindow);
-  mainSplitter->addWidget(topLevelWidget);
+  // containerWidget 是主窗口
+  mainLayout->addWidget(messageView);
+  mainLayout->addWidget(sendSetting);
 
   if (role_ == TtProtocolType::Client) {
     mqtt_client_setting_ = new Widget::MqttClientSetting;
     mainSplitter->addWidget(mqtt_client_setting_);
-  } else {
+  } else if (role_ == TtProtocolType::Server) {
   }
 
+  // 下面的左右窗口显示有问题
   main_layout_->addWidget(mainSplitter);
+
   mainSplitter->setStretchFactor(0, 2);
   mainSplitter->setStretchFactor(1, 1);
 
@@ -328,17 +350,11 @@ void MqttWindow::init() {
   initialSizes << mainSplitter->width() - 200 << 200;
   mainSplitter->setSizes(initialSizes);
 
-  mask_widget_ = new Ui::TtMaskWidget(this);
-  mask_widget_->setReusable(true);
-
-  meta_widget_ = new Widget::MqttMetaSettingWidget();
-
   connectSignals();
 }
 
 void MqttWindow::connectSignals() {
-
-  connect(on_off_btn_, &Ui::TtSvgButton::clicked, [this]() {
+  connect(on_off_btn_, &Ui::TtSvgButton::clicked, this, [this]() {
     on_off_btn_->setEnabled(false);
     if (mqtt_client_->isConnected()) {
       mqtt_client_->disconnectFromHost();
@@ -350,37 +366,84 @@ void MqttWindow::connectSignals() {
 
   connect(save_btn_, &Ui::TtSvgButton::clicked, this, &MqttWindow::saveSetting);
 
-  connect(meta_btn_, &Ui::TtTextButton::clicked,
-          [this]() { mask_widget_->show(meta_widget_); });
+  connect(meta_btn_, &Ui::TtTextButton::clicked, [this]() {
+    // if (!meta_widget_) {
+    //   qDebug() << "meta nullptr";
+    //   meta_widget_ = new Widget::MqttMetaSettingWidget();
+    // }
+    // 这个 meta_widget_ 也会被跟着删除
+    // delete 会出现问题
+    // 有问题
+    // mask_widget_->show(meta_widget_);
 
-  subscripition_widget = new Widget::SubscripitionWidget();
-  connect(subscriptionBtn, &Ui::TtSvgButton::clicked, [this]() {
-    if (!mqtt_client_->isConnected()) {
-      Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""),
-                              tr("请先与服务器建立链接"), 1500, this);
-    }
-    mask_widget_->show(subscripition_widget);
+    // 那么岂不是每次都要创建新的 ?
+    // 似乎存在内容泄漏的问题
+    // dialog 的样式表问题, size 问题
+    meta_widget_ = new Widget::MqttMetaSettingWidget();
+    Ui::TtContentDialog *dialog = new Ui::TtContentDialog(
+        Ui::TtContentDialog::LayoutSelection::TWO_OPTIONS, this);
+    qDebug() << "2";
+    // 设置 meta_widget_ 出现问题, 不为空
+    // 还是调用了 delete
+    dialog->setCentralWidget(meta_widget_);
+    qDebug() << "1";
+
+    QPointer<Ui::TtContentDialog> dialogPtr(dialog);
+    dialog->setLeftButtonText(tr("取消"));
+    dialog->setRightButtonText(tr("保存"));
+    connect(dialog, &Ui::TtContentDialog::leftButtonClicked, this,
+            [this, dialogPtr] {
+              dialogPtr->reject();
+              // 取消
+            });
+    connect(dialog, &Ui::TtContentDialog::rightButtonClicked, this,
+            [this, dialogPtr] {
+              dialogPtr->accept();
+              // 保存
+            });
+    // 对话框关闭时手动管理 meta_widget_ 生命周期
+    connect(dialog, &QDialog::finished, [this](int result) {
+      if (result == QDialog::Accepted) {
+        // 保存成功则保留 meta_widget_
+      } else {
+        meta_widget_->deleteLater(); // 取消操作时安全删除
+      }
+    });
+
+    dialog->setAttribute(Qt::WA_DeleteOnClose); // 自动删除
+    dialog->exec();
+    // delete dialog;
   });
 
-  connect(subscripition_widget,
-          &Widget::SubscripitionWidget::saveConfigToManager,
-          [this](const QByteArray &config) {
-            // 解码
-            if (!config.isEmpty()) {
-              QDataStream stream(config);
-              QString topic, qos, color, alias, identifier, noLocal,
-                  retainAsPublished, retainHandling;
-              stream >> topic >> qos >> color >> alias >> identifier >>
-                  noLocal >> retainAsPublished >> retainHandling;
-              qDebug() << topic << qos << color << alias << identifier
-                       << noLocal << retainAsPublished << retainHandling;
+  // // 订阅弹出
+  // subscripition_widget = new Widget::SubscripitionWidget();
+  // connect(subscriptionBtn, &Ui::TtSvgButton::clicked, [this]() {
+  //   if (!mqtt_client_->isConnected()) {
+  //     Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""),
+  //                             tr("请先与服务器建立链接"), 1500, this);
+  //   }
+  //   // mask_widget_->show(subscripition_widget);
+  // });
 
-              QStandardItem *item = new QStandardItem(QString(topic));
-              item->setData(config, Qt::UserRole);
-              model->appendRow(item);
-              mqtt_client_->subscribe(topic);
-            }
-          });
+  // connect(subscripition_widget,
+  //         &Widget::SubscripitionWidget::saveConfigToManager,
+  //         [this](const QByteArray &config) {
+  //           // 解码
+  //           if (!config.isEmpty()) {
+  //             QDataStream stream(config);
+  //             QString topic, qos, color, alias, identifier, noLocal,
+  //                 retainAsPublished, retainHandling;
+  //             stream >> topic >> qos >> color >> alias >> identifier >>
+  //                 noLocal >> retainAsPublished >> retainHandling;
+  //             qDebug() << topic << qos << color << alias << identifier
+  //                      << noLocal << retainAsPublished << retainHandling;
+
+  //             QStandardItem *item = new QStandardItem(QString(topic));
+  //             item->setData(config, Qt::UserRole);
+  //             model->appendRow(item);
+  //             mqtt_client_->subscribe(topic);
+  //           }
+  //         });
 
   connect(send_btn_, &QtMaterialFlatButton::clicked, [&]() {
     if (!mqtt_client_->isConnected()) {
@@ -392,6 +455,7 @@ void MqttWindow::connectSignals() {
     mqtt_client_->publishMessage(
         send_topic_->text(), data, qos_->currentData().toInt(),
         retain_->isChecked(), meta_widget_->getMetaSettings());
+    // 发布消息
     // auto tmp = new Ui::TtChatMessage();
     // tmp->setContent(data);
     // tmp->setOutgoing(true);

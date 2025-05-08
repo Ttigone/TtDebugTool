@@ -15,7 +15,7 @@
 
 namespace Widget {
 
-SubscripitionWidget::SubscripitionWidget(QWidget* parent) : QWidget{parent} {
+SubscripitionWidget::SubscripitionWidget(QWidget *parent) : QWidget{parent} {
   setObjectName("SubscripitionWidget");
   setAttribute(Qt::WA_StyledBackground, true);
   setStyleSheet(
@@ -28,8 +28,74 @@ SubscripitionWidget::~SubscripitionWidget() {
   qDebug() << "delete SubscripitionWidget";
 }
 
+void SubscripitionWidget::setOldSettings(const QJsonObject &config) {
+  if (config.isEmpty()) {
+    qDebug() << "没有 meta 信息";
+    return;
+  }
+  topic_edit_->setPlainText(config.value("Topic").toString());
+  QString qos = config.value("QoS").toString();
+
+  for (int i = 0; i < qos_->count(); ++i) {
+    if (qos_->itemData(i).toString() == qos) {
+      qos_->setCurrentIndex(i);
+    }
+  }
+  alias_edit_->setPlainText(config.value("Alias").toString());
+  subscripition_identifier_->setText(config.value("Identifier").toString());
+
+  for (int i = 0; i < retain_handling_->body()->count(); ++i) {
+    if (retain_handling_->body()->itemData(i).toString() == qos) {
+      retain_handling_->body()->setCurrentIndex(i);
+    }
+  }
+  {
+    auto button =
+        qobject_cast<Ui::TtRadioButton *>(no_local_flag_bgr_->checkedButton());
+    if (button) {
+      button->setText(config.value("NoLocalFlagBgr").toString());
+    }
+  }
+  {
+    auto button = qobject_cast<Ui::TtRadioButton *>(
+        retain_as_pub_flag_bgr_->checkedButton());
+    if (button) {
+      button->setText(config.value("RetainAsPubFlagBgr").toString());
+    }
+  }
+}
+
+QJsonObject SubscripitionWidget::getMetaSetting() {
+  // 返回 json 格式的 meta
+  QJsonObject config;
+
+  config.insert("Topic", QJsonValue(topic_edit_->toPlainText()));
+  config.insert("QoS", QJsonValue(qos_->currentText()));
+  config.insert("Color", color_->text());
+  config.insert("Alias", alias_edit_->toPlainText());
+  config.insert("Identifier", subscripition_identifier_->currentText());
+  config.insert("Retain", retain_handling_->currentText());
+
+  {
+    auto button =
+        qobject_cast<Ui::TtRadioButton *>(no_local_flag_bgr_->checkedButton());
+    if (button) {
+      config.insert("NoLocalFlagBgr", QJsonValue(button->text()));
+    }
+  }
+  {
+    auto button = qobject_cast<Ui::TtRadioButton *>(
+        retain_as_pub_flag_bgr_->checkedButton());
+    if (button) {
+      config.insert("RetainAsPubFlagBgr", QJsonValue(button->text()));
+    }
+  }
+
+  return config;
+}
+
 void SubscripitionWidget::onCloseButtonClicked() {
-  emit closed();  // 发射关闭信号
+  emit closed(); // 发射关闭信号
 }
 
 void SubscripitionWidget::validateTopicInput() {
@@ -70,15 +136,13 @@ void SubscripitionWidget::confirmSub() {
 
   {
     auto button =
-        qobject_cast<Ui::TtRadioButton*>(no_local_flag_bgr_->checkedButton());
+        qobject_cast<Ui::TtRadioButton *>(no_local_flag_bgr_->checkedButton());
     if (button) {
-      // qDebug() << "y";
-      // qDebug() << QString(button->text());
       data << QString(button->text());
     }
   }
   {
-    auto button = qobject_cast<Ui::TtRadioButton*>(
+    auto button = qobject_cast<Ui::TtRadioButton *>(
         retain_as_pub_flag_bgr_->checkedButton());
     if (button) {
       // qDebug() << "y";
@@ -89,6 +153,7 @@ void SubscripitionWidget::confirmSub() {
 
   emit saveConfigToManager(byteArray);
 
+  // 异步调用 invoke
   QMetaObject::invokeMethod(
       this, [this]() { emit closed(); }, Qt::QueuedConnection);
 }
@@ -98,16 +163,16 @@ void SubscripitionWidget::init() {
   main_layout_ = new Ui::TtVerticalLayout(this);
   main_layout_->setContentsMargins(QMargins(3, 3, 3, 3));
 
-  QWidget* basicWidget = new QWidget(this);
+  QWidget *basicWidget = new QWidget(this);
   basicWidget->setStyleSheet("background-color: white");
-  Ui::TtVerticalLayout* basicWidgetLayout =
+  Ui::TtVerticalLayout *basicWidgetLayout =
       new Ui::TtVerticalLayout(basicWidget);
 
-  QWidget* titleBar = new QWidget(basicWidget);
+  QWidget *titleBar = new QWidget(basicWidget);
   titleBar->setStyleSheet("QWidget { border-bottom: 1px solid #cccccc; }");
-  Ui::TtHorizontalLayout* titleBarLayout = new Ui::TtHorizontalLayout(titleBar);
+  Ui::TtHorizontalLayout *titleBarLayout = new Ui::TtHorizontalLayout(titleBar);
 
-  Ui::TtElidedLabel* title = new Ui::TtElidedLabel(tr("新建订阅"));
+  Ui::TtElidedLabel *title = new Ui::TtElidedLabel(tr("新建订阅"));
   titleBarLayout->addWidget(title, 1, Qt::AlignLeft);
   close_button_ = new Ui::TtSvgButton(":/sys/delete.svg");
   close_button_->setSvgSize(18, 18);
@@ -119,11 +184,11 @@ void SubscripitionWidget::init() {
           &SubscripitionWidget::onCloseButtonClicked);
   titleBarLayout->addWidget(close_button_, 0, Qt::AlignRight);
 
-  QLabel* topic = new QLabel(basicWidget);
+  QLabel *topic = new QLabel(basicWidget);
   topic->setText("<font color='red'>*</font> 主题");
-  topic->setTextFormat(Qt::RichText);  // 确保HTML被正确解析
+  topic->setTextFormat(Qt::RichText); // 确保HTML被正确解析
 
-  QLabel* infoIcon = new QLabel(basicWidget);
+  QLabel *infoIcon = new QLabel(basicWidget);
   QPixmap pixmap = style()->standardPixmap(QStyle::SP_MessageBoxInformation);
   infoIcon->setPixmap(pixmap);
   infoIcon->setToolTip(
@@ -155,31 +220,31 @@ void SubscripitionWidget::init() {
   error_animation_->setStartValue(0.0);
   error_animation_->setEndValue(1.0);
 
-  QGridLayout* layout1 = new QGridLayout();
+  QGridLayout *layout1 = new QGridLayout();
   layout1->addWidget(topic, 0, 0, Qt::AlignLeft);
   layout1->addWidget(infoIcon, 0, 1, Qt::AlignRight);
   layout1->addWidget(topic_edit_, 1, 0, 1, 2);
-  layout1->addWidget(error_label_, 2, 0, 1, 2);  // 新增错误提示行
+  layout1->addWidget(error_label_, 2, 0, 1, 2); // 新增错误提示行
 
-  QLabel* qosLabel = new QLabel(basicWidget);
+  QLabel *qosLabel = new QLabel(basicWidget);
   qosLabel->setText("<font color='red'>*</font> QoS");
-  qosLabel->setTextFormat(Qt::RichText);  // 确保HTML被正确解析
+  qosLabel->setTextFormat(Qt::RichText); // 确保HTML被正确解析
   qos_ = new Ui::TtComboBox(basicWidget);
   qos_->addItem("0 (At most once)");
   qos_->addItem("1 (At least once)");
   qos_->addItem("2 (Exactly once)");
 
-  QLabel* colorLabel = new QLabel(tr("Color"), basicWidget);
+  QLabel *colorLabel = new QLabel(tr("Color"), basicWidget);
   color_ = new Ui::TtLineEdit(basicWidget);
 
-  QGridLayout* layout2 = new QGridLayout();
+  QGridLayout *layout2 = new QGridLayout();
   layout2->addWidget(qosLabel, 0, 0, Qt::AlignLeft);
   layout2->addWidget(colorLabel, 0, 1, Qt::AlignRight);
   layout2->addWidget(qos_, 1, 0, Qt::AlignLeft);
   layout2->addWidget(color_, 1, 1, Qt::AlignRight);
 
-  QLabel* aliasLabel = new QLabel(tr("Alias"), basicWidget);
-  QLabel* infoIcon1 = new QLabel(basicWidget);
+  QLabel *aliasLabel = new QLabel(tr("Alias"), basicWidget);
+  QLabel *infoIcon1 = new QLabel(basicWidget);
   QPixmap pixmap1 = style()->standardPixmap(QStyle::SP_MessageBoxInformation);
   infoIcon1->setPixmap(pixmap1);
   infoIcon1->setToolTip(
@@ -189,8 +254,8 @@ void SubscripitionWidget::init() {
   alias_edit_ = new QPlainTextEdit(basicWidget);
   subscripition_identifier_ =
       new Ui::TtLabelLineEdit(tr("Subscripition Identifier"), basicWidget);
-  QLabel* no = new QLabel("No Local Flag", basicWidget);
-  QLabel* reta = new QLabel("Retain as Published Flag", basicWidget);
+  QLabel *no = new QLabel("No Local Flag", basicWidget);
+  QLabel *reta = new QLabel("Retain as Published Flag", basicWidget);
 
   no_local_flag_.append(new Ui::TtRadioButton("true"));
   no_local_flag_.append(new Ui::TtRadioButton("false"));
@@ -199,9 +264,9 @@ void SubscripitionWidget::init() {
   retain_as_pub_flag_.append(new Ui::TtRadioButton("false"));
 
   retain_handling_ = new Ui::TtLabelComboBox("Retain Handling");
-  retain_handling_->addItem("0");
-  retain_handling_->addItem("1");
-  retain_handling_->addItem("2");
+  retain_handling_->addItem("0", "0");
+  retain_handling_->addItem("1", "1");
+  retain_handling_->addItem("2", "2");
 
   cancle_button_ = new Ui::TtTextButton("Cancle", this);
   connect(cancle_button_, &QPushButton::clicked, this,
@@ -212,7 +277,7 @@ void SubscripitionWidget::init() {
   connect(confirm_button_, &QPushButton::clicked, this,
           &SubscripitionWidget::confirmSub);
 
-  QGridLayout* layout3 = new QGridLayout();
+  QGridLayout *layout3 = new QGridLayout();
   layout3->addWidget(aliasLabel, 0, 0, 1, 1, Qt::AlignLeft);
   layout3->addWidget(infoIcon1, 0, 2, 1, 1, Qt::AlignRight);
   layout3->addWidget(alias_edit_, 1, 0, 1, 3);
@@ -250,4 +315,4 @@ void SubscripitionWidget::init() {
   main_layout_->addWidget(basicWidget);
 }
 
-}  // namespace Widget
+} // namespace Widget

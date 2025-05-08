@@ -165,7 +165,7 @@ void MqttClientSetting::setProtocolVersion() {
 }
 
 void MqttClientSetting::setQoS() {
-  qos_->addItem("0");
+  qos_->addItem("0", "0");
   qos_->addItem("1");
   qos_->addItem("2");
 }

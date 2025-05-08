@@ -26,9 +26,10 @@ TtComboBox::TtComboBox(QWidget *parent)
   setObjectName("TtComboBox");
   setFixedHeight(35);
   d->comboBox_style_ = new style::TtComboBoxStyle(style());
-  // d->comboBox_style_ = style::TtComboBoxStyle();
-  // d->comboBox_style_ = style::TtComboBoxStyle::instance();
   setStyle(d->comboBox_style_);
+  this->setMinimumWidth(20);
+  //  忽略宽度, 固定高度
+  this->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Fixed);
 
   // 调用view 让container初始化
   setView(new QListView(this));
@@ -309,6 +310,7 @@ TtLabelBtnComboBox::TtLabelBtnComboBox(Qt::AlignmentFlag flag,
   QHBoxLayout *layout = new QHBoxLayout(this);
   part_ = new TtLabelComboBox(flag, text, this);
   auto refresh_btn = new Ui::TtSvgButton(":/sys/refresh-normal.svg", this);
+  refresh_btn->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   refresh_btn->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   refresh_btn->setEnableHoldToCheck(true);
 

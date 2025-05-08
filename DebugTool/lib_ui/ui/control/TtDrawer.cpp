@@ -6,17 +6,17 @@
 
 namespace Ui {
 
-TtDrawer::TtDrawer(QWidget* parent) : QWidget(parent) {}
+TtDrawer::TtDrawer(QWidget *parent) : QWidget(parent) {}
 
-TtDrawer::TtDrawer(const QString& title, const QString& closeImagePath,
-                   const QString& openImagePath, QWidget* bodyWidget,
-                   bool enable, QWidget* parent)
+TtDrawer::TtDrawer(const QString &title, const QString &closeImagePath,
+                   const QString &openImagePath, QWidget *bodyWidget,
+                   bool enable, QWidget *parent)
     : QWidget(parent), body_(bodyWidget), drawer_status_(enable) {
   main_layout_ = new Ui::TtVerticalLayout(this);
   label_ = new Ui::TtElidedLabel(title, this);
   fold_btn_ = new Ui::TtSvgButton(closeImagePath, this);
 
-  Ui::TtHorizontalLayout* headerLayout = new Ui::TtHorizontalLayout();
+  Ui::TtHorizontalLayout *headerLayout = new Ui::TtHorizontalLayout();
   headerLayout->addWidget(label_);
   headerLayout->addStretch();
   headerLayout->addWidget(fold_btn_);
@@ -35,13 +35,12 @@ TtDrawer::TtDrawer(const QString& title, const QString& closeImagePath,
             } else {
               fold_btn_->setSvgPath(closeImagePath);
             }
+            emit drawerStateChanged(drawer_status_);
           });
 }
 
 TtDrawer::~TtDrawer() {}
 
-void TtDrawer::setDrawerStatus(bool open) {
-  drawer_status_ = open;
-}
+void TtDrawer::setDrawerStatus(bool open) { drawer_status_ = open; }
 
-}  // namespace Ui
+} // namespace Ui

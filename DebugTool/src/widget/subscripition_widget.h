@@ -16,54 +16,57 @@ class TtVerticalLayout;
 class TtRadioButton;
 class TtSvgButton;
 class TtTextButton;
-}  // namespace Ui
+} // namespace Ui
 
 namespace Widget {
 
 class SubscripitionWidget : public QWidget {
   Q_OBJECT
- public:
-  explicit SubscripitionWidget(QWidget* parent = nullptr);
+public:
+  explicit SubscripitionWidget(QWidget *parent = nullptr);
   ~SubscripitionWidget();
 
- signals:
-  void closed();
-  void saveConfigToManager(const QByteArray& config);
+  void setOldSettings(const QJsonObject &config);
+  QJsonObject getMetaSetting();
 
- private slots:
-  void confirmSub();
+signals:
+  void closed();
+  void saveConfigToManager(const QByteArray &config);
+
+private slots:
+  void confirmSub(); // 提供 config 配置
   void onCloseButtonClicked();
   void validateTopicInput();
 
- private:
+private:
   void init();
   // void getSubscripition
 
-  Ui::TtVerticalLayout* main_layout_;
-  Ui::TtSvgButton* close_button_;
+  Ui::TtVerticalLayout *main_layout_;
+  Ui::TtSvgButton *close_button_;
 
-  QPlainTextEdit* topic_edit_;
-  QLabel* error_label_;  // 新增错误提示标签
-  QPropertyAnimation* error_animation_;
+  QPlainTextEdit *topic_edit_;
+  QLabel *error_label_; // 新增错误提示标签
+  QPropertyAnimation *error_animation_;
 
-  Ui::TtComboBox* qos_;
-  Ui::TtLineEdit* color_;
+  Ui::TtComboBox *qos_;
+  Ui::TtLineEdit *color_;
 
-  QPlainTextEdit* alias_edit_;
+  QPlainTextEdit *alias_edit_;
 
-  Ui::TtLabelLineEdit* subscripition_identifier_;
+  Ui::TtLabelLineEdit *subscripition_identifier_;
 
-  QVector<Ui::TtRadioButton*> no_local_flag_;
-  QVector<Ui::TtRadioButton*> retain_as_pub_flag_;
-  QButtonGroup* no_local_flag_bgr_;
-  QButtonGroup* retain_as_pub_flag_bgr_;
+  QVector<Ui::TtRadioButton *> no_local_flag_;
+  QVector<Ui::TtRadioButton *> retain_as_pub_flag_;
+  QButtonGroup *no_local_flag_bgr_;
+  QButtonGroup *retain_as_pub_flag_bgr_;
 
-  Ui::TtLabelComboBox* retain_handling_;
+  Ui::TtLabelComboBox *retain_handling_;
 
-  Ui::TtTextButton* cancle_button_;
-  Ui::TtTextButton* confirm_button_;
+  Ui::TtTextButton *cancle_button_;
+  Ui::TtTextButton *confirm_button_;
 };
 
-}  // namespace Widget
+} // namespace Widget
 
-#endif  // WIDGET_SUBSCRIPITION_WIDGET_H
+#endif // WIDGET_SUBSCRIPITION_WIDGET_H

@@ -6,14 +6,12 @@
 
 namespace Ui {
 
-TtMaskWidget::TtMaskWidget(QWidget* parent)
-    : QObject(parent),
-      parent_widget_(parent),
-      mask_widget_(nullptr),
+TtMaskWidget::TtMaskWidget(QWidget *parent)
+    : QObject(parent), parent_widget_(parent), mask_widget_(nullptr),
       child_widget_(nullptr) {
   if (!parent_widget_) {
-    parent_widget_ = QApplication::activeWindow();  // 备用方案
-    for (QWidget* widget : QApplication::allWidgets()) {
+    parent_widget_ = QApplication::activeWindow(); // 备用方案
+    for (QWidget *widget : QApplication::allWidgets()) {
       if (widget->objectName() == "CentralWidget") {
         parent_widget_ = widget;
         break;
@@ -22,6 +20,7 @@ TtMaskWidget::TtMaskWidget(QWidget* parent)
   }
 
   if (parent_widget_) {
+    // parent_widget_ 是 mqttwindow 类
     initMaskWidget();
   } else {
     qWarning() << "Parent widget not found!";
@@ -36,27 +35,52 @@ TtMaskWidget::~TtMaskWidget() {
 }
 
 void TtMaskWidget::initMaskWidget() {
+  // mask_widget_ = new QWidget(parent_widget_);
+  // mask_widget_->setAttribute(Qt::WA_TransparentForMouseEvents, false);
+  // mask_widget_->hide();
+  // setMaskColor(Qt::black, 0.7);
+  // parent_widget_->installEventFilter(this);
+  // mask_widget_->setGeometry(parent_widget_->rect());
+
   mask_widget_ = new QWidget(parent_widget_);
   mask_widget_->setAttribute(Qt::WA_TransparentForMouseEvents, false);
   mask_widget_->hide();
-  setMaskColor(Qt::black, 0.7);
+
+  // 设置背景色，但不使用样式表
+  QPalette palette = mask_widget_->palette();
+  palette.setColor(QPalette::Window, Qt::black);
+  mask_widget_->setAutoFillBackground(true);
+  mask_widget_->setPalette(palette);
+
+  // 创建一个专门的效果对象
+  effect_ = new QGraphicsOpacityEffect(mask_widget_);
+  effect_->setOpacity(0.7);
+  mask_widget_->setGraphicsEffect(effect_);
+
   parent_widget_->installEventFilter(this);
   mask_widget_->setGeometry(parent_widget_->rect());
 }
 
-void TtMaskWidget::setMaskColor(const QColor& color, qreal opacity) {
-  // 会影响子控件, 必须指定对象名
-  mask_widget_->setObjectName("maskWidget");
-  QString style =
-      QString("#maskWidget {background-color: rgba(%1, %2, %3, %4); }")
-          .arg(color.red())
-          .arg(color.green())
-          .arg(color.blue())
-          .arg(opacity * 255, 0, 'f', 0);
-  mask_widget_->setStyleSheet(style);
+void TtMaskWidget::setMaskColor(const QColor &color, qreal opacity) {
+  // // 会影响子控件, 必须指定对象名
+  // mask_widget_->setObjectName("maskWidget");
+  // QString style =
+  //     QString("#maskWidget {background-color: rgba(%1, %2, %3, %4); }")
+  //         .arg(color.red())
+  //         .arg(color.green())
+  //         .arg(color.blue())
+  //         .arg(opacity * 255, 0, 'f', 0);
+  // mask_widget_->setStyleSheet(style);
+  QPalette palette = mask_widget_->palette();
+  palette.setColor(QPalette::Window, color);
+  mask_widget_->setPalette(palette);
+
+  if (effect_) {
+    effect_->setOpacity(opacity);
+  }
 }
 
-void TtMaskWidget::show(QWidget* childWidget) {
+void TtMaskWidget::show(QWidget *childWidget) {
   if (!parent_widget_ || !mask_widget_) {
     qWarning() << "Mask widget not initialized";
     return;
@@ -98,14 +122,14 @@ void TtMaskWidget::hide() {
   startFadeAnimation(false);
 }
 
-bool TtMaskWidget::eventFilter(QObject* obj, QEvent* event) {
+bool TtMaskWidget::eventFilter(QObject *obj, QEvent *event) {
   if (obj == parent_widget_ && event->type() == QEvent::Resize) {
     updateMaskGeometry();
   }
   return QObject::eventFilter(obj, event);
 }
 
-void TtMaskWidget::handleChildDestroyed(QObject* obj) {
+void TtMaskWidget::handleChildDestroyed(QObject *obj) {
   if (obj == child_widget_) {
     child_widget_ = nullptr;
   }
@@ -145,7 +169,7 @@ void TtMaskWidget::startFadeAnimation(bool isShow) {
     return;
   }
 
-  QPropertyAnimation* anim = new QPropertyAnimation(effect_, "opacity");
+  QPropertyAnimation *anim = new QPropertyAnimation(effect_, "opacity");
   anim->setDuration(fade_duration_);
 
   if (isShow) {
@@ -170,7 +194,7 @@ void TtMaskWidget::startFadeAnimation(bool isShow) {
   anim->start(QAbstractAnimation::DeleteWhenStopped);
 }
 
-void TtMaskWidget::processChildWidget(QWidget* childWidget) {
+void TtMaskWidget::processChildWidget(QWidget *childWidget) {
   if (childWidget == child_widget_) {
     return;
   }
@@ -178,7 +202,7 @@ void TtMaskWidget::processChildWidget(QWidget* childWidget) {
     if (reusable_) {
       child_widget_->hide();
     } else {
-      child_widget_->deleteLater();  // 删除
+      child_widget_->deleteLater(); // 删除
     }
   }
   child_widget_ = childWidget;
@@ -187,19 +211,19 @@ void TtMaskWidget::processChildWidget(QWidget* childWidget) {
     child_widget_->show();
     connect(child_widget_, &QObject::destroyed, this,
             &TtMaskWidget::handleChildDestroyed);
-    if (auto* closable = qobject_cast<QWidget*>(child_widget_)) {
+    if (auto *closable = qobject_cast<QWidget *>(child_widget_)) {
       disconnect(closable, SIGNAL(closed()), this,
-                 SLOT(hide()));  // 确保断开旧连接
+                 SLOT(hide())); // 确保断开旧连接
       connect(closable, SIGNAL(closed()), this, SLOT(hide()));
     }
   }
 }
 
-QSize TtMaskWidget::calculateChildSize(const QSize& maskSize) const {
+QSize TtMaskWidget::calculateChildSize(const QSize &maskSize) const {
   constexpr int minWidth = 400;
   constexpr int minHeight = 300;
   return QSize(qMax(minWidth, maskSize.width() * 2 / 3),
                qMax(minHeight, maskSize.height() * 3 / 4));
 }
 
-}  // namespace Ui
+} // namespace Ui

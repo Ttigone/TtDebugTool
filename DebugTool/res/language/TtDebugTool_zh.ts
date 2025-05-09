@@ -211,27 +211,27 @@
 <context>
     <name>TabWindow</name>
     <message>
-        <location filename="../../src/ui/widgets/tabwindow.cpp" line="384"/>
+        <location filename="../../src/ui/widgets/tabwindow.cpp" line="386"/>
         <source>新增连接</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/widgets/tabwindow.cpp" line="649"/>
+        <location filename="../../src/ui/widgets/tabwindow.cpp" line="690"/>
         <source>New Tab</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/widgets/tabwindow.cpp" line="706"/>
+        <location filename="../../src/ui/widgets/tabwindow.cpp" line="751"/>
         <source>取消</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/widgets/tabwindow.cpp" line="707"/>
+        <location filename="../../src/ui/widgets/tabwindow.cpp" line="752"/>
         <source>确定</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/widgets/tabwindow.cpp" line="708"/>
+        <location filename="../../src/ui/widgets/tabwindow.cpp" line="753"/>
         <source>通讯链接配置已修改, 是否保存</source>
         <translation type="unfinished"></translation>
     </message>
@@ -771,53 +771,43 @@
 <context>
     <name>Widget::MqttMetaSettingWidget</name>
     <message>
-        <location filename="../../src/widget/mqtt_meta_setting_widget.cpp" line="108"/>
+        <location filename="../../src/widget/mqtt_meta_setting_widget.cpp" line="167"/>
         <source>User Properties</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/mqtt_meta_setting_widget.cpp" line="148"/>
+        <location filename="../../src/widget/mqtt_meta_setting_widget.cpp" line="188"/>
         <source>Content Type</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/mqtt_meta_setting_widget.cpp" line="150"/>
+        <location filename="../../src/widget/mqtt_meta_setting_widget.cpp" line="190"/>
         <source>Message Expiry Interval(s)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/mqtt_meta_setting_widget.cpp" line="151"/>
+        <location filename="../../src/widget/mqtt_meta_setting_widget.cpp" line="191"/>
         <source>Topic Alias</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/mqtt_meta_setting_widget.cpp" line="152"/>
+        <location filename="../../src/widget/mqtt_meta_setting_widget.cpp" line="192"/>
         <source>Response Topic</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/mqtt_meta_setting_widget.cpp" line="153"/>
+        <location filename="../../src/widget/mqtt_meta_setting_widget.cpp" line="193"/>
         <source>Correlation Data</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/mqtt_meta_setting_widget.cpp" line="155"/>
+        <location filename="../../src/widget/mqtt_meta_setting_widget.cpp" line="195"/>
         <source>Subscripition Identifier</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/mqtt_meta_setting_widget.cpp" line="157"/>
+        <location filename="../../src/widget/mqtt_meta_setting_widget.cpp" line="197"/>
         <source>Payload Format Indicator</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/widget/mqtt_meta_setting_widget.cpp" line="159"/>
-        <source>Cancle</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../src/widget/mqtt_meta_setting_widget.cpp" line="160"/>
-        <source>Save</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1018,22 +1008,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/subscripition_widget.cpp" line="237"/>
+        <location filename="../../src/widget/subscripition_widget.cpp" line="238"/>
         <source>Color</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/subscripition_widget.cpp" line="246"/>
+        <location filename="../../src/widget/subscripition_widget.cpp" line="247"/>
         <source>Alias</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/subscripition_widget.cpp" line="251"/>
+        <location filename="../../src/widget/subscripition_widget.cpp" line="252"/>
         <source>Comma separator (,) is also used when setting aliases for multiple topics</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/subscripition_widget.cpp" line="256"/>
+        <location filename="../../src/widget/subscripition_widget.cpp" line="257"/>
         <source>Subscripition Identifier</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1428,8 +1418,8 @@
     <message>
         <location filename="../../src/window/main_window.cpp" line="176"/>
         <location filename="../../src/window/main_window.cpp" line="323"/>
-        <location filename="../../src/window/main_window.cpp" line="580"/>
-        <location filename="../../src/window/main_window.cpp" line="604"/>
+        <location filename="../../src/window/main_window.cpp" line="581"/>
+        <location filename="../../src/window/main_window.cpp" line="605"/>
         <source>新建连接</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1472,154 +1462,159 @@
     </message>
     <message>
         <location filename="../../src/window/main_window.cpp" line="362"/>
-        <location filename="../../src/window/main_window.cpp" line="373"/>
+        <location filename="../../src/window/main_window.cpp" line="374"/>
         <source>创建模拟器</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="512"/>
+        <location filename="../../src/window/main_window.cpp" line="513"/>
         <source>语言</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="678"/>
+        <location filename="../../src/window/main_window.cpp" line="679"/>
         <source>文件(&amp;F)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="679"/>
+        <location filename="../../src/window/main_window.cpp" line="680"/>
         <source>新建</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="680"/>
+        <location filename="../../src/window/main_window.cpp" line="681"/>
         <source>打开</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="684"/>
+        <location filename="../../src/window/main_window.cpp" line="685"/>
         <source>保存到 CSV</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="689"/>
+        <location filename="../../src/window/main_window.cpp" line="690"/>
         <source>保存到 Sqlite 数据库</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="697"/>
+        <location filename="../../src/window/main_window.cpp" line="698"/>
         <source>&amp;Help</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="698"/>
+        <location filename="../../src/window/main_window.cpp" line="699"/>
         <source>关于 Qt</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="768"/>
+        <location filename="../../src/window/main_window.cpp" line="769"/>
         <source>Dark blur</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="781"/>
+        <location filename="../../src/window/main_window.cpp" line="782"/>
         <source>Light blur</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="794"/>
+        <location filename="../../src/window/main_window.cpp" line="795"/>
         <source>No blur</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="967"/>
+        <location filename="../../src/window/main_window.cpp" line="968"/>
         <source>确定要退出程序吗</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1101"/>
+        <location filename="../../src/window/main_window.cpp" line="1102"/>
         <source>设置</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1195"/>
-        <location filename="../../src/window/main_window.cpp" line="1217"/>
-        <location filename="../../src/window/main_window.cpp" line="1238"/>
-        <location filename="../../src/window/main_window.cpp" line="1261"/>
-        <location filename="../../src/window/main_window.cpp" line="1284"/>
-        <location filename="../../src/window/main_window.cpp" line="1305"/>
-        <location filename="../../src/window/main_window.cpp" line="1329"/>
+        <location filename="../../src/window/main_window.cpp" line="1221"/>
+        <location filename="../../src/window/main_window.cpp" line="1248"/>
+        <location filename="../../src/window/main_window.cpp" line="1269"/>
+        <location filename="../../src/window/main_window.cpp" line="1295"/>
+        <location filename="../../src/window/main_window.cpp" line="1321"/>
+        <location filename="../../src/window/main_window.cpp" line="1342"/>
+        <location filename="../../src/window/main_window.cpp" line="1366"/>
         <source>保存成功</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1200"/>
+        <location filename="../../src/window/main_window.cpp" line="1226"/>
         <source>未命名的串口连接</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1221"/>
+        <location filename="../../src/window/main_window.cpp" line="1252"/>
         <source>未命 TCP 客户端连接</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1242"/>
+        <location filename="../../src/window/main_window.cpp" line="1273"/>
         <source>未命名 UDP 连接</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1267"/>
+        <location filename="../../src/window/main_window.cpp" line="1301"/>
         <source>未命名的 MQTT 客户端</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1288"/>
+        <location filename="../../src/window/main_window.cpp" line="1325"/>
         <source>未命名的 Modbus 主机</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1309"/>
+        <location filename="../../src/window/main_window.cpp" line="1346"/>
         <source>未命名的 TCP 服务模拟端</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1333"/>
+        <location filename="../../src/window/main_window.cpp" line="1370"/>
         <source>未命名的 UDP 服务模拟端</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1389"/>
+        <location filename="../../src/window/main_window.cpp" line="1427"/>
         <source>简体中文</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1390"/>
+        <location filename="../../src/window/main_window.cpp" line="1428"/>
         <source>英文</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1391"/>
+        <location filename="../../src/window/main_window.cpp" line="1429"/>
         <source>法语</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1392"/>
+        <location filename="../../src/window/main_window.cpp" line="1430"/>
         <source>德语</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1393"/>
+        <location filename="../../src/window/main_window.cpp" line="1431"/>
         <source>日语</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1423"/>
+        <location filename="../../src/window/main_window.cpp" line="1461"/>
         <source>立马重启</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1424"/>
+        <location filename="../../src/window/main_window.cpp" line="1462"/>
         <source>稍后重启</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/window/main_window.cpp" line="1463"/>
+        <source>已经切换语言, 是否立马重启</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1693,43 +1688,43 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/mqtt_window.cpp" line="125"/>
+        <location filename="../../src/window/mqtt_window.cpp" line="127"/>
         <source>未命名的 MQTT 客户端</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/mqtt_window.cpp" line="127"/>
+        <location filename="../../src/window/mqtt_window.cpp" line="129"/>
         <source>未命名的 MQTT 服务模拟端</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/mqtt_window.cpp" line="176"/>
+        <location filename="../../src/window/mqtt_window.cpp" line="178"/>
         <source>名称不能为空！</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/mqtt_window.cpp" line="196"/>
-        <location filename="../../src/window/mqtt_window.cpp" line="222"/>
+        <location filename="../../src/window/mqtt_window.cpp" line="198"/>
+        <location filename="../../src/window/mqtt_window.cpp" line="224"/>
         <source>订阅</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/mqtt_window.cpp" line="291"/>
+        <location filename="../../src/window/mqtt_window.cpp" line="293"/>
         <source>发送</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/mqtt_window.cpp" line="392"/>
+        <location filename="../../src/window/mqtt_window.cpp" line="441"/>
         <source>取消</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/mqtt_window.cpp" line="393"/>
+        <location filename="../../src/window/mqtt_window.cpp" line="442"/>
         <source>保存</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/mqtt_window.cpp" line="451"/>
+        <location filename="../../src/window/mqtt_window.cpp" line="496"/>
         <source>客户端未建立链接</source>
         <translation type="unfinished"></translation>
     </message>

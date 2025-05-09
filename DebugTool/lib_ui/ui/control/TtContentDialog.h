@@ -22,11 +22,19 @@ class Tt_EXPORT TtContentDialog : public QDialog {
 
   explicit TtContentDialog(QWidget* parent = nullptr);
   explicit TtContentDialog(
+      bool fixSize = true,
       LayoutSelection layout = LayoutSelection::TWO_OPTIONS,
       QWidget* parent = nullptr);
 
   ~TtContentDialog();
 
+  /**
+   * @brief 设置对话框的中央部件
+   * @param centralWidget 要设置的中央部件
+   * 
+   * 注意：本方法不会获取centralWidget的所有权，
+   * 调用者负责确保传入的部件在对话框关闭后仍然有效或及时清理
+   */
   void setCentralWidget(QWidget* centralWidget);
 
   void setLeftButtonText(const QString& text);

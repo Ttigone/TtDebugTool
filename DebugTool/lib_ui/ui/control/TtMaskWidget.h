@@ -1,4 +1,4 @@
-﻿/*****************************************************************//**
+﻿/*****************************************************************/ /**
  * \file   TtMaskWidget.h
  * \brief  遮罩界面
  * 
@@ -35,7 +35,6 @@ class Tt_EXPORT TtMaskWidget : public QObject {
   void show(QWidget* childWidget = nullptr);
 
   void setFadeDuration(int ms) { fade_duration_ = ms; }
-
   void setReusable(bool reusable) { reusable_ = reusable; }
   bool isReusable() const { return reusable_; }
 
@@ -58,14 +57,15 @@ class Tt_EXPORT TtMaskWidget : public QObject {
   void processChildWidget(QWidget* childWidget);
   QSize calculateChildSize(const QSize& maskSize) const;
 
-  QWidget* parent_widget_;  // 底层父控件
-  QWidget* mask_widget_;    // 遮罩层
-  QWidget* child_widget_;   // 子控件（由外部传入）
-  QPointer<QGraphicsOpacityEffect> effect_;
-  int fade_duration_ = 220;  // 默认动画时长
-  bool reusable_;
+  QWidget* parent_widget_;                   // 底层父控件
+  QWidget* mask_widget_;                     // 遮罩层
+  QWidget* child_widget_;                    // 子控件（由外部传入）
+  QPointer<QGraphicsOpacityEffect> effect_;  // 透明效果
+  QPointer<QPropertyAnimation> fade_animation_;  // 动画对象
+  int fade_duration_ = 220;                      // 默认动画时长
+  bool reusable_;                                // 是否可以重用子控件
 };
 
-} // namespace Ui
+}  // namespace Ui
 
 #endif  // UI_CONTROL_TTMASKWIDGET_H

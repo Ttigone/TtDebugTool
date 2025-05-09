@@ -16,7 +16,37 @@
 
 namespace Widget {
 
-MqttMetaSettingWidget::MqttMetaSettingWidget(QWidget* parent)
+PropertyRow::PropertyRow(QWidget *parent) : QWidget(parent) {
+  auto *layout = new QHBoxLayout(this);
+  layout->setContentsMargins(0, 0, 0, 0);
+
+  keyEdit_ = new Ui::TtLineEdit(this);
+  keyEdit_->setPlaceholderText("Key");
+
+  valEdit_ = new Ui::TtLineEdit(this);
+  valEdit_->setPlaceholderText("Value");
+
+  delBtn_ = new Ui::TtSvgButton(":/sys/trash.svg", this);
+  delBtn_->setSvgSize(18, 18);
+
+  layout->addWidget(keyEdit_, 1);
+  layout->addWidget(valEdit_, 1);
+  layout->addWidget(delBtn_, 0, Qt::AlignRight);
+
+  connect(delBtn_, &Ui::TtSvgButton::clicked, this,
+          [this]() { emit removeRequested(this); });
+}
+
+QString PropertyRow::key() const { return keyEdit_->text(); }
+
+QString PropertyRow::value() const { return valEdit_->text(); }
+
+void PropertyRow::setData(const QString &k, const QString &v) {
+  keyEdit_->setText(k);
+  valEdit_->setText(v);
+}
+
+MqttMetaSettingWidget::MqttMetaSettingWidget(QWidget *parent)
     : QWidget(parent) {
   setObjectName("MqttMetaSettingWidget");
   setAttribute(Qt::WA_StyledBackground, true);
@@ -30,7 +60,7 @@ MqttMetaSettingWidget::~MqttMetaSettingWidget() {
   qDebug() << "delete MqttMeta";
 }
 
-void MqttMetaSettingWidget::setMetaSettings(const QByteArray& data) {
+void MqttMetaSettingWidget::setMetaSettings(const QByteArray &data) {
   QDataStream stream(data);
 
   // 读取固定属性
@@ -46,21 +76,26 @@ void MqttMetaSettingWidget::setMetaSettings(const QByteArray& data) {
   subscripition_identifier_->setText(subsId);
   payload_format_indicator_->setChecked(payload.compare("1") ? true : false);
 
-  // 清除现有动态属性
-  QLayout* layout = scroll_content_->layout();
-  while (layout->count()) {
-    auto item = layout->takeAt(0);
-    if (auto w = item->widget()) {
-      w->deleteLater();
-    }
-    delete item;
-  }
+  // 清除属性
+  clearProperties();
+  // // 清除现有动态属性
+  // QLayout *layout = scroll_content_->layout();
+  // while (layout->count()) {
+  //   auto item = layout->takeAt(0);
+  //   if (auto w = item->widget()) {
+  //     w->deleteLater();
+  //   }
+  //   delete item;
+  // }
 
   // 读取动态属性
   QString key, value;
   while (!stream.atEnd()) {
+    QString key, value;
     stream >> key >> value;
-    addPropertyRow(key, value);
+    // addPropertyRow(key, value);
+    addProperty();
+    propertyRows_.back()->setData(key, value);
   }
 }
 
@@ -79,15 +114,15 @@ QByteArray MqttMetaSettingWidget::getMetaSettings() {
   qDebug() << "get data: " << byteArray;
 
   // 序列化动态属性
-  QLayout* layout = scroll_content_->layout();
+  QLayout *layout = scroll_content_->layout();
   for (int i = 0; i < layout->count(); ++i) {
-    if (auto widget = qobject_cast<QWidget*>(layout->itemAt(i)->widget())) {
-      QLayout* rowLayout = widget->layout();
+    if (auto widget = qobject_cast<QWidget *>(layout->itemAt(i)->widget())) {
+      QLayout *rowLayout = widget->layout();
       if (rowLayout && rowLayout->count() >= 2) {
         auto keyEdit =
-            qobject_cast<Ui::TtLineEdit*>(rowLayout->itemAt(0)->widget());
+            qobject_cast<Ui::TtLineEdit *>(rowLayout->itemAt(0)->widget());
         auto valueEdit =
-            qobject_cast<Ui::TtLineEdit*>(rowLayout->itemAt(1)->widget());
+            qobject_cast<Ui::TtLineEdit *>(rowLayout->itemAt(1)->widget());
         if (keyEdit && valueEdit) {
           data << keyEdit->text() << valueEdit->text();
         }
@@ -98,15 +133,41 @@ QByteArray MqttMetaSettingWidget::getMetaSettings() {
   return byteArray;
 }
 
+void MqttMetaSettingWidget::addProperty() {
+  // 添加行, 能否动态调整
+  // 创建一行
+  auto *row = new PropertyRow(scroll_content_);
+  // 布局添加
+  properties_layout_->addWidget(row);
+  propertyRows_.push_back(row);
+
+  connect(row, &PropertyRow::removeRequested, this,
+          [this, row]() { removeProperty(row); });
+  // 太小了
+  scroll_->updateGeometry();
+  scroll_->adjustSize();
+}
+
+void MqttMetaSettingWidget::removeProperty(PropertyRow *row) {
+  properties_layout_->removeWidget(row);
+  propertyRows_.erase(
+      std::remove(propertyRows_.begin(), propertyRows_.end(), row),
+      propertyRows_.end());
+  row->deleteLater();
+}
+
 void MqttMetaSettingWidget::init() {
   main_layout_ = new Ui::TtVerticalLayout(this);
-  main_layout_->setContentsMargins(QMargins(3, 3, 3, 3));
+  // main_layout_->setContentsMargins(QMargins(3, 3, 3, 3));
+  main_layout_->setContentsMargins(0, 0, 0, 0);
 
-  QWidget* setMetaInfoWidget = new QWidget(this);
-  QGridLayout* setMetaInfoWidgetLayout = new QGridLayout(setMetaInfoWidget);
+  QWidget *setMetaInfoWidget = new QWidget(this);
+  QGridLayout *setMetaInfoWidgetLayout = new QGridLayout(setMetaInfoWidget);
 
-  QLabel* propLabel = new QLabel(tr("User Properties"), setMetaInfoWidget);
-  Ui::TtSvgButton* plusButton = new Ui::TtSvgButton(":/sys/plus.svg");
+  QLabel *propLabel = new QLabel(tr("User Properties"), setMetaInfoWidget);
+  Ui::TtSvgButton *plusButton = new Ui::TtSvgButton(":/sys/plus.svg");
+  plusButton->setFixedSize(30, 30);
+  plusButton->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
   scroll_ = new QScrollArea(this);
   // scroll->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Maximum);
@@ -116,34 +177,13 @@ void MqttMetaSettingWidget::init() {
 
   scroll_content_ = new QWidget(scroll_);
   scroll_->setStyleSheet("background-color: white");
-  Ui::TtVerticalLayout* scrollContentLayout =
-      new Ui::TtVerticalLayout(scroll_content_);
 
-  // Initial property widget
-  QWidget* initialProperty = new QWidget(scroll_content_);
-  Ui::TtHorizontalLayout* initialPropertyLayout =
-      new Ui::TtHorizontalLayout(initialProperty);
-  Ui::TtSvgButton* initialDeleteButton =
-      new Ui::TtSvgButton(":/sys/trash.svg", initialProperty);
-  initialDeleteButton->setSvgSize(18, 18);
-  Ui::TtLineEdit* initialKey = new Ui::TtLineEdit(initialProperty);
-  initialKey->setPlaceholderText("key");
-  Ui::TtLineEdit* initialValue = new Ui::TtLineEdit(initialProperty);
-  initialValue->setPlaceholderText("Value");
-
-  initialPropertyLayout->addWidget(initialKey, 1);
-  initialPropertyLayout->addWidget(initialValue, 1);
-  initialPropertyLayout->addWidget(initialDeleteButton, 0, Qt::AlignRight);
-  scrollContentLayout->addWidget(initialProperty);
-
-  // Connect initial delete button
-  connect(initialDeleteButton, &Ui::TtSvgButton::clicked, this,
-          [this, initialProperty]() {
-            scroll_content_->layout()->removeWidget(initialProperty);
-            initialProperty->deleteLater();
-          });
-
+  // 添加 row 的布局
+  properties_layout_ = new QVBoxLayout(scroll_content_);
+  scroll_content_->setLayout(properties_layout_);
   scroll_->setWidget(scroll_content_);
+  // 添加的布局
+  addProperty();
 
   content_type_ = new Ui::TtLabelLineEdit(tr("Content Type"));
   message_expiry_interval_ =
@@ -156,18 +196,17 @@ void MqttMetaSettingWidget::init() {
   payload_format_indicator_ =
       new Ui::TtSwitchButton(tr("Payload Format Indicator"));
 
-  Ui::TtTextButton* cancleButton = new Ui::TtTextButton(tr("Cancle"));
-  Ui::TtTextButton* saveButton = new Ui::TtTextButton(tr("Save"));
+  // Ui::TtTextButton *cancleButton = new Ui::TtTextButton(tr("Cancle"));
+  // Ui::TtTextButton *saveButton = new Ui::TtTextButton(tr("Save"));
+  // connect(cancleButton, &Ui::TtTextButton::clicked, this, [this]() {
+  //   emit closed();
+  //   qDebug() << "cancle";
+  // });
 
-  connect(cancleButton, &Ui::TtTextButton::clicked, this, [this]() {
-    emit closed();
-    qDebug() << "cancle";
-  });
-
-  connect(saveButton, &Ui::TtTextButton::clicked, this, [this]() {
-    emit closed();
-    qDebug() << "save";
-  });
+  // connect(saveButton, &Ui::TtTextButton::clicked, this, [this]() {
+  //   emit closed();
+  //   qDebug() << "save";
+  // });
 
   setMetaInfoWidgetLayout->addWidget(propLabel, 0, 0, 1, 1, Qt::AlignLeft);
   setMetaInfoWidgetLayout->addWidget(plusButton, 0, 2, 1, 1, Qt::AlignRight);
@@ -178,17 +217,20 @@ void MqttMetaSettingWidget::init() {
   setMetaInfoWidgetLayout->addWidget(response_topic_, 5, 0, 1, 3);
   setMetaInfoWidgetLayout->addWidget(correlation_data_, 6, 0, 1, 3);
   setMetaInfoWidgetLayout->addWidget(subscripition_identifier_, 7, 0, 1, 3);
-  setMetaInfoWidgetLayout->addWidget(cancleButton, 8, 1, 1, 1, Qt::AlignRight);
-  setMetaInfoWidgetLayout->addWidget(saveButton, 8, 2, 1, 1, Qt::AlignLeft);
+
+  // setMetaInfoWidgetLayout->addWidget(cancleButton, 8, 1, 1, 1,
+  // Qt::AlignRight); setMetaInfoWidgetLayout->addWidget(saveButton, 8, 2, 1, 1,
+  // Qt::AlignLeft);
 
   // setMetaInfoWidgetLayout->setContentsMargins(0, 0, 0, 0);  // 移除边距
-  // setMetaInfoWidgetLayout->setHorizontalSpacing(0);         // 移除水平间距
+  // setMetaInfoWidgetLayout->setHorizontalSpacing(0);         //
+  // 移除水平间距
 
   // 设置列拉伸因子：第0列固定，第1列扩展，第2列固定
-  setMetaInfoWidgetLayout->setColumnStretch(0, 0);  // 第0列不拉伸
-  setMetaInfoWidgetLayout->setColumnStretch(1, 1);  // 第1列占剩余空间
-  setMetaInfoWidgetLayout->setColumnStretch(2, 0);  // 第2列不拉伸
-  setMetaInfoWidgetLayout->setRowStretch(1, 1);     // 第 1 可以拉伸
+  setMetaInfoWidgetLayout->setColumnStretch(0, 0); // 第0列不拉伸
+  setMetaInfoWidgetLayout->setColumnStretch(1, 1); // 第1列占剩余空间
+  setMetaInfoWidgetLayout->setColumnStretch(2, 0); // 第2列不拉伸
+  setMetaInfoWidgetLayout->setRowStretch(1, 1);    // 第 1 可以拉伸
 
   // setMetaInfoWidget->setFixedWidth(300);
   // setMetaInfoWidget->setStyleSheet("background-color: Coral");
@@ -196,33 +238,10 @@ void MqttMetaSettingWidget::init() {
   // main_layout_->addWidget(scroll);
   main_layout_->addWidget(setMetaInfoWidget);
 
-  connect(plusButton, &Ui::TtSvgButton::clicked, this, [this]() {
-    QWidget* newProperty = new QWidget(scroll_content_);
-    Ui::TtHorizontalLayout* propertyLayout =
-        new Ui::TtHorizontalLayout(newProperty);
-    Ui::TtLineEdit* keyEdit = new Ui::TtLineEdit(newProperty);
-    keyEdit->setPlaceholderText("key");
-    Ui::TtLineEdit* valueEdit = new Ui::TtLineEdit(newProperty);
-    valueEdit->setPlaceholderText("Value");
-    Ui::TtSvgButton* deleteButton =
-        new Ui::TtSvgButton(":/sys/trash.svg", newProperty);
-    deleteButton->setSvgSize(18, 18);
-    propertyLayout->addWidget(keyEdit, 1);
-    propertyLayout->addWidget(valueEdit, 1);
-    propertyLayout->addWidget(deleteButton, 0, Qt::AlignRight);
-    // Connect delete button
-    connect(deleteButton, &Ui::TtSvgButton::clicked, this,
-            [this, newProperty]() {
-              if (auto layout = newProperty->parentWidget()->layout()) {
-                layout->removeWidget(newProperty);
-                newProperty->deleteLater();
-              }
-            });
-    scroll_content_->layout()->addWidget(newProperty);
-    // 添加新属性后强制更新布局
-    scroll_->widget()->adjustSize();
-    scroll_->updateGeometry();
-  });
+  connect(plusButton, &Ui::TtSvgButton::clicked, this,
+          [this]() { addProperty(); });
+
+  // 调整大小
   QMetaObject::invokeMethod(
       scroll_->widget(),
       [this]() {
@@ -232,9 +251,11 @@ void MqttMetaSettingWidget::init() {
       Qt::QueuedConnection);
 }
 
-void MqttMetaSettingWidget::addPropertyRow(const QString& key,
-                                           const QString& value) {
-  QWidget* row = new QWidget(scroll_content_);
+void MqttMetaSettingWidget::addPropertyRow(const QString &key,
+                                           const QString &value) {
+  // 出现内存泄漏
+  // 每个行都是 row
+  QWidget *row = new QWidget(scroll_content_);
   auto layout = new Ui::TtHorizontalLayout(row);
 
   auto keyEdit = new Ui::TtLineEdit(row);
@@ -258,4 +279,11 @@ void MqttMetaSettingWidget::addPropertyRow(const QString& key,
   scroll_->widget()->adjustSize();
 }
 
-}  // namespace Widget
+void MqttMetaSettingWidget::clearProperties() {
+  for (auto row : propertyRows_) {
+    row->deleteLater();
+  }
+  propertyRows_.clear();
+}
+
+} // namespace Widget

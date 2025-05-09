@@ -61,6 +61,8 @@ QMap<TtProtocolRole::Role, QString> TabWindow::type_icon_map_ = {
 QHash<TtProtocolRole::Role, TabWindow::WidgetFactory>
     TabWindow::widgetFactories; // Widget 工厂函数映射
 
+QMap<QString, QWidget *> TabWindow::widgetInstances; // Widget 实例
+
 QString TabWindow::SpecialTypeIcon(TtProtocolRole::Role role) {
   return type_icon_map_[role];
 }
@@ -438,13 +440,15 @@ void TabWindow::switchByCreateWidget(int tabIndex, TtProtocolRole::Role role) {
   // 创建新的 Widget
   QWidget *newWidget = widgetFactories[role]();
 
+  // 创建 uuid
   widgetInstances[QUuid::createUuid().toString()] = newWidget;
+  // 能够找到对应的 uuid, 创建存在
+  qDebug() << "widget: " << newWidget << "uuid: " << findWidget(newWidget);
 
   setTabText(tabIndex, widgetTitles[role]);
   insertTab(tabIndex, newWidget, QIcon(SpecialTypeIcon(role)),
             widgetTitles[role]);
   setupCustomTabButton(tabIndex);
-  // updateTabStyle(tabIndex);
   setCurrentIndex(tabIndex);
 }
 
@@ -491,12 +495,48 @@ void TabWindow::switchByAlreadyExistingWidget(int tabIndex, const QString &uuid,
   }
 }
 
+QString TabWindow::getCurrentWidgetUUid(QWidget *widget) {
+  return findWidget(widget);
+}
+
 QString TabWindow::getCurrentWidgetUUid() {
+  // 获取当前 tabWindow 的 uuid
+  // 不再当前的 uuid
+  // qDebug() << "currWidget: " << currentWidget();
+  // 当前的 widget 不同, 获取有问题
+  // 移动出去后,  widget 不是当前的 widget, 应该获取点击的 tabWindow 的
+  // currentWidget
+
   return findWidget(currentWidget());
 }
 
 void TabWindow::setTabTitle(const QString &title) {
+
   tabBar()->setTabText(currentIndex(), title);
+}
+
+void TabWindow::setTabTitle(const QString &index, const QString &title) {
+  auto *findWidget = widgetInstances.value(index);
+  if (!findWidget) {
+    // 不在实例中
+    return;
+  }
+  TabWindow *foundTabWindow = nullptr;
+  for (auto *tabWindow : TabWindowManager::instance()->windows()) {
+    int count = tabWindow->count();
+    for (int i = 0; i < count; ++i) {
+      QWidget *page = tabWindow->widget(i);
+      if (page == findWidget) {
+        qDebug() << "find";
+        foundTabWindow = tabWindow;
+        tabWindow->setTabText(i, title);
+        break;
+      }
+    }
+    if (foundTabWindow) {
+      break;
+    }
+  }
 }
 
 bool TabWindow::isStoredInMem(const QString &index) {
@@ -513,7 +553,7 @@ bool TabWindow::isCurrentDisplayedPage(const QString &index) {
 }
 
 void TabWindow::switchByPage(const QString &index) {
-  // 获取 TabWindowManage 的全部实例, 切换
+  // 根据 uuid 窗口所在的 TabWindow, 切换上升或下降
   auto *findWidget = widgetInstances.value(index);
   if (!findWidget) {
     return;
@@ -578,6 +618,7 @@ void TabWindow::switchByReadingDisk(const QString &index,
 }
 
 void TabWindow::sessionSwitchPage(int tabIndex, TtProtocolRole::Role role) {
+  // 进入的是这个
   // 根据鼠标位置, 获取当前的 tabWindow
   // 切换处于后, 将会导致 tabIndex 不匹配
   qDebug() << "switch index: " << tabIndex;
@@ -683,8 +724,12 @@ QWidget *TabWindow::createDefaultWidget(int tabIndex) {
 }
 
 QString TabWindow::findWidget(QWidget *widget) {
+  // 全部实例保存到 widgetInstance 中, 每个类都有一个 widgetInstaces 中
+  //
   for (auto it = widgetInstances.cbegin(); it != widgetInstances.cend(); ++it) {
     if (it.value() == widget) {
+      // error
+      qDebug() << "处于实例组中";
       return it.key();
     }
   }

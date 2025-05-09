@@ -4,6 +4,7 @@
 
 #include "Def.h"
 
+#include <qsizepolicy.h>
 #include <ui/control/ChatWidget/TtChatMessage.h>
 #include <ui/control/ChatWidget/TtChatMessageModel.h>
 #include <ui/control/ChatWidget/TtChatView.h>
@@ -69,13 +70,12 @@ bool MqttWindow::saveState() { return saved_; }
 void MqttWindow::setSaveState(bool state) { saved_ = state; }
 
 void MqttWindow::saveSetting() {
-  // 操作 config_
-  // 保存还是有 bug
   config_.insert("Type", TtFunctionalCategory::Communication);
   config_.insert("WindowTitle", title_->text());
   config_.insert("MqttSetting", mqtt_client_setting_->getMqttClientSetting());
-  // meta 信息
-  config_.insert("MetaSetting", subscripition_widget->getMetaSetting());
+  if (subscripition_widget_) {
+    config_.insert("MetaSetting", subscripition_widget_->getMetaSetting());
+  }
   saved_ = true;
   emit requestSaveConfig();
 }
@@ -91,8 +91,10 @@ void MqttWindow::setSetting(const QJsonObject &config) {
     // tcp_server_setting_->setOldSettings(
     //     config.value("TcpClientSetting").toObject(QJsonObject()));
   }
-  subscripition_widget->setOldSettings(
-      config.value("MetaSetting").toObject(QJsonObject()));
+  if (subscripition_widget_) {
+    subscripition_widget_->setOldSettings(
+        config.value("MetaSetting").toObject(QJsonObject()));
+  }
 }
 
 QString MqttWindow::getTitle() const { return title_->text(); }
@@ -351,6 +353,8 @@ void MqttWindow::init() {
   mainSplitter->setSizes(initialSizes);
 
   connectSignals();
+
+  mask_widget_ = new Ui::TtMaskWidget(this);
 }
 
 void MqttWindow::connectSignals() {
@@ -366,65 +370,106 @@ void MqttWindow::connectSignals() {
 
   connect(save_btn_, &Ui::TtSvgButton::clicked, this, &MqttWindow::saveSetting);
 
-  connect(meta_btn_, &Ui::TtTextButton::clicked, [this]() {
-    // if (!meta_widget_) {
-    //   qDebug() << "meta nullptr";
-    //   meta_widget_ = new Widget::MqttMetaSettingWidget();
-    // }
-    // 这个 meta_widget_ 也会被跟着删除
-    // delete 会出现问题
-    // 有问题
-    // mask_widget_->show(meta_widget_);
+  connect(meta_btn_, &Ui::TtTextButton::clicked, this, [this]() {
+    if (!meta_widget_) {
+      meta_widget_ = new Widget::MqttMetaSettingWidget(this);
+      meta_widget_->setSizePolicy(QSizePolicy::Expanding,
+                                  QSizePolicy::Expanding);
+    }
 
-    // 那么岂不是每次都要创建新的 ?
-    // 似乎存在内容泄漏的问题
-    // dialog 的样式表问题, size 问题
-    meta_widget_ = new Widget::MqttMetaSettingWidget();
+    mask_widget_->show(meta_widget_);
+    // Ui::TtContentDialog *dialog = new Ui::TtContentDialog(
+    //     false, Ui::TtContentDialog::LayoutSelection::TWO_OPTIONS, this);
+    // // 设置对话框样式表，确保背景是白色
+    // dialog->setStyleSheet("Ui--TtContentDialog { background-color: white;
+    // }");
+
+    // QWidget *oldParent = meta_widget_->parentWidget();
+    // dialog->setCentralWidget(meta_widget_);
+
+    // QSize dialogSize(this->width() * 0.8, this->height() * 0.6);
+    // dialog->resize(dialogSize);
+
+    // QPointer<Ui::TtContentDialog> dialogPtr(dialog);
+    // dialog->setLeftButtonText(tr("取消"));
+    // dialog->setRightButtonText(tr("保存"));
+    // bool accepted = false;
+    // connect(dialog, &Ui::TtContentDialog::leftButtonClicked, this,
+    //         [dialogPtr, &accepted] {
+    //           accepted = false;
+    //           dialogPtr->reject();
+    //           // 取消
+    //         });
+    // connect(dialog, &Ui::TtContentDialog::rightButtonClicked, this,
+    //         [dialogPtr, &accepted] {
+    //           accepted = true;
+    //           dialogPtr->accept();
+    //           // 保存
+    //         });
+
+    // connect(dialog, &QDialog::finished, [this, oldParent, &accepted]() {
+    //   if (!accepted) {
+    //   }
+    //   if (meta_widget_ && oldParent) {
+    //     meta_widget_->setParent(oldParent);
+    //     meta_widget_->hide();
+    //   }
+    // });
+
+    // dialog->setAttribute(Qt::WA_DeleteOnClose); // 自动删除
+    // dialog->exec();
+  });
+
+  connect(subscriptionBtn, &Ui::TtSvgButton::clicked, this, [this]() {
+    if (!subscripition_widget_) {
+      subscripition_widget_ = new Widget::SubscripitionWidget(this);
+      subscripition_widget_->setSizePolicy(QSizePolicy::Expanding,
+                                           QSizePolicy::Expanding);
+    }
     Ui::TtContentDialog *dialog = new Ui::TtContentDialog(
-        Ui::TtContentDialog::LayoutSelection::TWO_OPTIONS, this);
-    qDebug() << "2";
-    // 设置 meta_widget_ 出现问题, 不为空
-    // 还是调用了 delete
-    dialog->setCentralWidget(meta_widget_);
-    qDebug() << "1";
+        false, Ui::TtContentDialog::LayoutSelection::TWO_OPTIONS, this);
+
+    dialog->setStyleSheet("Ui--TtContentDialog { background-color: white; }");
+    QWidget *oldParent = subscripition_widget_->parentWidget();
+    dialog->setCentralWidget(subscripition_widget_);
+    QSize dialogSize(this->width() * 0.7, this->height() * 0.5);
+    dialog->resize(dialogSize);
+    QString originalStyleSheet = subscripition_widget_->styleSheet();
+    subscripition_widget_->setStyleSheet(originalStyleSheet);
 
     QPointer<Ui::TtContentDialog> dialogPtr(dialog);
     dialog->setLeftButtonText(tr("取消"));
     dialog->setRightButtonText(tr("保存"));
+    bool accepted = false;
     connect(dialog, &Ui::TtContentDialog::leftButtonClicked, this,
-            [this, dialogPtr] {
+            [dialogPtr, &accepted] {
+              accepted = false;
               dialogPtr->reject();
-              // 取消
             });
     connect(dialog, &Ui::TtContentDialog::rightButtonClicked, this,
-            [this, dialogPtr] {
+            [dialogPtr, &accepted] {
+              accepted = true;
               dialogPtr->accept();
-              // 保存
             });
-    // 对话框关闭时手动管理 meta_widget_ 生命周期
-    connect(dialog, &QDialog::finished, [this](int result) {
-      if (result == QDialog::Accepted) {
-        // 保存成功则保留 meta_widget_
-      } else {
-        meta_widget_->deleteLater(); // 取消操作时安全删除
-      }
-    });
 
+    connect(dialog, &QDialog::finished, [this, oldParent, &accepted]() {
+      if (!accepted) {
+      }
+      if (subscripition_widget_ && oldParent) {
+        // 确实没有调用析构函数
+        subscripition_widget_->setParent(oldParent);
+        subscripition_widget_->hide(); // 隐藏但不删除
+      }
+
+      // if (!mqtt_client_->isConnected()) {
+      //   Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""),
+      //                           tr("请先与服务器建立链接"), 1500, this);
+      // }
+      // mask_widget_->show(subscripition_widget);
+    });
     dialog->setAttribute(Qt::WA_DeleteOnClose); // 自动删除
     dialog->exec();
-    // delete dialog;
   });
-
-  // // 订阅弹出
-  // subscripition_widget = new Widget::SubscripitionWidget();
-  // connect(subscriptionBtn, &Ui::TtSvgButton::clicked, [this]() {
-  //   if (!mqtt_client_->isConnected()) {
-  //     Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""),
-  //                             tr("请先与服务器建立链接"), 1500, this);
-  //   }
-  //   // mask_widget_->show(subscripition_widget);
-  // });
-
   // connect(subscripition_widget,
   //         &Widget::SubscripitionWidget::saveConfigToManager,
   //         [this](const QByteArray &config) {

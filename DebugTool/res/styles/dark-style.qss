@@ -200,6 +200,61 @@ QSplitter::handle:pressed {
 }
 
 
+QScrollBar:vertical {
+    background: #f0f0f0;
+    width: 8px;
+    margin: 0px;
+    border-radius: 4px;
+}
+
+QScrollBar::handle:vertical {
+    background: #ccc;
+    min-height: 20px;
+    border-radius: 4px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background: #404142;
+}
+
+QScrollBar::handle:vertical:pressed {
+    background: #3C3C3C;
+}
+
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical {
+    height: 0px;
+    subcontrol-origin: margin;
+}
+
+QScrollBar:horizontal {
+    background: #f0f0f0;
+    height: 8px;
+    margin: 0px;
+    border-radius: 4px;
+}
+
+QScrollBar::handle:horizontal {
+    background: #ccc;
+    min-width: 20px;
+    border-radius: 4px;
+}
+
+QScrollBar::handle:horizontal:hover {
+    background: #404142;
+}
+
+QScrollBar::handle:horizontal:pressed {
+    background: #3C3C3C;
+}
+
+QScrollBar::add-line:horizontal,
+QScrollBar::sub-line:horizontal {
+    width: 0px;
+    subcontrol-origin: margin;
+}
+
+
 /* 普通未选中的标签样式 */
 /*
 QTabBar::tab {

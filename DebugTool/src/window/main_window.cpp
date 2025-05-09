@@ -363,6 +363,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
       QObject::connect(
           simulate, &SimulateFunctionSelectionWindow::switchRequested,
           [this](TtProtocolRole::Role role) {
+            // 在 tab 上切换不同的 功能 widget
             tabWidget_->sessionSwitchPage(tabWidget_->currentIndex(), role);
           });
       tabWidget_->setCurrentWidget(simulate);
@@ -962,7 +963,7 @@ void MainWindow::installWindowAgent() {
 
   connect(windowBar, &Ui::WindowBar::closeRequested, this, [this]() {
     Ui::TtContentDialog *dialog = new Ui::TtContentDialog(
-        Ui::TtContentDialog::LayoutSelection::THREE_OPTIONS, this);
+        true, Ui::TtContentDialog::LayoutSelection::THREE_OPTIONS, this);
     QPointer<Ui::TtContentDialog> dialogPtr(dialog);
     dialog->setCenterText(tr("确定要退出程序吗"));
     connect(dialog, &Ui::TtContentDialog::leftButtonClicked, this,
@@ -1175,21 +1176,46 @@ void MainWindow::registerTabWidget() {
         // qDebug() << "Create SerialWindow: " << runtime.elapseMilliseconds();
         connect(serial, &Window::SerialWindow::requestSaveConfig,
                 [this, serial]() {
-                  // 多次响应, 会出现问题
-                  //  有思索
+                  qDebug() << "request save";
+                  // 能够找到 widget, 本窗口
+                  // tabWidget_.find
+
+                  // 所有的 uuid 保存在
+                  // 当前 tabWidget_ 不是所处的 tabWindow
+                  // 获取当前所在 tabWindow
+                  // 这样才能获取正确的 uuid
+
+                  // 有成功保存到 leftbar 中, 但是 uuid 获取失败
                   // 获取当前窗口的独特值(uuid), 是否已经保存到 listwidget,
-                  addDifferentConfiguration(TtFunctionalCategory::Communication,
-                                            TtProtocolRole::Serial,
-                                            serial->getTitle(),
-                                            tabWidget_->getCurrentWidgetUUid());
-                  tabWidget_->setTabTitle(serial->getTitle());
+
+                  // 获取的 uuid 全部有问题
+                  // 应该使用实例获取
+
+                  // 有 widget, 寻找 uuid
+
+                  const auto &uuid = tabWidget_->getCurrentWidgetUUid(serial);
+
+                  addDifferentConfiguration(
+                      TtFunctionalCategory::Communication,
+                      TtProtocolRole::Serial, serial->getTitle(),
+                      // tabWidget_->getCurrentWidgetUUid());
+                      // tabWidget_->getCurrentWidgetUUid(serial));
+                      uuid);
+                  // 设置对应的 tabTitle
+                  // 设置的也有问题
+
+                  // 有 uuid
+
+                  // tabWidget_->setTabTitle(serial->getTitle());
+                  tabWidget_->setTabTitle(uuid, serial->getTitle());
+
                   // 直接保存到本地
                   // 从磁盘读取，又从磁盘写入, 怎么区分 ?
                   // 重新开启应用时, 从磁盘读取内容, 有 uuid, 则不需要创建
                   // 直接保存到磁盘
                   Storage::SettingsManager::instance().setSetting(
-                      "Serial+" + tabWidget_->getCurrentWidgetUUid(),
-                      serial->getConfiguration());
+                      // "Serial+" + tabWidget_->getCurrentWidgetUUid(),
+                      "Serial+" + uuid, serial->getConfiguration());
 
                   Ui::TtMessageBar::success(TtMessageBarType::Top, "",
                                             tr("保存成功"), 1000, this);
@@ -1205,14 +1231,19 @@ void MainWindow::registerTabWidget() {
             new Window::TcpWindow(TtProtocolType::Client);
         connect(tcpClient, &Window::TcpWindow::requestSaveConfig,
                 [this, tcpClient]() {
-                  addDifferentConfiguration(TtFunctionalCategory::Communication,
-                                            TtProtocolRole::TcpClient,
-                                            tcpClient->getTitle(),
-                                            tabWidget_->getCurrentWidgetUUid());
-                  tabWidget_->setTabTitle(tcpClient->getTitle());
+                  const auto &uuid =
+                      tabWidget_->getCurrentWidgetUUid(tcpClient);
+
+                  addDifferentConfiguration(
+                      TtFunctionalCategory::Communication,
+                      TtProtocolRole::TcpClient, tcpClient->getTitle(),
+                      // tabWidget_->getCurrentWidgetUUid());
+                      uuid);
+                  // tabWidget_->setTabTitle(tcpClient->getTitle());
+                  tabWidget_->setTabTitle(uuid, tcpClient->getTitle());
                   Storage::SettingsManager::instance().setSetting(
-                      "TcpClient+" + tabWidget_->getCurrentWidgetUUid(),
-                      tcpClient->getConfiguration());
+                      // "TcpClient+" + tabWidget_->getCurrentWidgetUUid(),
+                      "TcpClient+" + uuid, tcpClient->getConfiguration());
                   Ui::TtMessageBar::success(TtMessageBarType::Top, "",
                                             tr("保存成功"), 1000);
                 });
@@ -1248,14 +1279,17 @@ void MainWindow::registerTabWidget() {
             new Window::MqttWindow(TtProtocolType::Client);
         connect(mqttClient, &Window::MqttWindow::requestSaveConfig,
                 [this, mqttClient]() {
-                  addDifferentConfiguration(TtFunctionalCategory::Communication,
-                                            TtProtocolRole::MqttClient,
-                                            mqttClient->getTitle(),
-                                            tabWidget_->getCurrentWidgetUUid());
+                  const auto &uuid =
+                      tabWidget_->getCurrentWidgetUUid(mqttClient);
+                  addDifferentConfiguration(
+                      TtFunctionalCategory::Communication,
+                      TtProtocolRole::MqttClient, mqttClient->getTitle(),
+                      // tabWidget_->getCurrentWidgetUUid());
+                      uuid);
                   tabWidget_->setTabTitle(mqttClient->getTitle());
                   Storage::SettingsManager::instance().setSetting(
-                      "MqttClient+" + tabWidget_->getCurrentWidgetUUid(),
-                      mqttClient->getConfiguration());
+                      // "MqttClient+" + tabWidget_->getCurrentWidgetUUid(),
+                      "MqttClient+" + uuid, mqttClient->getConfiguration());
 
                   Ui::TtMessageBar::success(TtMessageBarType::Top, "",
                                             tr("保存成功"), 1000, this);
@@ -1272,14 +1306,17 @@ void MainWindow::registerTabWidget() {
             new Window::ModbusWindow(TtProtocolType::Client);
         connect(modbusClient, &Window::ModbusWindow::requestSaveConfig,
                 [this, modbusClient]() {
-                  addDifferentConfiguration(TtFunctionalCategory::Communication,
-                                            TtProtocolRole::ModbusClient,
-                                            modbusClient->getTitle(),
-                                            tabWidget_->getCurrentWidgetUUid());
+                  const auto &uuid =
+                      tabWidget_->getCurrentWidgetUUid(modbusClient);
+                  addDifferentConfiguration(
+                      TtFunctionalCategory::Communication,
+                      TtProtocolRole::ModbusClient, modbusClient->getTitle(),
+                      // tabWidget_->getCurrentWidgetUUid());
+                      uuid);
                   tabWidget_->setTabTitle(modbusClient->getTitle());
                   Storage::SettingsManager::instance().setSetting(
-                      "ModbusClient+" + tabWidget_->getCurrentWidgetUUid(),
-                      modbusClient->getConfiguration());
+                      // "ModbusClient+" + tabWidget_->getCurrentWidgetUUid(),
+                      "ModbusClient+" + uuid, modbusClient->getConfiguration());
                   Ui::TtMessageBar::success(TtMessageBarType::Top, "",
                                             tr("保存成功"), 1000);
                 });
@@ -1365,7 +1402,8 @@ void MainWindow::addDifferentConfiguration(TtFunctionalCategory::Category type,
   // 但是标签页的 icon 与 leftbar 的 icon 配置
   Ui::TtSpecialDeleteButton *button = new Ui::TtSpecialDeleteButton(
       title, ":/sys/displayport.svg", ":/sys/delete.svg", this);
-  qDebug() << button->parent();
+  // 但是这里 uuid 为空 查找不到 uuid
+  qDebug() << "uuid: " << uuid;
 
   switch (type) {
   case TtFunctionalCategory::Communication: {
@@ -1422,6 +1460,7 @@ void MainWindow::changeLanguage(const QString &qmFile) {
   Ui::TtContentDialog *dialog = new Ui::TtContentDialog(this);
   dialog->setLeftButtonText(tr("立马重启"));
   dialog->setRightButtonText(tr("稍后重启"));
+  dialog->setCenterText(tr("已经切换语言, 是否立马重启"));
 
   QPointer<Ui::TtContentDialog> dialogPtr(dialog);
 

@@ -47,7 +47,9 @@ TtLineEdit::TtLineEdit(const QString& text, QWidget* parent)
   setText(text);
 }
 
-TtLineEdit::~TtLineEdit() {}
+TtLineEdit::~TtLineEdit() {
+  qDebug() << "delete line edit";
+}
 
 void TtLineEdit::setReadOnlyNoClearButton(bool enable) {
   Q_D(TtLineEdit);

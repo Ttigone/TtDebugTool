@@ -33,6 +33,9 @@ windows 11, Qt 6.4.3 / Qt 6.6.3
 
 ## TODO
 
-1. TtComboBox 有内存泄漏
-2. Drawer 也有内存泄漏
-3. 删除对应通道时, 首先确定是否要保存数据, 然后 delete 掉对应的内存
+
+## BUG
+
+1. 语言翻译文件路径
+2. 移动出 tabWindow 后, 选择功能出现问题
+3. 

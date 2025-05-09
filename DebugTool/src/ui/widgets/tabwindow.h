@@ -140,12 +140,14 @@ public:
       TtProtocolRole::Role role); // 存有 uuid 的历史窗口
 
   QString getCurrentWidgetUUid();
+  QString getCurrentWidgetUUid(QWidget *widget);
 
   void setTabIcon(int index, const QString &iconPath);
   void setTabIcon(int index, const QIcon &icon);
 
   // 点击了 save 才保存
   void setTabTitle(const QString &title);
+  void setTabTitle(const QString &index, const QString &title);
 
   bool isStoredInMem(const QString &index);
   bool isCurrentDisplayedPage(const QString &index);
@@ -207,7 +209,12 @@ private:
       widgetFactories; // Widget 工厂函数映射 一个类共享
 
   QHash<TtProtocolRole::Role, QString> widgetTitles; // Widget 标题映射
-  QMap<QString, QWidget *> widgetInstances;          // Widget 实例
+  // 不是共享的
+  // 每个 tabWidget 都保存单独的实例, 主函数使用 tabWidget_ 去获取,
+  // 明显是有问题的, 必须获取当前的 tabWindow, 在去 currentWidget
+  // 但是我有当前的 widget, 需要获取 uuid
+  // 静态变量
+  static QMap<QString, QWidget *> widgetInstances; // Widget 实例
 
   static QMap<TtProtocolRole::Role, QString> type_icon_map_;
 

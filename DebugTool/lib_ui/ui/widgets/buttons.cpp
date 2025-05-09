@@ -11,35 +11,35 @@
 #include <QPropertyAnimation>
 
 namespace Ui {
-CommonButton::CommonButton(QWidget* parent) : AbstractButton(parent) {}
+CommonButton::CommonButton(QWidget *parent) : AbstractButton(parent) {}
 
-CommonButton::CommonButton(const QImage& image, QWidget* parent)
+CommonButton::CommonButton(const QImage &image, QWidget *parent)
     : AbstractButton(image, parent) {}
 
-CommonButton::CommonButton(const QString& image_path, QWidget* parent)
+CommonButton::CommonButton(const QString &image_path, QWidget *parent)
     : AbstractButton(image_path, parent) {}
 
-CommonButton::CommonButton(const QImage& normal_image,
-                           const QImage& entry_image, QWidget* parent)
+CommonButton::CommonButton(const QImage &normal_image,
+                           const QImage &entry_image, QWidget *parent)
     : AbstractButton(normal_image, entry_image, parent) {}
 
-CommonButton::CommonButton(const int& w, const int& h,
-                           const QImage& normal_image,
-                           const QImage& entry_image, QWidget* parent)
+CommonButton::CommonButton(const int &w, const int &h,
+                           const QImage &normal_image,
+                           const QImage &entry_image, QWidget *parent)
     : AbstractButton(w, h, normal_image, entry_image, parent) {}
 
-CommonButton::CommonButton(const QString& normal_image_path,
-                           const QString& entry_image_path, QWidget* parent)
+CommonButton::CommonButton(const QString &normal_image_path,
+                           const QString &entry_image_path, QWidget *parent)
     : AbstractButton(normal_image_path, entry_image_path, parent) {}
 
-CommonButton::CommonButton(const int& w, const int& h,
-                           const QString& normal_image_path,
-                           const QString& entry_image_path, QWidget* parent)
+CommonButton::CommonButton(const int &w, const int &h,
+                           const QString &normal_image_path,
+                           const QString &entry_image_path, QWidget *parent)
     : AbstractButton(w, h, normal_image_path, entry_image_path, parent) {}
 
 CommonButton::~CommonButton() {}
 
-void CommonButton::paintEvent(QPaintEvent* event) {
+void CommonButton::paintEvent(QPaintEvent *event) {
   QRectF rect(0, 0, this->width(), this->height());
   QPainter painter(this);
 
@@ -47,7 +47,7 @@ void CommonButton::paintEvent(QPaintEvent* event) {
   painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
 
   const auto img = isHover() ? getImage().at(1) : getImage().at(0);
-  const auto& test_ = QPixmap::fromImage(img);
+  const auto &test_ = QPixmap::fromImage(img);
   painter.drawPixmap(rect.toRect(),
                      test_.scaled(rect.size().toSize(), Qt::KeepAspectRatio,
                                   Qt::SmoothTransformation));
@@ -55,10 +55,10 @@ void CommonButton::paintEvent(QPaintEvent* event) {
   AbstractButton::paintEvent(event);
 }
 
-ConnerButton::ConnerButton(QWidget* parent) : AbstractButton(parent) {
+ConnerButton::ConnerButton(QWidget *parent) : AbstractButton(parent) {
   setFixedSize(40, 40);
   conner_rect_ = QRectF(this->width() - icon_rect_.x() - 22, icon_rect_.y(), 18,
-                        12);  // 留出一点边距，防止图像紧贴边缘
+                        12); // 留出一点边距，防止图像紧贴边缘
   conner_rect_w = 18, conner_rect_h = 12;
 
   conner_font_.setFamily("Arial");
@@ -76,48 +76,42 @@ ConnerButton::ConnerButton(QWidget* parent) : AbstractButton(parent) {
   // animation_group_->addAnimation(font_animation_);
 }
 
-ConnerButton::ConnerButton(const QString& normal_image_path,
-                           const QString& entry_image_path, QWidget* parent)
+ConnerButton::ConnerButton(const QString &normal_image_path,
+                           const QString &entry_image_path, QWidget *parent)
     : ConnerButton(parent) {
   setImage(normal_image_path, entry_image_path);
 }
 
-ConnerButton::ConnerButton(const QImage& normal_image,
-                           const QImage& entry_image, QWidget* parent)
+ConnerButton::ConnerButton(const QImage &normal_image,
+                           const QImage &entry_image, QWidget *parent)
     : ConnerButton(parent) {
   setImage(normal_image, entry_image);
 }
 
-QString ConnerButton::connerText() const {
-  return text_;
-}
+QString ConnerButton::connerText() const { return text_; }
 
-void ConnerButton::setConnerText(const QString& new_text) {
+void ConnerButton::setConnerText(const QString &new_text) {
   if (text_ != new_text) {
     text_ = new_text;
     update();
   }
 }
 
-QRectF ConnerButton::rect() const {
-  return conner_rect_;
-}
+QRectF ConnerButton::rect() const { return conner_rect_; }
 
-void ConnerButton::setRect(const QRectF& rect) {
+void ConnerButton::setRect(const QRectF &rect) {
   conner_rect_ = rect;
   update();
 }
 
-qint16 ConnerButton::fontSize() const {
-  return font_size_;
-}
+qint16 ConnerButton::fontSize() const { return font_size_; }
 
-void ConnerButton::setFontSize(const qint16& font_size) {
+void ConnerButton::setFontSize(const qint16 &font_size) {
   font_size_ = font_size;
   update();
 }
 
-void ConnerButton::paintEvent(QPaintEvent* event) {
+void ConnerButton::paintEvent(QPaintEvent *event) {
   Q_UNUSED(event);
   QPainter painter(this);
 
@@ -131,20 +125,20 @@ void ConnerButton::paintEvent(QPaintEvent* event) {
 
   const auto img = is_hovering_ ? getImage().at(1) : getImage().at(0);
   const auto test_ = QPixmap::fromImage(img);
-  painter.drawPixmap(
-      icon_rect_.toRect(),
-      test_.scaled(icon_rect_.size().toSize(), Qt::KeepAspectRatio,
-                   Qt::SmoothTransformation));
+  painter.drawPixmap(icon_rect_.toRect(),
+                     test_.scaled(icon_rect_.size().toSize(),
+                                  Qt::KeepAspectRatio,
+                                  Qt::SmoothTransformation));
 
   // conner_rect_ = QRectF(rect.width() - icon_Rect_.x() - 18, icon_Rect_.y(),
   // 18, 14); // 留出一点边距，防止图像紧贴边缘
   const qreal radius =
-      (conner_rect_.width() > this->width() / 2) ? 8 : 6;  // 圆角半径
+      (conner_rect_.width() > this->width() / 2) ? 8 : 6; // 圆角半径
 
   // 底色
   QBrush brush(QColor("#6f6f6f"));
   painter.setBrush(brush);
-  painter.setPen(Qt::NoPen);  // 无边框
+  painter.setPen(Qt::NoPen); // 无边框
 
   // 绘制矩形
   // qDebug() << conner_rect_;
@@ -168,20 +162,20 @@ void ConnerButton::paintEvent(QPaintEvent* event) {
   AbstractButton::paintEvent(event);
 }
 
-void ConnerButton::enterEvent(QEnterEvent* event) {
+void ConnerButton::enterEvent(QEnterEvent *event) {
   Q_UNUSED(event);
   is_hovering_ = true;
   // qDebug() << "e";
   update();
 }
 
-void ConnerButton::leaveEvent(QEvent* event) {
+void ConnerButton::leaveEvent(QEvent *event) {
   is_hovering_ = false;
   is_hovering_image_ = false;
   update();
 }
 
-void ConnerButton::mouseMoveEvent(QMouseEvent* event) {
+void ConnerButton::mouseMoveEvent(QMouseEvent *event) {
   // qDebug() << this->width();
   // QRectF iconRect(2, 6, 30, 30); // 图像区域
   // 处于图像区域
@@ -213,15 +207,15 @@ void ConnerButton::mouseMoveEvent(QMouseEvent* event) {
   QWidget::mouseMoveEvent(event);
 }
 
-TtWordsButton::TtWordsButton(const QString& text, QWidget* parent)
+TtWordsButton::TtWordsButton(const QString &text, QWidget *parent)
     : AbstractButton(parent), bottom_words_(text) {
   setFixedSize(40, 50);
   setImageSize(30, 30);
   words_size_ = QSize(40, 10);
 }
 
-TtWordsButton::TtWordsButton(const QImage& image, const QString& text,
-                             QWidget* parent)
+TtWordsButton::TtWordsButton(const QImage &image, const QString &text,
+                             QWidget *parent)
     : TtWordsButton(text, parent) {
   setImage(image);
   if (!is_conner_enable_ && !getImage().empty()) {
@@ -229,9 +223,9 @@ TtWordsButton::TtWordsButton(const QImage& image, const QString& text,
   }
 }
 
-TtWordsButton::TtWordsButton(const QString& normal_image_path,
-                             const QString& entry_image_path,
-                             const QString& text, QWidget* parent)
+TtWordsButton::TtWordsButton(const QString &normal_image_path,
+                             const QString &entry_image_path,
+                             const QString &text, QWidget *parent)
     : TtWordsButton(text, parent) {
   setImage(normal_image_path, entry_image_path);
   if (!is_conner_enable_ && !getImage().empty()) {
@@ -241,37 +235,29 @@ TtWordsButton::TtWordsButton(const QString& normal_image_path,
 
 TtWordsButton::~TtWordsButton() {}
 
-QString TtWordsButton::bottomText() const {
-  return bottom_words_;
-}
+QString TtWordsButton::bottomText() const { return bottom_words_; }
 
-void TtWordsButton::setBottomText(const QString& text) {
-  bottom_words_ = text;
-}
+void TtWordsButton::setBottomText(const QString &text) { bottom_words_ = text; }
 
-QSize TtWordsButton::imageSize() const {
-  return image_size_;
-}
+QSize TtWordsButton::imageSize() const { return image_size_; }
 
 void TtWordsButton::setImageSize(qreal w, qreal h) {
   image_size_ = QSize(w, h);
 }
 
-bool TtWordsButton::isConnerEnable() const {
-  return is_conner_enable_;
-}
+bool TtWordsButton::isConnerEnable() const { return is_conner_enable_; }
 
 void TtWordsButton::setConnerEnable(bool enable) {
   is_conner_enable_ = enable;
   // 启用角标
   cooperate_btn_->deleteLater();
-  cooperate_btn_ = enable ? static_cast<AbstractButton*>(new ConnerButton(
+  cooperate_btn_ = enable ? static_cast<AbstractButton *>(new ConnerButton(
                                 getImage().at(0), getImage().at(1), this))
-                          : static_cast<AbstractButton*>(
+                          : static_cast<AbstractButton *>(
                                 new CommonButton(getImage().at(0), this));
 }
 
-void TtWordsButton::paintEvent(QPaintEvent* event) {
+void TtWordsButton::paintEvent(QPaintEvent *event) {
   QPainter painter(this);
   painter.setRenderHint(QPainter::Antialiasing, true);
   painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
@@ -287,21 +273,18 @@ void TtWordsButton::paintEvent(QPaintEvent* event) {
   AbstractButton::paintEvent(event);
 }
 
-void TtWordsButton::enterEvent(QEnterEvent* event) {
+void TtWordsButton::enterEvent(QEnterEvent *event) {
   AbstractButton::enterEvent(event);
 }
 
-void TtWordsButton::leaveEvent(QEvent* event) {
+void TtWordsButton::leaveEvent(QEvent *event) {
   AbstractButton::leaveEvent(event);
 }
 
-RichTextButton::RichTextButton(const QImage& image, const QString& title,
-                               const QString& description, QWidget* parent)
-    : QWidget(parent),
-      image_(image),
-      title_(new QLabel(title, this)),
-      description_(new TtElidedLabel(description, this)),
-      is_pressed_(false) {
+RichTextButton::RichTextButton(const QImage &image, const QString &title,
+                               const QString &description, QWidget *parent)
+    : QWidget(parent), image_(image), title_(new QLabel(title, this)),
+      description_(new TtElidedLabel(description, this)), is_pressed_(false) {
   init();
   // 启用双缓冲
   setAttribute(Qt::WA_OpaquePaintEvent);
@@ -310,7 +293,7 @@ RichTextButton::RichTextButton(const QImage& image, const QString& title,
 
 RichTextButton::~RichTextButton() {}
 
-void RichTextButton::setNormalColor(const QColor& color) {
+void RichTextButton::setNormalColor(const QColor &color) {
   if (normal_color_ != color) {
     normal_color_ = color;
     update();
@@ -318,7 +301,7 @@ void RichTextButton::setNormalColor(const QColor& color) {
   }
 }
 
-void RichTextButton::setHoverColor(const QColor& color) {
+void RichTextButton::setHoverColor(const QColor &color) {
   if (hover_color_ != color) {
     hover_color_ = color;
     update();
@@ -326,7 +309,7 @@ void RichTextButton::setHoverColor(const QColor& color) {
   }
 }
 
-void RichTextButton::setPressedColor(const QColor& color) {
+void RichTextButton::setPressedColor(const QColor &color) {
   if (pressed_color_ != color) {
     pressed_color_ = color;
     update();
@@ -334,7 +317,7 @@ void RichTextButton::setPressedColor(const QColor& color) {
   }
 }
 
-void RichTextButton::setIconSize(const QSize& size) {
+void RichTextButton::setIconSize(const QSize &size) {
   if (icon_size_ != size) {
     icon_size_ = size;
     update();
@@ -342,40 +325,40 @@ void RichTextButton::setIconSize(const QSize& size) {
   }
 }
 
-void RichTextButton::setTitle(const QString& title) {
+void RichTextButton::setTitle(const QString &title) {
   if (title_->text() != title) {
     title_->setText(title);
     emit titleChanged(title);
   }
 }
 
-void RichTextButton::setDescription(const QString& description) {
+void RichTextButton::setDescription(const QString &description) {
   if (description_->text() != description) {
     description_->setText(description);
     emit descriptionChanged(description);
   }
 }
 
-void RichTextButton::setColor(const QColor& color) {
+void RichTextButton::setColor(const QColor &color) {
   if (current_color_ != color) {
     current_color_ = color;
-    update();  // 触发重绘
+    update(); // 触发重绘
     emit colorChanged(color);
   }
 }
 
-void RichTextButton::setIcon(const QImage& image) {
+void RichTextButton::setIcon(const QImage &image) {
   image_ = image;
   if (!image_.isNull()) {
-    QLabel* imageLabel = new QLabel(this);
+    QLabel *imageLabel = new QLabel(this);
     imageLabel->setPixmap(QPixmap::fromImage(image_).scaled(
         icon_size_, Qt::KeepAspectRatio, Qt::SmoothTransformation));
     imageLabel->setStyleSheet("border: 0;");
-    qobject_cast<QGridLayout*>(layout())->addWidget(imageLabel, 0, 0, 2, 1);
+    qobject_cast<QGridLayout *>(layout())->addWidget(imageLabel, 0, 0, 2, 1);
   }
 }
 
-void RichTextButton::paintEvent(QPaintEvent* event) {
+void RichTextButton::paintEvent(QPaintEvent *event) {
   Q_UNUSED(event);
   QPainter painter(this);
   // painter.setRenderHint(QPainter::Antialiasing, true);
@@ -387,16 +370,16 @@ void RichTextButton::paintEvent(QPaintEvent* event) {
     color = hover_color_;
   }
 
-  //painter.fillRect(rect(), color);
-  // 绘制背景
+  // painter.fillRect(rect(), color);
+  //  绘制背景
   painter.setBrush(color);
   painter.setPen(Qt::NoPen);
-  painter.drawRoundedRect(rect(), 3, 3);  // 圆角矩形
+  painter.drawRoundedRect(rect(), 3, 3); // 圆角矩形
 
-  //QWidget::paintEvent(event);
+  // QWidget::paintEvent(event);
 }
 
-void RichTextButton::mouseReleaseEvent(QMouseEvent* event) {
+void RichTextButton::mouseReleaseEvent(QMouseEvent *event) {
   is_pressed_ = false;
   update();
 
@@ -406,18 +389,18 @@ void RichTextButton::mouseReleaseEvent(QMouseEvent* event) {
   QWidget::mouseReleaseEvent(event);
 }
 
-void RichTextButton::mousePressEvent(QMouseEvent* event) {
+void RichTextButton::mousePressEvent(QMouseEvent *event) {
   is_pressed_ = true;
   update();
   QWidget::mousePressEvent(event);
 }
 
-void RichTextButton::enterEvent(QEnterEvent* event) {
+void RichTextButton::enterEvent(QEnterEvent *event) {
   startHoverAnimation(normal_color_, hover_color_);
   QWidget::enterEvent(event);
 }
 
-void RichTextButton::leaveEvent(QEvent* event) {
+void RichTextButton::leaveEvent(QEvent *event) {
   is_pressed_ = false;
   startHoverAnimation(hover_color_, normal_color_);
   QWidget::leaveEvent(event);
@@ -430,14 +413,14 @@ void RichTextButton::init() {
   setMinimumSize(0, 0);
   // setMinimumSize(200, 60);
   resize(200, 60);
-  //this->setMaximumSize(360, 60);
-  // 默认颜色
-  setNormalColor(QColor(240, 240, 240));   // 浅灰色
-  setHoverColor(QColor(200, 200, 255));    // 浅蓝色
-  setPressedColor(QColor(150, 150, 255));  // 深蓝色
-  setColor(normal_color_);                 // 初始化当前颜色
+  // this->setMaximumSize(360, 60);
+  //  默认颜色
+  setNormalColor(QColor(240, 240, 240));  // 浅灰色
+  setHoverColor(QColor(200, 200, 255));   // 浅蓝色
+  setPressedColor(QColor(150, 150, 255)); // 深蓝色
+  setColor(normal_color_);                // 初始化当前颜色
 
-  QGridLayout* mainLayout = new QGridLayout(this);
+  QGridLayout *mainLayout = new QGridLayout(this);
   mainLayout->setSpacing(10);
   mainLayout->setContentsMargins(QMargins(10, 5, 10, 5));
 
@@ -447,9 +430,9 @@ void RichTextButton::init() {
       30, 30, Qt::KeepAspectRatio, Qt::SmoothTransformation));
   imageLabel->setStyleSheet("border: 0");
 
-  //title_->setMaximumHeight(30);
+  // title_->setMaximumHeight(30);
   title_->setStyleSheet("border: 0");
-  //description_->setMaximumHeight(30);
+  // description_->setMaximumHeight(30);
   description_->setStyleSheet("border: 0");
   title_->setStyleSheet("font-size: 14px; font-weight: bold; color: #333;");
   description_->setStyleSheet("font-size: 12px; color: #666;");
@@ -459,37 +442,31 @@ void RichTextButton::init() {
 
   // 初始化动画
   color_animation_ = new QPropertyAnimation(this, "color");
-  color_animation_->setDuration(220);  // 200ms 动画
+  color_animation_->setDuration(220); // 200ms 动画
 }
 
-void RichTextButton::startHoverAnimation(const QColor& startColor,
-                                         const QColor& endColor) {
+void RichTextButton::startHoverAnimation(const QColor &startColor,
+                                         const QColor &endColor) {
   color_animation_->stop();
   color_animation_->setStartValue(startColor);
   color_animation_->setEndValue(endColor);
   color_animation_->start();
 }
 
-TtSvgButton::TtSvgButton(QWidget* parent)
-    : QWidget(parent),
-      is_pressed_(false),
-      svg_renderer_(new QSvgRenderer(this)),
-      svg_size_(22, 22) {
+TtSvgButton::TtSvgButton(QWidget *parent)
+    : QWidget(parent), is_pressed_(false),
+      svg_renderer_(new QSvgRenderer(this)), svg_size_(22, 22) {
   setObjectName("TtSvgButton");
   setMinimumSize(22, 22);
   // resize(22, 22);
   // setFixedSize(22, 22);
 }
 
-TtSvgButton::TtSvgButton(const QString& svgPath, QWidget* parent)
-    : QWidget(parent),
-      svg_path_(svgPath),
+TtSvgButton::TtSvgButton(const QString &svgPath, QWidget *parent)
+    : QWidget(parent), svg_path_(svgPath),
       svg_renderer_(new QSvgRenderer(this)),
-      hover_bg_color_(QColor(200, 200, 200)),
-      svg_size_(22, 22),
-      is_pressed_(false),
-      is_hovered_(false),
-      is_checked_(false) {
+      hover_bg_color_(QColor(200, 200, 200)), svg_size_(22, 22),
+      is_pressed_(false), is_hovered_(false), is_checked_(false) {
   setMinimumSize(22, 22);
   // resize(22, 22);
   // setFixedSize(22, 22);
@@ -497,19 +474,21 @@ TtSvgButton::TtSvgButton(const QString& svgPath, QWidget* parent)
   updateSvgContent();
 }
 
-void TtSvgButton::setColors(const QColor& firstColor,
-                            const QColor& secondColor) {
+TtSvgButton::~TtSvgButton() { qDebug() << "delete TtSvgButton"; }
+
+void TtSvgButton::setColors(const QColor &firstColor,
+                            const QColor &secondColor) {
   first_color_ = firstColor;
   second_color_ = secondColor;
   updateSvgContent();
 }
 
-void TtSvgButton::setHoverBackgroundColor(const QColor& color) {
+void TtSvgButton::setHoverBackgroundColor(const QColor &color) {
   hover_bg_color_ = color;
   update();
 }
 
-void TtSvgButton::setText(const QString& text) {
+void TtSvgButton::setText(const QString &text) {
   if (text_ != text) {
     text_ = text;
     updateGeometry();
@@ -517,26 +496,22 @@ void TtSvgButton::setText(const QString& text) {
   }
 }
 
-QSize TtSvgButton::svgSize() const {
-  return svg_size_;
-}
+QSize TtSvgButton::svgSize() const { return svg_size_; }
 
-void TtSvgButton::setSvgSize(const int& w, const int& h) {
+void TtSvgButton::setSvgSize(const int &w, const int &h) {
   setSvgSize(QSize(w, h));
 }
 
-void TtSvgButton::setSvgSize(const QSize& size) {
+void TtSvgButton::setSvgSize(const QSize &size) {
   if (svg_size_ != size) {
     svg_size_ = size;
-    update();  // 触发重绘
+    update(); // 触发重绘
   }
 }
 
-QString TtSvgButton::svgPath() const {
-  return svg_path_;
-}
+QString TtSvgButton::svgPath() const { return svg_path_; }
 
-void TtSvgButton::setSvgPath(const QString& path) {
+void TtSvgButton::setSvgPath(const QString &path) {
   if (svg_path_ != path) {
     svg_path_ = path;
     // update();
@@ -544,9 +519,7 @@ void TtSvgButton::setSvgPath(const QString& path) {
   }
 }
 
-bool TtSvgButton::isChecked() const {
-  return is_checked_;
-}
+bool TtSvgButton::isChecked() const { return is_checked_; }
 
 void TtSvgButton::setChecked(bool checked) {
   if (is_checked_ != checked) {
@@ -578,7 +551,7 @@ void TtSvgButton::setEnable(bool enabled) {
   update();
 }
 
-void TtSvgButton::paintEvent(QPaintEvent* event) {
+void TtSvgButton::paintEvent(QPaintEvent *event) {
   Q_UNUSED(event);
 
   QPainter painter(this);
@@ -608,19 +581,19 @@ void TtSvgButton::paintEvent(QPaintEvent* event) {
   }
 }
 
-void TtSvgButton::enterEvent(QEnterEvent* event) {
+void TtSvgButton::enterEvent(QEnterEvent *event) {
   is_hovered_ = true;
   update();
   QWidget::enterEvent(event);
 }
 
-void TtSvgButton::leaveEvent(QEvent* event) {
+void TtSvgButton::leaveEvent(QEvent *event) {
   is_hovered_ = false;
   update();
   QWidget::leaveEvent(event);
 }
 
-void TtSvgButton::mousePressEvent(QMouseEvent* event) {
+void TtSvgButton::mousePressEvent(QMouseEvent *event) {
   if (!isEnabled()) {
     return;
   }
@@ -634,7 +607,7 @@ void TtSvgButton::mousePressEvent(QMouseEvent* event) {
   QWidget::mousePressEvent(event);
 }
 
-void TtSvgButton::mouseReleaseEvent(QMouseEvent* event) {
+void TtSvgButton::mouseReleaseEvent(QMouseEvent *event) {
   if (!isEnabled()) {
     return;
   }
@@ -683,37 +656,33 @@ void TtSvgButton::updateSvgContent() {
   update();
 }
 
-TtImageButton::TtImageButton(const QString& svgPath, QWidget* parent)
+TtImageButton::TtImageButton(const QString &svgPath, QWidget *parent)
     : QWidget(parent), svg_path_(svgPath), is_pressed_(false) {
   // setFixedSize(22, 22);  // 设置按钮初始大小
-  setMinimumSize(22, 22);  // 设置按钮初始大小
+  setMinimumSize(22, 22); // 设置按钮初始大小
 }
 
-void TtImageButton::setSvg(const QString& path) {
+void TtImageButton::setSvg(const QString &path) {
   svg_path_ = path;
-  update();  // 重新绘制按钮
+  update(); // 重新绘制按钮
 }
 
-
-TtSpecialDeleteButton::TtSpecialDeleteButton(QWidget* parent)
+TtSpecialDeleteButton::TtSpecialDeleteButton(QWidget *parent)
     : QWidget(parent) {}
 
-TtSpecialDeleteButton::TtSpecialDeleteButton(const QString& name,
-                                             const QString& icon_path,
-                                             const QString& delete_path,
-                                             QWidget* parent)
-    : QWidget(parent),
-      is_hovered_(false),
-      is_pressed_(false),
-      icon_(icon_path),
+TtSpecialDeleteButton::TtSpecialDeleteButton(const QString &name,
+                                             const QString &icon_path,
+                                             const QString &delete_path,
+                                             QWidget *parent)
+    : QWidget(parent), is_hovered_(false), is_pressed_(false), icon_(icon_path),
       old_state_(false) {
   setObjectName("TtSpecialDeleteButton");
   layout_ = new Ui::TtHorizontalLayout(this);
-  layout_->setContentsMargins(5, 5, 5, 5);  // 设置边距
+  layout_->setContentsMargins(5, 5, 5, 5); // 设置边距
   layout_->setSpacing(5);
 
   // 创建图标标签
-  QLabel* iconLabel = new QLabel(this);
+  QLabel *iconLabel = new QLabel(this);
   iconLabel->setPixmap(
       icon_.scaled(18, 18, Qt::KeepAspectRatio, Qt::SmoothTransformation));
   iconLabel->setFixedSize(QSize(20, 20));
@@ -740,15 +709,15 @@ TtSpecialDeleteButton::~TtSpecialDeleteButton() {
 
 void TtSpecialDeleteButton::setChecked(bool checked) {
   old_state_ = checked;
-  update();  // 触发重绘
+  update(); // 触发重绘
 }
 
-void TtSpecialDeleteButton::paintEvent(QPaintEvent* event) {
+void TtSpecialDeleteButton::paintEvent(QPaintEvent *event) {
   QPainter painter(this);
   QColor backgroundColor;
   // // 优先级：悬停 > 点击状态
   if (old_state_) {
-    backgroundColor = QColor(186, 231, 255);  // 点击
+    backgroundColor = QColor(186, 231, 255); // 点击
   } else {
     backgroundColor = is_hovered_ ? QColor(229, 229, 229) : Qt::white;
   }
@@ -756,30 +725,30 @@ void TtSpecialDeleteButton::paintEvent(QPaintEvent* event) {
   QWidget::paintEvent(event);
 }
 
-void TtSpecialDeleteButton::enterEvent(QEnterEvent* event) {
+void TtSpecialDeleteButton::enterEvent(QEnterEvent *event) {
   is_hovered_ = true;
   update();
   QWidget::enterEvent(event);
 }
 
-void TtSpecialDeleteButton::leaveEvent(QEvent* event) {
+void TtSpecialDeleteButton::leaveEvent(QEvent *event) {
   is_hovered_ = false;
   update();
   QWidget::leaveEvent(event);
 }
 
-void TtSpecialDeleteButton::resizeEvent(QResizeEvent* event) {
+void TtSpecialDeleteButton::resizeEvent(QResizeEvent *event) {
   QWidget::resizeEvent(event);
 }
 
-void TtSpecialDeleteButton::mousePressEvent(QMouseEvent* event) {
+void TtSpecialDeleteButton::mousePressEvent(QMouseEvent *event) {
   if (event->button() == Qt::LeftButton) {
     is_pressed_ = true;
     update();
   }
 }
 
-void TtSpecialDeleteButton::mouseReleaseEvent(QMouseEvent* event) {
+void TtSpecialDeleteButton::mouseReleaseEvent(QMouseEvent *event) {
   if (event->button() == Qt::LeftButton && is_pressed_) {
     is_pressed_ = false;
     update();
@@ -787,12 +756,12 @@ void TtSpecialDeleteButton::mouseReleaseEvent(QMouseEvent* event) {
   }
 }
 
-TtCodeButton::TtCodeButton(const QString& text, const QString& path,
-                           QWidget* parent)
+TtCodeButton::TtCodeButton(const QString &text, const QString &path,
+                           QWidget *parent)
     : QWidget(parent), icon_(path) {
   layout_ = new Ui::TtHorizontalLayout(this);
   // 创建图标标签
-  QLabel* iconLabel = new QLabel(this);
+  QLabel *iconLabel = new QLabel(this);
   iconLabel->setPixmap(
       icon_.scaled(18, 18, Qt::KeepAspectRatio, Qt::SmoothTransformation));
   iconLabel->setFixedSize(QSize(20, 20));
@@ -809,14 +778,14 @@ TtCodeButton::TtCodeButton(const QString& text, const QString& path,
 
 TtCodeButton::~TtCodeButton() {}
 
-void TtCodeButton::mousePressEvent(QMouseEvent* event) {
+void TtCodeButton::mousePressEvent(QMouseEvent *event) {
   if (event->button() == Qt::LeftButton) {
     is_pressed_ = true;
     update();
   }
 }
 
-void TtCodeButton::mouseReleaseEvent(QMouseEvent* event) {
+void TtCodeButton::mouseReleaseEvent(QMouseEvent *event) {
   if (event->button() == Qt::LeftButton && is_pressed_) {
     is_pressed_ = false;
     update();
@@ -824,12 +793,12 @@ void TtCodeButton::mouseReleaseEvent(QMouseEvent* event) {
   }
 }
 
-void TtCodeButton::paintEvent(QPaintEvent* event) {
+void TtCodeButton::paintEvent(QPaintEvent *event) {
   QPainter painter(this);
   QColor backgroundColor;
   // // 优先级：悬停 > 点击状态
   if (old_state_) {
-    backgroundColor = QColor(186, 231, 255);  // 点击
+    backgroundColor = QColor(186, 231, 255); // 点击
   } else {
     backgroundColor = is_hovered_ ? QColor(229, 229, 229) : Qt::white;
   }
@@ -837,20 +806,20 @@ void TtCodeButton::paintEvent(QPaintEvent* event) {
   QWidget::paintEvent(event);
 }
 
-void TtCodeButton::enterEvent(QEnterEvent* event) {
+void TtCodeButton::enterEvent(QEnterEvent *event) {
   is_hovered_ = true;
   update();
   QWidget::enterEvent(event);
 }
 
-void TtCodeButton::leaveEvent(QEvent* event) {
+void TtCodeButton::leaveEvent(QEvent *event) {
   is_hovered_ = false;
   update();
   QWidget::leaveEvent(event);
 }
 
-void TtCodeButton::resizeEvent(QResizeEvent* event) {
+void TtCodeButton::resizeEvent(QResizeEvent *event) {
   QWidget::resizeEvent(event);
 }
 
-}  // namespace Ui
+} // namespace Ui

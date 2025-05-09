@@ -133,7 +133,7 @@ private:
   QStandardItemModel *model;
   Ui::SubscripitionManager *subscripition_list_;
 
-  Widget::SubscripitionWidget *subscripition_widget = nullptr;
+  Widget::SubscripitionWidget *subscripition_widget_ = nullptr;
   Widget::MqttMetaSettingWidget *meta_widget_ = nullptr;
 
   Ui::TtTextButton *meta_btn_;

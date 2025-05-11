@@ -25,7 +25,11 @@
 #include "ui/widgets/window_switcher.h"
 
 class SerialPlot;
+
+QT_BEGIN_NAMESPACE
 class QSplitter;
+class QListWidget;
+QT_END_NAMESPACE
 
 namespace Ui {
 
@@ -100,8 +104,8 @@ private:
   void setSerialSetting();       // 设置通讯配置
   void saveSerialLog();          // 保存串口日志
   void refreshTerminalDisplay(); // 显示方式刷新
-  void addChannelInfo(const QString &label, const QColor &olor,
-                      const QByteArray &blob);
+  void addChannel(const QColor &olor, const QByteArray &blob,
+                  const QString &uuid = "");
   void handleDialogData(const QString &label, quint16 channel,
                         const QByteArray &blob);
   // void sendMessage(const QByteArray &data);
@@ -161,6 +165,7 @@ private:
   Ui::TtLuaInputBox *lua_code_;
 
   Ui::TtSerialPortPlot *serial_plot_;
+  QListWidget *serialDataList;
 
   struct ParserRule {
     bool enable;       // 是否使能
@@ -171,6 +176,7 @@ private:
     int len_offset;    // 从 buffer[offset] 读长度
     int tail_len;      // 帧尾长度（若无尾则 = 0）
     bool has_checksum;
+    // 怎么存储对应的回调函数内容呢 ???
     std::function<bool(const QByteArray &)> validate; // 可选：校验函数
     std::function<void(quint8, const QByteArray &, const QString &)>
         processFrame;
@@ -179,6 +185,7 @@ private:
   // 修改相关配置
   QMap<QString, ParserRule> rules_;
 
+  // 存储了 plot 按钮的配置, first 是 uuid
   // uuid 通道
   quint16 channel_nums_ = 0;
   QMap<QString, QPair<quint16, QByteArray>> channel_info_;

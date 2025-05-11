@@ -51,6 +51,8 @@ UdpWindow::UdpWindow(TtProtocolType::ProtocolRole role, QWidget *parent)
   connectSignals();
 }
 
+UdpWindow::~UdpWindow() { qDebug() << "Delete UdpWindow"; }
+
 QJsonObject UdpWindow::getConfiguration() const { return config_; }
 
 bool UdpWindow::workState() const { return opened_; }

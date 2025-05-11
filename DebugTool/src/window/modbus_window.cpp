@@ -47,7 +47,7 @@ ModbusWindow::ModbusWindow(TtProtocolType::ProtocolRole role, QWidget *parent)
   qDebug() << "TEST3";
 }
 
-ModbusWindow::~ModbusWindow() {}
+ModbusWindow::~ModbusWindow() { qDebug() << "delete ModbusWindow"; }
 
 QString ModbusWindow::getTitle() const { return title_->text(); }
 

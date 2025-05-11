@@ -474,7 +474,10 @@ TtSvgButton::TtSvgButton(const QString &svgPath, QWidget *parent)
   updateSvgContent();
 }
 
-TtSvgButton::~TtSvgButton() { qDebug() << "delete TtSvgButton"; }
+TtSvgButton::~TtSvgButton() {
+  // qDebug() << "delete TtSvgButton";
+  // qDebug() << "delte" << svgPath();
+}
 
 void TtSvgButton::setColors(const QColor &firstColor,
                             const QColor &secondColor) {
@@ -544,6 +547,7 @@ void TtSvgButton::setEnable(bool enabled) {
       svgContent.replace(QRegularExpression("fill=\"[^\"]*\""),
                          QString("fill=\"#808080\""));
       disabled_svg_content_ = svgContent.toUtf8();
+      qDebug() << disabled_svg_content_;
     } else {
       disabled_svg_content_.clear();
     }
@@ -572,11 +576,19 @@ void TtSvgButton::paintEvent(QPaintEvent *event) {
   if (isEnabled) {
     svg_renderer_->render(&painter, svgRect);
   } else {
+    // 禁用状态
     if (!disabled_svg_content_.isEmpty()) {
+      // 灰色
+      // 根本没有
+      qDebug() << "无效的 svg" << disabled_svg_content_;
       QSvgRenderer tempRenderer(disabled_svg_content_);
       if (tempRenderer.isValid()) {
         tempRenderer.render(&painter, svgRect);
       }
+    } else {
+      painter.setOpacity(0.5);
+      svg_renderer_->render(&painter, svgRect);
+      painter.setOpacity(1.0);
     }
   }
 }
@@ -704,7 +716,7 @@ TtSpecialDeleteButton::TtSpecialDeleteButton(const QString &name,
 }
 
 TtSpecialDeleteButton::~TtSpecialDeleteButton() {
-  qDebug() << "TtSpecialDeleteButton delete";
+  // qDebug() << "TtSpecialDeleteButton delete";
 }
 
 void TtSpecialDeleteButton::setChecked(bool checked) {

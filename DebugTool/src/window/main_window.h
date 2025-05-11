@@ -6,11 +6,6 @@
 #include <QMainWindow>
 #include <QObject>
 
-#include <ui/control/buttonbox/TtButtonBox.h>
-#include <ui/layout/horizontal_layout.h>
-#include <ui/layout/vertical_layout.h>
-#include <ui/widgets/tabwindow.h>
-
 #include "Def.h"
 
 namespace QWK {
@@ -27,6 +22,12 @@ class SessionManager;
 // class TabManager;
 class TabWindow;
 class SettingWidget;
+
+class TtHorizontalLayout;
+class TtVerticalLayout;
+class TabWindow;
+class WidgetGroup;
+
 } // namespace Ui
 
 namespace Core {
@@ -89,10 +90,20 @@ private:
   void restartApplication();                         // 重启应用
 
   void readingProjectConfiguration(); // 读取全部配置
-  // 根据 uuid 获取单独的 配置信息
+  ///
+  /// @brief getSpecificConfiguration
+  /// @param index
+  /// @param role
+  /// @return
+  /// 根据 index 获取单个 config
   QJsonObject getSpecificConfiguration(const QString index,
                                        TtProtocolRole::Role role);
 
+  ///
+  /// @brief processConfigsByType
+  /// @param configs
+  /// @param protocolRole
+  /// 处理不同配置类型
   void processConfigsByType(const QHash<QString, QJsonObject> &configs,
                             TtProtocolRole::Role protocolRole);
 
@@ -122,7 +133,7 @@ private:
   // tab 页面
   // Ui::TabManager *tabWidget_;
   // Ui::TabWindow *tabWidget_;
-  TabWindow *tabWidget_;
+  Ui::TabWindow *tabWidget_;
 
   Window::FunctionSelectionWindow *function_select_;
 

@@ -19,6 +19,9 @@ TtChatMessage::TtChatMessage(const QString& id, QObject* parent)
 }
 
 TtChatMessage::~TtChatMessage() {
+  qDebug() << "清理消息对象 ID:" << m_id << "内容:" << m_content.left(20)
+           << "时间:" << m_timestamp.toString();
+  // 有调用析构函数
   // 清理资源（如图片缓存等）
   // qDebug() << "clear";
 }

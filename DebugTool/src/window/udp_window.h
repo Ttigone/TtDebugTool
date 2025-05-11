@@ -44,6 +44,7 @@ class UdpWindow : public FrameWindow {
 public:
   explicit UdpWindow(TtProtocolType::ProtocolRole role,
                      QWidget *parent = nullptr);
+  ~UdpWindow();
 
   QString getTitle() const;
   QJsonObject getConfiguration() const;

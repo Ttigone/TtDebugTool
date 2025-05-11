@@ -1,17 +1,17 @@
 #include "ui/controls/TtChannelButtonEditorDialog.h"
 
-#include <ui/control/TtLineEdit.h>
-#include <ui/widgets/buttons.h>
 #include "TtChannelButton.h"
 #include "ui/controls/TtLuaInputBox.h"
+#include <ui/control/TtLineEdit.h>
+#include <ui/widgets/buttons.h>
 
-TtChannelButtonEditorDialog::TtChannelButtonEditorDialog(QWidget* parent)
+TtChannelButtonEditorDialog::TtChannelButtonEditorDialog(QWidget *parent)
     : QDialog(parent) {
   init();
 }
 
 TtChannelButtonEditorDialog::TtChannelButtonEditorDialog(
-    TtChannelButton* button, QWidget* parent)
+    TtChannelButton *button, QWidget *parent)
     : QDialog(parent), m_button(button) {
   init();
 }
@@ -20,11 +20,13 @@ TtChannelButtonEditorDialog::~TtChannelButtonEditorDialog() {
   qDebug() << "dilog delete";
 }
 
-void TtChannelButtonEditorDialog::setMetaInfo(const QByteArray& meta) {
+void TtChannelButtonEditorDialog::setMetaInfo(const QByteArray &meta) {
+  // 解析数据
   QDataStream in(meta);
   in.setVersion(QDataStream::Qt_6_4);
 
-  // QString title, header, headerLength, type, typeOffset, length, lengthOffset,
+  // QString title, header, headerLength, type, typeOffset, length,
+  // lengthOffset,
   //     tail;
   // in >> title >> header >> headerLength >> type >> typeOffset >> length >>
   //     lengthOffset >> tail;
@@ -105,7 +107,7 @@ void TtChannelButtonEditorDialog::applyChanges() {
 void TtChannelButtonEditorDialog::init() {
   this->resize(500, 320);
   setWindowTitle(tr("编辑通道属性"));
-  QVBoxLayout* mainLayout = new QVBoxLayout(this);
+  QVBoxLayout *mainLayout = new QVBoxLayout(this);
 
   title_edit_ = new Ui::TtLabelLineEdit(tr("名称"), this);
   title_edit_->setText("Untitled");
@@ -128,7 +130,7 @@ void TtChannelButtonEditorDialog::init() {
   mainLayout->addWidget(frame_length_offset_);
   mainLayout->addWidget(frame_end_);
 
-  Ui::TtFancyButton* scriptBtton =
+  Ui::TtFancyButton *scriptBtton =
       new Ui::TtFancyButton(Qt::white, tr("脚本编辑"), this);
   mainLayout->addWidget(scriptBtton);
 
@@ -173,7 +175,7 @@ void TtChannelButtonEditorDialog::init() {
   // colorLayout->addWidget(m_colorButton);
   // mainLayout->addLayout(colorLayout);
 
-  QHBoxLayout* checkBlockLayout = new QHBoxLayout;
+  QHBoxLayout *checkBlockLayout = new QHBoxLayout;
   checkBlockLayout->addWidget(new QLabel(tr("勾选块色:"), this));
 
   // m_checkBlockButton = new Ui::TtFancyButton(m_button->getCheckBlockColor(),
@@ -205,9 +207,9 @@ void TtChannelButtonEditorDialog::init() {
 
   mainLayout->addLayout(checkBlockLayout);
 
-  QHBoxLayout* buttonLayout = new QHBoxLayout;
-  QPushButton* okButton = new QPushButton(tr("确定"), this);
-  QPushButton* cancelButton = new QPushButton(tr("取消"), this);
+  QHBoxLayout *buttonLayout = new QHBoxLayout;
+  QPushButton *okButton = new QPushButton(tr("确定"), this);
+  QPushButton *cancelButton = new QPushButton(tr("取消"), this);
   buttonLayout->addWidget(okButton);
   buttonLayout->addWidget(cancelButton);
   mainLayout->addLayout(buttonLayout);

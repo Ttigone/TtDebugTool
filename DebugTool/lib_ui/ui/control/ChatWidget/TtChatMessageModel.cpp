@@ -7,58 +7,56 @@
 
 namespace Ui {
 
-TtChatMessageModel::TtChatMessageModel(QObject* parent)
+TtChatMessageModel::TtChatMessageModel(QObject *parent)
     : QAbstractListModel(parent) {
   initializeBlocks();
 }
 
-TtChatMessageModel::~TtChatMessageModel() {
-  qDeleteAll(m_messageMap);
-}
+TtChatMessageModel::~TtChatMessageModel() { qDeleteAll(m_messageMap); }
 
 // 核心模型接口
-int TtChatMessageModel::rowCount(const QModelIndex& parent) const {
+int TtChatMessageModel::rowCount(const QModelIndex &parent) const {
   return parent.isValid()
              ? 0
              : m_blocks.last().baseIndex + m_blocks.last().messages.size();
 }
 
-QVariant TtChatMessageModel::data(const QModelIndex& index, int role) const {
+QVariant TtChatMessageModel::data(const QModelIndex &index, int role) const {
   if (!index.isValid()) {
     return QVariant();
   }
 
   const int row = index.row();
-  for (const auto& block : m_blocks) {
+  for (const auto &block : m_blocks) {
     if (row >= block.baseIndex &&
         row < block.baseIndex + block.messages.size()) {
-      TtChatMessage* msg = block.messages.at(row - block.baseIndex);
+      TtChatMessage *msg = block.messages.at(row - block.baseIndex);
       switch (role) {
-        case MessageObjectRole:
-          return QVariant::fromValue(
-              qobject_cast<QObject*>(msg));  // 返回对象指针
-        case MessageIdRole:
-          return msg->messageId();
-        case ContentRole:
-          return msg->content();
-        case TimestampRole:
-          return msg->timestamp();
-        case IsOutgoingRole:
-          return msg->isOutgoing();
-        case BubbleColorRole:
-          return msg->bubbleColor();
-        case TextColorRole:
-          return msg->textColor();
-        case FontRole:
-          return msg->font();
-        case SelectionStartRole:
-          return msg->selectionStart();
-        case SelectionEndRole:
-          return msg->selectionEnd();
-        case MessageTypeRole:
-          return msg->type();
-        case MessageStatusRole:
-          return msg->status();
+      case MessageObjectRole:
+        return QVariant::fromValue(
+            qobject_cast<QObject *>(msg)); // 返回对象指针
+      case MessageIdRole:
+        return msg->messageId();
+      case ContentRole:
+        return msg->content();
+      case TimestampRole:
+        return msg->timestamp();
+      case IsOutgoingRole:
+        return msg->isOutgoing();
+      case BubbleColorRole:
+        return msg->bubbleColor();
+      case TextColorRole:
+        return msg->textColor();
+      case FontRole:
+        return msg->font();
+      case SelectionStartRole:
+        return msg->selectionStart();
+      case SelectionEndRole:
+        return msg->selectionEnd();
+      case MessageTypeRole:
+        return msg->type();
+      case MessageStatusRole:
+        return msg->status();
       }
       break;
     }
@@ -81,7 +79,8 @@ QHash<int, QByteArray> TtChatMessageModel::roleNames() const {
 }
 
 // 数据操作
-void TtChatMessageModel::appendMessages(const QList<TtChatMessage*>& messages) {
+void TtChatMessageModel::appendMessages(
+    const QList<TtChatMessage *> &messages) {
   if (messages.isEmpty())
     return;
 
@@ -99,7 +98,7 @@ void TtChatMessageModel::appendMessages(const QList<TtChatMessage*>& messages) {
 }
 
 void TtChatMessageModel::prependMessages(
-    const QList<TtChatMessage*>& messages) {
+    const QList<TtChatMessage *> &messages) {
   // if (messages.isEmpty())
   //     return;
 
@@ -114,30 +113,42 @@ void TtChatMessageModel::prependMessages(
 }
 
 void TtChatMessageModel::removeMessages(int first, int last) {
-  // 移出消息, 当前没有调用 message 的析构
-  if (first > last || first < 0 || last >= rowCount())
+  // last 有问题, 可能是 -1
+  // 从最新的消息开始删除
+  // 1. 最新的消息索引 从新的开始删除
+  // 2.
+  // 3. 超出行
+  if (last < 0 || first < 0 || first > last || last >= rowCount()) {
     return;
+  }
 
   beginRemoveRows(QModelIndex(), first, last);
   for (int i = last; i >= first; --i) {
-    QModelIndex idx = index(i);                        // 当前索引
-    QString id = data(idx, MessageIdRole).toString();  // 当前消息ID
-    TtChatMessage* msg = m_messageMap.take(id);        // 移除消息
-    m_blocks.last().messages.removeAll(msg);           // 移除消息
-    if (msg) {
-      msg->deleteLater();
+    // 后往前遍历
+    QModelIndex idx = index(i); // 当前索引
+    if (idx.isValid()) {
+      QString id = data(idx, MessageIdRole).toString(); // 当前消息ID
+      TtChatMessage *msg = m_messageMap.take(id);       // 移除消息
+      m_blocks.last().messages.removeAll(msg);          // 移除消息
+      // if (msg) {
+      //   msg->deleteLater();
+      // }
+      if (msg) {
+        delete msg;
+        msg = nullptr;
+      }
     }
   }
   endRemoveRows();
 }
 
 // 分页加载
-bool TtChatMessageModel::canFetchMore(const QModelIndex& parent) const {
+bool TtChatMessageModel::canFetchMore(const QModelIndex &parent) const {
   // return !parent.isValid() && (m_hasOlder || m_hasNewer);
   return true;
 }
 
-void TtChatMessageModel::fetchMore(const QModelIndex& parent) {
+void TtChatMessageModel::fetchMore(const QModelIndex &parent) {
   // qDebug() << "test";
   // if (parent.isValid())
   //   return;
@@ -155,13 +166,13 @@ void TtChatMessageModel::fetchMore(const QModelIndex& parent) {
   // });
 }
 
-void TtChatMessageModel::setSelection(const QModelIndex& index, int start,
+void TtChatMessageModel::setSelection(const QModelIndex &index, int start,
                                       int end) {
   if (!index.isValid())
     return;
 
-  TtChatMessage* msg = qobject_cast<TtChatMessage*>(
-      index.data(MessageObjectRole).value<QObject*>());
+  TtChatMessage *msg = qobject_cast<TtChatMessage *>(
+      index.data(MessageObjectRole).value<QObject *>());
   if (!msg)
     return;
 
@@ -178,20 +189,23 @@ void TtChatMessageModel::clearAllSelections() {
   for (auto msg : m_finalSelections) {
     QModelIndex idx = indexForMessage(msg->messageId());
     if (idx.isValid()) {
-      // 清除选择
+      // 清除选择 -1, -1
       msg->clearSelection();
-      emit dataChanged(idx, idx, {SelectionStartRole, SelectionEndRole});
+      // emit dataChanged(idx, idx, {SelectionStartRole, SelectionEndRole});
     }
   }
+  // 视图更新
+  emit dataChanged(index(0, 0), index(rowCount(), 0),
+                   {SelectionStartRole, SelectionEndRole});
 }
 
-void TtChatMessageModel::clearMessageSelection(const QModelIndex& index) {
+void TtChatMessageModel::clearMessageSelection(const QModelIndex &index) {
   if (!index.isValid()) {
     return;
   }
 
-  TtChatMessage* msg = qobject_cast<TtChatMessage*>(
-      index.data(TtChatMessageModel::MessageObjectRole).value<QObject*>());
+  TtChatMessage *msg = qobject_cast<TtChatMessage *>(
+      index.data(TtChatMessageModel::MessageObjectRole).value<QObject *>());
   if (msg) {
     msg->clearSelection();
     // 移除
@@ -229,12 +243,12 @@ void TtChatMessageModel::commitSelections() {
 // 私有方法
 void TtChatMessageModel::initializeBlocks() {
   m_blocks.clear();                                     // 清除历史消息快
-  m_blocks.append({QList<TtChatMessage*>(), 0, true});  // 当前块
-  m_blocks.append({QList<TtChatMessage*>(), 0, false});  // 历史块占位
-  m_blocks.append({QList<TtChatMessage*>(), 0, false});  // 新消息块占位
+  m_blocks.append({QList<TtChatMessage *>(), 0, true}); // 当前块
+  m_blocks.append({QList<TtChatMessage *>(), 0, false}); // 历史块占位
+  m_blocks.append({QList<TtChatMessage *>(), 0, false}); // 新消息块占位
 }
 
-QModelIndex TtChatMessageModel::indexForMessage(const QString& id) const {
+QModelIndex TtChatMessageModel::indexForMessage(const QString &id) const {
   for (int i = 0; i < rowCount(); ++i) {
     QModelIndex idx = index(i, 0);
     if (!idx.isValid()) {
@@ -257,39 +271,40 @@ void TtChatMessageModel::updateBlockIndices() {
 }
 void TtChatMessageModel::clearModelData() {
   ////clear
-  //if (m_messageMap.empty()) {
-  //  return;
-  //}
+  // if (m_messageMap.empty()) {
+  //   return;
+  // }
 
-  //beginResetModel();
+  // beginResetModel();
   ////for (auto& block : m_blocks) {
   ////  //delete block.messages.removeAll();
   ////  block.messages.removeAll();
   ////}
   ////m_blocks.clear();
   ////m_messageMap.clear();
-  //endResetModel();
+  // endResetModel();
   beginResetModel();
+  // 清楚所有消息
   clearAllSelections();
   removeMessages(0, rowCount() - 1);
   endResetModel();
-  //if (m_messageMap.empty()) {
-  //  return;
-  //}
-  //beginResetModel();  // 通知视图模型即将被重置
-  //                    //for (auto& block : m_blocks) {
-  //                    //  delete block.messages;  // 删除消息对象
+  // if (m_messageMap.empty()) {
+  //   return;
+  // }
+  // beginResetModel();  // 通知视图模型即将被重置
+  //                     //for (auto& block : m_blocks) {
+  //                     //  delete block.messages;  // 删除消息对象
   //// 删除消息对象
-  //for (auto& block : m_blocks) {
-  //  for (auto msg : block.messages) {
-  //    delete msg;
-  //  }
-  //  block.messages.clear();
-  //}
+  // for (auto& block : m_blocks) {
+  //   for (auto msg : block.messages) {
+  //     delete msg;
+  //   }
+  //   block.messages.clear();
+  // }
   ////}
-  //m_blocks.clear();      // 清空消息块
-  //m_messageMap.clear();  // 清空消息映射
-  //endResetModel();       // 通知视图模型已经被重置
+  // m_blocks.clear();      // 清空消息块
+  // m_messageMap.clear();  // 清空消息映射
+  // endResetModel();       // 通知视图模型已经被重置
 }
 
 void TtChatMessageModel::loadInitialMessages() {}
@@ -305,7 +320,7 @@ void TtChatMessageModel::trimToMaxCapacity() {
   // }
 }
 
-void TtChatMessageModel::triggerLayoutUpdate(const QModelIndex& index) {
+void TtChatMessageModel::triggerLayoutUpdate(const QModelIndex &index) {
   if (index.isValid()) {
     // emit dataChanged(index, index, {Qt::SizeHintRole});
   }
@@ -316,4 +331,4 @@ void TtChatMessageModel::triggerLayoutUpdateForAll() {
     emit dataChanged(index(0), index(rowCount() - 1), {Qt::SizeHintRole});
   }
 }
-}  // namespace Ui
+} // namespace Ui

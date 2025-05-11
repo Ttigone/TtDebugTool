@@ -4,6 +4,8 @@
 #include <QEvent>
 #include <QListWidget>
 
+#include <Def.h>
+
 namespace Ui {
 
 class SessionManager : public QListWidget {
@@ -12,7 +14,13 @@ class SessionManager : public QListWidget {
   SessionManager(QWidget* parent = nullptr);
   ~SessionManager() = default;
 
-  bool addAdaptiveWidget(const QString& title, const QString& uuid,
+  // bool addAdaptiveWidget(const QString& title, const QString& uuid,
+  //                        QWidget* widget);
+  // bool addAdaptiveWidget(const QString &title,
+  //                        std::pair<const QString &, TtProtocolRole::Role> data,
+  //                        QWidget *widget);
+  bool addAdaptiveWidget(const QString& title,
+                         std::pair<QString, TtProtocolRole::Role> data,
                          QWidget* widget);
 
  protected:
@@ -22,7 +30,8 @@ class SessionManager : public QListWidget {
   }
 
  signals:
-  void uuidsChanged(const QString& index);
+  // void uuidsChanged(const QString &index);
+  void uuidsChanged(const QString& index, TtProtocolRole::Role role);
 
  private:
   void updateItemSize(QListWidgetItem* item);

@@ -9,21 +9,20 @@ TtVerticalLayout::TtVerticalLayout() : QVBoxLayout() {
   init();
 }
 
-TtVerticalLayout::TtVerticalLayout(QWidget* widget) : QVBoxLayout(widget) {
-  init();
-  // widget->setLayout(this);
+// TtVerticalLayout::TtVerticalLayout(QWidget* widget) : QVBoxLayout(widget) {
+//   init();
+//   // widget->setLayout(this);
+// }
+
+TtVerticalLayout::TtVerticalLayout(QWidget* widget) : TtVerticalLayout() {
+  widget->setLayout(this);
 }
 
-TtVerticalLayout::~TtVerticalLayout()
-{
+TtVerticalLayout::~TtVerticalLayout() {}
 
-}
-
-void TtVerticalLayout::init()
-{
+void TtVerticalLayout::init() {
   setContentsMargins(QMargins());
   setSpacing(0);
 }
 
-
-} // namespace Ui
+}  // namespace Ui

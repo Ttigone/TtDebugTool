@@ -23,16 +23,22 @@
 #include <ui/layout/vertical_layout.h>
 
 #include <ui/control/TtContentDialog.h>
+#include <ui/control/buttonbox/TtButtonBox.h>
 #include <ui/widgets/buttons.h>
 #include <ui/widgets/customizationtabwidget.h>
 #include <ui/widgets/labels.h>
 #include <ui/widgets/message_bar.h>
+#include <ui/widgets/tabwindow.h>
 #include <ui/widgets/widget_group.h>
 #include <ui/widgets/window_switcher.h>
+
+#include <ui/layout/horizontal_layout.h>
+#include <ui/layout/vertical_layout.h>
 
 #include <ui/window/title/window_button.h>
 #include <ui/window/title/windowbar.h>
 
+#include "ui/widgets/tabwindow.h"
 #include "window/function_selection_window.h"
 #include "window/modbus_window.h"
 #include "window/mqtt_window.h"
@@ -124,14 +130,16 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
   setLeftBar();
   function_select_ = new FunctionSelectionWindow();
 
-  tabWidget_ = new TabWindow(this);
+  tabWidget_ = new Ui::TabWindow(this);
   tabWidget_->addNewTab(function_select_);
+  // addWindow 已经添加了 root
   TabWindowManager::instance()->setRootWindow(tabWidget_);
 
   // // 容纳一定了 widget, 以供外部切换, 直接存放 widget, 而非设定
   auto *leftPopUp = new Window::PopUpWindow();
 
   QSplitter *mainSplitter = new QSplitter(this);
+  mainSplitter->setContentsMargins(QMargins(0, 0, 0, 0));
   mainSplitter->addWidget(leftPopUp);
   leftPopUp->setMinimumWidth(1);
   mainSplitter->addWidget(tabWidget_);
@@ -552,34 +560,26 @@ void MainWindow::saveCsvFile() {
 }
 
 void MainWindow::switchToOtherTabPage(const QString &uuid, const int &type) {
-  // 不是根据 index 切换, 而是特定的 uuid, 如果 tabwidget 不存在 uuid,
-  qDebug() << "switch uuid" << uuid;
-  // 有可能不是当前的 tabwidget 了
   if (tabWidget_->isCurrentDisplayedPage(uuid)) {
-    // 关闭后, 处于运作的窗口, 被保存在 close 中, 那么实例中的应当移除
-    // 处于展示 ? 错误的
-    qDebug() << "display";
-    // 卡到这里进程崩溃
-    // 第一个
     tabWidget_->switchByPage(uuid);
-    qDebug() << "ok";
   } else if (tabWidget_->isStoredInMem(uuid)) {
-    // 传入 uuid
     tabWidget_->switchByReadingMem(uuid,
                                    static_cast<TtProtocolRole::Role>(type));
   } else {
+    // 从磁盘读取
+    base::DetectRunningTime test;
+    // 只有第一次运行才会慢, 包行了创建首个窗口的缓存
     tabWidget_->switchByReadingDisk(
         uuid, static_cast<TtProtocolRole::Role>(type),
         getSpecificConfiguration(uuid,
                                  static_cast<TtProtocolRole::Role>(type)));
+    qDebug() << test.elapseMilliseconds();
   }
-  qDebug() << "switch sussccess";
 }
 
 void MainWindow::addSelectToolPage() {
   FunctionSelectionWindow *selectTool = new FunctionSelectionWindow();
   tabWidget_->addNewTab(selectTool, tr("新建连接"));
-  // 这里点击 test2, 是在初始的 TabWindow 中使用对应的切换界面函数
   QObject::connect(
       selectTool, &FunctionSelectionWindow::switchRequested, selectTool,
       [this, selectTool](TtProtocolRole::Role role) {
@@ -607,11 +607,13 @@ void MainWindow::addSelectAllToolPage() {
       selectAllTool, &AllFunctionSelectionWindow::switchRequested,
       selectAllTool, [this, selectAllTool](TtProtocolRole::Role role) {
         if (selectAllTool) {
+          // 根据 父对象 获取 TabWindow
           if (selectAllTool->parentWidget()) {
             auto *parent = selectAllTool->parentWidget();
 
             while (parent) {
               if (auto *tabWindow = qobject_cast<TabWindow *>(parent)) {
+                // 在父对象中显示对应的 tabWidget
                 tabWindow->sessionSwitchPage(tabWindow->currentIndex(), role);
                 return;
               }
@@ -672,21 +674,15 @@ void MainWindow::installWindowAgent() {
   auto menuBar = [this]() {
     auto menuBar = new QMenuBar(this);
 
-    // Virtual menu
-    // auto file = new QMenu(tr("File(&F)"), menuBar);
-    // file->addAction(new QAction(tr("New"), menuBar));
-    // file->addAction(new QAction(tr("Open"), menuBar));
     auto file = new QMenu(tr("文件(&F)"), menuBar);
     file->addAction(new QAction(tr("新建"), menuBar));
     file->addAction(new QAction(tr("打开"), menuBar));
 
     file->addSeparator();
-    // auto saveToCsv = new QAction(tr("Save To CSV"), menuBar);
     auto saveToCsv = new QAction(tr("保存到 CSV"), menuBar);
     file->addAction(saveToCsv);
     connect(saveToCsv, &QAction::triggered, this, [this] { saveCsvFile(); });
 
-    // file->addAction(new QAction(tr("Save To Sqlite"), menuBar));
     file->addAction(new QAction(tr("保存到 Sqlite 数据库"), menuBar));
     file->addSeparator();
 
@@ -966,6 +962,7 @@ void MainWindow::installWindowAgent() {
         true, Ui::TtContentDialog::LayoutSelection::THREE_OPTIONS, this);
     QPointer<Ui::TtContentDialog> dialogPtr(dialog);
     dialog->setCenterText(tr("确定要退出程序吗"));
+    // 样式表有时会失效
     connect(dialog, &Ui::TtContentDialog::leftButtonClicked, this,
             [this, dialogPtr] { dialogPtr->reject(); });
     connect(dialog, &Ui::TtContentDialog::middleButtonClicked, this,
@@ -1051,9 +1048,6 @@ void MainWindow::setLeftBar() {
   setting_->setColors(Qt::black, Qt::blue);
   setting_->setEnableHoldToCheck(true);
 
-  // communication_connection_->setStyleSheet("padding: 5px 10px;");
-  // communication_instruction_->setStyleSheet("padding: 5px 10px;");
-
   left_bar_logic_->addWidget(communication_connection_);
   left_bar_logic_->addWidget(communication_instruction_);
   left_bar_logic_->addWidget(realistic_simulation_);
@@ -1078,23 +1072,25 @@ void MainWindow::connectSignals() {
   // 删除的时候, 底层也删除
   connect(history_link_list_, &Ui::SessionManager::uuidsChanged, buttonGroup,
           &Ui::WidgetGroup::updateUuid);
-  connect(history_link_list_, &Ui::SessionManager::uuidsChanged, tabWidget_,
-          // &Ui::TabWindow::removeUuidWidget);
-          &TabWindow::removeUuidWidget);
-
+  connect(history_link_list_, &Ui::SessionManager::uuidsChanged,
+          [](const QString &index, TtProtocolRole::Role role) {
+            TabWindowManager::instance()->removeUuidTabPage(index);
+            Storage::SettingsManager::instance().removeOneSetting(
+                configMappingTable[role] + index);
+          });
   connect(history_mock_list_, &Ui::SessionManager::uuidsChanged, buttonGroup,
           &Ui::WidgetGroup::updateUuid);
-  connect(history_mock_list_, &Ui::SessionManager::uuidsChanged, tabWidget_,
-          // &Ui::TabWindow::removeUuidWidget);
-          &TabWindow::removeUuidWidget);
+
+  connect(history_mock_list_, &Ui::SessionManager::uuidsChanged,
+          [](const QString &index) {
+            TabWindowManager::instance()->removeUuidTabPage(index);
+          });
 
   connect(function_select_, &FunctionSelectionWindow::switchRequested,
           [this](TtProtocolRole::Role role) {
-            // 需要程序创建 uuid
             tabWidget_->sessionSwitchPage(tabWidget_->currentIndex(), role);
           });
   connect(setting_, &Ui::TtSvgButton::clicked, this, [this]() {
-    // 点击多次, 为什么 按钮失效
     if (!setting_widget_) {
       setting_widget_ = new Ui::SettingWidget;
       setting_widget_->setObjectName(QStringLiteral("SettingWidget"));
@@ -1107,8 +1103,35 @@ void MainWindow::connectSignals() {
   connect(buttonGroup, &Ui::WidgetGroup::currentIndexChanged, this,
           &MainWindow::switchToOtherTabPage);
 
-  connect(tabWidget_, &TabWindow::requestNewTab, this,
-          &MainWindow::addSelectAllToolPage);
+  connect(TabWindowManager::instance(), &TabWindowManager::tabCreateRequested,
+          this, [this](TabWindow *sourceWindow) {
+            AllFunctionSelectionWindow *selectAllTool =
+                new AllFunctionSelectionWindow;
+            sourceWindow->addNewTab(selectAllTool, tr("新建连接"));
+            sourceWindow->setCurrentWidget(selectAllTool);
+
+            QObject::connect(
+                selectAllTool, &AllFunctionSelectionWindow::switchRequested,
+                selectAllTool, [selectAllTool](TtProtocolRole::Role role) {
+                  if (selectAllTool) {
+                    if (selectAllTool->parentWidget()) {
+                      auto *parent = selectAllTool->parentWidget();
+                      while (parent) {
+                        if (auto *tabWindow =
+                                qobject_cast<TabWindow *>(parent)) {
+                          int index = tabWindow->indexOf(selectAllTool);
+                          if (index != -1) {
+                            tabWindow->sessionSwitchPage(index, role);
+                            break;
+                          }
+                        }
+                        parent = parent->parentWidget();
+                      }
+                    }
+                  }
+                });
+          });
+
   connect(
       tabWidget_, &TabWindow::widgetDeleted, this,
       [this](QWidget *deleteWidget) {
@@ -1257,14 +1280,17 @@ void MainWindow::registerTabWidget() {
             new Window::UdpWindow(TtProtocolType::Client);
         connect(udpClient, &Window::UdpWindow::requestSaveConfig,
                 [this, udpClient]() {
-                  addDifferentConfiguration(TtFunctionalCategory::Communication,
-                                            TtProtocolRole::UdpClient,
-                                            udpClient->getTitle(),
-                                            tabWidget_->getCurrentWidgetUUid());
-                  tabWidget_->setTabTitle(udpClient->getTitle());
+                  const auto &uuid =
+                      tabWidget_->getCurrentWidgetUUid(udpClient);
+                  addDifferentConfiguration(
+                      TtFunctionalCategory::Communication,
+                      TtProtocolRole::UdpClient, udpClient->getTitle(),
+                      // tabWidget_->getCurrentWidgetUUid());
+                      uuid);
+                  tabWidget_->setTabTitle(uuid, udpClient->getTitle());
                   Storage::SettingsManager::instance().setSetting(
-                      "UdpClient+" + tabWidget_->getCurrentWidgetUUid(),
-                      udpClient->getConfiguration());
+                      // "UdpClient+" + tabWidget_->getCurrentWidgetUUid(),
+                      "UdpClient+" + uuid, udpClient->getConfiguration());
                   Ui::TtMessageBar::success(TtMessageBarType::Top, "",
                                             tr("保存成功"), 1000);
                 });
@@ -1330,14 +1356,17 @@ void MainWindow::registerTabWidget() {
             new Window::TcpWindow(TtProtocolType::Server);
         connect(tcpServer, &Window::TcpWindow::requestSaveConfig,
                 [this, tcpServer]() {
-                  addDifferentConfiguration(TtFunctionalCategory::Simulate,
-                                            TtProtocolRole::TcpServer,
-                                            tcpServer->getTitle(),
-                                            tabWidget_->getCurrentWidgetUUid());
-                  tabWidget_->setTabTitle(tcpServer->getTitle());
+                  const auto &uuid =
+                      tabWidget_->getCurrentWidgetUUid(tcpServer);
+                  addDifferentConfiguration(
+                      TtFunctionalCategory::Simulate, TtProtocolRole::TcpServer,
+                      tcpServer->getTitle(),
+                      // tabWidget_->getCurrentWidgetUUid());
+                      uuid);
+                  tabWidget_->setTabTitle(uuid, tcpServer->getTitle());
                   Storage::SettingsManager::instance().setSetting(
-                      "TcpServer+" + tabWidget_->getCurrentWidgetUUid(),
-                      tcpServer->getConfiguration());
+                      // "TcpServer+" + tabWidget_->getCurrentWidgetUUid(),
+                      "TcpServer+" + uuid, tcpServer->getConfiguration());
                   Ui::TtMessageBar::success(TtMessageBarType::Top, "",
                                             tr("保存成功"), 1000);
                 });
@@ -1353,14 +1382,17 @@ void MainWindow::registerTabWidget() {
             new Window::UdpWindow(TtProtocolType::Server);
         connect(udpServer, &Window::UdpWindow::requestSaveConfig,
                 [this, udpServer]() {
-                  addDifferentConfiguration(TtFunctionalCategory::Simulate,
-                                            TtProtocolRole::UdpServer,
-                                            udpServer->getTitle(),
-                                            tabWidget_->getCurrentWidgetUUid());
-                  tabWidget_->setTabTitle(udpServer->getTitle());
+                  const auto &uuid =
+                      tabWidget_->getCurrentWidgetUUid(udpServer);
+                  addDifferentConfiguration(
+                      TtFunctionalCategory::Simulate, TtProtocolRole::UdpServer,
+                      udpServer->getTitle(),
+                      // tabWidget_->getCurrentWidgetUUid());
+                      uuid);
+                  tabWidget_->setTabTitle(uuid, udpServer->getTitle());
                   Storage::SettingsManager::instance().setSetting(
-                      "UdpServer+" + tabWidget_->getCurrentWidgetUUid(),
-                      udpServer->getConfiguration());
+                      // "UdpServer+" + tabWidget_->getCurrentWidgetUUid(),
+                      "UdpServer+" + uuid, udpServer->getConfiguration());
 
                   Ui::TtMessageBar::success(TtMessageBarType::Top, "",
                                             tr("保存成功"), 1000, this);
@@ -1400,6 +1432,7 @@ void MainWindow::addDifferentConfiguration(TtFunctionalCategory::Category type,
   // button 是创建了
   // 每个按钮的 icon 有各自的配对
   // 但是标签页的 icon 与 leftbar 的 icon 配置
+  // 给到了 uuid 对应的 role
   Ui::TtSpecialDeleteButton *button = new Ui::TtSpecialDeleteButton(
       title, ":/sys/displayport.svg", ":/sys/delete.svg", this);
   // 但是这里 uuid 为空 查找不到 uuid
@@ -1407,14 +1440,18 @@ void MainWindow::addDifferentConfiguration(TtFunctionalCategory::Category type,
 
   switch (type) {
   case TtFunctionalCategory::Communication: {
-    history_link_list_->addAdaptiveWidget(title, uuid, button);
+    // history_link_list_->addAdaptiveWidget(title, uuid, button);
+    history_link_list_->addAdaptiveWidget(title, std::make_pair(uuid, role),
+                                          button);
     break;
   }
   case TtFunctionalCategory::Instruction: {
     break;
   }
   case TtFunctionalCategory::Simulate: {
-    history_mock_list_->addAdaptiveWidget(title, uuid, button);
+    // history_mock_list_->addAdaptiveWidget(title, uuid, button);
+    history_mock_list_->addAdaptiveWidget(title, std::make_pair(uuid, role),
+                                          button);
     break;
   }
   default:
@@ -1460,7 +1497,7 @@ void MainWindow::changeLanguage(const QString &qmFile) {
   Ui::TtContentDialog *dialog = new Ui::TtContentDialog(this);
   dialog->setLeftButtonText(tr("立马重启"));
   dialog->setRightButtonText(tr("稍后重启"));
-  dialog->setCenterText(tr("已经切换语言, 是否立马重启"));
+  dialog->setCenterText(tr("已切换语言, 是否立马重启"));
 
   QPointer<Ui::TtContentDialog> dialogPtr(dialog);
 
@@ -1597,18 +1634,13 @@ QJsonObject MainWindow::getSpecificConfiguration(const QString index,
                                                  TtProtocolRole::Role role) {
   const auto configs =
       Storage::SettingsManager::instance().getHistorySettings();
-  qDebug() << "find: index" << index;
   auto prefix = configMappingTable.value(role);
   for (const QString &key : configs.keys()) {
     if (key.startsWith(prefix)) {
-      // bug uuid 没有的查找不到
-      // 找到对应的开头, 读取 uuid
       QString uuid = key.sliced(prefix.length());
-      // qDebug() << "Found Entry - Type:" << prefix << ", UUID:" << uuid;
       if (uuid == index) {
         QJsonValue value = configs.value(key);
         if (value.isObject()) {
-          // QJsonObject obj = value.toObject();
           return value.toObject();
         }
       }
@@ -1640,6 +1672,7 @@ void MainWindow::processConfigsByType(
         category = static_cast<TtFunctionalCategory::Category>(value);
       }
     }
+    // 添加了对应的信息
     // 这里值解析了 WindowTitle 属性
     addDifferentConfiguration(category, protocolRole,
                               obj.value("WindowTitle").toString(), uuid);

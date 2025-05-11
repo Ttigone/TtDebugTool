@@ -45,28 +45,6 @@ int distance(QRect r, QPoint p) {
 }
 } // namespace
 
-QMap<TtProtocolRole::Role, QString> TabWindow::type_icon_map_ = {
-    {TtProtocolRole::Serial, ":/sys/unlink.svg"},
-    {TtProtocolRole::TcpClient, ":/sys/netport.svg"},
-    {TtProtocolRole::TcpServer, ":/sys/netport.svg"},
-    {TtProtocolRole::UdpClient, ":/sys/netport.svg"},
-    {TtProtocolRole::UdpServer, ":/sys/netport.svg"},
-    {TtProtocolRole::MqttClient, ":/sys/mqtt.svg"},
-    {TtProtocolRole::MqttBroker, ":/sys/mqtt.svg"},
-    {TtProtocolRole::ModbusClient, ":/sys/modbus-seeklogo.svg"},
-    {TtProtocolRole::ModbusServer, ":/sys/modbus-seeklogo.svg"},
-    {TtProtocolRole::BlueTeeth, ":/sys/bluetooth-contact.svg"},
-};
-
-QHash<TtProtocolRole::Role, TabWindow::WidgetFactory>
-    TabWindow::widgetFactories; // Widget 工厂函数映射
-
-QMap<QString, QWidget *> TabWindow::widgetInstances; // Widget 实例
-
-QString TabWindow::SpecialTypeIcon(TtProtocolRole::Role role) {
-  return type_icon_map_[role];
-}
-
 TabWindowManager::TabWindowManager() {
   connect(qApp, &QApplication::focusWindowChanged, this,
           &TabWindowManager::activateWindow);
@@ -98,10 +76,55 @@ void TabWindowManager::setRootWindow(TabWindow *root) {
   addWindow(root);
 }
 
+void TabWindowManager::removeUuidTabPage(const QString &index) {
+  // 存储了全部实例的 widgetInstance, 获取 widget, 遍历每一个 tabWindow 项 ?
+  qDebug() << "tabWindow get remove:" << index;
+  if (TabWindow::widgetInstances.contains(index)) {
+    auto *item = TabWindow::widgetInstances.value(index);
+    int idx = 0;
+    for (TabWindow *w : m_windows) {
+      if ((idx = w->indexOf(item)) != -1) {
+        qDebug() << "成功找到";
+        auto *widget = w->widget(idx);
+        if (widget) {
+          qDebug() << "删除标签页";
+          widget->disconnect();
+          widget->setParent(nullptr);
+          widget->deleteLater();
+        }
+        qDebug() << "remove by leftbutton: " << index;
+        TabWindow::widgetInstances.remove(index);
+        w->removeTab(idx);
+        if (w->count() == 0) {
+          qDebug() << "TabWindow is empty, removing it from manager.";
+          removeWindow(w);
+        }
+        break;
+      }
+    }
+  }
+}
+
 void TabWindowManager::addWindow(TabWindow *window) {
+  // main_widow 设置了 root, 已经添加过了
+  qDebug() << "[Manager] addWindow: " << window;
+  if (m_windows.contains(window)) {
+    return;
+  }
   m_windows.append(window);
+
+  // disconnect(window, &TabWindow::requestNewTab, this, nullptr);
+  // 删除窗口
   connect(window, &TabWindow::tabCloseRequested, this,
           &TabWindowManager::requestCloseTab);
+
+  // 新窗口是肯定链接了的
+  // 但是切换其他窗口无响应
+  connect(window, &TabWindow::requestNewTab, this, [this, window]() {
+    // 触发 2 次 ???
+    qDebug() << "test";
+    emit tabCreateRequested(window);
+  });
 }
 
 void TabWindowManager::removeWindow(TabWindow *window) {
@@ -110,7 +133,6 @@ void TabWindowManager::removeWindow(TabWindow *window) {
     m_windows.removeOne(window);
     window->deleteLater(); // 确保对象删除
   }
-  // m_windows.removeOne(window);
 }
 
 TabWindow *TabWindowManager::possibleWindow(TabWindow *src, QPoint globalPos) {
@@ -162,12 +184,39 @@ void TabWindowManager::requestCloseTab(int index) {
   emit tabCloseRequested(window->widget(index), window);
 }
 
+namespace Ui {
+
+QMap<TtProtocolRole::Role, QString> TabWindow::type_icon_map_ = {
+    {TtProtocolRole::Serial, ":/sys/unlink.svg"},
+    {TtProtocolRole::TcpClient, ":/sys/netport.svg"},
+    {TtProtocolRole::TcpServer, ":/sys/netport.svg"},
+    {TtProtocolRole::UdpClient, ":/sys/netport.svg"},
+    {TtProtocolRole::UdpServer, ":/sys/netport.svg"},
+    {TtProtocolRole::MqttClient, ":/sys/mqtt.svg"},
+    {TtProtocolRole::MqttBroker, ":/sys/mqtt.svg"},
+    {TtProtocolRole::ModbusClient, ":/sys/modbus-seeklogo.svg"},
+    {TtProtocolRole::ModbusServer, ":/sys/modbus-seeklogo.svg"},
+    {TtProtocolRole::BlueTeeth, ":/sys/bluetooth-contact.svg"},
+};
+
+QHash<TtProtocolRole::Role, TabWindow::WidgetFactory>
+    TabWindow::widgetFactories; // Widget 工厂函数映射
+
+QMap<QString, QWidget *> TabWindow::widgetInstances; // Widget 实例
+
+QHash<TtProtocolRole::Role, QString> TabWindow::widgetTitles; // Widget 标题映射
+
+QString TabWindow::SpecialTypeIcon(TtProtocolRole::Role role) {
+  return type_icon_map_[role];
+}
+
 TabWindow::TabWindow(QWidget *parent) : QTabWidget(parent) {
   setAttribute(Qt::WA_DeleteOnClose);
 
   qDebug() << "New TabWindow created:" << this;
 
-  Q_ASSERT(TabWindowManager::instance());
+  // Q_ASSERT(TabWindowManager::instance());
+  // 构造函数添加 this
   TabWindowManager::instance()->addWindow(this);
   tabBar()->installEventFilter(this);
 
@@ -204,7 +253,7 @@ TabWindow::TabWindow(QWidget *parent) : QTabWidget(parent) {
 
   // 将角落区域样式与现有样式合并
   QString currentStyle = this->styleSheet();
-  qDebug() << "currentStyle" << currentStyle;
+  // qDebug() << "currentStyle" << currentStyle;
   this->setStyleSheet(currentStyle + tabBarStyle);
 
   resize(800, 600);
@@ -291,6 +340,7 @@ bool TabWindow::eventFilter(QObject *object, QEvent *event) {
           target->insertTab(insertIdx, w, icon, txt);
           target->setCurrentIndex(insertIdx);
           target->setupCustomTabButton(insertIdx);
+          qDebug() << "TabWindow 删除";
           m_movingWindow->deleteLater();
         }
         m_movingWindow = nullptr;
@@ -442,10 +492,15 @@ void TabWindow::switchByCreateWidget(int tabIndex, TtProtocolRole::Role role) {
 
   // 创建 uuid
   widgetInstances[QUuid::createUuid().toString()] = newWidget;
-  // 能够找到对应的 uuid, 创建存在
-  qDebug() << "widget: " << newWidget << "uuid: " << findWidget(newWidget);
+  // 能够找到对应的 uuid, 创建存在 qDebug() << "widget: " << newWidget << "uuid:
+  // " << findWidget(newWidget);
 
-  setTabText(tabIndex, widgetTitles[role]);
+  // setTabText(tabIndex, widgetTitles[role]);
+  // insertTab(tabIndex, newWidget, QIcon(SpecialTypeIcon(role)),
+  //           widgetTitles[role]);
+  // 这个地方没有获取到正确的 title, 本地的却能获取到正确的
+  qDebug() << widgetTitles[role];
+  // 没有标题
   insertTab(tabIndex, newWidget, QIcon(SpecialTypeIcon(role)),
             widgetTitles[role]);
   setupCustomTabButton(tabIndex);
@@ -553,6 +608,7 @@ bool TabWindow::isCurrentDisplayedPage(const QString &index) {
 }
 
 void TabWindow::switchByPage(const QString &index) {
+  // 移动出现后, 没办法切换
   // 根据 uuid 窗口所在的 TabWindow, 切换上升或下降
   auto *findWidget = widgetInstances.value(index);
   if (!findWidget) {
@@ -634,6 +690,8 @@ void TabWindow::handleTabCloseRequested(int index) {
   qDebug() << "handle delete index: " << index;
   // 关闭按钮的 close, 要从 widgetInstance 中删除掉
   QWidget *widget = this->widget(index);
+
+  // 功能widget实例
   const QString uuid = findWidget(widget);
   if (widgetInstances.contains(uuid)) {
     widgetInstances.remove(uuid);
@@ -646,6 +704,8 @@ void TabWindow::handleTabCloseRequested(int index) {
   // widgetInstances.contains(findWidget(widget))
   // 彻底删除
   if (widget) {
+    qDebug() << "delete";
+    // 似乎没有删除 function select widget
     emit widgetDeleted(widget);
     widget->disconnect();
     widget->setParent(nullptr);
@@ -655,16 +715,29 @@ void TabWindow::handleTabCloseRequested(int index) {
 }
 
 void TabWindow::removeUuidWidget(const QString &index) {
+  // 关闭对应的标签页, bug
+  // 实例中获取对应的 id
+  qDebug() << "tabWindow get remove:" << index;
   if (widgetInstances.contains(index)) {
-    // 移除标签页
-    auto item = widgetInstances.value(index);
+    // 实例全部都有, 但不是都存储在同一个 tabWindow 中
+    // 根据 uuid 获取对应的 tabWindow
+    // findWidget();
+    // 获取 QTabWindow
+
+    auto *item = widgetInstances.value(index);
+
+    // 每一个 window 都有不同
     auto i = indexOf(item);
+
+    // 调用的是 tabWidget_ 的查找 widget, 跨窗口无用
     auto *widget = QTabWidget::widget(i);
     if (widget) {
+      qDebug() << "删除标签页";
       widget->disconnect();
       widget->setParent(nullptr);
       widget->deleteLater();
     }
+    qDebug() << "remove by leftbutton: " << index;
     widgetInstances.remove(index);
     removeTab(i);
   }
@@ -704,6 +777,9 @@ void TabWindow::setupCornerButton() {
 
   setCornerWidget(add_button_, Qt::TopRightCorner);
 
+  // 对应肯定发出了信号, 但是没有人链接
+  // 衍生的 tabWindow 没有, 信号没有给到正确的 tabWindow
+  // 如果本窗口创建, 然后移动了出去, 对应的 tabWindow 会生成新的一个
   connect(add_button_, &QPushButton::clicked, this, &TabWindow::requestNewTab);
 }
 
@@ -725,7 +801,6 @@ QWidget *TabWindow::createDefaultWidget(int tabIndex) {
 
 QString TabWindow::findWidget(QWidget *widget) {
   // 全部实例保存到 widgetInstance 中, 每个类都有一个 widgetInstaces 中
-  //
   for (auto it = widgetInstances.cbegin(); it != widgetInstances.cend(); ++it) {
     if (it.value() == widget) {
       // error
@@ -790,7 +865,8 @@ void TabWindow::handleTabClose(int index) {
       }
     }
   } else {
-    // 一般不会进入
+    // function Select Widget 是否删除
+    handleTabCloseRequested(index);
     qDebug() << "nullptr";
   }
   // }
@@ -914,3 +990,5 @@ void TabWindow::deserializeTab(const QJsonObject &obj) {
 
   addTab(page, QIcon(iconName), title);
 }
+
+} // namespace Ui

@@ -54,13 +54,12 @@ int WidgetGroup::currentIndex() const { return m_currentIndex; }
 
 void WidgetGroup::updateUuid(const QString &index) {
   qDebug() << "remove" << index;
-  // buttons_.remove(index);
   QMap<QPair<QString, int>, TtSpecialDeleteButton *>::iterator it =
       buttons_.begin();
   while (it != buttons_.end()) {
-    // 检查当前键 (QPair) 的第一个元素 (QString) 是否匹配
     if (it.key().first == index) {
       TtSpecialDeleteButton *buttonToDelete = it.value();
+      // 本地删除对应的 btn
       it = buttons_.erase(it);
 
       // // 3. 删除 TtSpecialDeleteButton 对象 (如果 QMap 拥有所有权)

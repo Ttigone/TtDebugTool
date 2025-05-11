@@ -1,28 +1,28 @@
 ﻿#include "ui/widgets/labels.h"
 
 #include <QApplication>
-#include <QGuiApplication>
 #include <QClipboard>
+#include <QGuiApplication>
 
 #include "base/invoke_queued.h"
 
 namespace Ui {
-FlatLabel::FlatLabel(QWidget* parent) {}
+FlatLabel::FlatLabel(QWidget *parent) {}
 
-FlatLabel::FlatLabel(QWidget* parent, const QString& text) {}
+FlatLabel::FlatLabel(QWidget *parent, const QString &text) {}
 
 void FlatLabel::setOpacity(float64 o) {}
 
 void FlatLabel::setTextColorOverride(std::optional<QColor> color) {}
 
-void FlatLabel::setText(const QString& text) {}
+void FlatLabel::setText(const QString &text) {}
 
 void FlatLabel::setSelectable(bool selectable) {}
 
 void FlatLabel::setDoubleClickSelectsParagraph(
     bool double_click_selects_paragraph) {}
 
-void FlatLabel::setContextCopyText(const QString& copyText) {}
+void FlatLabel::setContextCopyText(const QString &copyText) {}
 
 void FlatLabel::setBreakEverywhere(bool breakEverywhere) {}
 
@@ -37,11 +37,11 @@ int FlatLabel::naturalWidth() const { return textMaxWidth(); }
 
 QMargins FlatLabel::getMargins() const { return MbWidget::getMargins(); }
 
-void FlatLabel::setLink(uint16 index, const ClickHandlerPtr& lnk) {}
+void FlatLabel::setLink(uint16 index, const ClickHandlerPtr &lnk) {}
 
 void FlatLabel::setLinksTrusted() {}
 
-void FlatLabel::setClickHandlerFilter(ClickHandlerFilter&& filter) {}
+void FlatLabel::setClickHandlerFilter(ClickHandlerFilter &&filter) {}
 
 void FlatLabel::overrideLinkClickHandler(std::function<void()> handler) {}
 
@@ -53,7 +53,7 @@ void FlatLabel::setContextMenuHook(
 
 void FlatLabel::fillContextMenu(ContextMenuReques request) {}
 
-void FlatLabel::paintEvent(QPaintEvent* event) {
+void FlatLabel::paintEvent(QPaintEvent *event) {
   QPainter painter(this);
   painter.setOpacity(opacity_);
   // 设置笔的颜色
@@ -65,39 +65,39 @@ void FlatLabel::paintEvent(QPaintEvent* event) {
   // painter.setTe
 }
 
-void FlatLabel::mouseMoveEvent(QMouseEvent* event) {
+void FlatLabel::mouseMoveEvent(QMouseEvent *event) {
   MbWidget::mouseMoveEvent(event);
 }
 
-void FlatLabel::mousePressEvent(QMouseEvent* event) {
+void FlatLabel::mousePressEvent(QMouseEvent *event) {
   MbWidget::mousePressEvent(event);
 }
 
-void FlatLabel::mouseReleaseEvent(QMouseEvent* event) {
+void FlatLabel::mouseReleaseEvent(QMouseEvent *event) {
   MbWidget::mouseReleaseEvent(event);
 }
 
-void FlatLabel::mouseDoubleClickEvent(QMouseEvent* event) {
+void FlatLabel::mouseDoubleClickEvent(QMouseEvent *event) {
   MbWidget::mouseDoubleClickEvent(event);
 }
 
-void FlatLabel::enterEvent(QEnterEvent* event) { MbWidget::enterEvent(event); }
+void FlatLabel::enterEvent(QEnterEvent *event) { MbWidget::enterEvent(event); }
 
-void FlatLabel::leaveEvent(QEvent* event) { MbWidget::leaveEvent(event); }
+void FlatLabel::leaveEvent(QEvent *event) { MbWidget::leaveEvent(event); }
 
-void FlatLabel::focusInEvent(QFocusEvent* event) {
+void FlatLabel::focusInEvent(QFocusEvent *event) {
   MbWidget::focusInEvent(event);
 }
 
-void FlatLabel::focusOutEvent(QFocusEvent* event) {
+void FlatLabel::focusOutEvent(QFocusEvent *event) {
   MbWidget::focusOutEvent(event);
 }
 
-void FlatLabel::keyPressEvent(QKeyEvent* event) {
+void FlatLabel::keyPressEvent(QKeyEvent *event) {
   MbWidget::keyPressEvent(event);
 }
 
-void FlatLabel::contextMenuEvent(QContextMenuEvent* event) {
+void FlatLabel::contextMenuEvent(QContextMenuEvent *event) {
   MbWidget::contextMenuEvent(event);
 }
 
@@ -129,11 +129,12 @@ Text::StateResult FlatLabel::dragActionUpdate() {
   return state;
 }
 
-Text::StateResult FlatLabel::dragActionStart(const QPoint& p,
+Text::StateResult FlatLabel::dragActionStart(const QPoint &p,
                                              Qt::MouseButton button) {
   last_mouse_pos_ = p;
   auto state = dragActionUpdate();
-  if (button != Qt::LeftButton) return state;
+  if (button != Qt::LeftButton)
+    return state;
   // 按压状态
   ClickHandler::pressed();
   drag_action_ = NoDrag;
@@ -142,27 +143,26 @@ Text::StateResult FlatLabel::dragActionStart(const QPoint& p,
   return state;
 }
 
-
-Text::StateResult FlatLabel::dragActionFinish(const QPoint& p, Qt::MouseButton button)
-{
+Text::StateResult FlatLabel::dragActionFinish(const QPoint &p,
+                                              Qt::MouseButton button) {
   last_mouse_pos_ = p;
   auto state = dragActionUpdate();
 
   auto activated = ClickHandler::unPressed();
   if (drag_action_ == Dragging) {
     activated = nullptr;
-  } else if (drag_action_== PrepareDrag) {
+  } else if (drag_action_ == PrepareDrag) {
     selection_ = {0, 0};
-    saved_selection_= {0, 0};
+    saved_selection_ = {0, 0};
     update();
   }
-  drag_action_= NoDrag;
-  selection_type_= TextSelectType::Letters;
+  drag_action_ = NoDrag;
+  selection_type_ = TextSelectType::Letters;
 
   if (activated) {
     // _clickHandlerFilter may delete `this`. In that case we don't want
     // to try to show a context menu or smth like that.
-    //crl::on_main(this, [=] {
+    // crl::on_main(this, [=] {
     //  const auto guard = window();
     //  if (!_clickHandlerFilter || _clickHandlerFilter(activated, button)) {
     //    ActivateClickHandler(guard, activated, button);
@@ -178,7 +178,7 @@ Text::StateResult FlatLabel::dragActionFinish(const QPoint& p, Qt::MouseButton b
   return state;
 }
 
-void FlatLabel::updateHover(const Text::StateResult& state) {
+void FlatLabel::updateHover(const Text::StateResult &state) {
   bool lnkChanged = ClickHandler::setActive(state.link, this);
   if (!select_able_) {
     refreshCursor(state.uponSymbol);
@@ -223,7 +223,7 @@ void FlatLabel::updateHover(const Text::StateResult& state) {
   }
 }
 
-Text::StateResult FlatLabel::getTextState(const QPoint& p) const {
+Text::StateResult FlatLabel::getTextState(const QPoint &p) const {
   Text::StateRequestElided request;
   request.align = style::al_left;
   if (select_able_) {
@@ -238,7 +238,7 @@ void FlatLabel::refreshCursor(bool uponSumbol) {
   if (drag_action_ != NoDrag) {
     return;
   }
-	bool needTextCursor = select_able_ && uponSumbol;
+  bool needTextCursor = select_able_ && uponSumbol;
   style::cursor newCursor =
       needTextCursor ? style::cur_text : style::cur_default;
   if (ClickHandler::getActive()) {
@@ -250,50 +250,43 @@ void FlatLabel::refreshCursor(bool uponSumbol) {
   }
 }
 
-int FlatLabel::countTextWidth() const
-{
-  //const auto available = _allowedWidth
-  //                           ? _allowedWidth
-  //                           : (_st.minWidth ? _st.minWidth : _text.maxWidth());
-  //if (_allowedWidth > 0 && _allowedWidth < _text.maxWidth() &&
-  //    _tryMakeSimilarLines) {
-  //  auto large = _allowedWidth;
-  //  auto small = _allowedWidth / 2;
-  //  const auto largeHeight = _text.countHeight(large, _breakEverywhere);
-  //  while (large - small > 1) {
-  //    const auto middle = (large + small) / 2;
-  //    if (largeHeight == _text.countHeight(middle, _breakEverywhere)) {
-  //      large = middle;
-  //    } else {
-  //      small = middle;
-  //    }
-  //  }
-  //  return large;
-  //}
-  //return available;
+int FlatLabel::countTextWidth() const {
+  // const auto available = _allowedWidth
+  //                            ? _allowedWidth
+  //                            : (_st.minWidth ? _st.minWidth :
+  //                            _text.maxWidth());
+  // if (_allowedWidth > 0 && _allowedWidth < _text.maxWidth() &&
+  //     _tryMakeSimilarLines) {
+  //   auto large = _allowedWidth;
+  //   auto small = _allowedWidth / 2;
+  //   const auto largeHeight = _text.countHeight(large, _breakEverywhere);
+  //   while (large - small > 1) {
+  //     const auto middle = (large + small) / 2;
+  //     if (largeHeight == _text.countHeight(middle, _breakEverywhere)) {
+  //       large = middle;
+  //     } else {
+  //       small = middle;
+  //     }
+  //   }
+  //   return large;
+  // }
+  // return available;
   return 0;
 }
 
-int FlatLabel::countTextHeight(int textWidth)
-{ return 0; }
+int FlatLabel::countTextHeight(int textWidth) { return 0; }
 
-void FlatLabel::refreshSize()
-{
-}
+void FlatLabel::refreshSize() {}
 
-TtNormalLabel::TtNormalLabel(QWidget* parent) : QLabel(parent) {
-  init();
-}
+TtNormalLabel::TtNormalLabel(QWidget *parent) : QLabel(parent) { init(); }
 
-TtNormalLabel::TtNormalLabel(const QString& text, QWidget* parent)
+TtNormalLabel::TtNormalLabel(const QString &text, QWidget *parent)
     : QLabel(text, parent) {
   init();
 }
 
-TtNormalLabel::~TtNormalLabel() {}
+TtNormalLabel::~TtNormalLabel() { qDebug() << "delete" << __FUNCTION__; }
 
-void TtNormalLabel::init() {
-  this->setStyleSheet("border: 0px");
-}
+void TtNormalLabel::init() { this->setStyleSheet("border: 0px"); }
 
-}  // namespace Ui
+} // namespace Ui

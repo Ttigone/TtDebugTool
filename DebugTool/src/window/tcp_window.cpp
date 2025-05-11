@@ -64,6 +64,8 @@ TcpWindow::TcpWindow(TtProtocolType::ProtocolRole role, QWidget *parent)
   connectSignals();
 }
 
+TcpWindow::~TcpWindow() { qDebug() << "Delete TCPWindow"; }
+
 QJsonObject TcpWindow::getConfiguration() const { return config_; }
 
 bool TcpWindow::workState() const { return tcp_opened_; }

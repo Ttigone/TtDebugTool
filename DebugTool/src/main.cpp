@@ -79,6 +79,7 @@ int main(int argc, char *argv[]) {
   bool suss = false;
   // qDebug() << curLang;
 
+  // 这个有 bug
   QString fr = QApplication::applicationDirPath() + "/translations/";
   if (curLang == "TtDebugTool_zh.qm") {
     qDebug() << "zh";

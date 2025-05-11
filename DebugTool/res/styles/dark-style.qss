@@ -202,7 +202,7 @@ QSplitter::handle:pressed {
 
 QScrollBar:vertical {
     background: #f0f0f0;
-    width: 8px;
+    width: 4px;
     margin: 0px;
     border-radius: 4px;
 }
@@ -229,7 +229,7 @@ QScrollBar::sub-line:vertical {
 
 QScrollBar:horizontal {
     background: #f0f0f0;
-    height: 8px;
+    height: 4px;
     margin: 0px;
     border-radius: 4px;
 }

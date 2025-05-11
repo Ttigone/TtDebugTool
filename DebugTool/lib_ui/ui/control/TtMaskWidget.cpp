@@ -1,5 +1,6 @@
 ﻿#include "ui/control/TtMaskWidget.h"
 #include <qcoreevent.h>
+#include <qnamespace.h>
 #include <qpropertyanimation.h>
 #include "ui/control/TtMaskWidget_p.h"
 
@@ -44,13 +45,18 @@ TtMaskWidget::~TtMaskWidget() {
 }
 
 void TtMaskWidget::initMaskWidget() {
+  // 也是在父对象之上
   mask_widget_ = new QWidget(parent_widget_);
   mask_widget_->setAttribute(Qt::WA_TransparentForMouseEvents, false);
+  // 干扰背景色绘制
+  // mask_widget_->setAttribute(Qt::WA_TranslucentBackground, true);
   mask_widget_->hide();
 
+  // mask_widget_ 设置为阴影界面
   // 设置背景色
   QPalette palette = mask_widget_->palette();
-  palette.setColor(QPalette::Window, Qt::black);
+  // palette.setColor(QPalette::Window, Qt::black);
+  palette.setColor(QPalette::Window, QColor(0, 0, 0, 128));
   mask_widget_->setAutoFillBackground(true);
   mask_widget_->setPalette(palette);
 
@@ -80,13 +86,16 @@ void TtMaskWidget::show(QWidget* childWidget) {
   }
 
   mask_widget_->raise();
+  processChildWidget(childWidget);
   // mask_widget_->stackUnder(parent_widget_);
 
   updateMaskGeometry();
   updateChildPosition();
+
   mask_widget_->show();
   if (child_widget_) {
     child_widget_->show();
+    child_widget_->raise();
   }
   startFadeAnimation(true);
 
@@ -164,38 +173,6 @@ void TtMaskWidget::startFadeAnimation(bool isShow) {
     qWarning() << "Mask widget is null!";
     return;
   }
-  // if (!effect_ || effect_->parent() != mask_widget_) {
-  //   effect_ = new QGraphicsOpacityEffect(mask_widget_);
-  //   mask_widget_->setGraphicsEffect(effect_);
-  // }
-  // if (!effect_->property("opacity").isValid()) {
-  //   qCritical() << "Opacity property not found!";
-  //   return;
-  // }
-
-  // QPropertyAnimation* anim = new QPropertyAnimation(effect_, "opacity");
-  // anim->setDuration(fade_duration_);
-
-  // if (isShow) {
-  //   effect_->setOpacity(0.0);
-  //   mask_widget_->show();
-  //   anim->setStartValue(0.0);
-  //   anim->setEndValue(1.0);
-  // } else {
-  //   anim->setStartValue(1.0);
-  //   anim->setEndValue(0.0);
-
-  //   connect(anim, &QPropertyAnimation::finished, [this] {
-  //     mask_widget_->hide();
-  //     emit aboutToClose();
-  //     if (child_widget_ && !reusable_) {
-  //       child_widget_->deleteLater();
-  //       child_widget_ = nullptr;
-  //     }
-  //   });
-  // }
-
-  // anim->start(QAbstractAnimation::DeleteWhenStopped);
   // 懒加载模式
   if (!fade_animation_) {
     fade_animation_ = new QPropertyAnimation(effect_, "opacity", this);
@@ -209,8 +186,11 @@ void TtMaskWidget::startFadeAnimation(bool isShow) {
     mask_widget_->show();
     fade_animation_->setStartValue(0.0);
     fade_animation_->setEndValue(1.0);
+    // fade_animation_->setEndValue(0.7);
   } else {
+    // 有bug
     fade_animation_->setStartValue(1.0);
+    // fade_animation_->setStartValue(0.7);
     fade_animation_->setEndValue(0.0);
 
     connect(fade_animation_, &QPropertyAnimation::finished, this, [this] {

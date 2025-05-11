@@ -1,18 +1,36 @@
 #include "ui/controls/TtSerialPortPlot.h"
 
+#include <qelapsedtimer.h>
 #include <ui/widgets/message_bar.h>
+#include "qcustomplot/qcustomplot.h"
 #include "ui/controls/TtPlotItem.h"
 
 namespace Ui {
 
 TtSerialPortPlot::TtSerialPortPlot(QWidget* parent) : QCustomPlot(parent) {
   setupPlot();
-  this->setOpenGl(true);
+  last_replot_time_.start();
+
+  bool hasOpenGL = false;
+#ifdef QT_OPENGL_SUPPORT
+  hasOpenGL = QOpenGLContext::currentContext() != nullptr;
+#endif
+  if (hasOpenGL) {
+    this->setOpenGl(true);
+  }
 
   setAntialiasedElements(QCP::aeAll);
 }
 
-TtSerialPortPlot::~TtSerialPortPlot() {}
+TtSerialPortPlot::~TtSerialPortPlot() {
+  for (auto& curve : curves_) {
+    if (curve.tag) {
+      delete curve.tag;
+      curve.tag = nullptr;
+    }
+  }
+  curves_.clear();
+}
 
 void TtSerialPortPlot::addData(int channel, double value) {
   if (!curves_.contains(channel)) {
@@ -101,7 +119,12 @@ void TtSerialPortPlot::addData(int channel, double value) {
       xAxis->setRange(xMin - 0.1, xMax + 0.1);
     }
   }
-  replot();
+  // 鼠标移动上去才会响应
+  if (last_replot_time_.elapsed() > 50) {
+    replot(QCustomPlot::rpQueuedReplot);
+    last_replot_time_.restart();
+  }
+  // replot();
 }
 
 void TtSerialPortPlot::clearData() {
@@ -266,9 +289,6 @@ void TtSerialPortPlot::setGraphsPointCapacity(quint16 nums) {
 
 void TtSerialPortPlot::mouseMoveEvent(QMouseEvent* event) {
   QCustomPlot::mouseMoveEvent(event);
-  // if (curves_.isEmpty()) {
-  //   return;
-  // }
 
   const bool show = viewport().contains(event->pos());
   // // 水平线
@@ -276,16 +296,8 @@ void TtSerialPortPlot::mouseMoveEvent(QMouseEvent* event) {
   m_tracer->setVisible(show);
   m_coordLabel->setVisible(show);
 
-  // for (auto* label : m_hoverLabels) {
-  //   if (label) {
-  //     label->setVisible(false);
-  //     this->removeItem(label);
-  //   }
-  // }
-  // m_hoverLabels.clear();
-
   if (!show) {
-    replot();
+    replot(QCustomPlot::rpQueuedReplot);
     return;
   }
 
@@ -300,7 +312,7 @@ void TtSerialPortPlot::mouseMoveEvent(QMouseEvent* event) {
 
   updateTracerPosition(event);
 
-  replot();
+  replot(QCustomPlot::rpQueuedReplot);
 }
 
 void TtSerialPortPlot::setupPlot() {

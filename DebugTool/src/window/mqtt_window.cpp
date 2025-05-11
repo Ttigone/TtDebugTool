@@ -59,7 +59,7 @@ MqttWindow::MqttWindow(TtProtocolType::ProtocolRole role, QWidget *parent)
   init();
 }
 
-MqttWindow::~MqttWindow() {}
+MqttWindow::~MqttWindow() { qDebug() << "delete MqttWindow"; }
 
 QJsonObject MqttWindow::getConfiguration() const { return config_; }
 
@@ -257,7 +257,8 @@ void MqttWindow::init() {
   //  操作的水平布局
   Ui::TtHorizontalLayout *propertyLayout = new Ui::TtHorizontalLayout();
   // 测试
-  propertyLayout->setContentsMargins(100, 0, 0, 0);
+  // propertyLayout->setContentsMargins(100, 0, 0, 0);
+  propertyLayout->setContentsMargins(0, 0, 0, 0);
   fomat_ = new Ui::TtComboBox(sendSetting);
   fomat_->addItem("JSON");
   fomat_->addItem("Base64");
@@ -352,9 +353,9 @@ void MqttWindow::init() {
   initialSizes << mainSplitter->width() - 200 << 200;
   mainSplitter->setSizes(initialSizes);
 
-  connectSignals();
-
   mask_widget_ = new Ui::TtMaskWidget(this);
+
+  connectSignals();
 }
 
 void MqttWindow::connectSignals() {

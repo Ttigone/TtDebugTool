@@ -2,32 +2,30 @@
 
 #include <QScrollArea>
 
-#include <ui/widgets/buttons.h>
 #include <ui/layout/vertical_layout.h>
+#include <ui/widgets/buttons.h>
 #include <ui/widgets/labels.h>
 
 #include "Def.h"
 
 namespace Window {
 
-FunctionSelectionWindow::FunctionSelectionWindow(QWidget* parent)
+FunctionSelectionWindow::FunctionSelectionWindow(QWidget *parent)
     : QWidget{parent} {
   // : Ui::CustomTabPage{parent} {
   init();
 }
 
-FunctionSelectionWindow::~FunctionSelectionWindow()
-{
-
+FunctionSelectionWindow::~FunctionSelectionWindow() {
+  qDebug() << "delete " << __FUNCTION__;
 }
 
-void FunctionSelectionWindow::init()
-{
-  Ui::TtVerticalLayout* mainLayout = new Ui::TtVerticalLayout(this);
+void FunctionSelectionWindow::init() {
+  Ui::TtVerticalLayout *mainLayout = new Ui::TtVerticalLayout(this);
 
-  QScrollArea* scroll = new QScrollArea(this);
+  QScrollArea *scroll = new QScrollArea(this);
   scroll->setFrameShape(QFrame::NoFrame);
-  Ui::TtVerticalLayout* scrollLayout = new Ui::TtVerticalLayout(scroll);
+  Ui::TtVerticalLayout *scrollLayout = new Ui::TtVerticalLayout(scroll);
 
   mainLayout->addWidget(scroll);
 
@@ -36,29 +34,29 @@ void FunctionSelectionWindow::init()
   label_->resize(68, 68);
 
   // 功能窗口布局
-  QGridLayout* function_layout_ = new QGridLayout(cont);
+  QGridLayout *function_layout_ = new QGridLayout(cont);
 
-  Ui::RichTextButton* serial_ =
+  Ui::RichTextButton *serial_ =
       new Ui::RichTextButton(QImage(":/sys/tmp.png"), tr("串口"),
                              tr("连接到串口设备以进行数据发送和接收"));
 
-  Ui::RichTextButton* tcp_ =
+  Ui::RichTextButton *tcp_ =
       new Ui::RichTextButton(QImage(":/sys/network.svg"), tr("TCP 客户端"),
                              tr("新建 TCP 客户端以连接到远程服务器"));
 
-  Ui::RichTextButton* udp_ =
+  Ui::RichTextButton *udp_ =
       new Ui::RichTextButton(QImage(":/sys/network.svg"), tr("UDP"),
                              tr("新建 UDP 发送端以发送数据到远程目标"));
 
-  Ui::RichTextButton* mqtt_ =
+  Ui::RichTextButton *mqtt_ =
       new Ui::RichTextButton(QImage(":/sys/tmp.png"), tr("MQTT 客户端"),
                              tr("新建 MQTT 客户端用于连接到远程服务器"));
 
-  Ui::RichTextButton* modbus_ =
+  Ui::RichTextButton *modbus_ =
       new Ui::RichTextButton(QImage(":/sys/modbus.svg"), tr("Modbus 主机"),
                              tr("新建 Modubus 主机以连接到从机设备"));
 
-  Ui::RichTextButton* blueteeth_ = new Ui::RichTextButton(
+  Ui::RichTextButton *blueteeth_ = new Ui::RichTextButton(
       QImage(":/sys/bluetooth-contact.svg"), tr("BT 蓝牙主机"),
       tr("新建经典蓝牙主机以扫描并连接到远程设备"));
 
@@ -90,42 +88,44 @@ void FunctionSelectionWindow::init()
 }
 
 SimulateFunctionSelectionWindow::SimulateFunctionSelectionWindow(
-    QWidget* parent)
+    QWidget *parent)
     : QWidget{parent} {
   init();
 }
 
-SimulateFunctionSelectionWindow::~SimulateFunctionSelectionWindow() {}
+SimulateFunctionSelectionWindow::~SimulateFunctionSelectionWindow() {
+  qDebug() << "Delete" << __FUNCTION__;
+}
 
 void SimulateFunctionSelectionWindow::init() {
-  Ui::TtVerticalLayout* mainLayout = new Ui::TtVerticalLayout(this);
+  Ui::TtVerticalLayout *mainLayout = new Ui::TtVerticalLayout(this);
 
-  QScrollArea* scroll = new QScrollArea(this);
+  QScrollArea *scroll = new QScrollArea(this);
   scroll->setFrameShape(QFrame::NoFrame);
-  Ui::TtVerticalLayout* scrollLayout = new Ui::TtVerticalLayout(scroll);
+  Ui::TtVerticalLayout *scrollLayout = new Ui::TtVerticalLayout(scroll);
 
   mainLayout->addWidget(scroll);
 
-  QWidget* cont = new QWidget();
+  QWidget *cont = new QWidget();
   label_ = new Ui::TtElidedLabel(tr("新建连接"), scroll);
   label_->resize(68, 68);
 
   // 功能窗口布局
-  QGridLayout* function_layout_ = new QGridLayout(cont);
+  QGridLayout *function_layout_ = new QGridLayout(cont);
 
-  Ui::RichTextButton* tcp_ = new Ui::RichTextButton(
+  Ui::RichTextButton *tcp_ = new Ui::RichTextButton(
       QImage(":/sys/network.svg"), tr("TCP 服务端模拟"),
       tr("通过配置匹配规则以自动响应来自 TCP 连接的请求"));
 
-  Ui::RichTextButton* udp_ = new Ui::RichTextButton(
+  Ui::RichTextButton *udp_ = new Ui::RichTextButton(
       QImage(":/sys/network.svg"), tr("UDP 服务端模拟"),
       tr("通过配置匹配规则以自动响应来自 UDP 连接的请求"));
 
-  Ui::RichTextButton* modbus_ =
+  Ui::RichTextButton *modbus_ =
       new Ui::RichTextButton(QImage(":/sys/modbus.svg"), tr("Modbus 模拟"),
                              tr("模拟线圈/离散输入/保持寄存器/输入寄存器操作"));
 
-  Ui::RichTextButton* mqtt_ = new Ui::RichTextButton(
+  Ui::RichTextButton *mqtt_ = new Ui::RichTextButton(
       QImage(":/sys/tmp.png"), tr("MQTT Broker 模拟"),
       tr("管理主题、客户端，并通过配置匹配规则以使消息自动回复"));
 
@@ -152,50 +152,50 @@ void SimulateFunctionSelectionWindow::init() {
   connect(modbus_, &Ui::RichTextButton::clicked,
           [this]() { emit switchRequested(TtProtocolRole::ModbusServer); });
 }
-}
+} // namespace Window
 
-AllFunctionSelectionWindow::AllFunctionSelectionWindow(QWidget* parent) {
+AllFunctionSelectionWindow::AllFunctionSelectionWindow(QWidget *parent) {
   init();
 }
 
 AllFunctionSelectionWindow::~AllFunctionSelectionWindow() {}
 
 void AllFunctionSelectionWindow::init() {
-  Ui::TtVerticalLayout* mainLayout = new Ui::TtVerticalLayout(this);
+  Ui::TtVerticalLayout *mainLayout = new Ui::TtVerticalLayout(this);
 
-  QScrollArea* scroll = new QScrollArea(this);
+  QScrollArea *scroll = new QScrollArea(this);
   scroll->setFrameShape(QFrame::NoFrame);
-  Ui::TtVerticalLayout* scrollLayout = new Ui::TtVerticalLayout(scroll);
+  Ui::TtVerticalLayout *scrollLayout = new Ui::TtVerticalLayout(scroll);
 
   mainLayout->addWidget(scroll);
 
-  QWidget* cont = new QWidget();
+  QWidget *cont = new QWidget();
   label_ = new Ui::TtElidedLabel(tr("新建连接"), scroll);
   label_->resize(68, 68);
 
   function_layout_ = new QGridLayout(cont);
 
-  Ui::RichTextButton* serial_ =
+  Ui::RichTextButton *serial_ =
       new Ui::RichTextButton(QImage(":/sys/tmp.png"), tr("串口"),
                              tr("连接到串口设备以进行数据发送和接收"));
 
-  Ui::RichTextButton* tcpClient =
+  Ui::RichTextButton *tcpClient =
       new Ui::RichTextButton(QImage(":/sys/network.svg"), tr("TCP 客户端"),
                              tr("新建 TCP 客户端以连接到远程服务器"));
 
-  Ui::RichTextButton* udpClient =
+  Ui::RichTextButton *udpClient =
       new Ui::RichTextButton(QImage(":/sys/network.svg"), tr("UDP"),
                              tr("新建 UDP 发送端以发送数据到远程目标"));
 
-  Ui::RichTextButton* mqttClient =
+  Ui::RichTextButton *mqttClient =
       new Ui::RichTextButton(QImage(":/sys/tmp.png"), tr("MQTT 客户端"),
                              tr("新建 MQTT 客户端用于连接到远程服务器"));
 
-  Ui::RichTextButton* modbusClient =
+  Ui::RichTextButton *modbusClient =
       new Ui::RichTextButton(QImage(":/sys/modbus.svg"), tr("Modbus 主机"),
                              tr("新建 Modubus 主机以连接到从机设备"));
 
-  Ui::RichTextButton* blueteeth_ = new Ui::RichTextButton(
+  Ui::RichTextButton *blueteeth_ = new Ui::RichTextButton(
       QImage(":/sys/bluetooth-contact.svg"), tr("BT 蓝牙主机"),
       tr("新建经典蓝牙主机以扫描并连接到远程设备"));
 
@@ -206,19 +206,19 @@ void AllFunctionSelectionWindow::init() {
   function_layout_->addWidget(modbusClient, 1, 1);
   function_layout_->addWidget(blueteeth_, 1, 2);
 
-  Ui::RichTextButton* tcpServer = new Ui::RichTextButton(
+  Ui::RichTextButton *tcpServer = new Ui::RichTextButton(
       QImage(":/sys/network.svg"), tr("TCP 服务端模拟"),
       tr("通过配置匹配规则以自动响应来自 TCP 连接的请求"));
 
-  Ui::RichTextButton* udpServer = new Ui::RichTextButton(
+  Ui::RichTextButton *udpServer = new Ui::RichTextButton(
       QImage(":/sys/network.svg"), tr("UDP 服务端模拟"),
       tr("通过配置匹配规则以自动响应来自 UDP 连接的请求"));
 
-  Ui::RichTextButton* modbusServer =
+  Ui::RichTextButton *modbusServer =
       new Ui::RichTextButton(QImage(":/sys/modbus.svg"), tr("Modbus 模拟"),
                              tr("模拟线圈/离散输入/保持寄存器/输入寄存器操作"));
 
-  Ui::RichTextButton* mqttServer = new Ui::RichTextButton(
+  Ui::RichTextButton *mqttServer = new Ui::RichTextButton(
       QImage(":/sys/tmp.png"), tr("MQTT Broker 模拟"),
       tr("管理主题、客户端，并通过配置匹配规则以使消息自动回复"));
 

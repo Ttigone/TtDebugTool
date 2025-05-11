@@ -43,6 +43,7 @@ class TcpWindow : public FrameWindow {
 public:
   explicit TcpWindow(TtProtocolType::ProtocolRole role,
                      QWidget *parent = nullptr);
+  ~TcpWindow();
 
   QString getTitle() const;
   QJsonObject getConfiguration() const;

@@ -7,20 +7,20 @@
 namespace Storage {
 
 class TtConfigsManager {
- public:
-  static TtConfigsManager& instance() {
+public:
+  static TtConfigsManager &instance() {
     static TtConfigsManager instance;
     return instance;
   }
 
-  void setTargetStoreFile(const QString& filePath) { file_path_ = filePath; }
+  void setTargetStoreFile(const QString &filePath) { file_path_ = filePath; }
 
-  void setConfigVaule(QAnyStringView key, const QVariant& value) {
+  void setConfigVaule(QAnyStringView key, const QVariant &value) {
     QSettings settings(getConfigFilePath(file_path_), QSettings::IniFormat);
     settings.setValue(key, value);
   }
 
-  QVariant getConfigVaule(QAnyStringView key, const QVariant& defaultValue) {
+  QVariant getConfigVaule(QAnyStringView key, const QVariant &defaultValue) {
     qDebug() << getConfigFilePath(file_path_);
     // qDebug() << getConfigFilePath(file_path_);
 
@@ -28,7 +28,8 @@ class TtConfigsManager {
     // if (settings.)
 
     QVariant val = settings.value(key, defaultValue);
-    // 如果文件刚好不存在，或者读取到的是 defaultValue，都把它写回去，保证文件被创建
+    // 如果文件刚好不存在，或者读取到的是
+    // defaultValue，都把它写回去，保证文件被创建
     return val;
     // return settings.value(key, defaultValue);
   }
@@ -47,17 +48,17 @@ class TtConfigsManager {
     // file.close();
   }
 
- private:
+private:
   TtConfigsManager() {}
   ~TtConfigsManager() {}
-  TtConfigsManager(const TtConfigsManager&) = delete;
-  TtConfigsManager& operator=(const TtConfigsManager&) = delete;
+  TtConfigsManager(const TtConfigsManager &) = delete;
+  TtConfigsManager &operator=(const TtConfigsManager &) = delete;
 
-  QString getConfigFilePath(const QString& filename) {
+  QString getConfigFilePath(const QString &filename) {
     // 获取当前可执行文件的路径
     QString appDirPath = QCoreApplication::applicationDirPath();
     QString configPath = appDirPath + "/" + filename;
-    qDebug() << "配置文件: " << configPath;
+    // qDebug() << "配置文件: " << configPath;
     // 创建文件
     QFile file(configPath);
     if (!file.exists()) {
@@ -75,6 +76,6 @@ class TtConfigsManager {
   // QSettings settings;
 };
 
-}  // namespace Storage
+} // namespace Storage
 
-#endif  // CONFIGS_MANAGER_H
+#endif // CONFIGS_MANAGER_H

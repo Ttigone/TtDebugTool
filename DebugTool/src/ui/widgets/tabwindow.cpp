@@ -822,24 +822,54 @@ void TabWindow::handleTabClose(int index) {
   if (w != nullptr) {
     if (!w->saveState()) {
       qDebug() << "no saved";
-      Ui::TtContentDialog *dialog = new Ui::TtContentDialog(this);
+
+      // Ui::TtContentDialog *dialog = new Ui::TtContentDialog(this);
+      // dialog->setLeftButtonText(tr("取消"));
+      // dialog->setRightButtonText(tr("确定"));
+      // dialog->setCenterText(tr("通讯链接配置已修改, 是否保存"));
+
+      // connect(dialog, &Ui::TtContentDialog::leftButtonClicked, this, [&]() {
+      //   dialog->reject();
+      //   qDebug() << "取消保存";
+      //   if (w->workState()) {
+      //     // 保存
+      //     saveWorkingTabPageToMem(index);
+      //   } else {
+      //     // 删除
+      //     handleTabCloseRequested(index);
+      //   }
+      // });
+      // connect(dialog, &Ui::TtContentDialog::rightButtonClicked, this, [&]() {
+      //   dialog->accept();
+      //   qDebug() << "保存最新变动";
+      //   w->saveSetting();
+      //   // 主动保存能成功
+      //   if (w->workState()) {
+      //     qDebug() << "save to mem";
+      //     saveWorkingTabPageToMem(index);
+      //   } else {
+      //     qDebug() << "close";
+      //     handleTabCloseRequested(index);
+      //   }
+      // });
+      // dialog->exec();
+      // delete dialog;
+
+      // 非模态对话框
+      Ui::TtContentDialog *dialog = new Ui::TtContentDialog(
+          Qt::ApplicationModal, true,
+          Ui::TtContentDialog::LayoutSelection::TWO_OPTIONS, this);
+      dialog->setAttribute(Qt::WA_DeleteOnClose); // 关闭自动销毁
       dialog->setLeftButtonText(tr("取消"));
       dialog->setRightButtonText(tr("确定"));
       dialog->setCenterText(tr("通讯链接配置已修改, 是否保存"));
-
-      connect(dialog, &Ui::TtContentDialog::leftButtonClicked, this, [&]() {
-        dialog->reject();
-        qDebug() << "取消保存";
-        if (w->workState()) {
-          // 保存
-          saveWorkingTabPageToMem(index);
-        } else {
-          // 删除
-          handleTabCloseRequested(index);
-        }
-      });
-      connect(dialog, &Ui::TtContentDialog::rightButtonClicked, this, [&]() {
-        dialog->accept();
+      connect(dialog, &Ui::TtContentDialog::leftButtonClicked, dialog,
+              &QDialog::reject);
+      connect(dialog, &Ui::TtContentDialog::rightButtonClicked, dialog,
+              &QDialog::accept);
+      const int result = dialog->exec();
+      if (result == QDialog::Accepted) {
+        // right 摁下
         qDebug() << "保存最新变动";
         w->saveSetting();
         // 主动保存能成功
@@ -850,9 +880,53 @@ void TabWindow::handleTabClose(int index) {
           qDebug() << "close";
           handleTabCloseRequested(index);
         }
-      });
-      dialog->exec();
-      delete dialog;
+      } else {
+        // left 摁下
+        if (w->workState()) {
+          // 保存
+          saveWorkingTabPageToMem(index);
+        } else {
+          // 删除
+          handleTabCloseRequested(index);
+        }
+      }
+
+      // // 非模态对话框
+      // Ui::TtContentDialog *dialog = new Ui::TtContentDialog(
+      //     Qt::NonModal, true,
+      //     Ui::TtContentDialog::LayoutSelection::TWO_OPTIONS, this);
+      // dialog->setAttribute(Qt::WA_DeleteOnClose); // 关闭自动销毁
+      // dialog->setLeftButtonText(tr("取消"));
+      // dialog->setRightButtonText(tr("确定"));
+      // dialog->setCenterText(tr("通讯链接配置已修改, 是否保存"));
+      // // 连接按钮信号到业务逻辑
+      // connect(dialog, &Ui::TtContentDialog::leftButtonClicked, this, [=] {
+      //   if (w->workState()) {
+      //     // 保存
+      //     saveWorkingTabPageToMem(index);
+      //   } else {
+      //     // 删除
+      //     handleTabCloseRequested(index);
+      //   }
+      //   qDebug() << "操作已取消";
+      //   dialog->close(); // 非必须，WA_DeleteOnClose会触发销毁
+      // });
+
+      // connect(dialog, &Ui::TtContentDialog::rightButtonClicked, this, [=] {
+      //   qDebug() << "保存最新变动";
+      //   w->saveSetting();
+      //   // 主动保存能成功
+      //   if (w->workState()) {
+      //     qDebug() << "save to mem";
+      //     saveWorkingTabPageToMem(index);
+      //   } else {
+      //     qDebug() << "close";
+      //     handleTabCloseRequested(index);
+      //   }
+      //   dialog->close();
+      // });
+
+      // dialog->show();
     } else {
       // 直接处于保存状态
       qDebug() << "save";

@@ -26,7 +26,6 @@
 namespace Window {
 
 UdpWindow::UdpWindow(TtProtocolType::ProtocolRole role, QWidget *parent)
-    // : QWidget(parent), role_(role) {
     : FrameWindow(parent), role_(role) {
   init();
 

@@ -551,9 +551,17 @@ void MainWindow::compileTsFilesFinished() {
 void MainWindow::saveCsvFile() {
   // 弹出一个串口, 选择你要保存的 csv 文件.
   // 当前的界面的 csv
+  // 获取的是当前的 窗口, 当如果是跨越窗口呢 ?
+  // 弹出一个 dialog, 里面有多个选择, 你要保存哪一个窗口的 csv
+  Ui::TtContentDialog choseDialog(this);
+  // choseDialog;
+  // 非模态的
+  QWidget *selectSaveCsvData = new QWidget;
+
   auto widget =
       qobject_cast<Window::SerialWindow *>(tabWidget_->currentWidget());
   if (widget) {
+    qDebug() << "保存窗口 csv";
     // qDebug() << widget->getTitle();
     widget->saveWaveFormData();
   }
@@ -653,7 +661,10 @@ bool MainWindow::event(QEvent *event) {
 void MainWindow::closeEvent(QCloseEvent *event) {
   // 关闭所有窗口
   // 写入文件
-  Storage::SettingsManager::instance().saveSettings();
+  // Storage::SettingsManager::instance().saveSettings();
+  // 强制保存
+  Storage::SettingsManager::instance().forceSave();
+
   // 先关闭所有 TabWindow
   auto manager = TabWindowManager::instance();
   for (auto w : manager->windows()) {
@@ -955,30 +966,61 @@ void MainWindow::installWindowAgent() {
           });
   // connect(windowBar, &Ui::WindowBar::closeRequested, this, &QWidget::close);
 
-  // connect()
-
+  // connect(windowBar, &Ui::WindowBar::closeRequested, this, [this]() {
+  //   // 模态窗口
+  //   Ui::TtContentDialog *dialog = new Ui::TtContentDialog(
+  //       true, Ui::TtContentDialog::LayoutSelection::THREE_OPTIONS, this);
+  //   QPointer<Ui::TtContentDialog> dialogPtr(dialog);
+  //   dialog->setCenterText(tr("确定要退出程序吗"));
+  //   // 样式表有时会失效
+  //   connect(dialog, &Ui::TtContentDialog::leftButtonClicked, this,
+  //           [this, dialogPtr] { dialogPtr->reject(); });
+  //   connect(dialog, &Ui::TtContentDialog::middleButtonClicked, this,
+  //           [this, dialogPtr] {
+  //             dialogPtr->accept();
+  //             MainWindow::showMinimized();
+  //           });
+  //   connect(dialog, &Ui::TtContentDialog::rightButtonClicked, this,
+  //           [this, dialogPtr] {
+  //             dialogPtr->accept();
+  //             MainWindow::closeWindow();
+  //           });
+  //   dialog->exec();
+  //   delete dialog;
+  //   qDebug() << "finale test";
+  // });
   connect(windowBar, &Ui::WindowBar::closeRequested, this, [this]() {
+    // QScopedPointer<Ui::TtContentDialog> dialog(new Ui::TtContentDialog(
+    //     Qt::ApplicationModal, true,
+    //     Ui::TtContentDialog::LayoutSelection::THREE_OPTIONS, this));
+
     Ui::TtContentDialog *dialog = new Ui::TtContentDialog(
-        true, Ui::TtContentDialog::LayoutSelection::THREE_OPTIONS, this);
-    QPointer<Ui::TtContentDialog> dialogPtr(dialog);
+        Qt::ApplicationModal, true,
+        Ui::TtContentDialog::LayoutSelection::THREE_OPTIONS, this);
+
     dialog->setCenterText(tr("确定要退出程序吗"));
-    // 样式表有时会失效
-    connect(dialog, &Ui::TtContentDialog::leftButtonClicked, this,
-            [this, dialogPtr] { dialogPtr->reject(); });
-    connect(dialog, &Ui::TtContentDialog::middleButtonClicked, this,
-            [this, dialogPtr] {
-              dialogPtr->accept();
-              MainWindow::showMinimized();
-            });
-    connect(dialog, &Ui::TtContentDialog::rightButtonClicked, this,
-            [this, dialogPtr] {
-              dialogPtr->accept();
-              MainWindow::closeWindow();
-            });
-    dialog->exec();
-    delete dialog;
-    qDebug() << "finale test";
+    dialog->setAttribute(Qt::WA_DeleteOnClose); // 二次删除的情况
+    connect(dialog, &Ui::TtContentDialog::leftButtonClicked, dialog,
+            &QDialog::reject);
+    connect(dialog, &Ui::TtContentDialog::middleButtonClicked, dialog,
+            &QDialog::accept); // 中间按钮 -> accept()
+    connect(dialog, &Ui::TtContentDialog::rightButtonClicked, dialog,
+            &QDialog::accept); // 右侧按钮 -> accept()
+    const int result = dialog->exec();
+    if (result == QDialog::Accepted) {
+      // 获取最后点击的按钮类型
+      if (dialog->clickButtonType() == Ui::TtContentDialog::MiddleButton) {
+        // 最小化时, 背后显示的阴影还是存在
+        MainWindow::showMinimized();
+      } else {
+        MainWindow::closeWindow();
+      }
+    } else {
+      qDebug() << "用户取消操作";
+    }
   });
+  // 有bug, 进程崩溃
+
 #endif
 }
 
@@ -1100,6 +1142,9 @@ void MainWindow::connectSignals() {
     tabWidget_->setCurrentWidget(setting_widget_);
   });
 
+  // 切换的时候, 存在一个原始的选择页面, 一个从历史打开的标签页
+  // 当点击左侧另一个没有打开的标签页的时候, 当前 widget 处于原始选择页面,
+  // 切换时，可能会覆盖从历史打开的标签页
   connect(buttonGroup, &Ui::WidgetGroup::currentIndexChanged, this,
           &MainWindow::switchToOtherTabPage);
 

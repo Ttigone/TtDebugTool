@@ -87,9 +87,22 @@ protected:
   bool eventFilter(QObject *watched, QEvent *event) override;
 
 private slots:
-  // 最原始的发送
+  ///
+  /// @brief sendMessageToPort
+  /// editor 编辑器发送编辑数据
   void sendMessageToPort();
+  ///
+  /// @brief sendMessageToPort
+  /// @param data
+  /// 立刻发送 data
+  /// 用于发送心跳内容, 发送指令表格的内容 sendRowMsg 信号
   void sendMessageToPort(const QString &data);
+
+  ///
+  /// @brief sendMessageToPort
+  /// @param data
+  /// @param times
+  /// 在 times 时间后发送 data
   void sendMessageToPort(const QString &data, const int &times);
   void showErrorMessage(const QString &text);
   void dataReceived(const QByteArray &data);
@@ -104,12 +117,19 @@ private:
   void setSerialSetting();       // 设置通讯配置
   void saveSerialLog();          // 保存串口日志
   void refreshTerminalDisplay(); // 显示方式刷新
-  void addChannel(const QColor &olor, const QByteArray &blob,
+  void addChannel(const QByteArray &blob, const QColor &color,
                   const QString &uuid = "");
+
   void handleDialogData(const QString &label, quint16 channel,
-                        const QByteArray &blob);
-  // void sendMessage(const QByteArray &data);
+                        const QByteArray &blob, const QColor &colork);
+
+  // 文本发送 hex 格式 并显示
+  // 数据接收显示 hex
+  void showMessage(const QByteArray &data, bool out = true); // 为 hex 进制提供
+  // 分开
   void showMessage(const QString &data, bool out = true);
+
+  // 发送 editor 的文本
   void sendMessage(const QString &data, MsgType type = MsgType::TEXT);
   void parseBuffer();                                        // 解析数据
   void processFrame(quint8 type, const QByteArray &payload); // 解析帧
@@ -185,10 +205,19 @@ private:
   // 修改相关配置
   QMap<QString, ParserRule> rules_;
 
+  struct ChannelSetting {
+    quint16 channel_num_;
+    QString title;
+    QByteArray data;
+    QColor color;
+  };
+
   // 存储了 plot 按钮的配置, first 是 uuid
   // uuid 通道
   quint16 channel_nums_ = 0;
-  QMap<QString, QPair<quint16, QByteArray>> channel_info_;
+  // 缺少颜色配置
+  // QMap<QString, QPair<quint16, QByteArray>> channel_info_;
+  QMap<QString, ChannelSetting> channel_info_;
 
   // 每个通道, 保存对应的 lua 解析代码
   QMap<quint16, QString> lua_script_codes_;

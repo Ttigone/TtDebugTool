@@ -137,6 +137,7 @@ int main(int argc, char *argv[]) {
       Storage::SettingsManager::instance();
   settingsManager.setTargetStoreFile(filePath);
   settingsManager.saveSettings();
+  settingsManager.setSaveDelay(2000);
 
   // #if (WIN32)
   //   //注冊异常捕获函数

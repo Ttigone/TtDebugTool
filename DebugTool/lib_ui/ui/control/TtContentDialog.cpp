@@ -1,27 +1,33 @@
 #include "TtContentDialog.h"
 #include "TtContentDialog_p.h"
+#include "ui/Def.h"
+#include "ui/TtTheme.h"
 
-#include <ui/control/TtTextButton.h>
 #include <QApplication>
 #include <QCloseEvent>
 #include <QScreen>
+#include <qdialog.h>
+#include <qnamespace.h>
+#include <ui/control/TtTextButton.h>
 
 namespace Ui {
 
-TtContentDialog::TtContentDialog(QWidget* parent)
-    : Ui::TtContentDialog(false, LayoutSelection::TWO_OPTIONS, parent) {}
+TtContentDialog::TtContentDialog(QWidget *parent)
+    : Ui::TtContentDialog(false, LayoutSelection::TWO_OPTIONS, parent) {
+  // 非模态, 但是有阴影, bug
+}
 
 TtContentDialog::TtContentDialog(bool fixSize, LayoutSelection layout,
-                                 QWidget* parent)
+                                 QWidget *parent)
     : QDialog(parent), d_ptr(new TtContentDialogPrivate) {
   Q_D(TtContentDialog);
   // 透明背景
   setAttribute(Qt::WA_TranslucentBackground);
   d->q_ptr = this;
 
-  QWidget* mainWindow = nullptr;
+  QWidget *mainWindow = nullptr;
   if (!parent) {
-    QList<QWidget*> widgetList = QApplication::topLevelWidgets();
+    QList<QWidget *> widgetList = QApplication::topLevelWidgets();
     // 如果已经给出了父窗口, 不需要遍历
     for (auto widget : widgetList) {
       if (widget->property("TtBaseClassName").toString() == "TtMainWindow") {
@@ -33,7 +39,7 @@ TtContentDialog::TtContentDialog(bool fixSize, LayoutSelection layout,
     mainWindow = parent;
   }
   if (mainWindow) {
-    d->main_window_ = mainWindow;  // 保存父窗口
+    d->main_window_ = mainWindow; // 保存父窗口
     d->_shadowWidget = new QWidget(mainWindow);
     d->_shadowWidget->move(0, 0);
     d->_shadowWidget->setFixedSize(mainWindow->size());
@@ -110,7 +116,7 @@ TtContentDialog::TtContentDialog(bool fixSize, LayoutSelection layout,
     d->_centralWidget = new QWidget(this);
     d->_centralWidget->setObjectName("TtContentDialogDefaultCentralWidget");
 
-    QHBoxLayout* centralVLayout = new QHBoxLayout(d->_centralWidget);
+    QHBoxLayout *centralVLayout = new QHBoxLayout(d->_centralWidget);
     centralVLayout->setContentsMargins(9, 15, 9, 20);
     QLabel iconLabel;
     iconLabel.setPixmap(QPixmap(":/icon/icon/info-circle.svg"));
@@ -126,12 +132,11 @@ TtContentDialog::TtContentDialog(bool fixSize, LayoutSelection layout,
     d->_buttonLayout->addWidget(d->_rightButton);
     d->_mainLayout->addWidget(d->_centralWidget);
     d->_mainLayout->addLayout(d->_buttonLayout);
+    d->_themeMode = TtTheme::getInstance()->getThemeMode();
+    connect(
+        TtTheme::getInstance(), &TtTheme::themeModeChanged, this,
+        [=](TtThemeType::ThemeMode themeMode) { d->_themeMode = themeMode; });
 
-    // d->_themeMode = ElaApplication::getInstance()->getThemeMode();
-    // connect(ElaApplication::getInstance(), &ElaApplication::themeModeChanged,
-    //         this, [=](ElaApplicationType::ThemeMode themeMode) {
-    //           d->_themeMode = themeMode;
-    //         });
   } else if (layout == LayoutSelection::TWO_OPTIONS) {
     d->_leftButton = new TtTextButton("cancel", this);
     d->_leftButton->setMinimumSize(0, 0);
@@ -139,7 +144,6 @@ TtContentDialog::TtContentDialog(bool fixSize, LayoutSelection layout,
     d->_leftButton->setFixedHeight(38);
     d->_leftButton->setBorderRadius(6);
 
-    // connect(d->_leftButton, &TtTextButton::clicked, this, [=]() {
     connect(d->_leftButton, &TtTextButton::clicked, this, [this]() {
       Q_EMIT leftButtonClicked();
       onLeftButtonClicked();
@@ -167,7 +171,7 @@ TtContentDialog::TtContentDialog(bool fixSize, LayoutSelection layout,
 
     d->_centralWidget = new QWidget(this);
 
-    QHBoxLayout* centralVLayout = new QHBoxLayout(d->_centralWidget);
+    QHBoxLayout *centralVLayout = new QHBoxLayout(d->_centralWidget);
     centralVLayout->setContentsMargins(9, 15, 9, 20);
     QLabel iconLabel;
     iconLabel.setPixmap(QPixmap(":/icon/icon/info-circle.svg"));
@@ -200,6 +204,199 @@ TtContentDialog::TtContentDialog(bool fixSize, LayoutSelection layout,
   }
 }
 
+TtContentDialog::TtContentDialog(Qt::WindowModality modality, bool fixSize,
+                                 LayoutSelection layout, QWidget *parent)
+    : QDialog(parent), d_ptr(new TtContentDialogPrivate) {
+  Q_D(TtContentDialog);
+  // 透明背景
+  setAttribute(Qt::WA_TranslucentBackground);
+  d->q_ptr = this;
+
+  QWidget *mainWindow = nullptr;
+  if (!parent) {
+    QList<QWidget *> widgetList = QApplication::topLevelWidgets();
+    // 如果已经给出了父窗口, 不需要遍历
+    for (auto widget : widgetList) {
+      if (widget->property("TtBaseClassName").toString() == "TtMainWindow") {
+        mainWindow = widget;
+        break;
+      }
+    }
+  } else {
+    mainWindow = parent;
+  }
+  if (fixSize) {
+    resize(400, height());
+  }
+  // setWindowFlags((window()->windowFlags()) | Qt::WindowMinimizeButtonHint |
+  //                Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
+  setWindowFlags((window()->windowFlags()) | Qt::WindowMinimizeButtonHint |
+                 Qt::FramelessWindowHint);
+  // #if (QT_VERSION == QT_VERSION_CHECK(6, 5, 3) || \
+//      QT_VERSION == QT_VERSION_CHECK(6, 6, 0))
+  //   setWindowModality(Qt::ApplicationModal);
+  //   setWindowFlags((window()->windowFlags()) | Qt::WindowMinimizeButtonHint |
+  //                  Qt::FramelessWindowHint);
+  //   installEventFilter(this);
+  //   createWinId();
+  //   setShadow((HWND)winId());
+  // #endif
+  // 安装原始过滤器
+  // QGuiApplication::instance()->installNativeEventFilter(this);
+  // 堆分配时自动删除
+  // setAttribute(Qt::WA_DeleteOnClose);
+
+  if (layout == LayoutSelection::THREE_OPTIONS) {
+    d->_leftButton = new TtTextButton("cancel", this);
+    d->_leftButton->setMinimumSize(0, 0);
+    d->_leftButton->setMaximumSize(QSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX));
+    d->_leftButton->setFixedHeight(38);
+    d->_leftButton->setBorderRadius(6);
+    connect(d->_leftButton, &QPushButton::clicked, this, [this]() {
+      Q_EMIT leftButtonClicked();
+      onLeftButtonClicked();
+      // close();
+    });
+
+    d->_middleButton = new TtTextButton("minimum", this);
+    d->_middleButton->setMinimumSize(0, 0);
+    d->_middleButton->setMaximumSize(QSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX));
+    d->_middleButton->setFixedHeight(38);
+    d->_middleButton->setBorderRadius(6);
+    connect(d->_middleButton, &TtTextButton::clicked, this, [this]() {
+      Q_EMIT middleButtonClicked();
+      onMiddleButtonClicked();
+      // close();
+    });
+
+    d->_rightButton = new TtTextButton("exit", this);
+    d->_rightButton->setLightDefaultColor(QColor(0x00, 0x66, 0xB4));
+    d->_rightButton->setLightHoverColor(QColor(0x00, 0x70, 0xC6));
+    d->_rightButton->setLightPressColor(QColor(0x00, 0x7A, 0xD8));
+    d->_rightButton->setLightTextColor(Qt::white);
+    d->_rightButton->setDarkDefaultColor(QColor(0x4C, 0xA0, 0xE0));
+    d->_rightButton->setDarkHoverColor(QColor(0x45, 0x91, 0xCC));
+    d->_rightButton->setDarkPressColor(QColor(0x3F, 0x85, 0xBB));
+    d->_rightButton->setDarkTextColor(Qt::black);
+    d->_rightButton->setMinimumSize(0, 0);
+    d->_rightButton->setMaximumSize(QSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX));
+    d->_rightButton->setFixedHeight(38);
+    d->_rightButton->setBorderRadius(6);
+    connect(d->_rightButton, &TtTextButton::clicked, this, [this]() {
+      Q_EMIT rightButtonClicked();
+      onRightButtonClicked();
+    });
+
+    // 默认有一个 中心后暂时的 widget
+    d->_centralWidget = new QWidget(this);
+    d->_centralWidget->setObjectName("TtContentDialogDefaultCentralWidget");
+
+    QHBoxLayout *centralVLayout = new QHBoxLayout(d->_centralWidget);
+    centralVLayout->setContentsMargins(9, 15, 9, 20);
+    QLabel iconLabel;
+    iconLabel.setPixmap(QPixmap(":/icon/icon/info-circle.svg"));
+    d->content_ = new QLabel();
+    centralVLayout->addWidget(&iconLabel);
+    centralVLayout->addWidget(d->content_);
+    centralVLayout->addStretch();
+
+    d->_mainLayout = new QVBoxLayout(this);
+    d->_buttonLayout = new QHBoxLayout();
+    d->_buttonLayout->addWidget(d->_leftButton);
+    d->_buttonLayout->addWidget(d->_middleButton);
+    d->_buttonLayout->addWidget(d->_rightButton);
+    d->_mainLayout->addWidget(d->_centralWidget);
+    d->_mainLayout->addLayout(d->_buttonLayout);
+
+    d->_themeMode = TtTheme::getInstance()->getThemeMode();
+    connect(
+        TtTheme::getInstance(), &TtTheme::themeModeChanged, this,
+        [=](TtThemeType::ThemeMode themeMode) { d->_themeMode = themeMode; });
+
+  } else if (layout == LayoutSelection::TWO_OPTIONS) {
+    d->_leftButton = new TtTextButton("cancel", this);
+    d->_leftButton->setMinimumSize(0, 0);
+    d->_leftButton->setMaximumSize(QSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX));
+    d->_leftButton->setFixedHeight(38);
+    d->_leftButton->setBorderRadius(6);
+
+    connect(d->_leftButton, &TtTextButton::clicked, this, [this]() {
+      Q_EMIT leftButtonClicked();
+      onLeftButtonClicked();
+      close();
+    });
+
+    d->_rightButton = new TtTextButton("exit", this);
+    d->_rightButton->setLightDefaultColor(QColor(0x00, 0x66, 0xB4));
+    d->_rightButton->setLightHoverColor(QColor(0x00, 0x70, 0xC6));
+    d->_rightButton->setLightPressColor(QColor(0x00, 0x7A, 0xD8));
+    d->_rightButton->setLightTextColor(Qt::white);
+    d->_rightButton->setDarkDefaultColor(QColor(0x4C, 0xA0, 0xE0));
+    d->_rightButton->setDarkHoverColor(QColor(0x45, 0x91, 0xCC));
+    d->_rightButton->setDarkPressColor(QColor(0x3F, 0x85, 0xBB));
+    d->_rightButton->setDarkTextColor(Qt::black);
+    d->_rightButton->setMinimumSize(0, 0);
+    d->_rightButton->setMaximumSize(QSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX));
+    d->_rightButton->setFixedHeight(38);
+    d->_rightButton->setBorderRadius(6);
+    connect(d->_rightButton, &TtTextButton::clicked, this, [=]() {
+      Q_EMIT rightButtonClicked();
+      onRightButtonClicked();
+      close();
+    });
+
+    d->_centralWidget = new QWidget(this);
+
+    // 默认中心显示的 widget
+    QHBoxLayout *centralVLayout = new QHBoxLayout(d->_centralWidget);
+    centralVLayout->setContentsMargins(9, 15, 9, 20);
+    QLabel iconLabel;
+    iconLabel.setPixmap(QPixmap(":/icon/icon/info-circle.svg"));
+    d->content_ = new QLabel();
+    centralVLayout->addWidget(&iconLabel);
+    centralVLayout->addWidget(d->content_);
+    centralVLayout->addStretch();
+
+    // 主布局
+    d->_mainLayout = new QVBoxLayout(this);
+    d->_buttonLayout = new QHBoxLayout();
+    d->_buttonLayout->addWidget(d->_leftButton);
+    d->_buttonLayout->addWidget(d->_rightButton);
+    d->_mainLayout->addWidget(d->_centralWidget);
+    d->_mainLayout->addLayout(d->_buttonLayout);
+
+    d->_themeMode = TtTheme::getInstance()->getThemeMode();
+    connect(
+        TtTheme::getInstance(), &TtTheme::themeModeChanged, this,
+        [=](TtThemeType::ThemeMode themeMode) { d->_themeMode = themeMode; });
+  }
+  if (fixSize) {
+    if (d->main_window_) {
+      QTimer::singleShot(0, this, [=]() {
+        setFixedWidth(400);
+        adjustPosition();
+      });
+    }
+  }
+  if (modality != Qt::NonModal && mainWindow) {
+    // 模态才会创建阴影窗口
+    d->main_window_ = mainWindow; // 保存父窗口
+    d->_shadowWidget = new QWidget(mainWindow);
+    d->_shadowWidget->move(0, 0);
+    d->_shadowWidget->setFixedSize(mainWindow->size());
+    d->_shadowWidget->setObjectName("TtShadowWidget");
+    d->_shadowWidget->setStyleSheet(
+        "#TtShadowWidget{background-color:rgba(0,0,0,90);}");
+    d->_shadowWidget->setVisible(true);
+    setContentsMargins(0, 0, 0, 0);
+    mainWindow->installEventFilter(this);
+  } else {
+    setContentsMargins(15, 15, 15, 15); // 为阴影留出空间
+  }
+
+  setWindowModality(modality);
+}
+
 TtContentDialog::~TtContentDialog() {
   Q_D(TtContentDialog);
   qDebug() << "contentdialog delete";
@@ -215,14 +412,16 @@ TtContentDialog::~TtContentDialog() {
     animation_ = nullptr;
   }
   // 查找并停止所有子动画
-  const auto animations = findChildren<QPropertyAnimation*>();
+  const auto animations = findChildren<QPropertyAnimation *>();
   for (auto anim : animations) {
     anim->stop();
     anim->deleteLater();
   }
 
   if (d->_shadowWidget) {
+    d->_shadowWidget->hide();
     delete d->_shadowWidget;
+    d->_shadowWidget = nullptr;
   }
   if (d->main_window_) {
     d->main_window_->removeEventFilter(this);
@@ -230,16 +429,25 @@ TtContentDialog::~TtContentDialog() {
   qDebug() << "test";
 }
 
-void TtContentDialog::onLeftButtonClicked() {}
+void TtContentDialog::onLeftButtonClicked() {
+  clicked_type_ = LeftButton;
+  reject();
+}
 
-void TtContentDialog::onMiddleButtonClicked() {}
+void TtContentDialog::onMiddleButtonClicked() {
+  clicked_type_ = MiddleButton;
+  accept();
+}
 
-void TtContentDialog::onRightButtonClicked() {}
+void TtContentDialog::onRightButtonClicked() {
+  clicked_type_ = RightButton;
+  accept();
+}
 
-void TtContentDialog::setCentralWidget(QWidget* centralWidget) {
+void TtContentDialog::setCentralWidget(QWidget *centralWidget) {
   Q_D(TtContentDialog);
   // 保存当前占位符部件的引用，稍后决定是否删除
-  QWidget* oldWidget = d->_centralWidget;
+  QWidget *oldWidget = d->_centralWidget;
   bool isDefaultWidget = false;
 
   // 检查是否为默认创建的占位符部件
@@ -281,22 +489,22 @@ void TtContentDialog::setCentralWidget(QWidget* centralWidget) {
   }
 }
 
-void TtContentDialog::setLeftButtonText(const QString& text) {
+void TtContentDialog::setLeftButtonText(const QString &text) {
   Q_D(TtContentDialog);
   d->_leftButton->setText(text);
 }
 
-void TtContentDialog::setMiddleButtonText(const QString& text) {
+void TtContentDialog::setMiddleButtonText(const QString &text) {
   Q_D(TtContentDialog);
   d->_middleButton->setText(text);
 }
 
-void TtContentDialog::setRightButtonText(const QString& text) {
+void TtContentDialog::setRightButtonText(const QString &text) {
   Q_D(TtContentDialog);
   d->_rightButton->setText(text);
 }
 
-void Ui::TtContentDialog::setCenterText(const QString& text) {
+void Ui::TtContentDialog::setCenterText(const QString &text) {
   Q_D(TtContentDialog);
   d->content_->setText(text);
 }
@@ -306,41 +514,81 @@ void TtContentDialog::setEnablePointOnMouse(bool enable) {
   d->enable_point_on_mouse_ = enable;
 }
 
-void TtContentDialog::paintEvent(QPaintEvent* event) {
+void TtContentDialog::paintEvent(QPaintEvent *event) {
   Q_D(TtContentDialog);
   QPainter painter(this);
   painter.save();
   painter.setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing);
+
+  const bool isNonModal = (windowModality() == Qt::NonModal);
+  const int margin = isNonModal ? 15 : 0; // 阴影边距
+
+  if (isNonModal) {
+    // 非模态, 绘制阴影
+    QColor shadowColor(0, 0, 0, 80);
+    for (int i = 0; i < margin; i++) {
+      shadowColor.setAlpha(80 * (margin - i) / margin);
+      painter.setPen(shadowColor);
+      painter.setBrush(Qt::NoBrush);
+      painter.drawRoundedRect(margin - i, margin - i,
+                              width() - 2 * (margin - i),
+                              height() - 2 * (margin - i), 8, 8);
+    }
+  }
+
+  // 主体背景
   painter.setPen(Qt::NoPen);
   painter.setBrush(d->_themeMode == TtThemeType::ThemeMode::Light
                        ? Qt::white
                        : QColor(0x2B, 0x2B, 0x2B));
 
-  painter.drawRoundedRect(rect(), 8, 8);  // 统一使用8px圆角半径
-                                          // // / 背景绘制
-                                          //  painter.drawRect(rect());
+  QRect contentRect = isNonModal ? QRect(margin, margin, width() - 2 * margin,
+                                         height() - 2 * margin)
+                                 : rect();
+  painter.drawRoundedRect(contentRect, 8, 8);
+  // painter.drawRoundedRect(rect(), 8, 8);  // 统一使用8px圆角半径
+  // // / 背景绘制
+  //  painter.drawRect(rect());
+  // 按钮栏背景（调整位置以适应阴影边距）
+  // painter.setBrush(d->_themeMode == TtThemeType::ThemeMode::Light
+  //                      ? QColor(0xF3, 0xF3, 0xF3)
+  //                      : QColor(0x20, 0x20, 0x20));
+  if (d->_buttonLayout && d->_buttonLayout->count() > 0) {
+    QRect buttonRect = contentRect;
+    buttonRect.setTop(buttonRect.bottom() - 60);
 
-  // 按钮栏背景绘制
-  painter.setBrush(d->_themeMode == TtThemeType::ThemeMode::Light
-                       ? QColor(0xF3, 0xF3, 0xF3)
-                       : QColor(0x20, 0x20, 0x20));
+    painter.setBrush(d->_themeMode == TtThemeType::ThemeMode::Light
+                         ? QColor(0xF3, 0xF3, 0xF3)
+                         : QColor(0x20, 0x20, 0x20));
+    painter.drawRoundedRect(buttonRect, 8, 8);
+  }
+
   // 圆角
   // painter.drawRoundedRect(QRectF(0, height() - 60, width(), 60), 8, 8);
   painter.restore();
 }
 
-void TtContentDialog::showEvent(QShowEvent* event) {
+void TtContentDialog::showEvent(QShowEvent *event) {
   Q_D(TtContentDialog);
   QDialog::showEvent(event);
-
   setProperty("closing", false);
 
+  // 模态对话框
+  if (windowModality() != Qt::NonModal) {
+    if (d->_shadowWidget) {
+      d->_shadowWidget->show();
+    }
+  }
   if (d->enable_point_on_mouse_) {
     startShowAnimation();
   }
 }
 
-void TtContentDialog::closeEvent(QCloseEvent* event) {
+void TtContentDialog::closeEvent(QCloseEvent *event) {
+  Q_D(TtContentDialog);
+  if (d->_shadowWidget) {
+    d->_shadowWidget->hide();
+  }
   if (isModal() && !property("closing").toBool()) {
     setProperty("closing", true);
     // 根据用户是 accept 还是 reject，可以用 sender() 来判断，或默认 accept
@@ -351,15 +599,14 @@ void TtContentDialog::closeEvent(QCloseEvent* event) {
   // 放置重入
   if (property("closing").toBool()) {
     // 截断事件
-    qDebug() << "av";
     event->accept();
     return;
   }
   setProperty("closing", true);
 
-  QPointer<TtContentDialog> self(this);  // 弱引用, 避免悬空访问
+  QPointer<TtContentDialog> self(this); // 弱引用, 避免悬空访问
 
-  QPropertyAnimation* closeAnim = new QPropertyAnimation(this, "windowOpacity");
+  QPropertyAnimation *closeAnim = new QPropertyAnimation(this, "windowOpacity");
   closeAnim->setDuration(200);
   closeAnim->setStartValue(1.0);
   closeAnim->setEndValue(0.0);
@@ -372,7 +619,7 @@ void TtContentDialog::closeEvent(QCloseEvent* event) {
       }
     }
   });
-  event->ignore();  // 阻止立即关闭
+  event->ignore(); // 阻止立即关闭
 
   // 禁用交互，防止在动画期间操作
   setAttribute(Qt::WA_TransparentForMouseEvents, true);
@@ -380,16 +627,17 @@ void TtContentDialog::closeEvent(QCloseEvent* event) {
 
   closeAnim->start(QAbstractAnimation::DeleteWhenStopped);
 
-  Q_D(TtContentDialog);
+  // Q_D(TtContentDialog);
   if (d->_shadowWidget) {
-    d->_shadowWidget->hide();  // 或者也加个动画
+    d->_shadowWidget->hide(); // 或者也加个动画
   }
 }
 
-bool TtContentDialog::eventFilter(QObject* obj, QEvent* event) {
+bool TtContentDialog::eventFilter(QObject *obj, QEvent *event) {
   Q_D(TtContentDialog);
   if (event->type() == QEvent::Resize && obj == d->main_window_) {
-    if (d->_shadowWidget) {
+    if (d->_shadowWidget && windowModality() != Qt::NonModal) {
+      // 非模态对话框, 不需要调整阴影大小
       d->_shadowWidget->setFixedSize(d->main_window_->size());
     }
     adjustPosition();
@@ -416,7 +664,7 @@ void TtContentDialog::adjustPosition() {
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
   // 当前父窗口所在的屏幕
-  QScreen* screen = QGuiApplication::screenAt(targetCenter);
+  QScreen *screen = QGuiApplication::screenAt(targetCenter);
   if (screen) {
     screenGeo = screen->availableGeometry();
   } else {
@@ -446,29 +694,29 @@ void TtContentDialog::startShowAnimation() {
   this->ensurePolished();
   this->adjustSize();
 
-  const QSize finalSize = size();          // 自身的显示大小
-  const QPoint mousePos = QCursor::pos();  // 全局坐标
-  const QPoint targetPos = this->pos();    // 本窗口
+  const QSize finalSize = size();         // 自身的显示大小
+  const QPoint mousePos = QCursor::pos(); // 全局坐标
+  const QPoint targetPos = this->pos();   // 本窗口
 
   setGeometry(QRect(mousePos, QSize(1, 1)));
-  setWindowOpacity(0.0);  // 透明状态
+  setWindowOpacity(0.0); // 透明状态
 
   // if (animation_) {
 
   // }
 
   // 创建动画组
-  QParallelAnimationGroup* group = new QParallelAnimationGroup(this);
+  QParallelAnimationGroup *group = new QParallelAnimationGroup(this);
 
   // 缩放动画（带弹性效果） 几何变化
-  QPropertyAnimation* scaleAnim = new QPropertyAnimation(this, "geometry");
+  QPropertyAnimation *scaleAnim = new QPropertyAnimation(this, "geometry");
   scaleAnim->setDuration(200);
   scaleAnim->setStartValue(QRect(mousePos, QSize(1, 1)));
   scaleAnim->setEndValue(QRect(targetPos, finalSize));
   scaleAnim->setEasingCurve(QEasingCurve::OutBack);
 
   // 淡入动画  透明度
-  QPropertyAnimation* fadeAnim = new QPropertyAnimation(this, "windowOpacity");
+  QPropertyAnimation *fadeAnim = new QPropertyAnimation(this, "windowOpacity");
   fadeAnim->setDuration(150);
   fadeAnim->setStartValue(0.0);
   fadeAnim->setEndValue(1.0);
@@ -481,7 +729,7 @@ void TtContentDialog::startShowAnimation() {
   connect(group, &QAnimationGroup::finished, [=]() {
     // 显示动画完成, dialog 接收鼠标事件
     setAttribute(Qt::WA_TransparentForMouseEvents, false);
-    activateWindow();  // 确保获得焦点
+    activateWindow(); // 确保获得焦点
   });
 
   // 禁用初始交互
@@ -566,9 +814,9 @@ void TtContentDialog::startShowAnimation() {
   //   show();
 }
 
-TtContentDialogPrivate::TtContentDialogPrivate(QObject* parent)
+TtContentDialogPrivate::TtContentDialogPrivate(QObject *parent)
     : QObject(parent) {}
 
 TtContentDialogPrivate::~TtContentDialogPrivate() {}
 
-}  // namespace Ui
+} // namespace Ui

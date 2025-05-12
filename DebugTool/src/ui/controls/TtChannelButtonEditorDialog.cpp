@@ -113,20 +113,14 @@ void TtChannelButtonEditorDialog::init() {
   title_edit_->setText("Untitled");
   frame_header_ = new Ui::TtLabelLineEdit(tr("帧头(HEX)"), this);
   frame_header_length_ = new Ui::TtLabelLineEdit(tr("帧头长度"), this);
-  // frame_type_ = new Ui::TtLabelLineEdit(tr("类型字段(字节)"), this);
-  // frame_type_->setText("1");
   frame_type_offset_ = new Ui::TtLabelLineEdit(tr("类型字段偏移"), this);
-  // frame_length_ = new Ui::TtLabelLineEdit(tr("长度字段(字节)"), this);
-  // frame_length_->setText("1");
   frame_length_offset_ = new Ui::TtLabelLineEdit(tr("长度字段偏移"), this);
   frame_end_ = new Ui::TtLabelLineEdit(tr("帧尾"), this);
 
   mainLayout->addWidget(title_edit_);
   mainLayout->addWidget(frame_header_);
   mainLayout->addWidget(frame_header_length_);
-  // mainLayout->addWidget(frame_type_);
   mainLayout->addWidget(frame_type_offset_);
-  // mainLayout->addWidget(frame_length_);
   mainLayout->addWidget(frame_length_offset_);
   mainLayout->addWidget(frame_end_);
 
@@ -177,29 +171,41 @@ void TtChannelButtonEditorDialog::init() {
 
   QHBoxLayout *checkBlockLayout = new QHBoxLayout;
   checkBlockLayout->addWidget(new QLabel(tr("勾选块色:"), this));
-
   // m_checkBlockButton = new Ui::TtFancyButton(m_button->getCheckBlockColor(),
   //                                            tr("选择颜色"), this);
+  // 赋值了 button
   if (m_button) {
+    // 无效的颜色
+    // 但那是无效
+    qDebug() << m_button->getCheckBlockColor();
+    // 编辑
     QColor randomCheckColor = m_button->getCheckBlockColor();
+    // 黑色
     m_checkBlockButton =
         new Ui::TtFancyButton(randomCheckColor, tr("选择颜色"), this);
     m_chosenCheckBlockColor = randomCheckColor;
   } else {
+    // 随机颜色生成, 没有指定 m_buttons
     int red = QRandomGenerator::global()->bounded(0, 256);
     int green = QRandomGenerator::global()->bounded(0, 256);
     int blue = QRandomGenerator::global()->bounded(0, 256);
     QColor randomCheckColor = QColor(red, green, blue, 100);
+    // 创建
     m_checkBlockButton =
         new Ui::TtFancyButton(randomCheckColor, tr("选择颜色"), this);
     m_chosenCheckBlockColor = randomCheckColor;
+    // 这里返回新建的随机颜色
   }
 
   connect(m_checkBlockButton, &Ui::TtFancyButton::clicked, this, [this]() {
     QColor chosen = QColorDialog::getColor(m_chosenCheckBlockColor, this,
                                            tr("选择背景颜色"));
+    qDebug() << chosen;
     if (chosen.isValid()) {
+      // 历史创建的, 无法更改颜色, 选择什么都是相同的黑色
+      qDebug() << chosen;
       m_chosenCheckBlockColor = chosen;
+      // 设置颜色失败 ???
       m_checkBlockButton->setColor(m_chosenCheckBlockColor);
     }
   });

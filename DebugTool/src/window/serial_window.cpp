@@ -145,17 +145,24 @@ void SerialWindow::saveSetting() {
   // 还有 btn plot 的配置
   // config_.insert("PlotSetting", QJsonValue(channel_info_));
   // 为 channel_info_ 创建一个自定义 JSON 对象
+
   QJsonObject channelInfoJson;
   for (auto it = channel_info_.constBegin(); it != channel_info_.constEnd();
        ++it) {
     // 遍历每一个 channel 信息
     QJsonObject channelData;
     // 是否会重复通道值
-    channelData["channel"] = static_cast<int>(it.value().first); // 保存通道号
+    // channelData["channel"] = static_cast<int>(it.value().first); //
+    // 保存通道号
+    channelData["channel"] = it.value().channel_num_; // 保存通道号
 
     // 将配置信息 QByteArray 转换为 Base64 字符串
-    QString base64Data = QString::fromLatin1(it.value().second.toBase64());
+    // QString base64Data = QString::fromLatin1(it.value().second.toBase64());
+    QString base64Data = QString::fromLatin1(it.value().data.toBase64());
     channelData["data"] = base64Data;
+
+    // 名字的方式存储
+    channelData["color"] = it.value().color.name();
 
     // 使用 UUID 作为键
     channelInfoJson[it.key()] = channelData;
@@ -210,16 +217,18 @@ void SerialWindow::setSetting(const QJsonObject &config) {
       QJsonObject data = it.value().toObject();
 
       quint16 channel = data["channel"].toInt();
+
       QByteArray binaryData =
           QByteArray::fromBase64(data["data"].toString().toLatin1());
 
-      // channel_info_[uuid] = qMakePair(channel, binaryData);
-      // 添加button
-      qDebug() << "配置信息";
-      // 颜色的写入和读取
-      addChannelInfo(QColor(Qt::blue), binaryData, uuid);
+      QColor color;
+      if (data.contains("color")) {
+        qDebug() << "contain";
+        color = QColor(data["color"].toString("#2cccff"));
+      }
+      // qDebug() << "配置信息 color" << color;
+      addChannel(binaryData, color, uuid);
     }
-    // 需要重新创建界面元素...
   }
 
   // 读取 Lua 脚本
@@ -335,32 +344,9 @@ void SerialWindow::refreshTerminalDisplay() {
   terminal_->setUpdatesEnabled(true);
 }
 
-void SerialWindow::addChannel(const QColor &color, const QByteArray &blob,
+void SerialWindow::addChannel(const QByteArray &blob, const QColor &color,
                               const QString &uuid) {
 
-  QListWidgetItem *item = new QListWidgetItem(serialDataList);
-  item->setSizeHint(QSize(78, 30));
-  TtChannelButton *channelBtn =
-      new TtChannelButton(QColor(100, 100, 140), editorDialog.title(), this);
-  channelBtn->setCheckBlockColor(editorDialog.checkBlockColor());
-  channelBtn->setFocusPolicy(Qt::NoFocus);
-  if (uuid.isEmpty()) {
-    qDebug() << "创建新的 uuid";
-    uuid = QUuid::createUuid();
-  }
-  channelBtn->setUuid(uuid.toString());
-  serialDataList->setItemWidget(item, channelBtn);
-
-  // 添加到配置中
-
-  // 添加解析规则
-  // 添加到了 rules_ 中
-  // 外部也可以提供 uuid
-
-  qDebug() << "添加配置";
-  channel_info_[uuid] = qMakePair(channel_nums_, blob);
-  quint16 channel = channel_nums_;
-  // title 可以重复
   QDataStream in(blob);
   in.setVersion(QDataStream::Qt_6_4);
 
@@ -372,6 +358,50 @@ void SerialWindow::addChannel(const QColor &color, const QByteArray &blob,
 
   QString title, header, headerLength, typeOffset, lengthOffset, tail;
   in >> title >> header >> headerLength >> typeOffset >> lengthOffset >> tail;
+
+  QListWidgetItem *item = new QListWidgetItem(serialDataList);
+  item->setSizeHint(QSize(78, 30));
+
+  // color: 1. 生成的; 2. 历史的
+  // title 1. 历史添加, blob 中解析
+  // 获取的 color 有问题
+  qDebug() << color;
+
+  // 创建 button
+  TtChannelButton *channelBtn =
+      new TtChannelButton(QColor(100, 100, 140), title, this);
+  channelBtn->setCheckBlockColor(color);
+
+  // 都出来的颜色直接无效
+  qDebug() << channelBtn->getCheckBlockColor();
+
+  channelBtn->setFocusPolicy(Qt::NoFocus);
+  if (uuid.isEmpty()) {
+    qDebug() << "创建新的 uuid";
+    uuid = QUuid::createUuid().toString();
+  }
+  channelBtn->setUuid(uuid);
+  serialDataList->setItemWidget(item, channelBtn);
+
+  // 颜色的添加
+
+  // 添加到配置中
+
+  // 添加解析规则
+  // 添加到了 rules_ 中
+  // 外部也可以提供 uuid
+
+  qDebug() << "添加配置";
+  // channel_info_[uuid] = qMakePair(channel_nums_, blob);
+  // channel_info_[uuid]
+  // channel_nums_, blob);
+
+  quint16 channel = channel_nums_;
+  // title 可以重复
+
+  // 保存配置信息
+  ChannelSetting setting{channel_nums_, title, blob, color};
+  channel_info_[uuid] = setting;
 
   QString luaCode;
   in >> luaCode;
@@ -438,6 +468,7 @@ void SerialWindow::addChannel(const QColor &color, const QByteArray &blob,
                        qDebug() << "解析的整数值:" << value;
                      }};
 
+  // 应用颜色
   serial_plot_->addGraphs(channel, color);
   // 修改则覆盖原有的值
   rules_.insert(uuid, rule);
@@ -453,10 +484,11 @@ void SerialWindow::addChannel(const QColor &color, const QByteArray &blob,
               it->enable = check;
             }
           });
-}
+} // namespace Window
 
 void SerialWindow::handleDialogData(const QString &uuid, quint16 channel,
-                                    const QByteArray &blob) {
+                                    const QByteArray &blob,
+                                    const QColor &color) {
   // title 可以重复
   QDataStream in(blob);
   in.setVersion(QDataStream::Qt_6_4);
@@ -478,8 +510,13 @@ void SerialWindow::handleDialogData(const QString &uuid, quint16 channel,
     lua_script_codes_[channel] = luaCode;
   }
 
-  // 每个 uuid 的对应配置数组
-  channel_info_[uuid] = qMakePair(channel, blob);
+  // // 每个 uuid 的对应配置数组
+  // channel_info_[uuid] = qMakePair(channel, blob);
+  // color 从哪里来 ?
+  // 修改后的
+  qDebug() << "edit color" << color;
+  ChannelSetting setting{channel_nums_, title, blob, color};
+  channel_info_[uuid] = setting;
 
   // qDebug() << title << header << headerLength << typeOffset << lengthOffset
   //          << length << tail;
@@ -510,9 +547,63 @@ void SerialWindow::handleDialogData(const QString &uuid, quint16 channel,
   }
 }
 
+void SerialWindow::showMessage(const QByteArray &data, bool out) {
+
+  if (out) {
+    send_byte_count_ += data.size();
+  } else {
+    recv_byte_count_ += data.size();
+  }
+
+  QDateTime now = QDateTime::currentDateTime();
+  QString timestamp = now.toString("[yyyy-MM-dd hh:mm:ss.zzz]");
+  QString formattedMessage;
+
+  if (out) {
+    formattedMessage += "[Tx]";
+  } else {
+    formattedMessage += "[Rx]";
+  }
+
+  formattedMessage += ' ';
+  formattedMessage.append(timestamp);
+  formattedMessage += ' ';
+
+  // 出现问题
+  if (display_type_ == MsgType::TEXT) {
+    // 直接追加文本
+    formattedMessage.append(data);
+  } else if (display_type_ == MsgType::HEX) {
+    // 转换成 utf8 -> hex
+    formattedMessage.append(data.toHex(' ').toUpper().trimmed());
+  }
+  terminal_->appendPlainText(formattedMessage);
+
+  auto *msg = new Ui::TtChatMessage();
+  msg->setContent(data);
+  msg->setRawData(data);
+  msg->setTimestamp(now);
+  if (out) {
+    msg->setOutgoing(true);
+  } else {
+    msg->setOutgoing(false);
+  }
+  msg->setBubbleColor(QColor("#DCF8C6"));
+  QList<Ui::TtChatMessage *> list;
+  list.append(msg);
+  message_model_->appendMessages(list);
+  message_view_->scrollToBottom();
+}
+
 void SerialWindow::showMessage(const QString &data, bool out) {
 
+  // false 返回 ?
+  // 文本 1234
+  qDebug() << out << data;
   QByteArray dataUtf8 = data.toUtf8();
+
+  // qDebug() << out << dataUtf8;
+
   if (out) {
     send_byte_count_ += data.size();
   } else {
@@ -533,8 +624,12 @@ void SerialWindow::showMessage(const QString &data, bool out) {
 
   // 出现问题
   if (display_type_ == MsgType::TEXT) {
+    // TEXT 格式, data 保持, 有问题
     formattedMessage.append(data);
   } else if (display_type_ == MsgType::HEX) {
+    // 这里
+    // 发送端
+    qDebug() << "hear" << dataUtf8.toHex(' ').toUpper().trimmed();
     formattedMessage.append(dataUtf8.toHex(' ').toUpper().trimmed());
   }
   terminal_->appendPlainText(formattedMessage);
@@ -563,21 +658,33 @@ void SerialWindow::sendMessage(const QString &data, MsgType type) {
 
   QByteArray dataUtf8;
 
+  // 判断发送的类型
   if (type == MsgType::HEX) {
     QString hexStr = data;
     hexStr = hexStr.remove(QRegularExpression("[^0-9A-Fa-f]"));
+    // hex
     if (hexStr.length() % 2 != 0) {
-      qDebug() << "HEX 字符串长度不是偶数，可能出错";
+      // qDebug() << "HEX 字符串长度不是偶数，可能出错";
+      Ui::TtMessageBar::warning(TtMessageBarType::Top, tr(""),
+                                tr("HEX 字符串长度不是偶数，可能出错"), 1000,
+                                this);
       return;
     }
     dataUtf8 = QByteArray::fromHex(hexStr.toUtf8());
+    // qDebug() << "dataUtf8" << data; // 原始数据
   } else {
     dataUtf8 = data.toUtf8();
   }
+  // 将dataUtf8 发送出去
 
   if (package_size_ > 0) {
     // 交给 sendPackageTimer 处理
     for (int i = 0; i < data.size(); i += package_size_) {
+      // 循环塞入, 但是这边塞入很快, 那边是 计时读取
+      qDebug() << "enqueue package";
+      // 心跳 timeout 会从 msg_queuq_ 中取出内容
+      // 存储的是 QString ?
+      // 确实入队了
       msg_queue_.enqueue(data.mid(i, package_size_));
     }
   } else {
@@ -586,78 +693,15 @@ void SerialWindow::sendMessage(const QString &data, MsgType type) {
                               1500, this);
       return;
     }
-    // send_byte_count += data.size();
-
-    // QDateTime now = QDateTime::currentDateTime();
-    // QString timestamp = now.toString("[yyyy-MM-dd hh:mm:ss.zzz]");
-    // QString formattedMessage;
-    // formattedMessage += "[Tx]";
-    // formattedMessage += ' ';
-    // formattedMessage.append(timestamp);
-    // formattedMessage += ' ';
-
-    // if (display_type_ == MsgType::TEXT) {
-    //   // formattedMessage.append(QString::fromUtf8(data));
-    //   formattedMessage.append(data);
-    // } else if (display_type_ == MsgType::HEX) {
-    //   // formattedMessage.append(data.toHex(' ').toUpper().trimmed());
-    //   // formattedMessage.append(data.toUtf8().toHex('
-    //   ').toUpper().trimmed()); formattedMessage.append(dataUtf8.toHex('
-    //   ').toUpper().trimmed());
-    // }
-    // terminal_->appendPlainText(formattedMessage);
-
-    // auto *msg = new Ui::TtChatMessage();
-    // msg->setContent(data);
-    // msg->setRawData(data.toUtf8());
-    // msg->setTimestamp(now);
-    // msg->setOutgoing(true);
-    // msg->setBubbleColor(QColor("#DCF8C6"));
-    // QList<Ui::TtChatMessage *> list;
-    // list.append(msg);
-    // message_model_->appendMessages(list);
-
-    // send_byte->setText(QString("发送字节数: %1 B").arg(send_byte_count));
-    // message_view_->scrollToBottom();
+    qDebug() << "no package";
     QMetaObject::invokeMethod(serial_port_, "sendData", Qt::QueuedConnection,
                               Q_ARG(QByteArray, dataUtf8));
 
-    showMessage(data);
+    // 显示上问题
+    // showMessage(data);
+    showMessage(dataUtf8);
   }
 }
-
-// void SerialWindow::sendMessage(const QByteArray &data) {
-//   QDateTime now = QDateTime::currentDateTime();
-//   QString timestamp = now.toString("[yyyy-MM-dd hh:mm:ss.zzz]");
-//   QString formattedMessage;
-//   formattedMessage += "[Tx]";
-//   formattedMessage += ' ';
-//   formattedMessage.append(timestamp);
-//   formattedMessage += ' ';
-
-//   if (display_type_ == MsgType::TEXT) {
-//     formattedMessage.append(QString::fromUtf8(data));
-//   } else if (display_type_ == MsgType::HEX) {
-//     formattedMessage.append(data.toHex(' ').toUpper().trimmed());
-//   }
-//   terminal_->appendPlainText(formattedMessage);
-
-//   auto *msg = new Ui::TtChatMessage();
-//   msg->setContent(QString(data));
-//   msg->setRawData(data);
-//   msg->setTimestamp(now);
-//   msg->setOutgoing(true);
-//   msg->setBubbleColor(QColor("#DCF8C6"));
-//   QList<Ui::TtChatMessage *> list;
-//   list.append(msg);
-//   message_model_->appendMessages(list);
-
-//   QMetaObject::invokeMethod(serial_port_, "sendData", Qt::QueuedConnection,
-//                             Q_ARG(QByteArray, data));
-
-//   send_byte->setText(QString("发送字节数: %1 B").arg(send_byte_count));
-//   message_view_->scrollToBottom();
-// }
 
 void SerialWindow::parseBuffer() {
   //   // 解析, 每个通道都有不同的 uuid 值
@@ -883,12 +927,20 @@ void SerialWindow::showErrorMessage(const QString &text) {
 }
 
 void SerialWindow::dataReceived(const QByteArray &data) {
-  // 接收数据
-  // qDebug() << "data: " << data;
+  qDebug() << "data: " << data;
+
+  // 添加是正确的
   receive_buffer_.append(data);
   // qDebug() << "rece_buf"
   // 解析数据帧
   parseBuffer();
+
+  // // 转换失败有问题
+  // auto str = QString::fromUtf8(data);
+  // auto hexstr = QByteArray::fromHex(str.toUtf8());
+  // qDebug() << "hex: " << hexstr;
+
+  showMessage(data);
 
   // 上面只对 receive_buffer_ 处理
 
@@ -896,7 +948,10 @@ void SerialWindow::dataReceived(const QByteArray &data) {
 
   // 导出 csv 格式. 在 menu 中实现
 
-  showMessage(QString::fromUtf8(data), false);
+  // 此处有 bug, 传入的是 16 进制的格式时
+  // showMessage(data);
+  // 转换 utf8, 有转换 hex
+  // showMessage(QString::fromUtf8(data), false);
 
   // QString content;
 
@@ -949,69 +1004,9 @@ void SerialWindow::sendMessageToPort() {
     qDebug() << "empty";
     return;
   }
+  // radio button 切换发送类型
+  // 适用于 分包机制
   sendMessage(editorText, send_type_);
-
-  // QByteArray data;
-
-  // if (send_type_ == MsgType::HEX) {
-  //   QString hexStr = text;
-  //   hexStr = hexStr.remove(QRegularExpression("[^0-9A-Fa-f]"));
-  //   if (hexStr.length() % 2 != 0) {
-  //     qDebug() << "HEX 字符串长度不是偶数，可能出错";
-  //     return;
-  //   }
-  //   data = QByteArray::fromHex(hexStr.toUtf8());
-  // } else if (send_type_ == MsgType::TEXT) {
-  //   data = text.toUtf8();
-  // }
-
-  // // 发送包拆分
-  // if (package_size_ > 0) {
-  //   for (int i = 0; i < text.size(); i += package_size_) {
-  //     msg_queue_.enqueue(text.mid(i, package_size_));
-  //   }
-  // } else {
-  //   // 如果发送包大小为 0
-  //   if (!serial_port_opened) {
-  //     Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""),
-  //     tr("串口未打开"),
-  //                             1500, this);
-  //     return;
-  //   }
-  //   send_byte_count += text.size();
-
-  //   // // 获取当前时间并格式化消息
-  //   // QDateTime now = QDateTime::currentDateTime();
-  //   // QString timestamp = now.toString("[yyyy-MM-dd hh:mm:ss.zzz]");
-  //   // content += "[Tx]";
-  //   // content += ' ';
-  //   // content.append(timestamp);
-  //   // content += ' ';
-
-  //   // if (display_type_ == MsgType::TEXT) {
-  //   //   content.append(QString::fromUtf8(data));
-  //   // } else if (display_type_ == MsgType::HEX) {
-  //   //   content.append(data.toHex(' ').toUpper().trimmed());
-  //   // }
-  //   // terminal_->appendPlainText(content);
-
-  //   // auto tmp = new Ui::TtChatMessage();
-  //   // tmp->setContent(text); // 显示的文本
-  //   // tmp->setRawData(data); // 原始文本
-  //   // tmp->setTimestamp(now);
-  //   // tmp->setOutgoing(true);
-  //   // tmp->setBubbleColor(QColor("#DCF8C6"));
-  //   // QList<Ui::TtChatMessage *> list;
-  //   // list.append(tmp);
-  //   // message_model_->appendMessages(list);
-
-  //   // QMetaObject::invokeMethod(serial_port_, "sendData",
-  //   Qt::QueuedConnection,
-  //   //                           Q_ARG(QByteArray, data));
-
-  //   // send_byte->setText(QString("发送字节数: %1 B").arg(send_byte_count));
-  //   // message_view_->scrollToBottom();
-  // }
 }
 
 void SerialWindow::sendMessageToPort(const QString &data) {
@@ -1269,82 +1264,96 @@ void SerialWindow::init() {
   serialDataList = new QListWidget(graphSpiltter);
   serialDataList->setContextMenuPolicy(
       Qt::CustomContextMenu); // 启用自定义右键菜单
-  connect(serialDataList, &QListWidget::customContextMenuRequested, this,
-          [=](const QPoint &pos) {
-            // 获取当前右键点击的项
-            QListWidgetItem *item = serialDataList->itemAt(pos);
+  connect(
+      serialDataList, &QListWidget::customContextMenuRequested, this,
+      [=](const QPoint &pos) {
+        // 获取当前右键点击的项
+        QListWidgetItem *item = serialDataList->itemAt(pos);
 
-            // 创建菜单
-            QMenu menu;
-            QAction *addAction = menu.addAction(tr("添加"));
+        // 创建菜单
+        QMenu menu;
+        QAction *addAction = menu.addAction(tr("添加"));
 
-            QAction *editAction = nullptr;
-            QAction *deleteAction = nullptr;
-            QAction *renameAction = nullptr;
+        QAction *editAction = nullptr;
+        QAction *deleteAction = nullptr;
+        QAction *renameAction = nullptr;
 
-            if (item) {
-              editAction = menu.addAction(tr("编辑"));
-              deleteAction = menu.addAction(tr("删除"));
-              renameAction = menu.addAction(tr("重命名"));
+        if (item) {
+          editAction = menu.addAction(tr("编辑"));
+          deleteAction = menu.addAction(tr("删除"));
+          renameAction = menu.addAction(tr("重命名"));
+        }
+
+        // 处理菜单点击
+        QAction *selectedAction =
+            menu.exec(serialDataList->viewport()->mapToGlobal(pos));
+        if (!selectedAction) {
+          // 点击 menu 的其他区域
+          return;
+        }
+        if (selectedAction == addAction) {
+          // 此处可以更改颜色
+          TtChannelButtonEditorDialog editorDialog(this);
+          if (editorDialog.exec() == QDialog::Accepted) {
+            saved_ = false;
+            // 颜色生成
+            // 创建 button, 添加 channel 信息
+            // 随机生成的颜色保存在 editorDialog 中
+            // addChannel(channelBtn->getCheckBlockColor(),
+            // editorDialog.metaInfo());
+            addChannel(editorDialog.metaInfo(), editorDialog.checkBlockColor());
+          }
+        } else if (item) {
+          if (selectedAction == renameAction) {
+            if (auto *btn = qobject_cast<TtChannelButton *>(
+                    serialDataList->itemWidget(item))) {
+              saved_ = false;
+              btn->modifyText();
             }
-
-            // 处理菜单点击
-            QAction *selectedAction =
-                menu.exec(serialDataList->viewport()->mapToGlobal(pos));
-            if (!selectedAction) {
-              // 点击 menu 的其他区域
-              return;
+          } else if (selectedAction == deleteAction) {
+            auto *btn = qobject_cast<TtChannelButton *>(
+                serialDataList->itemWidget(item));
+            if (btn) {
+              // 删除
+              saved_ = false;
+              // quint16 channel = channel_info_.value(btn->getUuid()).first;
+              quint16 channel =
+                  channel_info_.value(btn->getUuid()).channel_num_;
+              qDebug() << channel;
+              serial_plot_->removeGraphs(channel);
+              lua_script_codes_.remove(channel);
+              // 移出规则
+              channel_info_.remove(btn->getUuid());
+              rules_.remove(btn->getUuid());
             }
-            if (selectedAction == addAction) {
-              TtChannelButtonEditorDialog editorDialog(this);
+            auto *deleteItem =
+                serialDataList->takeItem(serialDataList->row(item)); // 删除项
+
+            qDebug() << "delete";
+            delete deleteItem;
+
+          } else if (selectedAction == editAction) {
+            if (auto *btn = qobject_cast<TtChannelButton *>(
+                    serialDataList->itemWidget(item))) {
+              saved_ = false;
+              // 数据保存在 info 中
+              // 根据存在的 btn
+              // 编辑状态
+              TtChannelButtonEditorDialog editorDialog(btn, this);
+              editorDialog.setMetaInfo(
+                  channel_info_.value(btn->getUuid()).data);
               if (editorDialog.exec() == QDialog::Accepted) {
-                // 缺少 button 制作
-                saved_ = false;
-                addChannel(channelBtn->getCheckBlockColor(),
-                           editorDialog.metaInfo());
-              }
-            } else if (item) {
-              if (selectedAction == renameAction) {
-                if (auto *btn = qobject_cast<TtChannelButton *>(
-                        serialDataList->itemWidget(item))) {
-                  saved_ = false;
-                  btn->modifyText();
-                }
-              } else if (selectedAction == deleteAction) {
-                auto *btn = qobject_cast<TtChannelButton *>(
-                    serialDataList->itemWidget(item));
-                if (btn) {
-                  saved_ = false;
-                  quint16 channel = channel_info_.value(btn->getUuid()).first;
-                  qDebug() << channel;
-                  serial_plot_->removeGraphs(channel);
-                  lua_script_codes_.remove(channel);
-                  // 移出规则
-                  channel_info_.remove(btn->getUuid());
-                  rules_.remove(btn->getUuid());
-                }
-                auto *deleteItem = serialDataList->takeItem(
-                    serialDataList->row(item)); // 删除项
-
-                qDebug() << "delete";
-                delete deleteItem;
-
-              } else if (selectedAction == editAction) {
-                if (auto *btn = qobject_cast<TtChannelButton *>(
-                        serialDataList->itemWidget(item))) {
-                  saved_ = false;
-                  // 数据保存在 info 中
-                  TtChannelButtonEditorDialog editorDialog(btn, this);
-                  editorDialog.setMetaInfo(
-                      channel_info_.value(btn->getUuid()).second);
-                  if (editorDialog.exec() == QDialog::Accepted) {
-                    handleDialogData(channel_info_.value(btn->getUuid()).first,
-                                     editorDialog.metaInfo(), btn->getUuid());
-                  }
-                }
+                // 编辑成功
+                qDebug() << editorDialog.checkBlockColor();
+                handleDialogData(
+                    btn->getUuid(),
+                    channel_info_.value(btn->getUuid()).channel_num_,
+                    editorDialog.metaInfo(), editorDialog.checkBlockColor());
               }
             }
-          });
+          }
+        }
+      });
 
   serialDataList->setContentsMargins(QMargins());
   serialDataList->setSpacing(0);
@@ -1517,6 +1526,7 @@ void SerialWindow::init() {
   main_layout_->addWidget(main_splitter_);
 
   send_package_timer_ = new QTimer(this);
+  send_package_timer_->setTimerType(Qt::TimerType::PreciseTimer);
   send_package_timer_->setInterval(0);
   heartbeat_timer_ = new QTimer(this);
   heartbeat_timer_->setTimerType(Qt::TimerType::PreciseTimer);
@@ -1566,14 +1576,12 @@ void SerialWindow::connectSignals() {
       on_off_btn_->setChecked(true);
 
       if (send_package_timer_->interval() != 0) {
-        qDebug() << "send package interval = 0";
         send_package_timer_->start();
       } else {
         send_package_timer_->stop();
       }
 
       if (heartbeat_timer_->interval() != 0) {
-        qDebug() << "heart interval = 0";
         heartbeat_timer_->start();
       } else {
         heartbeat_timer_->stop();
@@ -1625,48 +1633,84 @@ void SerialWindow::connectSignals() {
       msg_queue_.clear();
       return;
     }
-
+    // 时长偏差有点大, 发送显示 bug
     if (!msg_queue_.isEmpty()) {
-      auto package = msg_queue_.dequeue();
+      // QString 类型
+      QString package = msg_queue_.dequeue();
       send_byte_count_ += package.size();
 
-      QString content;
-
-      // 获取当前时间并格式化消息
-      QDateTime now = QDateTime::currentDateTime();
-      QString timestamp = now.toString("[yyyy-MM-dd hh:mm:ss.zzz]");
-
-      content += "[Tx]";
-      content += ' ';
-      content.append(timestamp);
-      content += ' ';
-      if (display_type_ == MsgType::TEXT) {
-        // terminal_->appendPlainText(package.toUtf8().toHex(' ').toUpper());
-        // content.append(QString::fromUtf8(package));
-        content.append(package);
-      } else if (display_type_ == MsgType::HEX) {
-        // terminal_->appendPlainText(package); // 数据内容作为独立块
-        content.append(package.toUtf8().toHex(' ').toUpper().trimmed());
+      // 判断发送的类型
+      QByteArray dataUtf8;
+      if (send_type_ == MsgType::HEX) {
+        QString hexStr = package;
+        hexStr = hexStr.remove(QRegularExpression("[^0-9A-Fa-f]"));
+        // hex
+        if (hexStr.length() % 2 != 0) {
+          // qDebug() << "HEX 字符串长度不是偶数，可能出错";
+          // TtMessageBarType::Warning(TtMessageBarType::Top, tr(""),
+          //                           tr("HEX 字符串长度不是偶数，可能出错"),
+          //                           this);
+          Ui::TtMessageBar::warning(TtMessageBarType::Top, tr(""),
+                                    tr("HEX 字符串长度不是偶数，可能出错"),
+                                    1000, this);
+          return;
+        }
+        dataUtf8 = QByteArray::fromHex(hexStr.toUtf8());
+      } else {
+        // 保持格式发送
+        dataUtf8 = package.toUtf8();
       }
-      // terminal_->appendPlainText(""); // 保留空行分隔
-      terminal_->appendPlainText(content);
+      // 十六进制的格式
+      qDebug() << "send: " << dataUtf8;
+      // // 显示
+      // QString content;
+      // // 获取当前时间并格式化消息
+      // QDateTime now = QDateTime::currentDateTime();
+      // QString timestamp = now.toString("[yyyy-MM-dd hh:mm:ss.zzz]");
+      // content += "[Tx]";
+      // content += ' ';
+      // content.append(timestamp);
+      // content += ' ';
+      // if (display_type_ == MsgType::TEXT) {
+      //   // terminal_->appendPlainText(package.toUtf8().toHex(' ').toUpper());
+      //   // content.append(QString::fromUtf8(package));
+      //   content.append(package);
+      // } else if (display_type_ == MsgType::HEX) {
+      //   // terminal_->appendPlainText(package); // 数据内容作为独立块
+      //   content.append(package.toUtf8().toHex(' ').toUpper().trimmed());
+      // }
+      // // terminal_->appendPlainText(""); // 保留空行分隔
+      // terminal_->appendPlainText(content);
 
-      auto msg = new Ui::TtChatMessage();
-      msg->setContent(package);
-      msg->setRawData(package.toUtf8());
-      msg->setTimestamp(now);
-      msg->setOutgoing(true);
-      msg->setBubbleColor(QColor("#DCF8C6"));
-      QList<Ui::TtChatMessage *> list;
-      list.append(msg);
-      message_model_->appendMessages(list);
+      // auto msg = new Ui::TtChatMessage();
+      // msg->setContent(package);
+      // msg->setRawData(package.toUtf8());
+      // msg->setTimestamp(now);
+      // msg->setOutgoing(true);
+      // msg->setBubbleColor(QColor("#DCF8C6"));
+      // QList<Ui::TtChatMessage *> list;
+      // list.append(msg);
+      // message_model_->appendMessages(list);
+
+      // send_byte_->setText(QString("发送字节数: %1 B").arg(send_byte_count_));
+      // message_view_->scrollToBottom();
 
       // 串口发送
-      QMetaObject::invokeMethod(serial_port_, "sendData", Qt::QueuedConnection,
-                                Q_ARG(QString, package));
+      // QMetaObject::invokeMethod(serial_port_, "sendData",
+      // Qt::QueuedConnection,
+      //                           Q_ARG(QString, package));
 
-      send_byte_->setText(QString("发送字节数: %1 B").arg(send_byte_count_));
-      message_view_->scrollToBottom();
+      // 发送有问题
+      // 这里变为了 QString 类型
+      // bug
+      // QMetaObject::invokeMethod(serial_port_, "sendData",
+      // Qt::QueuedConnection,
+      //                           Q_ARG(QString, dataUtf8));
+      QMetaObject::invokeMethod(serial_port_, "sendData", Qt::QueuedConnection,
+                                Q_ARG(QByteArray, dataUtf8));
+
+      // 展示在 termimal 中
+      showMessage(dataUtf8);
     }
   });
 

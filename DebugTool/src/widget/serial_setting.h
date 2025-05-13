@@ -76,8 +76,11 @@ private:
   Ui::TtLabelLineEdit *script_;
 
   Ui::TtLabelComboBox *framing_model_;
-  Ui::TtLabelComboBox *framing_timeout_;
-  Ui::TtLabelComboBox *framing_fixed_length_;
+  // 输入格式
+  // Ui::TtLabelComboBox *framing_timeout_;
+  // Ui::TtLabelComboBox *framing_fixed_length_;
+  Ui::TtLabelLineEdit *framing_timeout_;  
+  Ui::TtLabelLineEdit *framing_fixed_length_;
 
   Ui::TtLabelComboBox *line_break_;
 

@@ -19,8 +19,8 @@ public:
   Q_INVOKABLE virtual void setSetting(const QJsonObject &config) = 0;
 
 protected:
-  // 默认创建的窗口时, 是默认保存
-  bool saved_ = true;
+  // 初始状态下处于非保存状态
+  bool saved_{false};
 };
 
 } // namespace Window

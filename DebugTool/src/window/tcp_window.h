@@ -5,7 +5,6 @@
 
 #include "Def.h"
 // #include "frame_window.h"
-#include "ui/widgets/window_switcher.h"
 #include "window/frame_window.h"
 
 QT_BEGIN_NAMESPACE

@@ -1,13 +1,14 @@
 #include "ui/controls/TtSerialPortPlot.h"
 
-#include "qcustomplot/qcustomplot.h"
-#include "ui/controls/TtPlotItem.h"
 #include <qelapsedtimer.h>
 #include <ui/widgets/message_bar.h>
+#include "qcustomplot/qcustomplot.h"
+#include "ui/controls/TtPlotItem.h"
+
 
 namespace Ui {
 
-TtSerialPortPlot::TtSerialPortPlot(QWidget *parent) : QCustomPlot(parent) {
+TtSerialPortPlot::TtSerialPortPlot(QWidget* parent) : QCustomPlot(parent) {
   setupPlot();
   last_replot_time_.start();
 
@@ -15,16 +16,17 @@ TtSerialPortPlot::TtSerialPortPlot(QWidget *parent) : QCustomPlot(parent) {
 #ifdef QT_OPENGL_SUPPORT
   hasOpenGL = QOpenGLContext::currentContext() != nullptr;
 #endif
-  // if (hasOpenGL) {
-  //   this->setOpenGl(true);
-  // }
-  this->setOpenGl(true);
+  if (hasOpenGL) {
+    // 默认是不开启 opengl 的
+    // 如果开启了 opengl, 在分开窗口实现时, 不同窗口之间的 serial_plot_ 会造成数据显示混乱
+    this->setOpenGl(true);
+  }
 
   setAntialiasedElements(QCP::aeAll);
 }
 
 TtSerialPortPlot::~TtSerialPortPlot() {
-  for (auto &curve : curves_) {
+  for (auto& curve : curves_) {
     if (curve.tag) {
       delete curve.tag;
       curve.tag = nullptr;
@@ -45,12 +47,12 @@ void TtSerialPortPlot::addData(int channel, double value) {
   }
 
   // 对应图像
-  CurveData &curve = curves_[channel];
+  CurveData& curve = curves_[channel];
 
   // 添加时间戳(秒)
   double timestamp = QDateTime::currentDateTime().toMSecsSinceEpoch() / 1000.0;
   if (curve.timeData.isEmpty()) {
-    m_startTime = timestamp; // 共用同一个起始时间
+    m_startTime = timestamp;  // 共用同一个起始时间
   }
   // 计算相对于起始时间的偏移
   double relativeTime = timestamp - m_startTime;
@@ -76,19 +78,19 @@ void TtSerialPortPlot::addData(int channel, double value) {
     double yMax = std::numeric_limits<double>::lowest();
     bool hasData = false;
 
-    for (auto &c : curves_) {
+    for (auto& c : curves_) {
       if (!c.valueData.isEmpty()) {
         auto [minIt, maxIt] =
             std::minmax_element(c.valueData.begin(), c.valueData.end());
-        yMin = qMin(yMin, *minIt); // 所有图像中的最小 y
+        yMin = qMin(yMin, *minIt);  // 所有图像中的最小 y
         yMax = qMax(yMax, *maxIt);
         hasData = true;
       }
     }
     if (hasData) {
       if (yMin >= yMax) {
-        double center = yMin;                          // 当yMin == yMax时
-        double margin = qMax(qAbs(center) * 0.2, 0.5); // 20%或最小0.5单位
+        double center = yMin;                           // 当yMin == yMax时
+        double margin = qMax(qAbs(center) * 0.2, 0.5);  // 20%或最小0.5单位
         yMin = center - margin;
         yMax = center + margin;
       } else {
@@ -106,8 +108,8 @@ void TtSerialPortPlot::addData(int channel, double value) {
     double xMin = std::numeric_limits<double>::max();
     double xMax = std::numeric_limits<double>::lowest();
 
-    for (auto &c : curves_) {
-      if (c.graph && c.graph->data()->size() > 0) { // 直接使用图形数据
+    for (auto& c : curves_) {
+      if (c.graph && c.graph->data()->size() > 0) {  // 直接使用图形数据
         auto data = c.graph->data();
         xMin = qMin(xMin, data->begin()->key);
         xMax = qMax(xMax, (data->end() - 1)->key);
@@ -115,7 +117,7 @@ void TtSerialPortPlot::addData(int channel, double value) {
     }
 
     if (xMin < xMax) {
-      xAxis->setRange(xMin, xMax); // 无额外边距
+      xAxis->setRange(xMin, xMax);  // 无额外边距
     } else if (xMin == xMax) {
       xAxis->setRange(xMin - 0.1, xMax + 0.1);
     }
@@ -130,7 +132,7 @@ void TtSerialPortPlot::addData(int channel, double value) {
 
 void TtSerialPortPlot::clearData() {
   m_startTime = 0.0;
-  for (auto &curve : curves_) {
+  for (auto& curve : curves_) {
     curve.timeData.clear();
     curve.valueData.clear();
   }
@@ -210,7 +212,7 @@ void TtSerialPortPlot::saveWaveFormData() {
   // QMessageBox::information(this, "保存成功", "CSV 文件已成功保存。");
 }
 
-void TtSerialPortPlot::addGraphs(int channel, const QColor &color) {
+void TtSerialPortPlot::addGraphs(int channel, const QColor& color) {
   if (!curves_.contains(channel)) {
     // 新曲线
     CurveData newCurve;
@@ -224,7 +226,7 @@ void TtSerialPortPlot::addGraphs(int channel, const QColor &color) {
     // newCurve.graph->setLineStyle()
 
     // 创建右侧标签
-    QCPAxis *valueAxis = this->yAxis; // 共享Y轴或为每个曲线创建右轴
+    QCPAxis* valueAxis = this->yAxis;  // 共享Y轴或为每个曲线创建右轴
     newCurve.tag = new TtAxisTag(valueAxis);
     newCurve.tag->setPen(newCurve.graph->pen());
 
@@ -240,7 +242,7 @@ void TtSerialPortPlot::removeGraphs(int channel) {
   // qDebug() << "curves Keys: " << curves_.keys();
   if (curves_.contains(channel)) {
     // qDebug() << "delete channel" << channel;
-    auto &curve = curves_[channel];
+    auto& curve = curves_[channel];
 
     // 当前关联的图形
     if (m_tracer->graph() == curve.graph) {
@@ -274,13 +276,13 @@ void TtSerialPortPlot::removeGraphs(int channel) {
 void TtSerialPortPlot::setGraphsPointCapacity(quint16 nums) {
   if (nums > 0 && nums != points_nums_) {
     points_nums_ = nums;
-    for (auto &curve : curves_) {
+    for (auto& curve : curves_) {
       while (curve.timeData.size() > points_nums_) {
         curve.timeData.removeFirst();
         curve.valueData.removeFirst();
         if (!curve.graph->data()->isEmpty()) {
           auto dataMap = curve.graph->data();
-          dataMap->remove(dataMap->constBegin()->key); // 使用迭代器安全删除
+          dataMap->remove(dataMap->constBegin()->key);  // 使用迭代器安全删除
         }
       }
     }
@@ -288,7 +290,7 @@ void TtSerialPortPlot::setGraphsPointCapacity(quint16 nums) {
   }
 }
 
-void TtSerialPortPlot::mouseMoveEvent(QMouseEvent *event) {
+void TtSerialPortPlot::mouseMoveEvent(QMouseEvent* event) {
   QCustomPlot::mouseMoveEvent(event);
 
   const bool show = viewport().contains(event->pos());
@@ -317,21 +319,21 @@ void TtSerialPortPlot::mouseMoveEvent(QMouseEvent *event) {
 }
 
 void TtSerialPortPlot::setupPlot() {
-  QCPAxis *rightAxis = axisRect()->addAxis(QCPAxis::atRight);
+  QCPAxis* rightAxis = axisRect()->addAxis(QCPAxis::atRight);
   // 设置右边距
   // rightAxis->setPadding(60);
   rightAxis->setPadding(0);
   rightAxis->setVisible(true);
-  rightAxis->setTicks(false);       // 隐藏刻度线
-  rightAxis->setTickLabels(false);  // 隐藏刻度标签
-  rightAxis->setBasePen(Qt::NoPen); // 隐藏轴线
+  rightAxis->setTicks(false);        // 隐藏刻度线
+  rightAxis->setTickLabels(false);   // 隐藏刻度标签
+  rightAxis->setBasePen(Qt::NoPen);  // 隐藏轴线
 
   this->setInteraction(QCP::iRangeDrag, false);
   this->setInteraction(QCP::iRangeZoom, false);
 
   // 设置标签格式
-  this->xAxis->setNumberFormat("f");  // 使用固定小数点格式
-  this->xAxis->setNumberPrecision(0); // 无小数位
+  this->xAxis->setNumberFormat("f");   // 使用固定小数点格式
+  this->xAxis->setNumberPrecision(0);  // 无小数位
 
 #if 0
   this->xAxis->setVisible(false);          // 完全隐藏坐标轴
@@ -346,7 +348,7 @@ void TtSerialPortPlot::setupPlot() {
   // this->xAxis->setTickLabels(false);  // 隐藏刻度标签
   // this->xAxis->setLabel("");          // 清空轴标签文本
 #endif
-  this->yAxis->setTickLabels(false); // 隐藏刻度标签
+  this->yAxis->setTickLabels(false);  // 隐藏刻度标签
 
   // this->yAxis->setLabel("");
 
@@ -380,7 +382,7 @@ void TtSerialPortPlot::setupPlot() {
   m_coordLabel = new TtQCPItemRichText(this);
   m_coordLabel->setPositionAlignment(Qt::AlignLeft | Qt::AlignBottom);
   m_coordLabel->position->setType(QCPItemPosition::ptViewportRatio);
-  m_coordLabel->position->setCoords(1.0, 0.0); // 右上角
+  m_coordLabel->position->setCoords(1.0, 0.0);  // 右上角
   m_coordLabel->setTextAlignment(Qt::AlignRight);
   m_coordLabel->setBrush(QBrush(Qt::white));
   m_coordLabel->setPadding(QMargins(5, 5, 5, 5));
@@ -504,7 +506,7 @@ void TtSerialPortPlot::setupPlot() {
 //   replot();
 // }
 
-void TtSerialPortPlot::updateTracerPosition(QMouseEvent *event) {
+void TtSerialPortPlot::updateTracerPosition(QMouseEvent* event) {
   if (curves_.isEmpty()) {
     // 没有图像, 不显示
     // qDebug() << "empty";
@@ -542,14 +544,14 @@ void TtSerialPortPlot::updateTracerPosition(QMouseEvent *event) {
   // 遍历每一个图像
   for (auto it = curves_.begin(); it != curves_.end(); ++it) {
     //
-    const auto &curve = it.value();
+    const auto& curve = it.value();
     if (!curve.graph || curve.timeData.isEmpty()) {
       // 没有数据
       continue;
     }
     // qDebug() << "insit";
-    const auto &times = curve.timeData;
-    const auto &values = curve.valueData;
+    const auto& times = curve.timeData;
+    const auto& values = curve.valueData;
 
     // 添加数据一致性检查
     if (times.size() != values.size()) {
@@ -595,8 +597,8 @@ void TtSerialPortPlot::updateTracerPosition(QMouseEvent *event) {
     // TtQCPItemRichText* richLabel =
     //     qobject_cast<TtQCPItemRichText*>(m_coordLabel);
     // const QTextDocument& doc = richLabel->document();
-    const QTextDocument &doc = m_coordLabel->document();
-    qreal textWidth = doc.idealWidth() + 10; // 增加10px边距
+    const QTextDocument& doc = m_coordLabel->document();
+    qreal textWidth = doc.idealWidth() + 10;  // 增加10px边距
     qreal textHeight = doc.size().height() + 10;
 
     // 获取鼠标位置和视口边界
@@ -636,4 +638,4 @@ void TtSerialPortPlot::updateTracerPosition(QMouseEvent *event) {
   replot();
 }
 
-} // namespace Ui
+}  // namespace Ui

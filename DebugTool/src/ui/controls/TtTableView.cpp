@@ -1,5 +1,6 @@
 #include "ui/controls/TtTableView.h"
 
+#include <qcombobox.h>
 #include <ui/control/TtCheckBox.h>
 #include <ui/control/TtComboBox.h>
 #include <ui/control/TtLineEdit.h>
@@ -850,6 +851,7 @@ QJsonObject TtModbusTableWidget::getTableRecord() {
 }
 
 void TtModbusTableWidget::setCellWidget(int row, int column, QWidget *widget) {
+  // 不是居中显示的
   QTableWidget::setCellWidget(row, column, widget);
   cellWidgetCache_[widget][row] = widget; // 缓存控件
 }
@@ -876,9 +878,10 @@ void TtModbusTableWidget::addRow() {
   insertRow(newRowIndex);
   setupRow(newRowIndex);
 
+  // BUG 删除行后, 重新添加行, 会出现添加空白的清空, 并且横线存在
   qDebug() << "y";
 
-  // // 确保调整大小
+  // 调整大小
   resizeRowsToContents();
   resizeColumnsToContents();
 }
@@ -960,12 +963,15 @@ void TtModbusTableWidget::initHeader() {
   QStringList headers = {"", "", tr("名称"), tr("值"), tr("描述"), ""};
 
   QWidget *header = createCheckButton();
-  // header->setStyleSheet("background-color: green");
   setCellWidget(0, 0, header);
 
-  header = createTypeComboBox(QStringList{tr("地址(HEX)"), tr("地址(DEX)")});
-  setCellWidget(0, 1, header);
-  // setCellWidget(0, 1, new QComboBox(this));
+  // FIXME 似乎需要 addBtton 点击后, 其边距才能正确使用
+  // header = createTypeComboBox(QStringList{tr("地址(HEX)"), tr("地址(DEX)")});
+  auto *comboBox =
+      createTypeComboBox(QStringList{tr("地址(HEX)"), tr("地址(DEX)")});
+  comboBox->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+  // setCellWidget(0, 1, header);
+  setCellWidget(0, 1, createCellWrapper(comboBox));
 
   for (int col = 2; col < 5; ++col) {
     QWidget *header = nullptr;
@@ -989,6 +995,7 @@ void TtModbusTableWidget::setupRow(int row) {
     data.checkBtn = createCheckButton();
     data.address = new TtLineEdit(this);
     data.addressName = new TtLineEdit(this);
+    // BUG SwitchButton 不是居中显示的
     data.valueButton = new TtSwitchButton(this);
     data.description = new TtLineEdit(this);
     auto makeCell = [this](QWidget *content) {
@@ -1216,9 +1223,12 @@ TtSvgButton *TtModbusTableWidget::createRefreshButton() {
 // }
 
 QWidget *TtModbusTableWidget::createCellWrapper(QWidget *content) {
+  // BUG 创建的窗口 valuebtn 不是居中显示
   QWidget *wrapper =
       widgetPool_.isEmpty() ? new QWidget : widgetPool_.takeLast();
+  // wrapper->setStyleSheet("background-color: Coral");
   Ui::TtVerticalLayout *layout = new Ui::TtVerticalLayout(wrapper);
+  layout->setContentsMargins(8, 4, 8, 4);
   layout->addWidget(content);
   return wrapper;
 }

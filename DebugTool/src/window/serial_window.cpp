@@ -680,9 +680,6 @@ void SerialWindow::sendMessage(const QString &data, MsgType type) {
     for (int i = 0; i < data.size(); i += package_size_) {
       // 循环塞入, 但是这边塞入很快, 那边是 计时读取
       qDebug() << "enqueue package";
-      // 心跳 timeout 会从 msg_queuq_ 中取出内容
-      // 存储的是 QString ?
-      // 确实入队了
       msg_queue_.enqueue(data.mid(i, package_size_));
     }
   } else {

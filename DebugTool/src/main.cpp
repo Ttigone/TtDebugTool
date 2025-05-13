@@ -9,7 +9,6 @@
 #include "ui/widgets/tabwindow.h"
 #include "window/main_window.h"
 #include <ui/widgets/tabwindow.h>
-#include <ui/widgets/window_switcher.h>
 
 // 编译器版本为 6.5.3 时, 调整宽度和高度时, 控件会改变布局, qwindowkit bug
 // 编译器 < 6.5.3 or 编译器 > 6.6.2
@@ -74,6 +73,7 @@ int main(int argc, char *argv[]) {
       Storage::TtConfigsManager::instance();
   configManager.setTargetStoreFile("config.ini");
 
+  // 语言也有问题
   QString curLang =
       configManager.getConfigVaule("Language", "TtDebugTool_zh.qm").toString();
   bool suss = false;

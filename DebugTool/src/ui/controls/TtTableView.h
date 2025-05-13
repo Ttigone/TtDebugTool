@@ -277,7 +277,7 @@ private:
   QWidget *createHeaderCell(const QString &text, bool border = true) {
     HeaderWidget *container = new HeaderWidget(this);
     QHBoxLayout *layout = new QHBoxLayout(container);
-    layout->setContentsMargins(QMargins());
+    layout->setContentsMargins(QMargins(2, 2, 2, 2));
 
     QLabel *label = new QLabel(text, container);
     label->setStyleSheet("border: none;");
@@ -289,6 +289,7 @@ private:
   }
 
   QWidget *createAddButton() {
+    // 添加按钮
     auto *btn = new QPushButton(QIcon(":/sys/plus-circle.svg"), "");
     btn->setFlat(true);
     connect(btn, &QPushButton::clicked, this, [this] { addRow(); });

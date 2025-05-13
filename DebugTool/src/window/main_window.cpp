@@ -30,7 +30,6 @@
 #include <ui/widgets/message_bar.h>
 #include <ui/widgets/tabwindow.h>
 #include <ui/widgets/widget_group.h>
-#include <ui/widgets/window_switcher.h>
 
 #include <ui/layout/horizontal_layout.h>
 #include <ui/layout/vertical_layout.h>
@@ -51,7 +50,6 @@
 
 #include "storage/configs_manager.h"
 #include "storage/setting_manager.h"
-#include "ui/widgets/window_switcher.h"
 #include <ui/window/title/window_button.h>
 
 #include "window/instruction_window.h"
@@ -63,7 +61,14 @@
 namespace Window {
 
 QMap<TtProtocolRole::Role, QString> configMappingTable = {
-    {TtProtocolRole::Serial, "Serial+"}};
+    {TtProtocolRole::Serial, SerialPrefix},
+    {TtProtocolRole::TcpClient, TcpClientPrefix},
+    {TtProtocolRole::UdpClient, UdpClientPrefix},
+    {TtProtocolRole::TcpServer, TcpServerPrefix},
+    {TtProtocolRole::UdpServer, UdpServerPrefix},
+    {TtProtocolRole::MqttClient, MqttPrefix},
+    {TtProtocolRole::ModbusClient, ModbusPrefix},
+};
 
 static inline void emulateLeaveEvent(QWidget *widget) {
   Q_ASSERT(widget);
@@ -570,16 +575,16 @@ void MainWindow::saveCsvFile() {
 void MainWindow::switchToOtherTabPage(const QString &uuid, const int &type) {
   // 删除了原有的窗口
   if (tabWidget_->isCurrentDisplayedPage(uuid)) {
-    qDebug() << "1";
+    // qDebug() << "1";
     tabWidget_->switchByPage(uuid);
   } else if (tabWidget_->isStoredInMem(uuid)) {
-    qDebug() << "2";
+    // qDebug() << "2";
     tabWidget_->switchByReadingMem(uuid,
                                    static_cast<TtProtocolRole::Role>(type));
   } else {
     // 出现了bug 进入了这里, 本质上没有查找到, 进来是正确的, 在于存取 count
     // 的时候出现了问题
-    qDebug() << "3";
+    // qDebug() << "3";
     // 从磁盘读取
     base::DetectRunningTime test;
     // 只有第一次运行才会慢, 包行了创建首个窗口的缓存
@@ -1071,6 +1076,7 @@ void MainWindow::loadStyleSheet(Theme theme) {
   //                             : QStringLiteral(":/light-style.qss"));
   QFile qss(":/theme/dark-style.qss");
   qss.open(QIODevice::ReadOnly | QIODevice::Text);
+  // 应用与全局
   qApp->setStyleSheet(QString::fromUtf8(qss.readAll()));
   // setStyleSheet(QString::fromUtf8(qss.readAll()));
   // emit themeChanged();
@@ -1125,7 +1131,9 @@ void MainWindow::connectSignals() {
           &Ui::WidgetGroup::updateUuid);
   connect(history_link_list_, &Ui::SessionManager::uuidsChanged,
           [](const QString &index, TtProtocolRole::Role role) {
+            // 删除 tab 页面
             TabWindowManager::instance()->removeUuidTabPage(index);
+            // 本地删除
             Storage::SettingsManager::instance().removeOneSetting(
                 configMappingTable[role] + index);
           });
@@ -1621,6 +1629,7 @@ void MainWindow::readingProjectConfiguration() {
   // qDebug() << timer.elapseMilliseconds();
   const auto configs =
       Storage::SettingsManager::instance().getHistorySettings();
+  qDebug() << configs;
 
   // 创建三个哈希表来存储不同前缀的配置，以UUID为键
   QHash<QString, QJsonObject> serialConfigs;

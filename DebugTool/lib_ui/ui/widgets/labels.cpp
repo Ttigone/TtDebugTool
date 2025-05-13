@@ -285,7 +285,9 @@ TtNormalLabel::TtNormalLabel(const QString &text, QWidget *parent)
   init();
 }
 
-TtNormalLabel::~TtNormalLabel() { qDebug() << "delete" << __FUNCTION__; }
+TtNormalLabel::~TtNormalLabel() {
+  // qDebug() << "delete" << __FUNCTION__;
+}
 
 void TtNormalLabel::init() { this->setStyleSheet("border: 0px"); }
 

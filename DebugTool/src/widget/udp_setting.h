@@ -41,8 +41,9 @@ private:
   Ui::TtLabelLineEdit *self_port_;
 
   Ui::TtLabelComboBox *framing_model_;
-  Ui::TtLabelComboBox *framing_timeout_;
-  Ui::TtLabelComboBox *framing_fixed_length_;
+
+  Ui::TtLabelLineEdit *framing_timeout_;
+  Ui::TtLabelLineEdit *framing_fixed_length_;
 
   Ui::TtLabelBtnComboBox *retransmission_;
 
@@ -77,8 +78,8 @@ private:
   Ui::TtLabelLineEdit *send_packet_interval_;
 
   Ui::TtLabelComboBox *framing_model_;
-  Ui::TtLabelComboBox *framing_timeout_;
-  Ui::TtLabelComboBox *framing_fixed_length_;
+  Ui::TtLabelLineEdit *framing_timeout_;
+  Ui::TtLabelLineEdit *framing_fixed_length_;
 
   Ui::TtLabelBtnComboBox *retransmission_;
 

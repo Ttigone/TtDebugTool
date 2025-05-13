@@ -1,7 +1,8 @@
 #include "storage/setting_manager.h"
-#include <QTimer>
+#include <qcontainerfwd.h>
 #include <qjsonobject.h>
 #include <qmutex.h>
+#include <QTimer>
 
 namespace Storage {
 
@@ -29,7 +30,7 @@ void SettingsManager::saveSettings() {
 
   // 将当前设置合并到现有内容中
   for (auto it = settings.begin(); it != settings.end(); ++it) {
-    existingSettings[it.key()] = it.value(); // 同名键会被覆盖
+    existingSettings[it.key()] = it.value();  // 同名键会被覆盖
   }
 
   QFile writeFile(targetFile);
@@ -44,7 +45,7 @@ void SettingsManager::saveSettings() {
   qDebug() << "write success";
 }
 
-void SettingsManager::loadSettings(const QString &filePath) {
+void SettingsManager::loadSettings(const QString& filePath) {
   // QMutexLocker locker(&mutex);
 
   // QFile file(filePath);
@@ -72,7 +73,7 @@ void SettingsManager::loadSettings(const QString &filePath) {
       qDebug() << "Successfully recovered from backup";
     } else {
       qWarning("Backup recovery failed, starting with empty configuration");
-      settings = QJsonObject(); // 使用空配置
+      settings = QJsonObject();  // 使用空配置
       return;
     }
   }
@@ -118,23 +119,25 @@ QJsonObject SettingsManager::getHistorySettings() const {
   return historySettings;
 }
 
-void SettingsManager::setSetting(const QString &key, const QJsonValue &value) {
+void SettingsManager::setSetting(const QString& key, const QJsonValue& value) {
   QMutexLocker locker(&mutex);
-
+  qDebug() << settings;
+  loadSettingsIfNeeded();
+  qDebug() << settings;
   if (settings.contains(key) && settings[key] == value) {
     // 值没有变化, 不需要保存
     return;
   }
+  // settings 中的配置
   settings[key] = value;
-  // saveSettings();
-  // 延时保存
+  qDebug() << "保存新的 key";
   dirty_ = true;
   if (!save_timer_->isActive()) {
     save_timer_->start(save_delay_ms_);
   }
 }
 
-void SettingsManager::setMultipleSettings(const QJsonObject &settingsToAdd) {
+void SettingsManager::setMultipleSettings(const QJsonObject& settingsToAdd) {
   QMutexLocker locker(&mutex);
   bool changed = false;
 
@@ -155,7 +158,7 @@ void SettingsManager::setMultipleSettings(const QJsonObject &settingsToAdd) {
   }
 }
 
-QJsonValue SettingsManager::getSetting(const QString &key) const {
+QJsonValue SettingsManager::getSetting(const QString& key) const {
   // // 需要先调用 loadSetting
   // QMutexLocker locker(&mutex);
   // if (settings.isEmpty()) {
@@ -170,20 +173,37 @@ QJsonValue SettingsManager::getSetting(const QString &key) const {
   // 如果内存中没有, 则从文件加载全部设置
   if (settings.isEmpty()) {
     // 加载配置到 settings 中
-    const_cast<SettingsManager *>(this)->loadSettingsIfNeeded();
+    const_cast<SettingsManager*>(this)->loadSettingsIfNeeded();
   }
   return settings.value(key);
 }
 
-void SettingsManager::removeOneSetting(const QString &key) {
+void SettingsManager::removeOneSetting(const QString& key) {
   // 写读取全部的, 在删除, 在重新写入
   QMutexLocker locker(&mutex);
-
+  // 确保设置已加载 - 这是关键修复点
+  if (settings.isEmpty()) {
+    qDebug() << "Settings object is empty, loading from file...";
+    // 必须无锁
+    loadSettingsIfNeeded();
+    qDebug() << "After loading, settings contains:" << settings.keys();
+    // 第一次删除, 需要加载设置
+  }
+  // 移出操作
+  // 从settings 中删除
+  // 没有包含
+  // qDebug() << settings;
+  // 缺少前缀
+  qDebug() << "key" << key;
   if (settings.contains(key)) {
+    // 进入，确实移出
+    qDebug() << "remove from settings" << key;
     settings.remove(key);
     dirty_ = true;
 
     if (!save_timer_->isActive()) {
+      // 延时保存
+      qDebug() << "start timer" << save_delay_ms_;
       save_timer_->start(save_delay_ms_);
     }
   }
@@ -242,6 +262,9 @@ void SettingsManager::forceSave() {
 }
 
 void SettingsManager::actualSaveSettings() {
+  // 本地还是被覆盖了
+  QMutexLocker locker(&mutex);
+
   QString targetFile = getConfigFilePath(file_path_);
   if (targetFile.isEmpty()) {
     qWarning() << "Invalid config file path";
@@ -263,10 +286,26 @@ void SettingsManager::actualSaveSettings() {
       readFile.close();
     }
   }
-  // 合并内存中的设置
-  for (auto it = settings.begin(); it != settings.end(); ++it) {
-    existingSettings[it.key()] = it.value(); // 同名键会被覆盖
+
+  QStringList keysToRemove;
+  // 遍历历史记录
+  for (auto it = existingSettings.begin(); it != existingSettings.end(); ++it) {
+    if (!settings.contains(it.key())) {
+      // 不存在, 需要在本地删除
+      keysToRemove.append(it.key());
+    }
   }
+
+  for (const QString& key : keysToRemove) {
+    qDebug() << "Removing key from existing settings:" << key;
+    existingSettings.remove(key);
+  }
+
+  // 优先设置内存的内容
+  for (auto it = settings.begin(); it != settings.end(); ++it) {
+    existingSettings[it.key()] = it.value();  // 同名键会被覆盖
+  }
+
   // 使用临时文件进行写入
   QString tempFile = targetFile + ".temp";
   QFile writeFile(tempFile);
@@ -304,7 +343,48 @@ void SettingsManager::actualSaveSettings() {
   dirty_ = false;
 }
 
-QString SettingsManager::getConfigFilePath(const QString &filename) const {
+// void SettingsManager::actualSaveSettings() {
+//   QString targetFile = getConfigFilePath(file_path_);
+//   if (targetFile.isEmpty()) {
+//     qWarning() << "Invalid config file path";
+//     return;
+//   }
+//   // 创建备份文件
+//   createBackUp();
+
+//   // 使用临时文件进行写入
+//   QString tempFile = targetFile + ".temp";
+//   QFile writeFile(tempFile);
+//   if (!writeFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+//     qWarning() << "Failed to open temp file for writing:"
+//                << writeFile.errorString();
+//     return;
+//   }
+//   // 直接写入当前内存中的设置, 不从文件读取和合并
+//   if (writeFile.write(QJsonDocument(settings).toJson()) == -1) {
+//     qWarning() << "Write error:" << writeFile.errorString();
+//     writeFile.close();
+//     QFile::remove(tempFile);
+//     return;
+//   }
+//   writeFile.flush();
+//   writeFile.close();
+//   if (QFile::exists(targetFile)) {
+//     if (!QFile::remove(targetFile)) {
+//       qWarning() << "Failed to remove old config file";
+//       QFile::remove(tempFile);
+//       return;
+//     }
+//   }
+//   if (!QFile::rename(tempFile, targetFile)) {
+//     qWarning() << "Failed to rename temp file to config file";
+//     return;
+//   }
+//   qDebug() << "Settings successfully saved";
+//   dirty_ = false;
+// }
+
+QString SettingsManager::getConfigFilePath(const QString& filename) const {
   // 获取当前可执行文件的路径
   QString appDirPath = QCoreApplication::applicationDirPath();
   // 创建 configs 目录路径
@@ -340,7 +420,21 @@ void SettingsManager::loadSettingsIfNeeded() {
   if (settings.isEmpty()) {
     QString targetFile = getConfigFilePath(file_path_);
     if (!targetFile.isEmpty()) {
-      loadSettings(targetFile);
+      QFile file(targetFile);
+      if (!file.open(QIODevice::ReadOnly)) {
+        qWarning("Couldn't open load file.");
+        return;
+      }
+      QByteArray fileData = file.readAll();
+      file.close();
+
+      QJsonDocument jsonDoc(QJsonDocument::fromJson(fileData));
+      if (jsonDoc.isNull() || !jsonDoc.isObject()) {
+        qWarning() << "Failed to parse JSON from file.";
+        return;
+      }
+      // 读取配置文件内容到 settings 中
+      settings = jsonDoc.object();
     }
   }
 }
@@ -348,11 +442,11 @@ void SettingsManager::loadSettingsIfNeeded() {
 void SettingsManager::createBackUp() {
   QString targetFile = getConfigFilePath(file_path_);
   QString backupFile = targetFile + ".bak";
-  QFile::remove(backupFile);           // 删除旧备份
-  QFile::copy(targetFile, backupFile); // 创建新备份
+  QFile::remove(backupFile);            // 删除旧备份
+  QFile::copy(targetFile, backupFile);  // 创建新备份
 }
 
-bool SettingsManager::isFileValid(const QString &filePath) {
+bool SettingsManager::isFileValid(const QString& filePath) {
   QFile file(filePath);
   if (!file.open(QIODevice::ReadOnly)) {
     return false;
@@ -380,4 +474,4 @@ bool SettingsManager::recoverFromBackup() {
   return QFile::copy(backupFile, targetFile);
 }
 
-} // namespace Storage
+}  // namespace Storage

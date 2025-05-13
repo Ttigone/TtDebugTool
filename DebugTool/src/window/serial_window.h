@@ -22,7 +22,6 @@
 #include <Qsci/qsciscintilla.h>
 
 #include "frame_window.h"
-#include "ui/widgets/window_switcher.h"
 
 class SerialPlot;
 

@@ -77,26 +77,25 @@ void TabWindowManager::setRootWindow(TabWindow *root) {
 }
 
 void TabWindowManager::removeUuidTabPage(const QString &index) {
-  // 存储了全部实例的 widgetInstance, 获取 widget, 遍历每一个 tabWindow 项 ?
-  qDebug() << "tabWindow get remove:" << index;
+  // qDebug() << "tabWindow get remove:" << index;
   if (TabWindow::widgetInstances.contains(index)) {
     auto *item = TabWindow::widgetInstances.value(index);
     int idx = 0;
     for (TabWindow *w : m_windows) {
       if ((idx = w->indexOf(item)) != -1) {
-        qDebug() << "成功找到";
+        // qDebug() << "成功找到";
         auto *widget = w->widget(idx);
         if (widget) {
-          qDebug() << "删除标签页";
+          // qDebug() << "删除标签页";
           widget->disconnect();
           widget->setParent(nullptr);
           widget->deleteLater();
         }
-        qDebug() << "remove by leftbutton: " << index;
+        // qDebug() << "remove by leftbutton: " << index;
         TabWindow::widgetInstances.remove(index);
         w->removeTab(idx);
         if (w->count() == 0) {
-          qDebug() << "TabWindow is empty, removing it from manager.";
+          // qDebug() << "TabWindow is empty, removing it from manager.";
           removeWindow(w);
         }
         break;
@@ -128,7 +127,8 @@ void TabWindowManager::addWindow(TabWindow *window) {
 }
 
 void TabWindowManager::removeWindow(TabWindow *window) {
-  if (m_windows.contains(window)) {
+  // root 不能删除
+  if (m_windows.contains(window) && window != m_root) {
     qDebug() << "[Manager] Removing window:" << window;
     m_windows.removeOne(window);
     window->deleteLater(); // 确保对象删除
@@ -531,6 +531,8 @@ void TabWindow::switchByAlreadyExistingWidget(int tabIndex, const QString &uuid,
 
   // 这里需要设置对应的 config 配置
   Window::FrameWindow *newWidget = widgetFactories[role]();
+  // 从 disk 恢复, 处于保存状态
+  newWidget->setSaveState(true);
 
   if (newWidget) {
     // 设置
@@ -673,6 +675,7 @@ void TabWindow::switchByReadingDisk(const QString &index,
   // switchByAlreadyExistingWidget(currentIndex() + 1, index, config, role);
   // 当前的数量加 1
   // switchByAlreadyExistingWidget(count() + 1, index, config, role);
+  // 当前 count() 作为索引
   switchByAlreadyExistingWidget(count(), index, config, role);
   // qDebug() << "TEST2";
 }

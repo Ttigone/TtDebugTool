@@ -79,7 +79,6 @@ set(PROJECT_SOURCES
 
     ${src_loc}/ui/widgets/text_widget.h ${src_loc}/ui/widgets/text_widget.cpp
     ${src_loc}/ui/widgets/pop_widget.h ${src_loc}/ui/widgets/pop_widget.cpp
-    ${src_loc}/ui/widgets/window_switcher.h ${src_loc}/ui/widgets/window_switcher.cpp
     ${src_loc}/ui/widgets/session_manager.h ${src_loc}/ui/widgets/session_manager.cpp
     # ${src_loc}/ui/widgets/data_presentation_widget.h ${src_loc}/ui/widgets/data_presentation_widget.cpp
     ${src_loc}/ui/widgets/subscripition_manager.h ${src_loc}/ui/widgets/subscripition_manager.cpp

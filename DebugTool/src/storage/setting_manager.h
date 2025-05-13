@@ -32,10 +32,7 @@ public:
   /// 保存配置到本地中
   void saveSettings();
 
-  ///
-  /// @brief loadSettings
-  /// @param filePath
-  /// 加载配置到 settings 中
+  // 有锁
   void loadSettings(const QString &filePath);
 
   ///

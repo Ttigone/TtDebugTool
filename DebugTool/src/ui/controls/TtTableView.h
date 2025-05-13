@@ -1,7 +1,9 @@
+#include <QHeaderView>
+#include <QScrollBar>
 #include <QTableWidget>
 
-#include <ui/control/TtLineEdit.h>
 #include "Def.h"
+#include <ui/control/TtLineEdit.h>
 
 class QSpinBox;
 
@@ -15,8 +17,8 @@ class TtSvgButton;
 
 class TtTableWidget : public QTableWidget {
   Q_OBJECT
- public:
-  explicit TtTableWidget(QWidget* parent = nullptr);
+public:
+  explicit TtTableWidget(QWidget *parent = nullptr);
   ~TtTableWidget();
 
   void setupHeaderRow();
@@ -24,49 +26,54 @@ class TtTableWidget : public QTableWidget {
   void setupTable(const QJsonObject &record);
   QJsonObject getTableRecord();
 
-  void setCellWidget(int row, int column, QWidget* widget);
+  void setCellWidget(int row, int column, QWidget *widget);
 
- signals:
+signals:
   void rowsChanged(quint16 rows);
-  void sendRowMsg(const QString& msg);
-  void sendRowsMsg(const QVector<QPair<QString, int>>& msg);
+  void sendRowMsg(const QString &msg);
+  void sendRowsMsg(const QVector<QPair<QString, int>> &msg);
 
- private slots:
+private slots:
   void onAddRowButtonClicked();
 
- private:
+private:
+  // 每一行固定的显示控件
   struct TableRow {
-    TtSwitchButton* enableBtn = nullptr;
-    TtLineEdit* nameEdit = nullptr;
-    TtComboBox* typeCombo = nullptr;
-    TtLineEdit* contentEdit = nullptr;
-    QSpinBox* delaySpin = nullptr;
+    TtSwitchButton *enableBtn = nullptr;
+    TtLineEdit *nameEdit = nullptr;
+    TtComboBox *typeCombo = nullptr;
+    TtLineEdit *contentEdit = nullptr;
+    QSpinBox *delaySpin = nullptr;
     bool fromPool = false;
   };
 
   // 对象池
-  QList<TtComboBox*> comboPool_;
-  QList<TtSwitchButton*> switchPool_;
-  QList<QSpinBox*> spinPool_;
-  QList<QWidget*> widgetPool_;
+  QList<TtComboBox *> comboPool_;
+  QList<TtSwitchButton *> switchPool_;
+  QList<QSpinBox *> spinPool_;
+  QList<QWidget *> widgetPool_;
 
   QVector<TableRow> rowsData_;
 
   void initHeader();
   void setupRow(int row);
-  void recycleRow(TableRow& row);
+  void recycleRow(TableRow &row);
 
   // 控件管理
-  TtSwitchButton* createSwitchButton();
-  TtComboBox* createTypeComboBox();
-  QSpinBox* createDelaySpin();
-  QWidget* createCellWrapper(QWidget* content);
+  TtSwitchButton *createSwitchButton();
+  TtComboBox *createTypeComboBox();
+  QSpinBox *createDelaySpin();
 
-  int findRowIndex(QWidget* context, const int& col, bool deep = false) const {
+  /// @brief 创建一个单元格的包装器
+  /// @param content 包装的内容
+  /// @return 包装后的QWidget
+  QWidget *createCellWrapper(QWidget *content);
+
+  int findRowIndex(QWidget *context, const int &col, bool deep = false) const {
     if (!context) {
       return -1;
     }
-    QWidget* parent = context->parentWidget();
+    QWidget *parent = context->parentWidget();
     if (!parent) {
       return -1;
     }
@@ -78,7 +85,7 @@ class TtTableWidget : public QTableWidget {
         }
       }
     } else {
-      QWidget* grandparent = parent->parentWidget();
+      QWidget *grandparent = parent->parentWidget();
       if (!grandparent) {
         return -1;
       }
@@ -91,13 +98,18 @@ class TtTableWidget : public QTableWidget {
     return -1;
   }
 
+  bool isRowVisible(int row) {
+    return row >= verticalScrollBar()->value() &&
+           row <= verticalScrollBar()->value() + visibleRowCount();
+  }
+
   // UI 创建
-  QWidget* createHeaderCell(const QString& text, bool border = true) {
-    HeaderWidget* container = new HeaderWidget(this);
-    QHBoxLayout* layout = new QHBoxLayout(container);
+  QWidget *createHeaderCell(const QString &text, bool border = true) {
+    HeaderWidget *container = new HeaderWidget(this);
+    QHBoxLayout *layout = new QHBoxLayout(container);
     layout->setContentsMargins(QMargins());
 
-    QLabel* label = new QLabel(text, container);
+    QLabel *label = new QLabel(text, container);
     label->setStyleSheet("border: none;");
     layout->addWidget(label, 0, Qt::AlignCenter);
 
@@ -106,116 +118,137 @@ class TtTableWidget : public QTableWidget {
     return container;
   }
 
-  QWidget* createAddButton();
-  QWidget* createSendButton();
-  QWidget* createDeleteButton();
-  QWidget* createRowSendButton();
+  QWidget *createAddButton();
+  QWidget *createSendButton();
+  QWidget *createDeleteButton();
+  QWidget *createRowSendButton();
 
   class HeaderWidget : public QWidget {
-   public:
-    HeaderWidget(QWidget* parent = nullptr) : QWidget(parent), paint_(true) {}
+  public:
+    HeaderWidget(QWidget *parent = nullptr) : QWidget(parent), paint_(true) {}
 
     void setPaintRightBorder(bool isPaint) { paint_ = isPaint; }
 
-   protected:
-    void paintEvent(QPaintEvent* event) override;
+  protected:
+    void paintEvent(QPaintEvent *event) override;
 
-   private:
+  private:
     bool paint_;
   };
 
-  QWidget* createHeaderWidget(const QString& text, bool paintBorder);
+  QWidget *createHeaderWidget(const QString &text, bool paintBorder);
 
-  QWidget* createHeaderAddRowWidget();   // 创建添加行按钮
-  QWidget* createHeaderSendMsgWidget();  // 创建发送按钮
+  QWidget *createHeaderAddRowWidget();  // 创建添加行按钮
+  QWidget *createHeaderSendMsgWidget(); // 创建发送按钮
 
-  QWidget* createFirstColumnWidget();    // 仅用于数据行
-  QWidget* createSecondColumnWidget();   // 仅用于数据行
-  QWidget* createThirdColumnWidget();    // 仅用于数据行
-  QWidget* createFourthColumnWidget();   // 仅用于数据行
-  QWidget* createFifthColumnWidget();    // 仅用于数据行
-  QWidget* createSixthColumnWidget();    // 仅用于数据行
-  QWidget* createSeventhColumnWidget();  // 仅用于数据行
+  QWidget *createFirstColumnWidget();   // 仅用于数据行
+  QWidget *createSecondColumnWidget();  // 仅用于数据行
+  QWidget *createThirdColumnWidget();   // 仅用于数据行
+  QWidget *createFourthColumnWidget();  // 仅用于数据行
+  QWidget *createFifthColumnWidget();   // 仅用于数据行
+  QWidget *createSixthColumnWidget();   // 仅用于数据行
+  QWidget *createSeventhColumnWidget(); // 仅用于数据行
   // 在类中添加控件缓存
-  QMap<QWidget*, QHash<int, QWidget*>> cellWidgetCache_;
+  QMap<QWidget *, QHash<int, QWidget *>> cellWidgetCache_;
 
   QJsonObject record_;
   int rows_;
   int cols_;
+  int visibleRowCount() {
+    // 计算表格视图中可见的行数
+    if (!isVisible() || height() <= horizontalHeader()->height()) {
+      return 0;
+    }
+
+    // 可见区域高度减去表头高度
+    int availableHeight = viewport()->height();
+
+    // 没有行或行高为0则返回0
+    if (rowCount() <= 0 || rowHeight(0) <= 0) {
+      return 0;
+    }
+
+    // 假设所有行高度相同
+    return availableHeight / rowHeight(0);
+  }
 };
 
 class TtModbusTableWidget : public QTableWidget {
   Q_OBJECT
- public:
+public:
   explicit TtModbusTableWidget(TtModbusRegisterType::Type type,
-                               QWidget* parent = nullptr);
+                               QWidget *parent = nullptr);
   ~TtModbusTableWidget();
 
-  void setRowValue(int row, int col, const QString& data);
+  void setRowValue(int row, int col, const QString &data);
   QVector<int> getAddressValue();
-  void setValue(const QString& data);
-  void setValue(const int& addr, const QVector<quint16>& data);
-  void setValue(const QVector<quint16>& data);
+  void setValue(const QString &data);
+  void setValue(const int &addr, const QVector<quint16> &data);
+  void setValue(const QVector<quint16> &data);
 
-  void setTable(const QJsonObject& record);
+  void setTable(const QJsonObject &record);
   QJsonObject getTableRecord();
 
-  void setCellWidget(int row, int column, QWidget* widget);
+  void setCellWidget(int row, int column, QWidget *widget);
 
- signals:
-  void valueConfirmed(const int& addr, const int& value);  // 值被确认保存
-  void requestShowGraph(TtModbusRegisterType::Type type, const int& addr,
+signals:
+  void valueConfirmed(const int &addr, const int &value); // 值被确认保存
+  void requestShowGraph(TtModbusRegisterType::Type type, const int &addr,
                         bool enabled);
 
- public slots:
+public slots:
   void addRow();
 
- private slots:
+private slots:
   void onValueChanged();
   void onConfirmClicked();
   void onCancelClicked();
   void onSwitchButtonToggle(bool toggled);
 
- private:
+private:
+  bool isRowVisible(int row) {
+    return row >= verticalScrollBar()->value() &&
+           row <= verticalScrollBar()->value() + visibleRowCount();
+  }
   QVector<QString> getRowValue(int col);
 
   struct TableRow {
-    TtCheckBox* checkBtn = nullptr;
-    TtLineEdit* address = nullptr;
-    TtLineEdit* addressName = nullptr;
-    TtLineEdit* value = nullptr;
-    TtSwitchButton* valueButton = nullptr;
-    QPushButton* editButton = nullptr;     // 新增
-    QPushButton* confirmButton = nullptr;  // 新增
-    QPushButton* cancelButton = nullptr;   // 新增
-    QString originalValue;                 // 新增
-    TtLineEdit* description = nullptr;
-    bool fromPool = false;
+    TtCheckBox *checkBtn{nullptr};
+    TtLineEdit *address{nullptr};
+    TtLineEdit *addressName{nullptr};
+    TtLineEdit *value{nullptr};
+    TtSwitchButton *valueButton{nullptr};
+    QPushButton *editButton{nullptr};    // 新增
+    QPushButton *confirmButton{nullptr}; // 新增
+    QPushButton *cancelButton{nullptr};  // 新增
+    QString originalValue;               // 新增
+    TtLineEdit *description{nullptr};
+    bool fromPool{false};
   };
 
-  QList<TtComboBox*> comboPool_;
-  QList<TtCheckBox*> switchPool_;
-  QList<QSpinBox*> spinPool_;
-  QList<QWidget*> widgetPool_;
+  QList<TtComboBox *> comboPool_;
+  QList<TtCheckBox *> switchPool_;
+  QList<QSpinBox *> spinPool_;
+  QList<QWidget *> widgetPool_;
 
   QVector<TableRow> rowsData_;
 
   void initHeader();
   void setupRow(int row);
-  void recycleRow(TableRow& row);
+  void recycleRow(TableRow &row);
 
   // 控件管理
-  TtCheckBox* createCheckButton();
-  TtSwitchButton* createSwitchButton();
-  TtComboBox* createTypeComboBox(const QStringList& strs);
-  TtSvgButton* createRefreshButton();
-  QWidget* createCellWrapper(QWidget* content);
+  TtCheckBox *createCheckButton();
+  TtSwitchButton *createSwitchButton();
+  TtComboBox *createTypeComboBox(const QStringList &strs);
+  TtSvgButton *createRefreshButton();
+  QWidget *createCellWrapper(QWidget *content);
 
-  int findRowIndex(QWidget* context, bool deep = false) const {
+  int findRowIndex(QWidget *context, bool deep = false) const {
     if (!context) {
       return -1;
     }
-    QWidget* parent = context->parentWidget();
+    QWidget *parent = context->parentWidget();
     if (!parent) {
       return -1;
     }
@@ -227,7 +260,7 @@ class TtModbusTableWidget : public QTableWidget {
         }
       }
     } else {
-      QWidget* grandparent = parent->parentWidget();
+      QWidget *grandparent = parent->parentWidget();
       if (!grandparent) {
         return -1;
       }
@@ -241,12 +274,12 @@ class TtModbusTableWidget : public QTableWidget {
   }
 
   // UI 创建
-  QWidget* createHeaderCell(const QString& text, bool border = true) {
-    HeaderWidget* container = new HeaderWidget(this);
-    QHBoxLayout* layout = new QHBoxLayout(container);
+  QWidget *createHeaderCell(const QString &text, bool border = true) {
+    HeaderWidget *container = new HeaderWidget(this);
+    QHBoxLayout *layout = new QHBoxLayout(container);
     layout->setContentsMargins(QMargins());
 
-    QLabel* label = new QLabel(text, container);
+    QLabel *label = new QLabel(text, container);
     label->setStyleSheet("border: none;");
     layout->addWidget(label, 0, Qt::AlignCenter);
 
@@ -255,26 +288,26 @@ class TtModbusTableWidget : public QTableWidget {
     return container;
   }
 
-  QWidget* createAddButton() {
-    auto* btn = new QPushButton(QIcon(":/sys/plus-circle.svg"), "");
+  QWidget *createAddButton() {
+    auto *btn = new QPushButton(QIcon(":/sys/plus-circle.svg"), "");
     btn->setFlat(true);
     connect(btn, &QPushButton::clicked, this, [this] { addRow(); });
     return createCellWrapper(btn);
   }
-  QWidget* createSendButton() {
-    auto* btn = new QPushButton(QIcon(":/sys/send.svg"), "");
+  QWidget *createSendButton() {
+    auto *btn = new QPushButton(QIcon(":/sys/send.svg"), "");
     btn->setFlat(true);
     connect(btn, &QPushButton::clicked, this, [this]() {});
     return createCellWrapper(btn);
   }
 
-  QWidget* createGraphAndDeleteButton();
+  QWidget *createGraphAndDeleteButton();
 
-  QWidget* createDeleteButton() {
-    auto* btn = new QPushButton(QIcon(":/sys/trash.svg"), "");
+  QWidget *createDeleteButton() {
+    auto *btn = new QPushButton(QIcon(":/sys/trash.svg"), "");
     btn->setFlat(true);
     connect(btn, &QPushButton::clicked, this, [this] {
-      if (auto* btn = qobject_cast<QPushButton*>(sender())) {
+      if (auto *btn = qobject_cast<QPushButton *>(sender())) {
         int row = findRowIndex(btn);
         if (row > 0) {
           // 回收控件
@@ -288,11 +321,11 @@ class TtModbusTableWidget : public QTableWidget {
     return createCellWrapper(btn);
   }
 
-  QWidget* createRowSendButton() {
-    auto* btn = new QPushButton(QIcon(":/sys/send.svg"), "");
+  QWidget *createRowSendButton() {
+    auto *btn = new QPushButton(QIcon(":/sys/send.svg"), "");
     btn->setFlat(true);
     connect(btn, &QPushButton::clicked, this, [this] {
-      if (auto* btn = qobject_cast<QPushButton*>(sender())) {
+      if (auto *btn = qobject_cast<QPushButton *>(sender())) {
         int row = findRowIndex(btn);
         if (row > 0) {
           // 回收控件
@@ -307,38 +340,55 @@ class TtModbusTableWidget : public QTableWidget {
   }
 
   class HeaderWidget : public QWidget {
-   public:
-    HeaderWidget(QWidget* parent = nullptr) : QWidget(parent), paint_(true) {}
+  public:
+    HeaderWidget(QWidget *parent = nullptr) : QWidget(parent), paint_(true) {}
 
     void setPaintRightBorder(bool isPaint) { paint_ = isPaint; }
 
-   protected:
-    void paintEvent(QPaintEvent* event) override;
+  protected:
+    void paintEvent(QPaintEvent *event) override;
 
-   private:
+  private:
     bool paint_;
   };
 
-  QWidget* createHeaderWidget(const QString& text, bool paintBorder);
+  QWidget *createHeaderWidget(const QString &text, bool paintBorder);
 
-  QWidget* createHeaderAddRowWidget();   // 创建添加行按钮
-  QWidget* createHeaderSendMsgWidget();  // 创建发送按钮
+  QWidget *createHeaderAddRowWidget();  // 创建添加行按钮
+  QWidget *createHeaderSendMsgWidget(); // 创建发送按钮
 
-  QWidget* createFirstColumnWidget();    // 仅用于数据行
-  QWidget* createSecondColumnWidget();   // 仅用于数据行
-  QWidget* createThirdColumnWidget();    // 仅用于数据行
-  QWidget* createFourthColumnWidget();   // 仅用于数据行
-  QWidget* createFifthColumnWidget();    // 仅用于数据行
-  QWidget* createSixthColumnWidget();    // 仅用于数据行
-  QWidget* createSeventhColumnWidget();  // 仅用于数据行
+  QWidget *createFirstColumnWidget();   // 仅用于数据行
+  QWidget *createSecondColumnWidget();  // 仅用于数据行
+  QWidget *createThirdColumnWidget();   // 仅用于数据行
+  QWidget *createFourthColumnWidget();  // 仅用于数据行
+  QWidget *createFifthColumnWidget();   // 仅用于数据行
+  QWidget *createSixthColumnWidget();   // 仅用于数据行
+  QWidget *createSeventhColumnWidget(); // 仅用于数据行
   // 在类中添加控件缓存
-  QMap<QWidget*, QHash<int, QWidget*>> cellWidgetCache_;
+  QMap<QWidget *, QHash<int, QWidget *>> cellWidgetCache_;
 
   QJsonObject record_;
   int rows_;
   int cols_;
 
   TtModbusRegisterType::Type type_;
+  int visibleRowCount() {
+    // 计算表格视图中可见的行数
+    if (!isVisible() || height() <= horizontalHeader()->height()) {
+      return 0;
+    }
+
+    // 可见区域高度减去表头高度
+    int availableHeight = viewport()->height();
+
+    // 没有行或行高为0则返回0
+    if (rowCount() <= 0 || rowHeight(0) <= 0) {
+      return 0;
+    }
+
+    // 假设所有行高度相同
+    return availableHeight / rowHeight(0);
+  }
 };
 
-}  // namespace Ui
+} // namespace Ui

@@ -131,7 +131,7 @@ void TcpServerSetting::setOldSettings(const QJsonObject &config) {
   QString fixedLength = framing.value("FixedLength").toString();
 
   QJsonObject retransmission = config.value("Retransmission").toObject();
-  QString lineFeed = retransmission.value("Target").toString();
+  QString target = retransmission.value("Target").toString();
 
   // 宏配置
 
@@ -164,15 +164,18 @@ void TcpServerSetting::setOldSettings(const QJsonObject &config) {
       break;
     }
   }
-  // for (int i = 0; i < framing_model_->body()->count(); ++i) {
-  //   if (framing_model_->body()->itemData(i).toString() == model) {
-  //     framing_model_->body()->setCurrentIndex(i);
-  //     break;
-  //   }
-  // }
+
+  for (int i = 0; i < retransmission_->body()->count(); ++i) {
+    if (retransmission_->body()->itemData(i).toString() == target) {
+      retransmission_->body()->setCurrentIndex(i);
+      break;
+    }
+  }
 }
 
-const QJsonObject &TcpServerSetting::getSerialSetting() {}
+const QJsonObject &TcpServerSetting::getSerialSetting() {
+  return tcp_server_save_config_;
+}
 
 void TcpServerSetting::setHost() {}
 
@@ -285,6 +288,8 @@ const QJsonObject &TcpClientSetting::getTcpClientSetting() {
   linkSetting.insert("TargetPort", QJsonValue(config.target_port));
   linkSetting.insert("SelfHost", QJsonValue(config.self_host));
   linkSetting.insert("SelfPort", QJsonValue(config.self_port));
+  linkSetting.insert("PackageInterval",
+                     QJsonValue(send_packet_interval_->currentText()));
   tcp_client_save_config_.insert("LinkSetting", QJsonValue(linkSetting));
 
   QJsonObject framing;
@@ -311,6 +316,7 @@ void TcpClientSetting::setOldSettings(const QJsonObject &config) {
   QString targetPort = linkSetting.value("TargetPort").toString();
   QString selfHost = linkSetting.value("SelfHost").toString();
   QString selfPort = linkSetting.value("SelfPort").toString();
+  QString packageInterval = linkSetting.value("PackageInterval").toString();
 
   QJsonObject framing = config.value("Framing").toObject();
   QString model = framing.value("Model").toString();
@@ -318,9 +324,8 @@ void TcpClientSetting::setOldSettings(const QJsonObject &config) {
   QString fixedLength = framing.value("FixedLength").toString();
 
   QJsonObject retransmission = config.value("Retransmission").toObject();
-  QString lineFeed = retransmission.value("Target").toString();
+  QString target = retransmission.value("Target").toString();
 
-  // 目标端口
   for (int i = 0; i < target_host_->body()->count(); ++i) {
     if (target_host_->body()->itemData(i).toString() == targetHost) {
       target_host_->body()->setCurrentIndex(i);
@@ -331,6 +336,33 @@ void TcpClientSetting::setOldSettings(const QJsonObject &config) {
   target_port_->setText(targetPort);
   self_host_->setText(selfHost);
   self_port_->setText(selfPort);
+  send_packet_interval_->setText(packageInterval);
+
+  for (int i = 0; i < framing_model_->body()->count(); ++i) {
+    if (framing_model_->body()->itemData(i).toString() == model) {
+      framing_model_->body()->setCurrentIndex(i);
+      break;
+    }
+  }
+
+  for (int i = 0; i < framing_timeout_->body()->count(); ++i) {
+    if (framing_timeout_->body()->itemData(i).toString() == timeout) {
+      framing_timeout_->body()->setCurrentIndex(i);
+      break;
+    }
+  }
+  for (int i = 0; i < framing_fixed_length_->body()->count(); ++i) {
+    if (framing_fixed_length_->body()->itemData(i).toString() == fixedLength) {
+      framing_fixed_length_->body()->setCurrentIndex(i);
+      break;
+    }
+  }
+  for (int i = 0; i < retransmission_->body()->count(); ++i) {
+    if (retransmission_->body()->itemData(i).toString() == target) {
+      retransmission_->body()->setCurrentIndex(i);
+      break;
+    }
+  }
 }
 
 void TcpClientSetting::setHostAddress() {

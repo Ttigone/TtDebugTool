@@ -568,17 +568,26 @@ void MainWindow::saveCsvFile() {
 }
 
 void MainWindow::switchToOtherTabPage(const QString &uuid, const int &type) {
+  // 删除了原有的窗口
   if (tabWidget_->isCurrentDisplayedPage(uuid)) {
+    qDebug() << "1";
     tabWidget_->switchByPage(uuid);
   } else if (tabWidget_->isStoredInMem(uuid)) {
+    qDebug() << "2";
     tabWidget_->switchByReadingMem(uuid,
                                    static_cast<TtProtocolRole::Role>(type));
   } else {
+    // 出现了bug 进入了这里, 本质上没有查找到, 进来是正确的, 在于存取 count
+    // 的时候出现了问题
+    qDebug() << "3";
     // 从磁盘读取
     base::DetectRunningTime test;
     // 只有第一次运行才会慢, 包行了创建首个窗口的缓存
+    qDebug() << "switch uuid " << uuid;
+
     tabWidget_->switchByReadingDisk(
         uuid, static_cast<TtProtocolRole::Role>(type),
+
         getSpecificConfiguration(uuid,
                                  static_cast<TtProtocolRole::Role>(type)));
     qDebug() << test.elapseMilliseconds();

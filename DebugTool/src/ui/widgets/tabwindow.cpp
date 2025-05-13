@@ -669,7 +669,11 @@ void TabWindow::switchByReadingDisk(const QString &index,
 
   // qDebug() << "TEST1";
   // qDebug() << currentIndex() + 1;
-  switchByAlreadyExistingWidget(currentIndex() + 1, index, config, role);
+  // 当前索引加 1?
+  // switchByAlreadyExistingWidget(currentIndex() + 1, index, config, role);
+  // 当前的数量加 1
+  // switchByAlreadyExistingWidget(count() + 1, index, config, role);
+  switchByAlreadyExistingWidget(count(), index, config, role);
   // qDebug() << "TEST2";
 }
 

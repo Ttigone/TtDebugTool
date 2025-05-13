@@ -114,13 +114,23 @@ void SerialSetting::setOldSettings(const QJsonObject &config) {
   int parity = linkSetting.value("ParityBit").toInt();
   int stopBit = linkSetting.value("StopBits").toInt();
   int flowControl = linkSetting.value("FlowControl").toInt();
+  QString packageInterval = linkSetting.value("SendPackageInterval").toString();
+  QString packageMaxSize = linkSetting.value("SendPackageMaxSize").toString();
+  // 没有读取到数据
+  // qDebug() << packageInterval << packageMaxSize;
+
+  QJsonObject framing = config.value("Framing").toObject();
+  QString model = framing.value("Model").toString();
+  QString timeout = framing.value("Timeout").toString();
+  QString fixedLength = framing.value("FixedLength").toString();
+
+  QJsonObject lineFeed = config.value("LineFeed").toObject();
+  QString lineBreak = lineFeed.value("LineBreak").toString();
 
   QJsonObject heartBeat = config.value("Heartbeat").toObject();
+  int type = heartBeat.value("Type").toInt();
   QString content = heartBeat.value("Content").toString();
   QString interval = heartBeat.value("Interval").toString();
-  QString type = heartBeat.value("Type").toString();
-  QJsonObject framing = config.value("Framing").toObject();
-  QString lineFeed = framing.value("LineFeed").toString();
 
   // 设置串口名
   for (int i = 0; i < serial_port_->body()->count(); ++i) {
@@ -169,6 +179,46 @@ void SerialSetting::setOldSettings(const QJsonObject &config) {
       break;
     }
   }
+  send_package_interval_->setText(packageInterval);
+  send_package_max_size_->setText(packageMaxSize);
+
+  for (int i = 0; i < framing_model_->body()->count(); ++i) {
+    if (framing_model_->body()->itemData(i).toString() == model) {
+      framing_model_->body()->setCurrentIndex(i);
+      break;
+    }
+  }
+
+  for (int i = 0; i < framing_timeout_->body()->count(); ++i) {
+    if (framing_timeout_->body()->itemData(i).toString() == timeout) {
+      framing_timeout_->body()->setCurrentIndex(i);
+      break;
+    }
+  }
+
+  for (int i = 0; i < framing_fixed_length_->body()->count(); ++i) {
+    if (framing_fixed_length_->body()->itemData(i).toString() == fixedLength) {
+      framing_fixed_length_->body()->setCurrentIndex(i);
+      break;
+    }
+  }
+
+  for (int i = 0; i < line_break_->body()->count(); ++i) {
+    if (line_break_->body()->itemData(i).toString() == lineBreak) {
+      line_break_->body()->setCurrentIndex(i);
+      break;
+    }
+  }
+
+  for (int i = 0; i < heartbeat_send_type_->body()->count(); ++i) {
+    if (heartbeat_send_type_->body()->itemData(i).toInt() == type) {
+      heartbeat_send_type_->body()->setCurrentIndex(i);
+      break;
+    }
+  }
+
+  heartbeat_interval_->setText(interval);
+  heartbeat_content_->setText(content);
 }
 
 const QJsonObject &SerialSetting::getSerialSetting() {
@@ -180,6 +230,10 @@ const QJsonObject &SerialSetting::getSerialSetting() {
   linkSetting.insert("ParityBit", QJsonValue(cfg.parity));
   linkSetting.insert("StopBits", QJsonValue(cfg.stop_bits));
   linkSetting.insert("FlowControl", QJsonValue(cfg.flow_control));
+  linkSetting.insert("SendPackageInterval",
+                     QJsonValue(send_package_interval_->currentText()));
+  linkSetting.insert("SendPackageMaxSize",
+                     QJsonValue(send_package_max_size_->currentText()));
   config_.insert("LinkSetting", QJsonValue(linkSetting));
 
   QJsonObject framing;
@@ -191,12 +245,14 @@ const QJsonObject &SerialSetting::getSerialSetting() {
   config_.insert("Framing", QJsonValue(framing));
 
   QJsonObject lineFeed;
-  lineFeed.insert("LineFeed", QJsonValue(line_break_->body()->currentText()));
-  config_.insert("Framing", QJsonValue(lineFeed));
+  lineFeed.insert("LineBreak", QJsonValue(line_break_->body()->currentText()));
+  config_.insert("LineFeed", QJsonValue(lineFeed));
 
   QJsonObject heartbeat;
-  heartbeat.insert("Type",
-                   QJsonValue(heartbeat_send_type_->body()->currentText()));
+  heartbeat.insert(
+      "Type",
+      // QJsonValue(heartbeat_send_type_->body()->itemData(0)));
+      QJsonValue(heartbeat_send_type_->body()->currentData().toInt()));
   heartbeat.insert("Interval", QJsonValue(heartbeat_interval_->body()->text()));
   heartbeat.insert("Content", QJsonValue(heartbeat_content_->body()->text()));
   config_.insert("Heartbeat", QJsonValue(heartbeat));
@@ -376,7 +432,7 @@ void SerialSetting::init() {
   framingWidgetLayout->addWidget(framing_fixed_length_);
 
   Ui::TtDrawer *drawerFraming = new Ui::TtDrawer(
-      tr("分帧"), ":/sys/chevron-double-up.svg",
+      tr("分帧[收数据包](暂未提供使用)"), ":/sys/chevron-double-up.svg",
       ":/sys/chevron-double-down.svg", framingWidget, false, this);
 
   drawers << drawerFraming;
@@ -409,11 +465,11 @@ void SerialSetting::init() {
   framing_fixed_length_->setVisible(false);
 
   line_break_ = new Ui::TtLabelComboBox(tr("换行符: "));
-  line_break_->addItem("\\r");
-  line_break_->addItem("\\n");
-  line_break_->addItem("\\r\\n");
+  line_break_->addItem("\\r", "\\r");
+  line_break_->addItem("\\n", "\\n");
+  line_break_->addItem("\\r\\n", "\\r\\n");
   Ui::TtDrawer *drawerLineBreak = new Ui::TtDrawer(
-      tr("换行"), ":/sys/chevron-double-up.svg",
+      tr("换行[收数据包](暂未提供使用)"), ":/sys/chevron-double-up.svg",
       ":/sys/chevron-double-down.svg", line_break_, false, this);
 
   drawers << drawerLineBreak;
@@ -423,9 +479,9 @@ void SerialSetting::init() {
       new Ui::TtVerticalLayout(heartbeatWidget);
   heartbeatWidget->adjustSize(); // 确保大小正确
   heartbeat_send_type_ = new Ui::TtLabelComboBox(tr("类型: "));
-  heartbeat_send_type_->addItem(tr("无"));
-  heartbeat_send_type_->addItem(tr("文本"));
-  heartbeat_send_type_->addItem(tr("HEX"));
+  heartbeat_send_type_->addItem(tr("无"), TtTextFormat::None);
+  heartbeat_send_type_->addItem(tr("文本"), TtTextFormat::TEXT);
+  heartbeat_send_type_->addItem(tr("HEX"), TtTextFormat::HEX);
   heartbeat_interval_ = new Ui::TtLabelLineEdit(tr("间隔: "));
   heartbeat_content_ = new Ui::TtLabelLineEdit(tr("内容: "));
 

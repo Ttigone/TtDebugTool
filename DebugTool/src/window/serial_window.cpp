@@ -535,9 +535,7 @@ void SerialWindow::handleDialogData(const QString &uuid, quint16 channel,
     }
 
     rule.header_len = headerLength.toInt();
-    // rule.type_bytes = type.toInt();
     rule.type_offset = typeOffset.toInt();
-    // rule.len_bytes = length.toInt();
     rule.len_offset = lengthOffset.toInt();
   } else {
     Ui::TtMessageBar::information(TtMessageBarType::Top, "",

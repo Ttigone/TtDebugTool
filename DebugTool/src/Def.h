@@ -86,4 +86,14 @@ enum Type {
 Q_ENUM_CREATE(Type)
 Q_END_ENUM_CREATE(TtModbusRegisterType)
 
+Q_BEGIN_ENUM_CREATE_SRC(TtTextFormat)
+enum Type {
+  None,
+  TEXT,
+  HEX,
+  ASCALL,
+};
+Q_ENUM_CREATE(Type)
+Q_END_ENUM_CREATE(TtTextFormat)
+
 #endif // GLOBAL_DEF_H

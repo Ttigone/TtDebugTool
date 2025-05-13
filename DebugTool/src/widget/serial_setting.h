@@ -1,6 +1,7 @@
 #ifndef WIDGET_SERIAL_SETTING_H
 #define WIDGET_SERIAL_SETTING_H
 
+#include "Def.h"
 #include "core/serial_port.h"
 
 namespace Ui {

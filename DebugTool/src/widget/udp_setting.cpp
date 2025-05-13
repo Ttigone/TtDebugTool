@@ -118,7 +118,53 @@ const QJsonObject &UdpServerSetting::getUdpServerSetting() {
   return udp_server_save_config_;
 }
 
-void UdpServerSetting::setOldSettings(const QJsonObject &config) {}
+void UdpServerSetting::setOldSettings(const QJsonObject &config) {
+  if (config.isEmpty()) {
+    return;
+  }
+  QJsonObject linkSetting = config.value("LinkSetting").toObject();
+  QString selfHost = linkSetting.value("SelfHost").toString();
+  QString selfPort = linkSetting.value("SelfPort").toString();
+
+  QJsonObject framing = config.value("Framing").toObject();
+  QString model = framing.value("Model").toString();
+  QString timeout = framing.value("Timeout").toString();
+  QString fixedLength = framing.value("FixedLength").toString();
+
+  QJsonObject retransmission = config.value("Retransmission").toObject();
+  QString target = retransmission.value("Target").toString();
+
+  self_ip_->setText(selfHost);
+  self_port_->setText(selfPort);
+
+  for (int i = 0; i < framing_model_->body()->count(); ++i) {
+    if (framing_model_->body()->itemData(i).toString() == model) {
+      framing_model_->body()->setCurrentIndex(i);
+      break;
+    }
+  }
+
+  for (int i = 0; i < framing_timeout_->body()->count(); ++i) {
+    if (framing_timeout_->body()->itemData(i).toString() == timeout) {
+      framing_timeout_->body()->setCurrentIndex(i);
+      break;
+    }
+  }
+
+  for (int i = 0; i < framing_fixed_length_->body()->count(); ++i) {
+    if (framing_fixed_length_->body()->itemData(i).toString() == fixedLength) {
+      framing_fixed_length_->body()->setCurrentIndex(i);
+      break;
+    }
+  }
+
+  for (int i = 0; i < retransmission_->body()->count(); ++i) {
+    if (retransmission_->body()->itemData(i).toString() == target) {
+      retransmission_->body()->setCurrentIndex(i);
+      break;
+    }
+  }
+}
 
 const QJsonObject &UdpServerSetting::getSerialSetting() {}
 
@@ -289,10 +335,40 @@ void UdpClientSetting::setOldSettings(const QJsonObject &config) {
   QJsonObject retransmission = config.value("Retransmission").toObject();
   QString target = retransmission.value("Target").toString();
 
-  // for ()
   for (int i = 0; i < mode_->body()->count(); ++i) {
     if (mode_->body()->itemData(i).toInt() == mode) {
       mode_->body()->setCurrentIndex(i);
+    }
+  }
+  target_ip_->setText(targetHost);
+  target_port_->setText(targetPort);
+  self_ip_->setText(selfHost);
+  self_port_->setText(selfPort);
+  send_packet_interval_->setText(sendPacketInterval);
+
+  for (int i = 0; i < framing_model_->body()->count(); ++i) {
+    if (framing_model_->body()->itemData(i).toString() == model) {
+      framing_model_->body()->setCurrentIndex(i);
+      break;
+    }
+  }
+
+  for (int i = 0; i < framing_timeout_->body()->count(); ++i) {
+    if (framing_timeout_->body()->itemData(i).toString() == timeout) {
+      framing_timeout_->body()->setCurrentIndex(i);
+      break;
+    }
+  }
+  for (int i = 0; i < framing_fixed_length_->body()->count(); ++i) {
+    if (framing_fixed_length_->body()->itemData(i).toString() == fixedLength) {
+      framing_fixed_length_->body()->setCurrentIndex(i);
+      break;
+    }
+  }
+  for (int i = 0; i < retransmission_->body()->count(); ++i) {
+    if (retransmission_->body()->itemData(i).toString() == target) {
+      retransmission_->body()->setCurrentIndex(i);
+      break;
     }
   }
 }

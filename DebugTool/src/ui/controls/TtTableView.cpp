@@ -856,6 +856,12 @@ void TtModbusTableWidget::setCellWidget(int row, int column, QWidget *widget) {
   cellWidgetCache_[widget][row] = widget; // 缓存控件
 }
 
+void setEnable(bool enable) {
+  // BUF 遍历每行所有的控件, 设置 enable 状态
+  // 缓存的控件中设置状态
+  // FIXME 
+}
+
 QVector<QString> TtModbusTableWidget::getRowValue(int col) {
   QVector<QString> result;
   for (int i = 1; i < this->rowCount(); ++i) {

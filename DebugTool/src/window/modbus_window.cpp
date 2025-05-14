@@ -278,6 +278,7 @@ void ModbusWindow::init() {
   refresh_btn_->setSvgSize(18, 18);
   function_selection_->setCornerWidget(refresh_btn_, Qt::BottomRightCorner);
 
+  // 对应的 wiget 处于不可选择状态
   function_selection_->addTab(createCoilWidget(), tr("线圈"));
   function_selection_->addTab(createDiscreteInputsWidget(), tr("离散输入"));
   function_selection_->addTab(createHoldingRegisterWidget(), tr("保持寄存器"));
@@ -472,8 +473,6 @@ QWidget *ModbusWindow::createCoilWidget() {
               return;
             }
             if (modbus_master_->isConnected()) {
-              // FIXME 没有打开, 全部不允许操作
-              // BUG 这里出现问题 write 出现问题, 无法写入数据
               modbus_master_->writeCoilsData(
                   address, QVector<quint16>(1, value),
                   modbus_client_setting_->getModbusDeviceId());

@@ -97,6 +97,8 @@ private:
   QWidget *createRegisterWidget(TtModbusRegisterType::Type type,
                                 const QString &title);
 
+  void setFunctionTableState(bool state);
+
   QWidget *createCoilWidget();
   QWidget *createDiscreteInputsWidget();
   QWidget *createHoldingRegisterWidget();
@@ -136,6 +138,10 @@ private:
   Ui::TtModbusTableWidget *discrete_inputs_table_;
   Ui::TtModbusTableWidget *holding_registers_table_;
   Ui::TtModbusTableWidget *input_registers_table_;
+
+  // 一共只有 4 张表格
+  // QList<Ui::TtModbusTableWidget*> function_table_;
+  QHash<TtModbusRegisterType::Type, Ui::TtModbusTableWidget *> function_table_;
 
   QJsonObject config_;
   QTimer refresh_timer_;

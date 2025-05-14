@@ -5,16 +5,9 @@
 namespace Ui {
 
 // TtVerticalLayout::TtVerticalLayout(QWidget* widget) : TtVerticalLayout() {
-TtVerticalLayout::TtVerticalLayout() : QVBoxLayout() {
-  init();
-}
+TtVerticalLayout::TtVerticalLayout() : QVBoxLayout() { init(); }
 
-// TtVerticalLayout::TtVerticalLayout(QWidget* widget) : QVBoxLayout(widget) {
-//   init();
-//   // widget->setLayout(this);
-// }
-
-TtVerticalLayout::TtVerticalLayout(QWidget* widget) : TtVerticalLayout() {
+TtVerticalLayout::TtVerticalLayout(QWidget *widget) : TtVerticalLayout() {
   widget->setLayout(this);
 }
 
@@ -25,4 +18,4 @@ void TtVerticalLayout::init() {
   setSpacing(0);
 }
 
-}  // namespace Ui
+} // namespace Ui

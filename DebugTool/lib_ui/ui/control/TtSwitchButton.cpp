@@ -11,6 +11,7 @@ TtSwitchButton::TtSwitchButton(QWidget* parent)
       animation(new QPropertyAnimation(this, "knobPosition", this)),
       text_(""),
       textPosition_(TextLeft) {
+  this->setStyleSheet("background-color: Coral");
   updateLayout();
   animation->setDuration(200);
   animation->setEasingCurve(QEasingCurve::OutBounce);
@@ -91,6 +92,7 @@ void TtSwitchButton::setChecked(bool checked_) {
     const qreal endValue =
         checked ? (switchRect.width() - knobDiameter - 2.0) : 2.0;
 
+    // 滑块
     animation->setStartValue(m_knobPosition);
     animation->setEndValue(endValue);
     animation->start();
@@ -114,13 +116,35 @@ void TtSwitchButton::updateLayout() {
   int totalWidth = textWidth + switchWidth + spacing;
   int fixedHeight = 20;  // 固定高度
 
-  // 根据文本位置调整布局
-  if (textPosition_ == TextRight) {
-    textRect = QRect(switchWidth + spacing, 0, textWidth, fixedHeight);
-    switchRect = QRect(0, 0, switchWidth, fixedHeight);
+  // // 根据文本位置调整布局
+  // if (textPosition_ == TextRight) {
+  //   textRect = QRect(switchWidth + spacing, 0, textWidth, fixedHeight);
+  //   switchRect = QRect(0, 0, switchWidth, fixedHeight);
+  // } else {
+  //   textRect = QRect(0, 0, textWidth, fixedHeight);
+  //   switchRect = QRect(textWidth + spacing, 0, switchWidth, fixedHeight);
+  // }
+
+  // 当没有文本时，让控件宽度略大于开关宽度以提供足够空间
+  if (textWidth == 0) {
+    totalWidth = switchWidth + 8;  // 添加少量边距，更美观
   } else {
+    totalWidth = textWidth + spacing + switchWidth;
+  }
+
+  if (textWidth == 0) {
+    // 无文本时居中显示开关
+    int offsetX = (totalWidth - switchWidth) / 2;
+    switchRect = QRect(offsetX, 0, switchWidth, fixedHeight);
+    textRect = QRect(0, 0, 0, 0);  // 空文本矩形
+  } else if (textPosition_ == TextLeft) {
+    // 文本在左，开关在右
     textRect = QRect(0, 0, textWidth, fixedHeight);
     switchRect = QRect(textWidth + spacing, 0, switchWidth, fixedHeight);
+  } else {  // TextRight
+    // 开关在左，文本在右
+    switchRect = QRect(0, 0, switchWidth, fixedHeight);
+    textRect = QRect(switchWidth + spacing, 0, textWidth, fixedHeight);
   }
 
   setFixedSize(totalWidth, fixedHeight);

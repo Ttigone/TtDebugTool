@@ -51,16 +51,44 @@ QJsonObject ModbusWindow::getConfiguration() const { return config_; }
 
 bool ModbusWindow::workState() const {
   // return open
-  return false;
+  return opened_;
 }
 
 bool ModbusWindow::saveState() { return saved_; }
 
-void ModbusWindow::setSaveState(bool state) {}
+void ModbusWindow::setSaveState(bool state) { saved_ = state; }
 
-void ModbusWindow::saveSetting() {}
+void ModbusWindow::saveSetting() {
+  config_.insert("WindowTitile", title_->text());
+  if (role_ == TtProtocolType::Client) {
+    config_.insert("ModbusClientSetting",
+                   modbus_client_setting_->getModbusClientSetting());
+  } else if (role_ == TtProtocolType::Server) {
+  }
+  // 循环插入所有 function_table_ 中的表格项
 
-void ModbusWindow::setSetting(const QJsonObject &config) {}
+  for (auto it = function_table_.constBegin(); it != function_table_.constEnd();
+       ++it) {
+    auto *widget = qobject_cast<Ui::TtModbusTableWidget *>(it.value());
+    config_.insert("InstructionTable+" + TYPE_NAMES.value(it.key()),
+                   widget->getTableRecord());
+  }
+  saved_ = true;
+  emit requestSaveConfig();
+}
+
+void ModbusWindow::setSetting(const QJsonObject &config) {
+  if (config.isEmpty()) {
+    return;
+  }
+  // 设置后
+  title_->setText(config.value("WindowTitle").toString(tr("未读取正确的标题")));
+  // BUG 读取失败, 没有读取成功
+  modbus_client_setting_->setOldSettings(
+      config.value("ModbusClientSetting").toObject(QJsonObject()));
+  // FIXME 每个表格设定 确实 graph 的选择情况
+  // config.value("InstructionTable+")
+}
 
 void ModbusWindow::switchToEditMode() {
   QGraphicsOpacityEffect *effect = new QGraphicsOpacityEffect(title_edit_);
@@ -279,6 +307,7 @@ void ModbusWindow::init() {
   function_selection_->setCornerWidget(refresh_btn_, Qt::BottomRightCorner);
 
   // 对应的 wiget 处于不可选择状态
+  // 内部创建多个 widget
   function_selection_->addTab(createCoilWidget(), tr("线圈"));
   function_selection_->addTab(createDiscreteInputsWidget(), tr("离散输入"));
   function_selection_->addTab(createHoldingRegisterWidget(), tr("保持寄存器"));
@@ -345,29 +374,24 @@ void ModbusWindow::connectSignals() {
           on_off_btn_->setChecked(true);
           modbus_client_setting_->setControlState(false);
           refresh_btn_->setEnable(true);
+          setFunctionTableState(true);
           opened_ = true;
         } else {
-          // FIXME 需要对 moduletable 做不可操作
           qDebug() << "链接失败";
           on_off_btn_->setChecked(false);
           modbus_client_setting_->setControlState(true);
           refresh_btn_->setEnable(false);
+          setFunctionTableState(false);
           opened_ = false;
         }
       }
     });
   }
 
-  connect(save_btn_, &Ui::TtSvgButton::clicked, [this]() {
-    config_.insert("WindowTitile", title_->text());
-    if (role_ == TtProtocolType::Client) {
-      config_.insert("ModbusClientSetting",
-                     modbus_client_setting_->getModbusClientSetting());
-    } else if (role_ == TtProtocolType::Server) {
-    }
-    // config_.insert("InstructionTable", instruction_table_->getTableRecord());
-    emit requestSaveConfig();
-  });
+  connect(save_btn_, &Ui::TtSvgButton::clicked, this,
+          &ModbusWindow::saveSetting);
+
+  connect(save_btn_, &Ui::TtSvgButton::clicked, [this]() {});
 
   QObject::connect(&refresh_timer_, &QTimer::timeout, this,
                    &Window::ModbusWindow::timerRefreshValue);
@@ -431,11 +455,36 @@ void ModbusWindow::updatePlot(TtModbusRegisterType::Type type, const int &addr,
   }
 }
 
+void ModbusWindow::setFunctionTableState(bool state) {
+  // for (auto it = function_table_.begin(); it != function_table_.end(); ++it)
+  // {
+  //   // if (*it) {
+  //   //   (*it)->setEnabled(state);
+  //   // }
+  // }
+  // for (auto &it : function_table_.values()) {
+  //   if (*it) {
+  //     (*it)->setEnabled(state);
+  //   }
+  // }
+  // 1. 只遍历值
+  // for (const Ui::TtModbusTableWidget &value : function_table_) {
+  //   // qDebug() << "Value:" << value;
+  //   value.setEnabled(state);
+  // }
+  for (auto it = function_table_.constBegin(); it != function_table_.constEnd();
+       ++it) {
+    Ui::TtModbusTableWidget *widget = it.value();
+    widget->setEnabled(state);
+  }
+}
+
 QWidget *ModbusWindow::createCoilWidget() {
-  // 线圈
+  // 上部操作窗口
   QWidget *coilsWidget = new QWidget;
   Ui::TtVerticalLayout *coilsWidgetLayout =
       new Ui::TtVerticalLayout(coilsWidget);
+  // 底部的按钮操作栏
   QWidget *bottomWidget = new QWidget;
   Ui::TtHorizontalLayout *bottomWidgetLayout =
       new Ui::TtHorizontalLayout(bottomWidget);
@@ -453,17 +502,14 @@ QWidget *ModbusWindow::createCoilWidget() {
   coil_table_ =
       new Ui::TtModbusTableWidget(TtModbusRegisterType::Coils, coilsWidget);
   coil_table_->setObjectName("Coil");
+  function_table_.insert(TtModbusRegisterType::Coils, coil_table_);
 
   coilsWidgetLayout->addWidget(coil_table_, 1);
   coilsWidgetLayout->addWidget(bottomWidget, 0, Qt::AlignBottom);
 
-  // 写入
+  // 数据请求写入
   connect(coil_table_, &Ui::TtModbusTableWidget::valueConfirmed, this,
           [this](const int &address, const int &value) {
-            // 写线圈
-            // qDebug() << "test";
-            // 添加空指针检查
-            // 为空 ?
             if (!modbus_client_setting_) {
               qWarning()
                   << "modbus_client_setting_ is null, cannot write coils data";
@@ -478,20 +524,20 @@ QWidget *ModbusWindow::createCoilWidget() {
                   modbus_client_setting_->getModbusDeviceId());
             }
           });
-
+  // 不同通道的数据显示在图标上
   connect(
       coil_table_, &Ui::TtModbusTableWidget::requestShowGraph,
       [this](TtModbusRegisterType::Type type, const int &addr, bool enable) {
         // qDebug() << "show grah";
         if (!enable) {
-          // 清空后, 仍然有残留 plot
+          // BUG 清空后, 仍然有残留 plot
           modbus_plot_->removeGraphs(type, addr);
         } else {
           modbus_plot_->addGraphs(type, addr);
         }
       });
 
-  // 添加按钮
+  // 添加行按钮
   connect(plusButton, &QPushButton::clicked, this,
           [this]() { coil_table_->addRow(); });
 
@@ -499,7 +545,6 @@ QWidget *ModbusWindow::createCoilWidget() {
 }
 
 QWidget *ModbusWindow::createDiscreteInputsWidget() {
-
   QWidget *discreteInputsWidget = new QWidget;
   Ui::TtVerticalLayout *discreteInputsWidgetLayout =
       new Ui::TtVerticalLayout(discreteInputsWidget);
@@ -520,6 +565,9 @@ QWidget *ModbusWindow::createDiscreteInputsWidget() {
   discrete_inputs_table_ = new Ui::TtModbusTableWidget(
       TtModbusRegisterType::DiscreteInputs, discreteInputsWidget);
   discrete_inputs_table_->setObjectName("DiscreteInputs");
+
+  function_table_.insert(TtModbusRegisterType::DiscreteInputs,
+                         discrete_inputs_table_);
 
   discreteInputsWidgetLayout->addWidget(discrete_inputs_table_, 1);
   discreteInputsWidgetLayout->addWidget(bottomWidget, 0, Qt::AlignBottom);
@@ -551,7 +599,6 @@ QWidget *ModbusWindow::createHoldingRegisterWidget() {
   QWidget *holdingRegistersWidget = new QWidget;
   Ui::TtVerticalLayout *coilsWidgetLayout =
       new Ui::TtVerticalLayout(holdingRegistersWidget);
-
   QWidget *bottomWidget = new QWidget;
   Ui::TtHorizontalLayout *bottomWidgetLayout =
       new Ui::TtHorizontalLayout(bottomWidget);
@@ -569,6 +616,8 @@ QWidget *ModbusWindow::createHoldingRegisterWidget() {
   holding_registers_table_ = new Ui::TtModbusTableWidget(
       TtModbusRegisterType::HoldingRegisters, holdingRegistersWidget);
   holding_registers_table_->setObjectName("HoldingRegisters");
+  function_table_.insert(TtModbusRegisterType::HoldingRegisters,
+                         holding_registers_table_);
 
   // auto table = new QTableView;
   // 创建模型和委托实例
@@ -639,6 +688,8 @@ QWidget *ModbusWindow::createInputRegisterWidget() {
   input_registers_table_ = new Ui::TtModbusTableWidget(
       TtModbusRegisterType::InputRegisters, inputRegistersWidget);
   input_registers_table_->setObjectName("InputRegisters");
+  function_table_.insert(TtModbusRegisterType::InputRegisters,
+                         input_registers_table_);
 
   coilsWidgetLayout->addWidget(input_registers_table_, 1);
   coilsWidgetLayout->addWidget(bottomWidget, 0, Qt::AlignBottom);

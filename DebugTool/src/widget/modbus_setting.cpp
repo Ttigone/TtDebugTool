@@ -13,9 +13,7 @@
 
 namespace Widget {
 
-ModbusClientSetting::ModbusClientSetting(QWidget* parent) {
-  init();
-}
+ModbusClientSetting::ModbusClientSetting(QWidget *parent) { init(); }
 
 ModbusClientSetting::~ModbusClientSetting() {}
 
@@ -32,12 +30,68 @@ ModbusClientSetting::getModbusClientConfiguration() {
       port_->currentText().toInt());
 }
 
-void ModbusClientSetting::setModbusClientSetting(const QJsonObject& obj) {
+void ModbusClientSetting::setOldSettings(const QJsonObject &config) {
+  if (config.isEmpty()) {
+    return;
+  }
+  QJsonObject linkSetting = config.value("LinkSetting").toObject();
+  int linkType = linkSetting.value("LinkType").toInt();
+  QString path = linkSetting.value("Path").toString();
+  int baudRate = linkSetting.value("BaudRate").toInt();
+  int dataBit = linkSetting.value("DataBit").toInt();
+  int parityBit = linkSetting.value("ParityBit").toInt();
+  int stopBit = linkSetting.value("StopBit").toInt();
+  QString host = linkSetting.value("Host").toString();
+  QString port = linkSetting.value("Port").toString();
+  QString deviceId = linkSetting.value("DeviceId").toString();
+  QString timeout = linkSetting.value("Timeout").toString();
+  bool enableAutoRefresh = linkSetting.value("EnableAutoRefresh").toBool();
+  QString refreshInterval = linkSetting.value("RefreshInterval").toString();
+
+  for (int i = 0; i < link_type_->body()->count(); ++i) {
+    if (link_type_->body()->itemData(i).toInt() == linkType) {
+      link_type_->body()->setCurrentIndex(i);
+    }
+  }
+  for (int i = 0; i < path_->body()->count(); ++i) {
+    if (path_->body()->itemData(i).toString() == path) {
+      path_->body()->setCurrentIndex(i);
+    }
+  }
+  for (int i = 0; i < baud_->body()->count(); ++i) {
+    if (baud_->body()->itemData(i).toInt() == baudRate) {
+      baud_->body()->setCurrentIndex(i);
+    }
+  }
+  for (int i = 0; i < data_bit_->body()->count(); ++i) {
+    if (data_bit_->body()->itemData(i).toInt() == dataBit) {
+      data_bit_->body()->setCurrentIndex(i);
+    }
+  }
+  for (int i = 0; i < parity_bit_->body()->count(); ++i) {
+    if (parity_bit_->body()->itemData(i).toInt() == parityBit) {
+      parity_bit_->body()->setCurrentIndex(i);
+    }
+  }
+  for (int i = 0; i < stop_bit_->body()->count(); ++i) {
+    if (stop_bit_->body()->itemData(i).toInt() == stopBit) {
+      stop_bit_->body()->setCurrentIndex(i);
+    }
+  }
+  host_->setText(host);
+  port_->setText(port);
+  device_id_->setText(deviceId);
+  timeout_->setText(timeout);
+  auto_refresh_->setChecked(enableAutoRefresh);
+  refresh_interval_->setText(refreshInterval);
+}
+
+void ModbusClientSetting::setModbusClientSetting(const QJsonObject &obj) {
   host_->setText("127.0.0.1");
   port_->setText("502");
 }
 
-const QJsonObject& ModbusClientSetting::getModbusClientSetting() {
+const QJsonObject &ModbusClientSetting::getModbusClientSetting() {
   auto config = getModbusClientConfiguration();
   QJsonObject linkSetting;
   linkSetting.insert("LinkType", QJsonValue(config.type));
@@ -76,11 +130,12 @@ void ModbusClientSetting::setSerialPortsName() {
   const auto serialPortInfos = QSerialPortInfo::availablePorts();
   path_->body()->clear();
 
-  for (const QSerialPortInfo& portInfo : serialPortInfos) {
+  for (const QSerialPortInfo &portInfo : serialPortInfos) {
     QString portName = (portInfo.portName() + "-" + portInfo.description());
     path_->addItem(portName, portInfo.portName());
   }
   path_->body()->model()->sort(0);
+  path_->setCurrentItem(0);
 }
 
 void ModbusClientSetting::setSerialPortsBaudRate() {
@@ -139,8 +194,8 @@ quint32 ModbusClientSetting::getRefreshInterval() {
 void ModbusClientSetting::init() {
   main_layout_ = new Ui::TtVerticalLayout(this);
 
-  QWidget* linkSettingWidget = new QWidget(this);
-  Ui::TtVerticalLayout* linkSettingWidgetLayout =
+  QWidget *linkSettingWidget = new QWidget(this);
+  Ui::TtVerticalLayout *linkSettingWidgetLayout =
       new Ui::TtVerticalLayout(linkSettingWidget);
   link_type_ = new Ui::TtLabelComboBox(tr("连接类型:"), linkSettingWidget);
 
@@ -174,7 +229,7 @@ void ModbusClientSetting::init() {
   linkSettingWidgetLayout->addWidget(timeout_);
   linkSettingWidgetLayout->addWidget(auto_refresh_);
   linkSettingWidgetLayout->addWidget(refresh_interval_);
-  Ui::Drawer* drawer1 = new Ui::Drawer(tr("连接设置"), linkSettingWidget);
+  Ui::Drawer *drawer1 = new Ui::Drawer(tr("连接设置"), linkSettingWidget);
 
   // 界面切换
   connect(link_type_, &Ui::TtLabelComboBox::currentIndexChanged,
@@ -204,17 +259,17 @@ void ModbusClientSetting::init() {
           });
   link_type_->setCurrentItem(0);
 
-  QWidget* graphSettingWidget = new QWidget(this);
-  Ui::TtVerticalLayout* graphSettingWidgetLayout =
+  QWidget *graphSettingWidget = new QWidget(this);
+  Ui::TtVerticalLayout *graphSettingWidgetLayout =
       new Ui::TtVerticalLayout(graphSettingWidget);
   graph_capacity_ = new Ui::TtLabelLineEdit(tr("容量:"), graphSettingWidget);
   connect(graph_capacity_, &Ui::TtLabelLineEdit::currentTextChanged,
-          [this](const QString& text) {
+          [this](const QString &text) {
             qDebug() << "nums: " << text.toUShort();
             emit graphNumsChanged(text.toUShort());
           });
   graphSettingWidgetLayout->addWidget(graph_capacity_);
-  Ui::Drawer* drawer2 = new Ui::Drawer(tr("图表"), graphSettingWidget);
+  Ui::Drawer *drawer2 = new Ui::Drawer(tr("图表"), graphSettingWidget);
 
   setLinkType();
   setSerialPortsName();
@@ -223,12 +278,12 @@ void ModbusClientSetting::init() {
   setSerialPortsParityBit();
   setSerialPortsStopBit();
 
-  QScrollArea* scroll = new QScrollArea(this);
+  QScrollArea *scroll = new QScrollArea(this);
   scroll->setFrameStyle(QFrame::NoFrame);
   scroll->setWidgetResizable(true);
-  QWidget* scrollContent = new QWidget(scroll);
+  QWidget *scrollContent = new QWidget(scroll);
 
-  Ui::TtVerticalLayout* scrollContentLayout =
+  Ui::TtVerticalLayout *scrollContentLayout =
       new Ui::TtVerticalLayout(scrollContent);
   scrollContentLayout->addWidget(drawer1, 0, Qt::AlignTop);
   scrollContentLayout->addWidget(drawer2, 0);
@@ -247,4 +302,4 @@ void ModbusClientSetting::init() {
       });
 }
 
-}  // namespace Widget
+} // namespace Widget

@@ -216,6 +216,7 @@ void ModbusClientSetting::init() {
   host_ = new Ui::TtLabelLineEdit(tr("主机:"), linkSettingWidget);
   port_ = new Ui::TtLabelLineEdit(tr("端口:"), linkSettingWidget);
 
+  // 设备 id 与主机 id 要匹配才能写入数据
   device_id_ = new Ui::TtLabelLineEdit(tr("设备 ID:"), linkSettingWidget);
   timeout_ = new Ui::TtLabelLineEdit(tr("超时时间"), linkSettingWidget);
   auto_refresh_ = new Ui::TtSwitchButton(tr("自动刷新"), linkSettingWidget);

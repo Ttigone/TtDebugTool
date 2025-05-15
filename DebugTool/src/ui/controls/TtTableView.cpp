@@ -10,6 +10,7 @@
 #include <ui/control/TtLineEdit.h>
 #include <ui/control/TtSwitchButton.h>
 
+#include "Def.h"
 #include "ui/layout/horizontal_layout.h"
 #include "ui/widgets/buttons.h"
 
@@ -766,12 +767,45 @@ void TtModbusTableWidget::setValue(const int &addr,
                                    const QVector<quint16> &data) {
   // 手动更新标志
   programmatic_update_ = true;
+
+  // // BUG 待修改为 QMutilMap 方式匹配
+  // // 某一个地址映射的全部可能行
+  // QList<int> rows = address_to_row_map_.values(addr);
+
+  // // 遍历行号
+  // for (int row : rows) {
+  //   if (row < 1 || row > rowCount() || row -1 >= rowsData_.size()) {
+  //     qDebug() << "行号不合法: " << row;
+  //     continue;
+  //   }
+  //   switch (type_) {
+  //     case TtModbusRegisterType::Coils:
+  //     case TtModbusRegisterType::DiscreteInputs:
+  //       if (rowsData_[row].valueButton) {
+  //         // 对 button 赋值
+  //         rowsData_[row].valueButton->setChecked(data.isEmpty() ? false :
+  //         data[0] != 0);
+  //       }
+  //     break;
+  //     case TtModbusRegisterType::HoldingRegisters:
+  //     case TtModbusRegisterType::InputRegisters:
+  //     if (rowsData_[row].value) {
+  //       rowsData_[row].value->setText(data.isEmpty() ? "0" :
+  //       QString::number(data[0]));
+  //     }
+  //     break;
+  //   }
+  // }
+  // programmatic_update_ = false;
+
   switch (type_) {
   case TtModbusRegisterType::Coils: { // Coils
     for (int i = 1; i < this->rowCount(); ++i) {
       QWidget *widget = cellWidget(i, 1);
       if (widget) {
         TtLineEdit *lineEdit = widget->findChild<TtLineEdit *>();
+        // 对比当前的地址与目标设置地址
+        // 如果存在多个相同地址呢, 需要兼容
         if (lineEdit && lineEdit->text() == QString::number(addr)) {
           QWidget *widget = cellWidget(i, 3);
           if (widget) {
@@ -892,6 +926,7 @@ void TtModbusTableWidget::setTable(const QJsonObject &record) {
     int newRow = rowCount(); // 首行为 1, 插入的位置是该处
     insertRow(newRow);       // 插入新行到最后的位置
     // setup 需要全包 可视状态
+    qDebug() << "table setup Row";
     setupRow(newRow);
     // 如果rowsData_大小不足，可能是setupRow没有正确创建控件
     // rowsData 逐渐递增的
@@ -943,9 +978,24 @@ void TtModbusTableWidget::setTable(const QJsonObject &record) {
       row.checkBtn->setChecked(rowData.at(dataOffset).toBool());
     }
     dataOffset++;
-    // 设置地址
+    // 设置地址 更新地址映射
     if (rowData.size() > dataOffset && row.address) {
-      row.address->setText(rowData.at(dataOffset).toString());
+      // row.address->setText(rowData.at(dataOffset).toString());
+      QString addrText = rowData.at(dataOffset).toString();
+      row.address->setText(addrText);
+      // 添加地址映射
+      // bool ok;
+      // int addr;
+      // if (addrText.startsWith("0x", Qt::CaseInsensitive)) {
+      //   addr = addrText.mid(2).toInt(&ok, 16);
+      // } else {
+      //   addr = addrText.toInt(&ok, 10);
+      // }
+
+      // if (ok) {
+      //   rowsData_[newRow - 1].currentAddress = addr;
+      //   address_to_row_map_.insert(addr, newRow);
+      // }
     }
     dataOffset++;
 
@@ -980,7 +1030,30 @@ void TtModbusTableWidget::setTable(const QJsonObject &record) {
     if (rowData.size() > dataOffset && row.description) {
       row.description->setText(rowData.at(dataOffset).toString());
     }
+
+    // // 设置地址并更新映射
+    // if (rowData.size() > dataOffset && row.address) {
+    //   QString addrText = rowData.at(dataOffset).toString();
+    //   row.address->setText(addrText);
+
+    //   // 添加地址映射
+    //   bool ok;
+    //   int addr;
+
+    //   // 地址没有16进制
+    //   if (addrText.startsWith("0x", Qt::CaseInsensitive)) {
+    //     addr = addrText.mid(2).toInt(&ok, 16);
+    //   } else {
+    //     addr = addrText.toInt(&ok, 10);
+    //   }
+
+    //   if (ok) {
+    //     rowsData_[newRow - 1].currentAddress = addr;
+    //     address_to_row_map_.insert(addr, newRow);
+    //   }
+    // }
   }
+
   // 调整行高和列宽以适应内容
   QTimer::singleShot(0, this, [this]() {
     resizeRowsToContents();
@@ -1230,11 +1303,23 @@ void TtModbusTableWidget::onSwitchButtonToggle(bool toggled) {
   if (!btn) {
     return;
   }
+  // rowsData 的索引从 0 开始
   for (int i = 0; i < rowsData_.size(); ++i) {
     if (rowsData_[i].valueButton == btn) {
-      // 发出信号, 通知外部 switchbutton 状态改变
-      emit valueConfirmed(rowsData_[i].address->text().toInt(),
-                          toggled ? 1 : 0);
+      // BUG 前面没有被赋值, 处于 setTable 的地方
+      int addr = rowsData_[i].currentAddress;
+      // 地址 -1 没有行遭到
+      // 全部都是 -1 ???
+      // qDebug() << "find addr" << addr << rowsData_[i].address;
+      // 为什么读取的 addr 全部是错误的 ???
+      qDebug() << "find addr" << addr << rowsData_[i].address->text();
+      if (addr >= 0) {
+        // 发出信号, 通知外部 switchbutton 状态改变
+        emit valueConfirmed(addr, toggled ? 1 : 0);
+      }
+      // // 发出信号, 通知外部 switchbutton 状态改变
+      // emit valueConfirmed(rowsData_[i].address->text().toInt(),
+      //                     toggled ? 1 : 0);
       break;
     }
   }
@@ -1316,7 +1401,6 @@ void TtModbusTableWidget::initHeader() {
   check_state_ = createCheckButton();
   setCellWidget(0, 0, check_state_);
 
-  // FIXME 似乎需要 addBtton 点击后, 其边距才能正确使用
   // header = createTypeComboBox(QStringList{tr("地址(HEX)"), tr("地址(DEX)")});
 
   // 决定地址这一栏的数据类型
@@ -1377,8 +1461,55 @@ void TtModbusTableWidget::setupRow(int row) {
     TableRow &newRow = rowsData_.last();
 
     // 状态触发改变
+    // 手动触发改变
+    // 怎么会找不到
+    // 链接信号
     connect(data.valueButton, &Ui::TtSwitchButton::toggled, this,
             &TtModbusTableWidget::onSwitchButtonToggle);
+
+    // 地址变化信号
+    connect(data.address, &TtLineEdit::textChanged, this,
+            [this, row](const QString &text) {
+              // 设置的行
+              qDebug() << "address current row: " << row;
+              // 当前存在的个数是 1
+              qDebug() << "rowsData.size() " << rowsData_.size();
+              if (row < 1 || row - 1 >= rowsData_.size()) {
+                qDebug() << "行号不合法: " << row;
+                return;
+              }
+              bool ok;
+              int newAddr;
+              // BUG 这里需要判断是否是十六进制
+              // 16 进制不需要以 0x 开头, lineedit
+              // 中输入符合十六进制格式的字符串即可
+              newAddr = text.toInt(&ok, 10);
+              // 越界
+              // int oldAddr = rowsData_[row].currentAddress;
+              int oldAddr = rowsData_[row - 1].currentAddress;
+
+              // 更新映射
+              if (ok) {
+                // 旧地址有效, 移出旧的映射
+                if (oldAddr >= 0) {
+                  // 删除特定键值对
+                  address_to_row_map_.remove(oldAddr, row);
+                }
+                // 添加新映射
+                address_to_row_map_.insert(newAddr, row);
+                rowsData_[row - 1].currentAddress = newAddr;
+              } else {
+                // 无效地址, 移出旧映射
+                if (oldAddr >= 0) {
+                  // 删除特定键值对
+                  address_to_row_map_.remove(oldAddr, row);
+                  // rowsData_[row].currentAddress = -1;
+                  rowsData_[row - 1].currentAddress = -1;
+                }
+              }
+              qDebug() << "地址映射更新: 行=" << row << ", 地址=" << newAddr
+                       << ", 总映射数=" << address_to_row_map_.size();
+            });
     break;
   }
   case TtModbusRegisterType::DiscreteInputs: {
@@ -1551,6 +1682,39 @@ void TtModbusTableWidget::recycleRow(TableRow &row) {
   // }
 }
 
+void TtModbusTableWidget::deleteRow(int row) {
+  if (row < 1 || row >= rowCount() || row - 1 >= rowsData_.size()) {
+    qWarning() << "行号不合法: " << row;
+    return;
+  }
+  int addr = rowsData_[row - 1].currentAddress;
+  qDebug() << "delete addr" << addr;
+  if (addr >= 0) {
+    address_to_row_map_.remove(addr, row);
+  }
+  recycleRow(rowsData_[row - 1]);
+  removeRow(row);
+  rowsData_.remove(row - 1); // 删除对应的数据行
+
+  // 更新所有大于此行的行号在映射中的引用
+  QMultiMap<int, int> updatedMap;
+  for (auto it = address_to_row_map_.begin(); it != address_to_row_map_.end();
+       ++it) {
+    int currentRow = it.value();
+    if (currentRow > row) {
+      // 减少大于已删除行的行号
+      updatedMap.insert(it.key(), currentRow - 1);
+    } else if (currentRow < row) {
+      // 保持小于已删除行的行号不变
+      updatedMap.insert(it.key(), currentRow);
+    }
+    // 相等的行已经在前面移除了
+  }
+
+  // 替换为更新后的映射
+  address_to_row_map_ = updatedMap;
+}
+
 TtCheckBox *TtModbusTableWidget::createCheckButton() {
   if (!switchPool_.isEmpty()) {
     auto btn = switchPool_.takeLast();
@@ -1683,9 +1847,10 @@ QWidget *TtModbusTableWidget::createGraphAndDeleteButton() {
     if (auto *btn = qobject_cast<TtSvgButton *>(sender())) {
       int row = findRowIndex(btn, true);
       if (row > 0) {
-        recycleRow(rowsData_[row - 1]);
-        removeRow(row);
-        rowsData_.remove(row - 1);
+        // recycleRow(rowsData_[row - 1]);
+        // removeRow(row);
+        // rowsData_.remove(row - 1);
+        deleteRow(row);
       }
     }
   });
@@ -1702,10 +1867,11 @@ QWidget *TtModbusTableWidget::createDeleteButton() {
       int row = findRowIndex(btn);
       if (row > 0) {
         // 回收控件
-        recycleRow(rowsData_[row - 1]);
-        // 移除行
-        removeRow(row);
-        rowsData_.remove(row - 1);
+        // recycleRow(rowsData_[row - 1]);
+        // // 移除行
+        // removeRow(row);
+        // rowsData_.remove(row - 1);
+        deleteRow(row);
       }
     }
   });

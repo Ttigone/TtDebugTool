@@ -11,6 +11,8 @@
 #ifndef CORE_MODBUS_CLIENT_H
 #define CORE_MODBUS_CLIENT_H
 
+#if 1
+
 #include <QModbusClient>
 #include <QObject>
 #include <QQueue>
@@ -73,56 +75,28 @@ public:
   void readCoilsData(const int &startAddr, const quint16 &size,
                      const int &serverAddr);
 
-  void readDiscreteInputsData(const QVector<int> &addrs,
-                              const int &serverAddr) {
-    for (auto it = addrs.cbegin(); it != addrs.cend(); ++it) {
-      readModbusData(QModbusDataUnit::DiscreteInputs, *it, 1, serverAddr);
-    }
-  }
+  void readDiscreteInputsData(const QVector<int> &addrs, const int &serverAddr);
 
-  void readHoldingData(const QVector<int> &addrs, const int &serverAddr) {
-    for (auto it = addrs.cbegin(); it != addrs.cend(); ++it) {
-      readModbusData(QModbusDataUnit::HoldingRegisters, *it, 1, serverAddr);
-    }
-  }
+  void readHoldingData(const QVector<int> &addrs, const int &serverAddr);
 
   void readHoldingData(const int &startAddr, const quint16 &size,
-                       const int &serverAddr) {
-    readModbusData(QModbusDataUnit::HoldingRegisters, startAddr, size,
-                   serverAddr);
-  }
+                       const int &serverAddr);
 
-  void readInputRegistersData(const QVector<int> &addrs,
-                              const int &serverAddr) {
-    for (auto it = addrs.cbegin(); it != addrs.cend(); ++it) {
-      readModbusData(QModbusDataUnit::InputRegisters, *it, 1, serverAddr);
-    }
-  }
+  void readInputRegistersData(const QVector<int> &addrs, const int &serverAddr);
 
   void writeCoilsData(const int &startAddr, const QVector<quint16> &values,
-                      const int &serverAddr) {
-    writeModbusData(QModbusDataUnit::Coils, startAddr, values, serverAddr);
-  }
+                      const int &serverAddr);
 
   void writeDiscreteInputsData(const int &startAddr,
                                const QVector<quint16> &values,
-                               const int &serverAddr) {
-    writeModbusData(QModbusDataUnit::DiscreteInputs, startAddr, values,
-                    serverAddr);
-  }
+                               const int &serverAddr);
 
   void writeHoldingData(const int &startAddr, const QVector<quint16> &values,
-                        const int &serverAddr) {
-    writeModbusData(QModbusDataUnit::HoldingRegisters, startAddr, values,
-                    serverAddr);
-  }
+                        const int &serverAddr);
 
   void writeInputRegistersData(const int &startAddr,
                                const QVector<quint16> &values,
-                               const int &serverAddr) {
-    writeModbusData(QModbusDataUnit::InputRegisters, startAddr, values,
-                    serverAddr);
-  }
+                               const int &serverAddr);
 
 signals:
   // void dataReceived(const int& startAddr, const QVector<quint16>& data);
@@ -149,5 +123,143 @@ private:
 };
 
 } // namespace Core
+
+#elif
+
+#include "modbus.h"
+
+class TtModbusRtuClient : public QObject {
+  Q_OBJECT
+public:
+  explicit TtModbusRtuClient(QObject *parent = nullptr);
+  ~TtModbusRtuClient();
+
+  ///
+  /// @brief connect
+  /// @param port
+  /// @param baud
+  /// @param parity
+  /// @param dataBit
+  /// @param stopBit
+  /// @return
+  /// 链接 Rtu 设备
+  bool connect(const QString &port, int baud, char parity, int dataBit,
+               int stopBit);
+
+  ///
+  /// @brief disconnect
+  /// 断开 Rtu 设备
+  void disconnect();
+
+  ///
+  /// @brief isConnected
+  /// @return
+  /// 链接状态
+  bool isConnected();
+
+  ///
+  /// @brief setSlaveAddress
+  /// @param address
+  /// 设置从站地址
+  void setSlaveAddress(int address);
+
+  ///
+  /// @brief setTimeout
+  /// @param msec
+  /// @return
+  /// 设置超时时间
+  bool setTimeout(int msec);
+
+  ///
+  /// @brief readCoils
+  /// @param addr
+  /// @param nb
+  /// @return
+  /// 读线圈
+  QVector<bool> readCoils(int addr, int nb);
+
+  ///
+  /// @brief readDiscreteInputs
+  /// @param addr
+  /// @param nb
+  /// @return
+  /// 读取离散输入
+  QVector<bool> readDiscreteInputs(int addr, int nb);
+
+  ///
+  /// @brief readHoldingRegisters
+  /// @param addr
+  /// @param nb
+  /// @return
+  /// 读取保持寄存器
+  QVector<uint16_t> readHoldingRegisters(int addr, int nb);
+
+  ///
+  /// @brief readInputRegisters
+  /// @param addr
+  /// @param nb
+  /// @return
+  /// 读取输入寄存器
+  QVector<uint16_t> readInputRegisters(int addr, int nb);
+
+  ///
+  /// @brief
+  /// @param addr
+  /// @param value
+  /// @return
+  /// 写单个线圈
+  bool writeCoil(int addr, bool value);
+
+  ///
+  /// @brief writeCoils
+  /// @param addr
+  /// @param values
+  /// @return
+  /// 写多个线圈
+  bool writeCoils(int addr, const QVector<bool> &values);
+
+  ///
+  /// @brief writeRegister
+  /// @param addr
+  /// @param value
+  /// @return
+  /// 写单个寄存器
+  bool writeRegister(int addr, uint16_t value);
+
+  ///
+  /// @brief writeRegisters
+  /// @param addr
+  /// @param values
+  /// @return
+  /// 写多个寄存器
+  bool writeRegisters(int addr, const QVector<uint16_t> &values);
+
+  ///
+  /// @brief lastError
+  /// @return
+  /// 获取最后的错误信息
+  QString lastError() const;
+
+signals:
+  ///
+  /// @brief connectionChanged
+  /// @param connected
+  /// 链接状态改变
+  void connectionChanged(bool connected);
+
+  ///
+  /// @brief communicationError
+  /// @param errorMessage
+  /// 通信错误信号
+  void communicationError(const QStrin &errorMessage);
+
+private:
+  modbus_t *ctx_;         // modbus 上下文
+  bool connected_;        // 链接状态
+  int slave_address_;     // 从站地址
+  QString error_message_; // 错误信息
+};
+
+#endif
 
 #endif // CORE_MODBUS_CLIENT_H

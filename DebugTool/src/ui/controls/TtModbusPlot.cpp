@@ -1,15 +1,25 @@
 #include "TtModbusPlot.h"
 
-#include <ui/widgets/message_bar.h>
 #include "qcustomplot/qcustomplot.h"
 #include "ui/controls/TtPlotItem.h"
+#include <ui/widgets/message_bar.h>
 
 namespace Ui {
 
-TtModbusPlot::TtModbusPlot(QWidget* parent) : QCustomPlot(parent) {
+TtModbusPlot::TtModbusPlot(QWidget *parent) : QCustomPlot(parent) {
+  // BUG 达到一定点数后, 才会向左移动, 为什么
   setupPlot();
-  this->setOpenGl(true);
-  qDebug() << "opengle=" << this->openGl();
+
+  bool hasOpenGL = false;
+#ifdef QT_OPENGL_SUPPORT
+  hasOpenGL = QOpenGLContext::currentContext() != nullptr;
+#endif
+  if (hasOpenGL) {
+    // 默认是不开启 opengl 的
+    // 如果开启了 opengl, 在分开窗口实现时, 不同窗口之间的 serial_plot_
+    // 会造成数据显示混乱
+    this->setOpenGl(true);
+  }
 
   setAntialiasedElements(QCP::aeAll);
 }
@@ -17,22 +27,22 @@ TtModbusPlot::TtModbusPlot(QWidget* parent) : QCustomPlot(parent) {
 TtModbusPlot::~TtModbusPlot() {}
 
 void TtModbusPlot::setupPlot() {
-  QCPAxis* rightAxis = axisRect()->addAxis(QCPAxis::atRight);
+  QCPAxis *rightAxis = axisRect()->addAxis(QCPAxis::atRight);
   rightAxis->setPadding(60);
   rightAxis->setVisible(true);
-  rightAxis->setTicks(false);        // 隐藏刻度线
-  rightAxis->setTickLabels(false);   // 隐藏刻度标签
-  rightAxis->setBasePen(Qt::NoPen);  // 隐藏轴线
+  rightAxis->setTicks(false);       // 隐藏刻度线
+  rightAxis->setTickLabels(false);  // 隐藏刻度标签
+  rightAxis->setBasePen(Qt::NoPen); // 隐藏轴线
 
   this->setInteraction(QCP::iRangeDrag, false);
   this->setInteraction(QCP::iRangeZoom, false);
 
   // 配置横轴显示格式（禁用科学计数法）
   QSharedPointer<QCPAxisTickerFixed> fixedTicker(new QCPAxisTickerFixed);
-  fixedTicker->setTickStep(1.0);  // 主刻度间隔1秒
+  fixedTicker->setTickStep(1.0); // 主刻度间隔1秒
   fixedTicker->setScaleStrategy(QCPAxisTickerFixed::ssMultiples);
   this->xAxis->setTicker(fixedTicker);
-  this->xAxis->setNumberPrecision(0);  // 显示整数秒
+  this->xAxis->setNumberPrecision(0); // 显示整数秒
 
 #if 0
   this->xAxis->setVisible(false);          // 完全隐藏坐标轴
@@ -43,11 +53,11 @@ void TtModbusPlot::setupPlot() {
 #else
   // 保留空间但隐藏可视元素
   // this->xAxis->setBasePen(Qt::NoPen);     // 隐藏轴线
-  this->xAxis->setTicks(false);       // 隐藏刻度线
-  this->xAxis->setTickLabels(false);  // 隐藏刻度标签
+  this->xAxis->setTicks(false);      // 隐藏刻度线
+  this->xAxis->setTickLabels(false); // 隐藏刻度标签
   // this->xAxis->setLabel("");          // 清空轴标签文本
 #endif
-  this->yAxis->setTickLabels(false);  // 隐藏刻度标签
+  this->yAxis->setTickLabels(false); // 隐藏刻度标签
 
   // this->yAxis->setLabel("");
 
@@ -81,7 +91,7 @@ void TtModbusPlot::setupPlot() {
   m_coordLabel = new TtQCPItemRichText(this);
   m_coordLabel->setPositionAlignment(Qt::AlignLeft | Qt::AlignBottom);
   m_coordLabel->position->setType(QCPItemPosition::ptViewportRatio);
-  m_coordLabel->position->setCoords(1.0, 0.0);  // 右上角
+  m_coordLabel->position->setCoords(1.0, 0.0); // 右上角
   m_coordLabel->setTextAlignment(Qt::AlignRight);
   m_coordLabel->setBrush(QBrush(Qt::white));
   m_coordLabel->setPadding(QMargins(5, 5, 5, 5));
@@ -91,7 +101,7 @@ void TtModbusPlot::setupPlot() {
   this->setMouseTracking(true);
 }
 
-void TtModbusPlot::addData(TtModbusRegisterType::Type type, const int& addr,
+void TtModbusPlot::addData(TtModbusRegisterType::Type type, const int &addr,
                            double value) {
 
   auto key = qMakePair(static_cast<int>(type), addr);
@@ -107,12 +117,12 @@ void TtModbusPlot::addData(TtModbusRegisterType::Type type, const int& addr,
     m_firstDataReceived = true;
   }
 
-  CurveData& curve = m_curves[key];
+  CurveData &curve = m_curves[key];
 
   // 添加时间戳(秒)
   double timestamp = QDateTime::currentDateTime().toMSecsSinceEpoch() / 1000.0;
   if (curve.timeData.isEmpty()) {
-    m_startTime = timestamp;  // 共用同一个起始时间
+    m_startTime = timestamp; // 共用同一个起始时间
   }
   // 计算相对于起始时间的偏移
   double relativeTime = timestamp - m_startTime;
@@ -137,19 +147,19 @@ void TtModbusPlot::addData(TtModbusRegisterType::Type type, const int& addr,
     double yMax = std::numeric_limits<double>::lowest();
     bool hasData = false;
 
-    for (auto& c : m_curves) {
+    for (auto &c : m_curves) {
       if (!c.valueData.isEmpty()) {
         auto [minIt, maxIt] =
             std::minmax_element(c.valueData.begin(), c.valueData.end());
-        yMin = qMin(yMin, *minIt);  // 所有图像中的最小 y
+        yMin = qMin(yMin, *minIt); // 所有图像中的最小 y
         yMax = qMax(yMax, *maxIt);
         hasData = true;
       }
     }
     if (hasData) {
       if (yMin >= yMax) {
-        double center = yMin;                           // 当yMin == yMax时
-        double margin = qMax(qAbs(center) * 0.2, 0.5);  // 20%或最小0.5单位
+        double center = yMin;                          // 当yMin == yMax时
+        double margin = qMax(qAbs(center) * 0.2, 0.5); // 20%或最小0.5单位
         yMin = center - margin;
         yMax = center + margin;
       } else {
@@ -169,7 +179,7 @@ void TtModbusPlot::addData(TtModbusRegisterType::Type type, const int& addr,
     double xMax = std::numeric_limits<double>::lowest();
 
     // 遍历所有曲线获取时间范围
-    for (auto& c : m_curves) {
+    for (auto &c : m_curves) {
       if (!c.timeData.isEmpty()) {
         xMin = qMin(xMin, c.timeData.first());
         xMax = qMax(xMax, c.timeData.last());
@@ -188,7 +198,7 @@ void TtModbusPlot::addData(TtModbusRegisterType::Type type, const int& addr,
   replot();
 }
 
-void TtModbusPlot::addGraphs(TtModbusRegisterType::Type type, const int& addr) {
+void TtModbusPlot::addGraphs(TtModbusRegisterType::Type type, const int &addr) {
   auto key = qMakePair(static_cast<int>(type), addr);
   if (!m_curves.contains(key)) {
     // 新曲线
@@ -204,7 +214,7 @@ void TtModbusPlot::addGraphs(TtModbusRegisterType::Type type, const int& addr) {
     newCurve.graph->setName(QString("%1@%2").arg(type).arg(addr));
 
     // 创建右侧标签
-    QCPAxis* valueAxis = this->yAxis;  // 共享Y轴或为每个曲线创建右轴
+    QCPAxis *valueAxis = this->yAxis; // 共享Y轴或为每个曲线创建右轴
     newCurve.tag = new TtAxisTag(valueAxis);
     newCurve.tag->setPen(newCurve.graph->pen());
 
@@ -215,11 +225,11 @@ void TtModbusPlot::addGraphs(TtModbusRegisterType::Type type, const int& addr) {
 }
 
 void TtModbusPlot::removeGraphs(TtModbusRegisterType::Type type,
-                                const int& addr) {
+                                const int &addr) {
   auto key = qMakePair(static_cast<int>(type), addr);
   if (m_curves.contains(key)) {
     qDebug() << "remove";
-    auto& curve = m_curves[key];
+    auto &curve = m_curves[key];
 
     // 移除图形
     if (curve.graph) {
@@ -244,7 +254,7 @@ void TtModbusPlot::setGraphsPointCapacity(quint16 nums) {
     points_nums_ = nums;
 
     // 立即应用新的限制
-    for (auto& curve : m_curves) {
+    for (auto &curve : m_curves) {
       while (curve.timeData.size() > points_nums_) {
         curve.timeData.removeFirst();
         curve.valueData.removeFirst();
@@ -257,7 +267,7 @@ void TtModbusPlot::setGraphsPointCapacity(quint16 nums) {
         // }
         if (!curve.graph->data()->isEmpty()) {
           auto dataMap = curve.graph->data();
-          dataMap->remove(dataMap->constBegin()->key);  // 使用迭代器安全删除
+          dataMap->remove(dataMap->constBegin()->key); // 使用迭代器安全删除
         }
       }
     }
@@ -269,7 +279,7 @@ void TtModbusPlot::setGraphsPointCapacity(quint16 nums) {
 
 void TtModbusPlot::clearData() {
   m_startTime = 0.0;
-  for (auto& curve : m_curves) {
+  for (auto &curve : m_curves) {
     curve.timeData.clear();
     curve.valueData.clear();
     // curve.graph.data();
@@ -304,7 +314,7 @@ void TtModbusPlot::clearData() {
 //   updateTracerPosition(event);
 // }
 
-void TtModbusPlot::mouseMoveEvent(QMouseEvent* event) {
+void TtModbusPlot::mouseMoveEvent(QMouseEvent *event) {
   QCustomPlot::mouseMoveEvent(event);
 
   // 显示/隐藏组件
@@ -440,7 +450,7 @@ void TtModbusPlot::mouseMoveEvent(QMouseEvent* event) {
 //   replot();
 // }
 
-void TtModbusPlot::updateTracerPosition(QMouseEvent* event) {
+void TtModbusPlot::updateTracerPosition(QMouseEvent *event) {
   if (m_curves.isEmpty()) {
     m_tracer->setVisible(false);
     m_tracerLabel->setVisible(false);
@@ -474,13 +484,13 @@ void TtModbusPlot::updateTracerPosition(QMouseEvent* event) {
   // 遍历每一个图像
   for (auto it = m_curves.begin(); it != m_curves.end(); ++it) {
     //
-    const auto& curve = it.value();
+    const auto &curve = it.value();
     if (!curve.graph || curve.timeData.isEmpty()) {
       continue;
     }
 
-    const auto& times = curve.timeData;
-    const auto& values = curve.valueData;
+    const auto &times = curve.timeData;
+    const auto &values = curve.valueData;
 
     // 添加数据一致性检查
     if (times.size() != values.size()) {
@@ -513,10 +523,10 @@ void TtModbusPlot::updateTracerPosition(QMouseEvent* event) {
   if (tooltipLines.size() > 1) {
     m_coordLabel->setText(tooltipLines.join("<br>"));
 
-    TtQCPItemRichText* richLabel =
-        qobject_cast<TtQCPItemRichText*>(m_coordLabel);
-    const QTextDocument& doc = richLabel->document();
-    qreal textWidth = doc.idealWidth() + 10;  // 增加10px边距
+    TtQCPItemRichText *richLabel =
+        qobject_cast<TtQCPItemRichText *>(m_coordLabel);
+    const QTextDocument &doc = richLabel->document();
+    qreal textWidth = doc.idealWidth() + 10; // 增加10px边距
     qreal textHeight = doc.size().height() + 10;
 
     // 获取鼠标位置和视口边界
@@ -573,7 +583,7 @@ void TtModbusPlot::updateTracerPosition(QMouseEvent* event) {
   replot();
 }
 
-SerialPlot::SerialPlot(QWidget* parent) : QCustomPlot(parent) {
+SerialPlot::SerialPlot(QWidget *parent) : QCustomPlot(parent) {
   setupPlot();
   this->setOpenGl(true);
   // qDebug() << "opengle=" << this->openGl();
@@ -597,12 +607,12 @@ void SerialPlot::addData(int channel, double value) {
   }
 
   // 对应图像
-  CurveData& curve = curves_[channel];
+  CurveData &curve = curves_[channel];
 
   // 添加时间戳(秒)
   double timestamp = QDateTime::currentDateTime().toMSecsSinceEpoch() / 1000.0;
   if (curve.timeData.isEmpty()) {
-    m_startTime = timestamp;  // 共用同一个起始时间
+    m_startTime = timestamp; // 共用同一个起始时间
   }
   // 计算相对于起始时间的偏移
   double relativeTime = timestamp - m_startTime;
@@ -628,19 +638,19 @@ void SerialPlot::addData(int channel, double value) {
     double yMax = std::numeric_limits<double>::lowest();
     bool hasData = false;
 
-    for (auto& c : curves_) {
+    for (auto &c : curves_) {
       if (!c.valueData.isEmpty()) {
         auto [minIt, maxIt] =
             std::minmax_element(c.valueData.begin(), c.valueData.end());
-        yMin = qMin(yMin, *minIt);  // 所有图像中的最小 y
+        yMin = qMin(yMin, *minIt); // 所有图像中的最小 y
         yMax = qMax(yMax, *maxIt);
         hasData = true;
       }
     }
     if (hasData) {
       if (yMin >= yMax) {
-        double center = yMin;                           // 当yMin == yMax时
-        double margin = qMax(qAbs(center) * 0.2, 0.5);  // 20%或最小0.5单位
+        double center = yMin;                          // 当yMin == yMax时
+        double margin = qMax(qAbs(center) * 0.2, 0.5); // 20%或最小0.5单位
         yMin = center - margin;
         yMax = center + margin;
       } else {
@@ -669,8 +679,8 @@ void SerialPlot::addData(int channel, double value) {
     // for (auto& c : m_curves) {
     // if (c.graph && c.graph.data()->size() > 0) {}
     // }
-    for (auto& c : curves_) {
-      if (c.graph && c.graph->data()->size() > 0) {  // 直接使用图形数据
+    for (auto &c : curves_) {
+      if (c.graph && c.graph->data()->size() > 0) { // 直接使用图形数据
         auto data = c.graph->data();
         xMin = qMin(xMin, data->begin()->key);
         xMax = qMax(xMax, (data->end() - 1)->key);
@@ -687,7 +697,7 @@ void SerialPlot::addData(int channel, double value) {
     //   xAxis->setRange(xMin - 1.0, xMax + 1.0);
     // }
     if (xMin < xMax) {
-      xAxis->setRange(xMin, xMax);  // 无额外边距
+      xAxis->setRange(xMin, xMax); // 无额外边距
     } else if (xMin == xMax) {
       xAxis->setRange(xMin - 0.1, xMax + 0.1);
     }
@@ -697,7 +707,7 @@ void SerialPlot::addData(int channel, double value) {
 
 void SerialPlot::clearData() {
   m_startTime = 0.0;
-  for (auto& curve : curves_) {
+  for (auto &curve : curves_) {
     curve.timeData.clear();
     curve.valueData.clear();
     // curve.graph.data();
@@ -778,7 +788,7 @@ void SerialPlot::saveWaveFormData() {
   // QMessageBox::information(this, "保存成功", "CSV 文件已成功保存。");
 }
 
-void SerialPlot::addGraphs(int channel, const QColor& color) {
+void SerialPlot::addGraphs(int channel, const QColor &color) {
   if (!curves_.contains(channel)) {
 
     // 新曲线
@@ -794,7 +804,7 @@ void SerialPlot::addGraphs(int channel, const QColor& color) {
     newCurve.graph->setName(QString("channel@%1").arg(channel));
 
     // 创建右侧标签
-    QCPAxis* valueAxis = this->yAxis;  // 共享Y轴或为每个曲线创建右轴
+    QCPAxis *valueAxis = this->yAxis; // 共享Y轴或为每个曲线创建右轴
     newCurve.tag = new TtAxisTag(valueAxis);
     newCurve.tag->setPen(newCurve.graph->pen());
 
@@ -806,7 +816,7 @@ void SerialPlot::addGraphs(int channel, const QColor& color) {
 
 void SerialPlot::removeGraphs(int channel) {
   if (curves_.contains(channel)) {
-    auto& curve = curves_[channel];
+    auto &curve = curves_[channel];
 
     // 移除图形
     if (curve.graph) {
@@ -827,13 +837,13 @@ void SerialPlot::removeGraphs(int channel) {
 void SerialPlot::setGraphsPointCapacity(quint16 nums) {
   if (nums > 0 && nums != points_nums_) {
     points_nums_ = nums;
-    for (auto& curve : curves_) {
+    for (auto &curve : curves_) {
       while (curve.timeData.size() > points_nums_) {
         curve.timeData.removeFirst();
         curve.valueData.removeFirst();
         if (!curve.graph->data()->isEmpty()) {
           auto dataMap = curve.graph->data();
-          dataMap->remove(dataMap->constBegin()->key);  // 使用迭代器安全删除
+          dataMap->remove(dataMap->constBegin()->key); // 使用迭代器安全删除
         }
       }
     }
@@ -841,7 +851,7 @@ void SerialPlot::setGraphsPointCapacity(quint16 nums) {
   }
 }
 
-void SerialPlot::mouseMoveEvent(QMouseEvent* event) {
+void SerialPlot::mouseMoveEvent(QMouseEvent *event) {
   QCustomPlot::mouseMoveEvent(event);
 
   // 显示/隐藏组件
@@ -850,7 +860,7 @@ void SerialPlot::mouseMoveEvent(QMouseEvent* event) {
   m_vLine->setVisible(show);
   m_coordLabel->setVisible(show);
 
-  for (auto* label : m_hoverLabels) {
+  for (auto *label : m_hoverLabels) {
     if (label) {
       label->setVisible(false);
       this->removeItem(label);
@@ -875,14 +885,14 @@ void SerialPlot::mouseMoveEvent(QMouseEvent* event) {
 }
 
 void SerialPlot::setupPlot() {
-  QCPAxis* rightAxis = axisRect()->addAxis(QCPAxis::atRight);
+  QCPAxis *rightAxis = axisRect()->addAxis(QCPAxis::atRight);
   // 设置右边距
   // rightAxis->setPadding(60);
   rightAxis->setPadding(0);
   rightAxis->setVisible(true);
-  rightAxis->setTicks(false);        // 隐藏刻度线
-  rightAxis->setTickLabels(false);   // 隐藏刻度标签
-  rightAxis->setBasePen(Qt::NoPen);  // 隐藏轴线
+  rightAxis->setTicks(false);       // 隐藏刻度线
+  rightAxis->setTickLabels(false);  // 隐藏刻度标签
+  rightAxis->setBasePen(Qt::NoPen); // 隐藏轴线
 
   this->setInteraction(QCP::iRangeDrag, false);
   this->setInteraction(QCP::iRangeZoom, false);
@@ -893,8 +903,8 @@ void SerialPlot::setupPlot() {
   // fixedTicker->setScaleStrategy(QCPAxisTickerFixed::ssMultiples);
 
   // 设置标签格式
-  this->xAxis->setNumberFormat("f");   // 使用固定小数点格式
-  this->xAxis->setNumberPrecision(0);  // 无小数位
+  this->xAxis->setNumberFormat("f");  // 使用固定小数点格式
+  this->xAxis->setNumberPrecision(0); // 无小数位
   // 如果需要确保刻度是整数
   // this->xAxis->setAutoTickStep(false); // 对于旧版本
   // this->xAxis->setTickStep(1.0);       // 设置整数步长
@@ -912,7 +922,7 @@ void SerialPlot::setupPlot() {
   // this->xAxis->setTickLabels(false);  // 隐藏刻度标签
   // this->xAxis->setLabel("");          // 清空轴标签文本
 #endif
-  this->yAxis->setTickLabels(false);  // 隐藏刻度标签
+  this->yAxis->setTickLabels(false); // 隐藏刻度标签
 
   // this->yAxis->setLabel("");
 
@@ -946,7 +956,7 @@ void SerialPlot::setupPlot() {
   m_coordLabel = new TtQCPItemRichText(this);
   m_coordLabel->setPositionAlignment(Qt::AlignLeft | Qt::AlignBottom);
   m_coordLabel->position->setType(QCPItemPosition::ptViewportRatio);
-  m_coordLabel->position->setCoords(1.0, 0.0);  // 右上角
+  m_coordLabel->position->setCoords(1.0, 0.0); // 右上角
   m_coordLabel->setTextAlignment(Qt::AlignRight);
   m_coordLabel->setBrush(QBrush(Qt::white));
   m_coordLabel->setPadding(QMargins(5, 5, 5, 5));
@@ -1070,7 +1080,7 @@ void SerialPlot::setupPlot() {
 //   replot();
 // }
 
-void SerialPlot::updateTracerPosition(QMouseEvent* event) {
+void SerialPlot::updateTracerPosition(QMouseEvent *event) {
   if (curves_.isEmpty()) {
     m_tracer->setVisible(false);
     m_tracerLabel->setVisible(false);
@@ -1108,13 +1118,13 @@ void SerialPlot::updateTracerPosition(QMouseEvent* event) {
   // 遍历每一个图像
   for (auto it = curves_.begin(); it != curves_.end(); ++it) {
     //
-    const auto& curve = it.value();
+    const auto &curve = it.value();
     if (!curve.graph || curve.timeData.isEmpty()) {
       continue;
     }
 
-    const auto& times = curve.timeData;
-    const auto& values = curve.valueData;
+    const auto &times = curve.timeData;
+    const auto &values = curve.valueData;
 
     // 添加数据一致性检查
     if (times.size() != values.size()) {
@@ -1154,10 +1164,10 @@ void SerialPlot::updateTracerPosition(QMouseEvent* event) {
   if (tooltipLines.size() > 1) {
     m_coordLabel->setText(tooltipLines.join("<br>"));
 
-    TtQCPItemRichText* richLabel =
-        qobject_cast<TtQCPItemRichText*>(m_coordLabel);
-    const QTextDocument& doc = richLabel->document();
-    qreal textWidth = doc.idealWidth() + 10;  // 增加10px边距
+    TtQCPItemRichText *richLabel =
+        qobject_cast<TtQCPItemRichText *>(m_coordLabel);
+    const QTextDocument &doc = richLabel->document();
+    qreal textWidth = doc.idealWidth() + 10; // 增加10px边距
     qreal textHeight = doc.size().height() + 10;
 
     // 获取鼠标位置和视口边界
@@ -1187,9 +1197,9 @@ void SerialPlot::updateTracerPosition(QMouseEvent* event) {
   }
 
   if (!tracerSet) {
-    m_tracer->setVisible(false);  // 没有找到点时隐藏
+    m_tracer->setVisible(false); // 没有找到点时隐藏
   }
   replot();
 }
 
-}  // namespace Ui
+} // namespace Ui

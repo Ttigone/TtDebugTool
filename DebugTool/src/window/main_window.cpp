@@ -709,7 +709,7 @@ void MainWindow::installWindowAgent() {
     // edit->addAction(new QAction(tr("Redo(&R)"), menuBar));
 
     // 创建帮助菜单
-    QMenu *helpMenu = menuBar->addMenu(tr("&Help"));
+    QMenu *helpMenu = menuBar->addMenu(tr("Help(&H)"));
     QAction *aboutQtAction = new QAction(tr("关于 Qt"), menuBar);
     helpMenu->addAction(aboutQtAction);
     connect(aboutQtAction, &QAction::triggered, qApp, &QApplication::aboutQt);

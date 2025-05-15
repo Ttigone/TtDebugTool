@@ -34,7 +34,15 @@ public:
   void setModbusClientSetting(const QJsonObject &obj);
   const QJsonObject &getModbusClientSetting();
 
+  ///
+  /// @brief getModbusLinkType
+  /// @return
+  /// 获取寄存器类型
   TtModbusProcotol::Type getModbusLinkType() const;
+  ///
+  /// @brief getModbusDeviceId
+  /// @return
+  /// 获取设备 id, 与主机 id 匹配才能写操作
   int getModbusDeviceId() const;
 
 signals:

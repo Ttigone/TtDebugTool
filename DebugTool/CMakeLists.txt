@@ -221,6 +221,7 @@ PRIVATE
   OpenGL::GL           # 系统OpenGL
   OpenGL::GLU          # 系统GLU（可选
   lua5.4.7
+  modbus
 )
 # 查看链接的库
 get_target_property(LINK_LIBS ${PROJECT_NAME} LINK_LIBRARIES)

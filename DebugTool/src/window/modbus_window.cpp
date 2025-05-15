@@ -60,7 +60,7 @@ void ModbusWindow::setSaveState(bool state) { saved_ = state; }
 
 void ModbusWindow::saveSetting() {
   config_.insert("Type", TtFunctionalCategory::Communication);
-  config_.insert("WindowTitile", title_->text());
+  config_.insert("WindowTitle", title_->text());
   if (role_ == TtProtocolType::Client) {
     config_.insert("ModbusClientSetting",
                    modbus_client_setting_->getModbusClientSetting());
@@ -68,7 +68,6 @@ void ModbusWindow::saveSetting() {
   }
   // 循环插入所有 function_table_ 中的表格项
 
-  // BUG 能够保存进去, 但是不能读取
   for (auto it = function_table_.constBegin(); it != function_table_.constEnd();
        ++it) {
     auto *widget = qobject_cast<Ui::TtModbusTableWidget *>(it.value());
@@ -85,7 +84,6 @@ void ModbusWindow::setSetting(const QJsonObject &config) {
   }
   // 设置后
   title_->setText(config.value("WindowTitle").toString(tr("未读取正确的标题")));
-  // BUG 读取失败, 没有读取成功
   modbus_client_setting_->setOldSettings(
       config.value("ModbusClientSetting").toObject(QJsonObject()));
   if (coil_table_ && config.contains("InstructionTable+Coil")) {
@@ -208,12 +206,12 @@ void ModbusWindow::timerRefreshValue() {
   if (!modbus_master_->isConnected()) {
     return;
   }
-  // 读取
-  // 获取不同寄存器值
+  // BUG 如果在读取的过程中, 我手动设置了对应的值, 是否出现, 与读取冲突, 出现
+  // bug 读取 获取不同寄存器值
   getCoilValue();
-  // getDiscreteInputsValue();
-  // getHoldingRegisterValue();
-  // getInputRegistersValue();
+  getDiscreteInputsValue();
+  getHoldingRegisterValue();
+  getInputRegistersValue();
 }
 
 void ModbusWindow::getSpecificValue() {}
@@ -277,12 +275,13 @@ void ModbusWindow::init() {
 
   // 创建原始界面
   original_widget_ = new QWidget(this);
-  Ui::TtHorizontalLayout *tmpl = new Ui::TtHorizontalLayout(original_widget_);
-  tmpl->addSpacerItem(new QSpacerItem(10, 10));
-  tmpl->addWidget(title_, 0, Qt::AlignLeft);
-  tmpl->addSpacerItem(new QSpacerItem(10, 10));
-  tmpl->addWidget(modify_title_btn_);
-  tmpl->addStretch();
+  Ui::TtHorizontalLayout *originalWidgetLayout =
+      new Ui::TtHorizontalLayout(original_widget_);
+  originalWidgetLayout->addSpacerItem(new QSpacerItem(10, 10));
+  originalWidgetLayout->addWidget(title_, 0, Qt::AlignLeft);
+  originalWidgetLayout->addSpacerItem(new QSpacerItem(10, 10));
+  originalWidgetLayout->addWidget(modify_title_btn_);
+  originalWidgetLayout->addStretch();
 
   // 创建编辑界面
   edit_widget_ = new QWidget(this);
@@ -300,7 +299,7 @@ void ModbusWindow::init() {
   stack_->addWidget(original_widget_);
   stack_->addWidget(edit_widget_);
 
-  qDebug() << "TEST1";
+  // qDebug() << "TEST1";
 
   // 优化后的信号连接（仅需2个连接点）
   connect(modify_title_btn_, &Ui::TtSvgButton::clicked, this,
@@ -381,6 +380,7 @@ void ModbusWindow::init() {
   VSplitter->addWidget(graphWidget);
   VSplitter->setStretchFactor(0, 3);
   VSplitter->setStretchFactor(1, 2);
+  VSplitter->setCollapsible(1, false);
 
   VSplitter->setSizes(QList({400, 200}));
 
@@ -391,7 +391,7 @@ void ModbusWindow::init() {
   } else {
   }
 
-  qDebug() << "TEST2";
+  // qDebug() << "TEST2";
 
   // 主界面是左右分隔
   main_layout_->addWidget(mainSplitter);
@@ -406,6 +406,7 @@ void ModbusWindow::init() {
 
   refresh_timer_.setTimerType(Qt::TimerType::PreciseTimer);
   // 为设定则以 50ms
+  // 平均 1s 读取 5 次
   refresh_timer_.setInterval(50);
 }
 
@@ -583,8 +584,10 @@ QWidget *ModbusWindow::createCoilWidget() {
                                       this);
               return;
             }
+            // 运行到这里, 但是没有成功写入到主机的地方
             qDebug() << "coil write" << address << value;
             if (modbus_master_->isConnected()) {
+              // 设备 id 当主机的 id ???
               modbus_master_->writeCoilsData(
                   address, QVector<quint16>(1, value),
                   modbus_client_setting_->getModbusDeviceId());

@@ -3,6 +3,7 @@
 #include <qmodbusdataunit.h>
 #include <qmodbusdevice.h>
 #include <qmodbusreply.h>
+#include <qmodbusrtuserialclient.h>
 #include <qpair.h>
 
 #include <QModbusRtuSerialClient>
@@ -11,7 +12,7 @@
 
 namespace Core {
 
-ModbusMaster::ModbusMaster(QObject* parent) : QObject(parent) {}
+ModbusMaster::ModbusMaster(QObject *parent) : QObject(parent) {}
 
 ModbusMaster::~ModbusMaster() {
   if (modbusDevice) {
@@ -19,9 +20,9 @@ ModbusMaster::~ModbusMaster() {
   }
 }
 
-void ModbusMaster::setupConfiguration(const ModbusMasterConfiguration& config) {
-  qDebug() << config.com << config.baud_rate << config.parity
-           << config.data_bits << config.stop_bits;
+void ModbusMaster::setupConfiguration(const ModbusMasterConfiguration &config) {
+  // qDebug() << config.com << config.baud_rate << config.parity
+  //          << config.data_bits << config.stop_bits;
   if (modbusDevice) {
     modbusDevice->disconnectDevice();
     delete modbusDevice;
@@ -47,6 +48,7 @@ void ModbusMaster::setupConfiguration(const ModbusMasterConfiguration& config) {
     modbusDevice->setConnectionParameter(QModbusDevice::NetworkPortParameter,
                                          config.port);
   }
+  modbusDevice->setTimeout(1000);
 }
 
 bool ModbusMaster::connectModbusDevice(bool reconnect) {
@@ -73,7 +75,7 @@ void ModbusMaster::toDisconnect() {
   if (modbusDevice) {
     modbusDevice->disconnectDevice();
     // 终止所有未完成请求
-    for (QModbusReply* reply : active_replies_) {
+    for (QModbusReply *reply : active_replies_) {
       reply->deleteLater();
     }
     active_replies_.clear();
@@ -82,9 +84,9 @@ void ModbusMaster::toDisconnect() {
   }
 }
 
-void ModbusMaster::readModbusData(const QModbusDataUnit::RegisterType& dataType,
-                                  const int& startAddr, const quint16& size,
-                                  const int& serverAddr) {
+void ModbusMaster::readModbusData(const QModbusDataUnit::RegisterType &dataType,
+                                  const int &startAddr, const quint16 &size,
+                                  const int &serverAddr) {
   if (size == 0 || size > 125) {
     emit errorOccurred("Invalid request size");
     return;
@@ -114,8 +116,8 @@ void ModbusMaster::readModbusData(const QModbusDataUnit::RegisterType& dataType,
  *@return: bool:true=发送请求成功 false=请求失败
  */
 bool ModbusMaster::writeModbusData(
-    const QModbusDataUnit::RegisterType& dataType, const int& startAddr,
-    const QVector<quint16>& values, const int& serverAddr) {
+    const QModbusDataUnit::RegisterType &dataType, const int &startAddr,
+    const QVector<quint16> &values, const int &serverAddr) {
   // 写数据时，没连接则尝试重连
   if (modbusDevice->state() != QModbusDevice::ConnectedState) {
     modbusDevice->connectDevice();
@@ -124,9 +126,11 @@ bool ModbusMaster::writeModbusData(
 
   QModbusDataUnit dataUnit(dataType, startAddr, values.size());
   dataUnit.setValues(values);
-  // 读取数据有点慢
-  // 为什么这里
-  qDebug() << " 1: " << dataUnit.startAddress() << dataUnit.values();
+  // 这里也运行到了
+  // qDebug() << " 1: " << dataUnit.startAddress() << dataUnit.values();
+  // 为什么写失败 ???
+  qDebug() << "Write Request: Address=" << dataUnit.startAddress()
+           << "Values=" << dataUnit.values();
 
   // QModbusReply* reply = modbusDevice->sendWriteRequest(dataUnit, serverAddr);
   // if (reply) {
@@ -161,38 +165,64 @@ bool ModbusMaster::writeModbusData(
   // } else {
   //   return false;
   // }
-
-  if (auto* reply = modbusDevice->sendWriteRequest(dataUnit, serverAddr)) {
-    if (!reply->isFinished()) {
-      connect(reply, &QModbusReply::finished, this, [this, reply]() {
-        const auto error = reply->error();
-        if (error == QModbusDevice::ProtocolError) {
-          emit errorOccurred(
-              QString("writeModbusData error:%1(exception code = 0x%2)")
-                  .arg(reply->errorString())
-                  .arg(reply->rawResult().exceptionCode(), -1, 16));
-        } else if (error != QModbusDevice::NoError) {
-          // BUG 为什么读取数据时, 会调用写函数
-          emit errorOccurred(QString("Write response error: %1 (code: 0x%2)")
-                                 .arg(reply->errorString())
-                                 .arg(error, -1, 16));
-        }
-        reply->deleteLater();
-      });
-    } else {
+  // modbus 写操作时异步的, 未执行完毕就取出返回结果
+  // 检查设备ID是否在有效范围内
+  // 使用的 id 有问题
+  qDebug() << "Using device ID:" << serverAddr;
+  if (serverAddr < 1 || serverAddr > 247) {
+    qDebug() << "Warning: Device ID may be out of range (1-247)";
+  }
+  if (auto *reply = modbusDevice->sendWriteRequest(dataUnit, serverAddr)) {
+    // if (!reply->isFinished()) {
+    //   connect(reply, &QModbusReply::finished, this, [this, reply]() {
+    //     const auto error = reply->error();
+    //     if (error == QModbusDevice::ProtocolError) {
+    //       emit errorOccurred(
+    //           QString("writeModbusData error:%1(exception code = 0x%2)")
+    //               .arg(reply->errorString())
+    //               .arg(reply->rawResult().exceptionCode(), -1, 16));
+    //     } else if (error != QModbusDevice::NoError) {
+    //       emit errorOccurred(QString("Write response error: %1 (code: 0x%2)")
+    //                              .arg(reply->errorString())
+    //                              .arg(error, -1, 16));
+    //     }
+    //     reply->deleteLater();
+    //   });
+    // } else {
+    //   reply->deleteLater();
+    //   qDebug() << "Write Success";
+    //   return true;
+    // }
+    connect(reply, &QModbusReply::finished, this, [this, reply, dataUnit] {
+      const auto error = reply->error();
+      if (error == QModbusDevice::NoError) {
+        qDebug() << "Write Success";
+        // reply->Raw;
+      } else if (error == QModbusDevice::ProtocolError) {
+        // 协议错误
+        emit errorOccurred(
+            QString("writeModbusData error:%1(exception code = 0x%2)")
+                .arg(reply->errorString())
+                .arg(reply->rawResult().exceptionCode(), -1, 16));
+      } else {
+        emit errorOccurred(QString("Write response error: %1 (code: 0x%2)")
+                               .arg(reply->errorString())
+                               .arg(error, -1, 16));
+      }
       reply->deleteLater();
-      return true;
-    }
+    });
+    return true;
   } else {
-    emit errorOccurred(
-        QString("Write error: %1").arg(modbusDevice->errorString()));
+    // emit errorOccurred(
+    //     QString("Write error: %1").arg(modbusDevice->errorString()));
+    emit errorOccurred(QString("Failed to send write request: %1")
+                           .arg(modbusDevice->errorString()));
     return false;
   }
-  return true;
 }
 
-void ModbusMaster::readCoilsData(const QVector<int>& addrs,
-                                 const int& serverAddr) {
+void ModbusMaster::readCoilsData(const QVector<int> &addrs,
+                                 const int &serverAddr) {
   // for (auto it = addrs.cbegin(); it != addrs.cend(); ++it) {
   //   readModbusData(QModbusDataUnit::Coils, *it, 1, serverAddr);
   // }
@@ -207,7 +237,7 @@ void ModbusMaster::readCoilsData(const QVector<int>& addrs,
   // 起始地址
   int lastAddr = startAddr;
   // 多个范围
-  QVector<QPair<int, int>> ranges;  // <startAddr, count>
+  QVector<QPair<int, int>> ranges; // <startAddr, count>
 
   for (int i = 1; i < sortedAddrs.size(); ++i) {
     if (sortedAddrs[i] == lastAddr + 1) {
@@ -224,15 +254,69 @@ void ModbusMaster::readCoilsData(const QVector<int>& addrs,
   ranges.append(qMakePair(startAddr, lastAddr - startAddr + 1));
 
   // 发送合并后的请求
-  for (const auto& range : ranges) {
+  for (const auto &range : ranges) {
     readModbusData(QModbusDataUnit::Coils, range.first, range.second,
                    serverAddr);
   }
 }
 
-void ModbusMaster::readCoilsData(const int& startAddr, const quint16& size,
-                                 const int& serverAddr) {
+void ModbusMaster::readCoilsData(const int &startAddr, const quint16 &size,
+                                 const int &serverAddr) {
   readModbusData(QModbusDataUnit::Coils, startAddr, size, serverAddr);
+}
+
+void ModbusMaster::readDiscreteInputsData(const QVector<int> &addrs,
+                                          const int &serverAddr) {
+  for (auto it = addrs.cbegin(); it != addrs.cend(); ++it) {
+    readModbusData(QModbusDataUnit::DiscreteInputs, *it, 1, serverAddr);
+  }
+}
+
+void ModbusMaster::readHoldingData(const QVector<int> &addrs,
+                                   const int &serverAddr) {
+  for (auto it = addrs.cbegin(); it != addrs.cend(); ++it) {
+    readModbusData(QModbusDataUnit::HoldingRegisters, *it, 1, serverAddr);
+  }
+}
+
+void ModbusMaster::readHoldingData(const int &startAddr, const quint16 &size,
+                                   const int &serverAddr) {
+  readModbusData(QModbusDataUnit::HoldingRegisters, startAddr, size,
+                 serverAddr);
+}
+
+void ModbusMaster::readInputRegistersData(const QVector<int> &addrs,
+                                          const int &serverAddr) {
+  for (auto it = addrs.cbegin(); it != addrs.cend(); ++it) {
+    readModbusData(QModbusDataUnit::InputRegisters, *it, 1, serverAddr);
+  }
+}
+
+void ModbusMaster::writeCoilsData(const int &startAddr,
+                                  const QVector<quint16> &values,
+                                  const int &serverAddr) {
+  writeModbusData(QModbusDataUnit::Coils, startAddr, values, serverAddr);
+}
+
+void ModbusMaster::writeDiscreteInputsData(const int &startAddr,
+                                           const QVector<quint16> &values,
+                                           const int &serverAddr) {
+  writeModbusData(QModbusDataUnit::DiscreteInputs, startAddr, values,
+                  serverAddr);
+}
+
+void ModbusMaster::writeHoldingData(const int &startAddr,
+                                    const QVector<quint16> &values,
+                                    const int &serverAddr) {
+  writeModbusData(QModbusDataUnit::HoldingRegisters, startAddr, values,
+                  serverAddr);
+}
+
+void ModbusMaster::writeInputRegistersData(const int &startAddr,
+                                           const QVector<quint16> &values,
+                                           const int &serverAddr) {
+  writeModbusData(QModbusDataUnit::InputRegisters, startAddr, values,
+                  serverAddr);
 }
 
 // void ModbusMaster::errorOccurred(QModbusDevice::Error error) {}
@@ -304,7 +388,7 @@ void ModbusMaster::stateChanged(QModbusDevice::State state) {}
 // }
 
 void ModbusMaster::processNextRequest() {
-  const int MAX_PARALLEL_REQUESTS = 5;  // 最大并行请求数
+  const int MAX_PARALLEL_REQUESTS = 5; // 最大并行请求数
   if (request_queue_.isEmpty() ||
       active_replies_.size() >= MAX_PARALLEL_REQUESTS) {
     // 超限运行
@@ -317,7 +401,7 @@ void ModbusMaster::processNextRequest() {
   }
   // 拿出一个请求
   QModbusDataUnit unit = request_queue_.dequeue();
-  if (auto* reply = modbusDevice->sendReadRequest(unit, 1)) {
+  if (auto *reply = modbusDevice->sendReadRequest(unit, 1)) {
     active_replies_.insert(reply);
     connect(reply, &QModbusReply::finished, this, [this, reply, unit]() {
       reply->deleteLater();
@@ -345,7 +429,7 @@ void ModbusMaster::processNextRequest() {
   }
 }
 
-}  // namespace Core
+} // namespace Core
 
 // void ModbusMaster::readModbusData(const QModbusDataUnit::RegisterType&
 // dataType,

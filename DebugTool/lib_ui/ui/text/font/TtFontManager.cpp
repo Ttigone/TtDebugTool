@@ -8,8 +8,6 @@ namespace {
 // 单次在家
 
 bool loadFont() {
-  // int fontId =
-  //     QFontDatabase::addApplicationFont(":/font/fontawesome-webfont.ttf");
   // 如何获得对应的名字
   int fontId = QFontDatabase::addApplicationFont(":/font/iconfont.ttf");
   qDebug() << fontId;

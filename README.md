@@ -1,5 +1,5 @@
 <div align=center>
-<img width=64 src="./common/delegateui_icon.svg">
+<!-- <img width=64 src="./common/delegateui_icon.svg"> -->
 
 基于 QtWidget  开发
 
@@ -7,11 +7,42 @@
 
 </div>
 
-
-
 ## 开发环境
+* windows 11
+* IDE: Qt Creator 16.0.01
+* Qt Version: Qt 6.6.3
 
-windows 11, Qt 6.4.3 / Qt 6.6.3
+
+
+## 预览
+双语界面(仍有 Bug)
+
+[![image.png](https://pic1.imgdb.cn/item/68260f7558cb8da5c8f49e96.png)](https://pic1.imgdb.cn/item/68260f7558cb8da5c8f49e96.png)
+
+[![image.png](https://pic1.imgdb.cn/item/68260f6158cb8da5c8f49e70.png)](https://pic1.imgdb.cn/item/68260f6158cb8da5c8f49e70.png)
+
+
+### 串口
+
+[![image.png](https://pic1.imgdb.cn/item/68260ef658cb8da5c8f49ddf.png)](https://pic1.imgdb.cn/item/68260ef658cb8da5c8f49ddf.png)
+
+### Tcp
+
+[![image.png](https://pic1.imgdb.cn/item/68260fa058cb8da5c8f49ed0.png)](https://pic1.imgdb.cn/item/68260fa058cb8da5c8f49ed0.png)
+
+### Udp
+
+[![image.png](https://pic1.imgdb.cn/item/68260fb858cb8da5c8f49ef3.png)](https://pic1.imgdb.cn/item/68260fb858cb8da5c8f49ef3.png)
+
+### MQTT
+
+[![image.png](https://pic1.imgdb.cn/item/68260fd658cb8da5c8f49f12.png)](https://pic1.imgdb.cn/item/68260fd658cb8da5c8f49f12.png)
+
+### ModBus
+
+[![image.png](https://pic1.imgdb.cn/item/6826100258cb8da5c8f49f49.png)](https://pic1.imgdb.cn/item/6826100258cb8da5c8f49f49.png)
+
+
 
 ## 许可证
 
@@ -32,10 +63,7 @@ windows 11, Qt 6.4.3 / Qt 6.6.3
 
 
 ## TODO
-
+待完善...
 
 ## BUG
-
-1. 语言翻译文件路径
-2. 移动出 tabWindow 后, 选择功能出现问题
-3. 
+待完善...

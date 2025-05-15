@@ -1,6 +1,5 @@
 <RCC>
     <qresource prefix="/font">
-        <file>fontawesome-webfont.ttf</file>
         <file>iconfont.ttf</file>
     </qresource>
     <qresource prefix="/icon">

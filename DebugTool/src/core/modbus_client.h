@@ -111,6 +111,7 @@ private:
   void configRtuParam();
   void configTcpParam(QString addr = "127.0.0.1", int port = 502);
   void configUdpParam();
+  void processNextRequest();
 
   QModbusClient *modbusDevice = nullptr;
 
@@ -119,7 +120,9 @@ private:
 
   bool is_processing_ = false;
 
-  void processNextRequest();
+  // 缓存最近写入的值，格式：<寄存器类型, <地址, <值, 时间戳>>>
+  QMap<QModbusDataUnit::RegisterType, QMap<int, QPair<quint16, QDateTime>>>
+      recentWrites_;
 };
 
 } // namespace Core

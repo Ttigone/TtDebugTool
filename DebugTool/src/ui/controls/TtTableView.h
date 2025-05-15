@@ -173,6 +173,8 @@ public:
   /// 为特定行列设定 cellWidget
   void setCellWidget(int row, int column, QWidget *widget);
 
+  void setEnable(bool enable);
+
 signals:
   ///
   /// @brief valueConfirmed

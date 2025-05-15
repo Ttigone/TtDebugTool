@@ -319,9 +319,9 @@ void ModbusClientSetting::init() {
   connect(auto_refresh_, &Ui::TtSwitchButton::toggled, this,
           [this](bool state) {
             if (refresh_interval_->currentText().isEmpty()) {
-              qDebug() << "为设定, 默认以 50ms 运行";
-              refresh_interval_->setText("50");
-              emit refreshIntervalChanged(50);
+              qDebug() << "为设定, 默认以 100ms 运行";
+              refresh_interval_->setText("100");
+              emit refreshIntervalChanged(100);
             }
             emit autoRefreshStateChanged(state);
           });

@@ -547,7 +547,7 @@ void TtSvgButton::setEnable(bool enabled) {
       svgContent.replace(QRegularExpression("fill=\"[^\"]*\""),
                          QString("fill=\"#808080\""));
       disabled_svg_content_ = svgContent.toUtf8();
-      qDebug() << disabled_svg_content_;
+      // qDebug() << disabled_svg_content_;
     } else {
       disabled_svg_content_.clear();
     }
@@ -580,7 +580,7 @@ void TtSvgButton::paintEvent(QPaintEvent *event) {
     if (!disabled_svg_content_.isEmpty()) {
       // 灰色
       // 根本没有
-      qDebug() << "无效的 svg" << disabled_svg_content_;
+      // qDebug() << "无效的 svg" << disabled_svg_content_;
       QSvgRenderer tempRenderer(disabled_svg_content_);
       if (tempRenderer.isValid()) {
         tempRenderer.render(&painter, svgRect);

@@ -95,6 +95,8 @@ void MqttWindow::setSetting(const QJsonObject &config) {
     subscripition_widget_->setOldSettings(
         config.value("MetaSetting").toObject(QJsonObject()));
   }
+  Ui::TtMessageBar::success(TtMessageBarType::Top, tr(""), tr("读取配置成功"),
+                            1500);
 }
 
 QString MqttWindow::getTitle() const { return title_->text(); }

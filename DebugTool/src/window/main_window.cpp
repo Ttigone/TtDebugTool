@@ -573,19 +573,12 @@ void MainWindow::saveCsvFile() {
 }
 
 void MainWindow::switchToOtherTabPage(const QString &uuid, const int &type) {
-  // 删除了原有的窗口
   if (tabWidget_->isCurrentDisplayedPage(uuid)) {
-    // qDebug() << "1";
     tabWidget_->switchByPage(uuid);
   } else if (tabWidget_->isStoredInMem(uuid)) {
-    // qDebug() << "2";
     tabWidget_->switchByReadingMem(uuid,
                                    static_cast<TtProtocolRole::Role>(type));
   } else {
-    // 出现了bug 进入了这里, 本质上没有查找到, 进来是正确的, 在于存取 count
-    // 的时候出现了问题
-    // qDebug() << "3";
-    // 从磁盘读取
     base::DetectRunningTime test;
     // 只有第一次运行才会慢, 包行了创建首个窗口的缓存
     qDebug() << "switch uuid " << uuid;
@@ -1159,9 +1152,6 @@ void MainWindow::connectSignals() {
     tabWidget_->setCurrentWidget(setting_widget_);
   });
 
-  // 切换的时候, 存在一个原始的选择页面, 一个从历史打开的标签页
-  // 当点击左侧另一个没有打开的标签页的时候, 当前 widget 处于原始选择页面,
-  // 切换时，可能会覆盖从历史打开的标签页
   connect(buttonGroup, &Ui::WidgetGroup::currentIndexChanged, this,
           &MainWindow::switchToOtherTabPage);
 
@@ -1344,14 +1334,11 @@ void MainWindow::registerTabWidget() {
                 [this, udpClient]() {
                   const auto &uuid =
                       tabWidget_->getCurrentWidgetUUid(udpClient);
-                  addDifferentConfiguration(
-                      TtFunctionalCategory::Communication,
-                      TtProtocolRole::UdpClient, udpClient->getTitle(),
-                      // tabWidget_->getCurrentWidgetUUid());
-                      uuid);
+                  addDifferentConfiguration(TtFunctionalCategory::Communication,
+                                            TtProtocolRole::UdpClient,
+                                            udpClient->getTitle(), uuid);
                   tabWidget_->setTabTitle(uuid, udpClient->getTitle());
                   Storage::SettingsManager::instance().setSetting(
-                      // "UdpClient+" + tabWidget_->getCurrentWidgetUUid(),
                       "UdpClient+" + uuid, udpClient->getConfiguration());
                   Ui::TtMessageBar::success(TtMessageBarType::Top, "",
                                             tr("保存成功"), 1000);
@@ -1396,14 +1383,11 @@ void MainWindow::registerTabWidget() {
                 [this, modbusClient]() {
                   const auto &uuid =
                       tabWidget_->getCurrentWidgetUUid(modbusClient);
-                  addDifferentConfiguration(
-                      TtFunctionalCategory::Communication,
-                      TtProtocolRole::ModbusClient, modbusClient->getTitle(),
-                      // tabWidget_->getCurrentWidgetUUid());
-                      uuid);
+                  addDifferentConfiguration(TtFunctionalCategory::Communication,
+                                            TtProtocolRole::ModbusClient,
+                                            modbusClient->getTitle(), uuid);
                   tabWidget_->setTabTitle(modbusClient->getTitle());
                   Storage::SettingsManager::instance().setSetting(
-                      // "ModbusClient+" + tabWidget_->getCurrentWidgetUUid(),
                       "ModbusClient+" + uuid, modbusClient->getConfiguration());
                   Ui::TtMessageBar::success(TtMessageBarType::Top, "",
                                             tr("保存成功"), 1000);
@@ -1490,19 +1474,11 @@ void MainWindow::addDifferentConfiguration(TtFunctionalCategory::Category type,
                                            TtProtocolRole::Role role,
                                            const QString &title,
                                            const QString &uuid) {
-  // 有问题
-  // button 是创建了
-  // 每个按钮的 icon 有各自的配对
-  // 但是标签页的 icon 与 leftbar 的 icon 配置
-  // 给到了 uuid 对应的 role
   Ui::TtSpecialDeleteButton *button = new Ui::TtSpecialDeleteButton(
       title, ":/sys/displayport.svg", ":/sys/delete.svg", this);
-  // 但是这里 uuid 为空 查找不到 uuid
-  qDebug() << "uuid: " << uuid;
 
   switch (type) {
   case TtFunctionalCategory::Communication: {
-    // history_link_list_->addAdaptiveWidget(title, uuid, button);
     history_link_list_->addAdaptiveWidget(title, std::make_pair(uuid, role),
                                           button);
     break;
@@ -1511,7 +1487,6 @@ void MainWindow::addDifferentConfiguration(TtFunctionalCategory::Category type,
     break;
   }
   case TtFunctionalCategory::Simulate: {
-    // history_mock_list_->addAdaptiveWidget(title, uuid, button);
     history_mock_list_->addAdaptiveWidget(title, std::make_pair(uuid, role),
                                           button);
     break;
@@ -1629,7 +1604,7 @@ void MainWindow::readingProjectConfiguration() {
   // qDebug() << timer.elapseMilliseconds();
   const auto configs =
       Storage::SettingsManager::instance().getHistorySettings();
-  qDebug() << configs;
+  // qDebug() << configs;
 
   // 创建三个哈希表来存储不同前缀的配置，以UUID为键
   QHash<QString, QJsonObject> serialConfigs;
@@ -1678,7 +1653,7 @@ void MainWindow::readingProjectConfiguration() {
         mqttConfigs[uuid] = it.value().toObject();
       }
     } else if (key.startsWith(ModbusPrefix)) {
-      QString uuid = key.mid(UdpServerPrefix.length());
+      QString uuid = key.mid(ModbusPrefix.length());
       if (!uuid.isEmpty() && it.value().isObject()) {
         modbusConfigs[uuid] = it.value().toObject();
       }

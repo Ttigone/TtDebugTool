@@ -38,8 +38,12 @@ public:
   int getModbusDeviceId() const;
 
 signals:
+  void drawerStateChanged(bool state);
+
+signals:
+  void settingChanged();
   void autoRefreshStateChanged(bool enable);
-  void refreshIntervalChanged(quint32 interval);
+  void refreshIntervalChanged(uint32_t interval);
   void graphNumsChanged(quint16 nums);
 
 public slots:

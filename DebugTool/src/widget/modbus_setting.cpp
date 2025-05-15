@@ -3,6 +3,7 @@
 #include <QSerialPortInfo>
 
 #include <ui/control/TtComboBox.h>
+#include <ui/control/TtDrawer.h>
 #include <ui/control/TtLineEdit.h>
 #include <ui/control/TtSwitchButton.h>
 #include <ui/layout/horizontal_layout.h>
@@ -13,7 +14,9 @@
 
 namespace Widget {
 
-ModbusClientSetting::ModbusClientSetting(QWidget *parent) { init(); }
+ModbusClientSetting::ModbusClientSetting(QWidget *parent) : QWidget(parent) {
+  init();
+}
 
 ModbusClientSetting::~ModbusClientSetting() {}
 
@@ -101,6 +104,7 @@ const QJsonObject &ModbusClientSetting::getModbusClientSetting() {
   linkSetting.insert("ParityBit", QJsonValue(config.parity));
   linkSetting.insert("StopBit", QJsonValue(config.stop_bits));
   linkSetting.insert("Host", QJsonValue(host_->currentText()));
+  qDebug() << host_->currentText();
   linkSetting.insert("Port", QJsonValue(port_->currentText()));
   linkSetting.insert("DeviceId", QJsonValue(device_id_->currentText()));
   linkSetting.insert("Timeout", QJsonValue(timeout_->currentText()));
@@ -194,6 +198,10 @@ quint32 ModbusClientSetting::getRefreshInterval() {
 void ModbusClientSetting::init() {
   main_layout_ = new Ui::TtVerticalLayout(this);
 
+  QList<QComboBox *> comboBoxes;
+  QList<QLineEdit *> lineEdits;
+  QList<Ui::TtDrawer *> drawers;
+
   QWidget *linkSettingWidget = new QWidget(this);
   Ui::TtVerticalLayout *linkSettingWidgetLayout =
       new Ui::TtVerticalLayout(linkSettingWidget);
@@ -212,7 +220,18 @@ void ModbusClientSetting::init() {
   timeout_ = new Ui::TtLabelLineEdit(tr("超时时间"), linkSettingWidget);
   auto_refresh_ = new Ui::TtSwitchButton(tr("自动刷新"), linkSettingWidget);
   refresh_interval_ =
-      new Ui::TtLabelLineEdit(tr("刷新间隔"), linkSettingWidget);
+      new Ui::TtLabelLineEdit(tr("刷新间隔(ms)"), linkSettingWidget);
+
+  comboBoxes << link_type_->body();
+  comboBoxes << path_->body();
+  comboBoxes << baud_->body();
+  comboBoxes << parity_bit_->body();
+  comboBoxes << stop_bit_->body();
+  lineEdits << host_->body();
+  lineEdits << port_->body();
+  lineEdits << device_id_->body();
+  lineEdits << timeout_->body();
+  lineEdits << refresh_interval_->body();
 
   linkSettingWidgetLayout->addWidget(link_type_);
 
@@ -263,6 +282,9 @@ void ModbusClientSetting::init() {
   Ui::TtVerticalLayout *graphSettingWidgetLayout =
       new Ui::TtVerticalLayout(graphSettingWidget);
   graph_capacity_ = new Ui::TtLabelLineEdit(tr("容量:"), graphSettingWidget);
+
+  lineEdits << graph_capacity_->body();
+
   connect(graph_capacity_, &Ui::TtLabelLineEdit::currentTextChanged,
           [this](const QString &text) {
             qDebug() << "nums: " << text.toUShort();
@@ -294,12 +316,44 @@ void ModbusClientSetting::init() {
   main_layout_->addWidget(scroll);
 
   connect(auto_refresh_, &Ui::TtSwitchButton::toggled, this,
-          &Widget::ModbusClientSetting::autoRefreshStateChanged);
+          [this](bool state) {
+            if (refresh_interval_->currentText().isEmpty()) {
+              qDebug() << "为设定, 默认以 50ms 运行";
+              refresh_interval_->setText("50");
+              emit refreshIntervalChanged(50);
+            }
+            emit autoRefreshStateChanged(state);
+          });
 
-  connect(
-      refresh_interval_->body(), &Ui::TtLineEdit::editingFinished, [this]() {
-        emit refreshIntervalChanged(refresh_interval_->currentText().toULong());
-      });
+  // connect(
+  //     refresh_interval_->body(), &Ui::TtLineEdit::editingFinished, [this]() {
+  //       emit
+  //       refreshIntervalChanged(refresh_interval_->currentText().toULong());
+  //     });
+  connect(refresh_interval_, &Ui::TtLabelLineEdit::currentTextToUInt32,
+          [this](uint32_t num) { emit refreshIntervalChanged(num); });
+
+  for (auto *comboBox : comboBoxes) {
+    if (comboBox) {
+      connect(comboBox,
+              QOverload<int>::of(&Ui::TtComboBox::currentIndexChanged), this,
+              &ModbusClientSetting::settingChanged);
+    }
+  }
+
+  for (auto *lineEdit : lineEdits) {
+    if (lineEdit) { // 确保指针有效
+      connect(lineEdit, &QLineEdit::textChanged, this,
+              &ModbusClientSetting::settingChanged);
+    }
+  }
+
+  for (auto *drawer : drawers) {
+    if (drawer) {
+      connect(drawer, &Ui::TtDrawer::drawerStateChanged, this,
+              &ModbusClientSetting::drawerStateChanged);
+    }
+  }
 }
 
 } // namespace Widget

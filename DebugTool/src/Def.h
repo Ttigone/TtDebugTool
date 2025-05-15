@@ -33,7 +33,7 @@ const QString TcpServerPrefix = "TcpServer+"; // Define the prefix
 const QString UdpClientPrefix = "UdpClient+"; // Define the prefix
 const QString UdpServerPrefix = "UdpServer+"; // Define the prefix
 const QString MqttPrefix = "MqttClient+";     // Define the prefix
-const QString ModbusPrefix = "Modbus+";       // Define the prefix
+const QString ModbusPrefix = "ModbusClient+"; // Define the prefix
 
 Q_BEGIN_ENUM_CREATE_SRC(TtProtocolRole)
 enum Role {

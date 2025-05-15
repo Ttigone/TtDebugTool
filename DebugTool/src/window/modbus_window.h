@@ -134,10 +134,10 @@ private:
   // Core::ModbusMaster *modbus_master_;
   QScopedPointer<Core::ModbusMaster> modbus_master_;
 
-  Ui::TtModbusTableWidget *coil_table_;
-  Ui::TtModbusTableWidget *discrete_inputs_table_;
-  Ui::TtModbusTableWidget *holding_registers_table_;
-  Ui::TtModbusTableWidget *input_registers_table_;
+  Ui::TtModbusTableWidget *coil_table_{nullptr};
+  Ui::TtModbusTableWidget *discrete_inputs_table_{nullptr};
+  Ui::TtModbusTableWidget *holding_registers_table_{nullptr};
+  Ui::TtModbusTableWidget *input_registers_table_{nullptr};
 
   // 一共只有 4 张表格
   // QList<Ui::TtModbusTableWidget*> function_table_;

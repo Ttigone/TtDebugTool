@@ -59,6 +59,7 @@ bool ModbusWindow::saveState() { return saved_; }
 void ModbusWindow::setSaveState(bool state) { saved_ = state; }
 
 void ModbusWindow::saveSetting() {
+  config_.insert("Type", TtFunctionalCategory::Communication);
   config_.insert("WindowTitile", title_->text());
   if (role_ == TtProtocolType::Client) {
     config_.insert("ModbusClientSetting",
@@ -67,6 +68,7 @@ void ModbusWindow::saveSetting() {
   }
   // 循环插入所有 function_table_ 中的表格项
 
+  // BUG 能够保存进去, 但是不能读取
   for (auto it = function_table_.constBegin(); it != function_table_.constEnd();
        ++it) {
     auto *widget = qobject_cast<Ui::TtModbusTableWidget *>(it.value());
@@ -86,8 +88,54 @@ void ModbusWindow::setSetting(const QJsonObject &config) {
   // BUG 读取失败, 没有读取成功
   modbus_client_setting_->setOldSettings(
       config.value("ModbusClientSetting").toObject(QJsonObject()));
-  // FIXME 每个表格设定 确实 graph 的选择情况
-  // config.value("InstructionTable+")
+  if (coil_table_ && config.contains("InstructionTable+Coil")) {
+    QJsonObject coilTableData =
+        config.value("InstructionTable+Coil").toObject();
+    if (!coilTableData.isEmpty()) {
+      qDebug() << "还原线圈表格数据";
+      coil_table_->setTable(coilTableData);
+    }
+  }
+  if (discrete_inputs_table_ &&
+      config.contains("InstructionTable+DiscreteInputs")) {
+    QJsonObject discreteInputsTableData =
+        config.value("InstructionTable+DiscreteInputs").toObject();
+    if (!discreteInputsTableData.isEmpty()) {
+      qDebug() << "还原离散输入表格数据";
+      discrete_inputs_table_->setTable(discreteInputsTableData);
+    }
+  }
+  if (holding_registers_table_ &&
+      config.contains("InstructionTable+HoldingRegisters")) {
+    QJsonObject holdingRegistersTableData =
+        config.value("InstructionTable+HoldingRegisters").toObject();
+    if (!holdingRegistersTableData.isEmpty()) {
+      qDebug() << "还原保持寄存器表格数据";
+      holding_registers_table_->setTable(holdingRegistersTableData);
+    }
+  }
+  if (input_registers_table_ &&
+      config.contains("InstructionTable+InputRegisters")) {
+    QJsonObject inputRegistersTableData =
+        config.value("InstructionTable+InputRegisters").toObject();
+    if (!inputRegistersTableData.isEmpty()) {
+      qDebug() << "还原输入寄存器表格数据";
+      input_registers_table_->setTable(inputRegistersTableData);
+    }
+  }
+  // 在所有表格加载完成后调整大小
+  QTimer::singleShot(0, this, [this]() {
+    coil_table_->resizeColumnsToContents();
+    coil_table_->resizeRowsToContents();
+    discrete_inputs_table_->resizeColumnsToContents();
+    discrete_inputs_table_->resizeRowsToContents();
+    holding_registers_table_->resizeColumnsToContents();
+    holding_registers_table_->resizeRowsToContents();
+    input_registers_table_->resizeColumnsToContents();
+    input_registers_table_->resizeRowsToContents();
+  });
+  Ui::TtMessageBar::success(TtMessageBarType::Top, tr(""), tr("读取配置成功"),
+                            1500);
 }
 
 void ModbusWindow::switchToEditMode() {
@@ -112,16 +160,18 @@ void ModbusWindow::switchToDisplayMode() {
 // void ModbusWindow::sloveDataReceived(const int& addr,
 //                                      const QVector<quint16>& data) {
 void ModbusWindow::sloveDataReceived(const QModbusDataUnit &dataUnit) {
-
   // 小于 100 ms
   // 修复发送的逻辑
   auto type = dataUnit.registerType();
   switch (type) {
   case QModbusDataUnit::Coils: {
+    // 处理
     coil_table_->setValue(dataUnit.startAddress(), dataUnit.values());
+    // 显示在 plot 上
     updatePlot(TtModbusRegisterType::Coils, dataUnit.startAddress(),
                dataUnit.values().at(0));
 
+    // 发送
     break;
   }
   case QModbusDataUnit::DiscreteInputs: {
@@ -154,13 +204,16 @@ void ModbusWindow::sloveDataReceived(const QModbusDataUnit &dataUnit) {
 }
 
 void ModbusWindow::timerRefreshValue() {
+  // 定时器刷新
   if (!modbus_master_->isConnected()) {
     return;
   }
+  // 读取
+  // 获取不同寄存器值
   getCoilValue();
-  getDiscreteInputsValue();
-  getHoldingRegisterValue();
-  getInputRegistersValue();
+  // getDiscreteInputsValue();
+  // getHoldingRegisterValue();
+  // getInputRegistersValue();
 }
 
 void ModbusWindow::getSpecificValue() {}
@@ -180,7 +233,12 @@ void ModbusWindow::getCoilValue() {
     return;
   }
   if (coil_table_->rowCount() > 1) {
+    // 获取地址长度
+    // base::DetectRunningTime test;
     auto values = coil_table_->getAddressValue();
+    // 输出为 0
+    // qDebug() << "get address time: " << test.elapseMilliseconds();
+    // qDebug() << "get address: " << values;
     modbus_master_->readCoilsData(values, 1);
   }
 }
@@ -347,6 +405,8 @@ void ModbusWindow::init() {
   mainSplitter->setSizes(initialSizes);
 
   refresh_timer_.setTimerType(Qt::TimerType::PreciseTimer);
+  // 为设定则以 50ms
+  refresh_timer_.setInterval(50);
 }
 
 void ModbusWindow::connectSignals() {
@@ -395,14 +455,19 @@ void ModbusWindow::connectSignals() {
 
   QObject::connect(&refresh_timer_, &QTimer::timeout, this,
                    &Window::ModbusWindow::timerRefreshValue);
+  // 设定刷新的时间间隔
   if (modbus_client_setting_) {
     connect(modbus_client_setting_,
             &Widget::ModbusClientSetting::refreshIntervalChanged,
-            [this](quint32 interval) { refresh_timer_.setInterval(interval); });
+            [this](uint32_t interval) {
+              // ms
+              refresh_timer_.setInterval(interval);
+            });
 
     connect(modbus_client_setting_,
             &Widget::ModbusClientSetting::autoRefreshStateChanged,
             [this](bool enable) {
+              saved_ = false;
               if (enable) {
                 refresh_timer_.start();
               } else {
@@ -518,6 +583,7 @@ QWidget *ModbusWindow::createCoilWidget() {
                                       this);
               return;
             }
+            qDebug() << "coil write" << address << value;
             if (modbus_master_->isConnected()) {
               modbus_master_->writeCoilsData(
                   address, QVector<quint16>(1, value),

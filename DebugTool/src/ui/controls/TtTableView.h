@@ -5,6 +5,7 @@
 #include <ui/control/TtLineEdit.h>
 #include "Def.h"
 
+
 class QSpinBox;
 
 namespace Ui {
@@ -127,6 +128,11 @@ class TtModbusTableWidget : public QTableWidget {
   ~TtModbusTableWidget();
 
   void setRowValue(int row, int col, const QString& data);
+
+  ///
+  /// @brief getAddressValue
+  /// @return
+  /// 获取地址所在列的全部数据
   QVector<int> getAddressValue();
   void setValue(const QString& data);
   void setValue(const int& addr, const QVector<quint16>& data);
@@ -164,12 +170,18 @@ class TtModbusTableWidget : public QTableWidget {
   void onValueChanged();
   void onConfirmClicked();
   void onCancelClicked();
+  // 手动切换状态, 主动写入
   void onSwitchButtonToggle(bool toggled);
   void adjustRowHeights();
 
  private:
   void connectSignals();
   bool isRowVisible(int row);
+  ///
+  /// @brief getRowValue
+  /// @param col
+  /// @return
+  /// 遍历行, 从 1 ~ rowCount()
   QVector<QString> getRowValue(int col);
   void setupVisibleRows();
 
@@ -248,18 +260,22 @@ class TtModbusTableWidget : public QTableWidget {
   QWidget* createSixthColumnWidget();    // 仅用于数据行
   QWidget* createSeventhColumnWidget();  // 仅用于数据行
 
+  int visibleRowCount();
+
   // 在类中添加控件缓存
   QMap<QWidget*, QHash<int, QWidget*>> cellWidgetCache_;
 
-  Ui::TtCheckBox* check_state_;  // 控制 check 列
-  Ui::TtComboBox* data_format_;  // 控制 address 列
+  Ui::TtCheckBox* check_state_{nullptr};  // 控制 check 列
+  Ui::TtComboBox* data_format_{nullptr};  // 控制 address 列
 
   QJsonObject record_;
   int rows_;
   int cols_;
 
   TtModbusRegisterType::Type type_;
-  int visibleRowCount();
+  bool programmatic_update_{false};
+
+  // 地址到行号的映射
 };
 
 }  // namespace Ui

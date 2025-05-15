@@ -354,43 +354,43 @@
 <context>
     <name>Ui::TtModbusTableWidget</name>
     <message>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="1200"/>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="1686"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="1311"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="1803"/>
         <source>名称</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="1200"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="1311"/>
         <source>值</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="1200"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="1311"/>
         <source>描述</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="1216"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="1327"/>
         <source>地址(HEX)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="1216"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="1327"/>
         <source>地址(DEC)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="1715"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="1832"/>
         <source>TEXT</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="1715"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="1832"/>
         <source>HEX</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="1730"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="1847"/>
         <source>内容</source>
         <translation type="unfinished"></translation>
     </message>
@@ -480,46 +480,46 @@
 <context>
     <name>Ui::TtTableWidget</name>
     <message>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="96"/>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="232"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="97"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="245"/>
         <source>启用</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="97"/>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="232"/>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="512"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="98"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="245"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="525"/>
         <source>名称</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="98"/>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="232"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="99"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="245"/>
         <source>格式</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="99"/>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="232"/>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="557"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="100"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="245"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="570"/>
         <source>内容</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="100"/>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="233"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="101"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="246"/>
         <source>延时</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="310"/>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="542"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="323"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="555"/>
         <source>TEXT</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="310"/>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="542"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="323"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="555"/>
         <source>HEX</source>
         <translation type="unfinished"></translation>
     </message>
@@ -527,132 +527,132 @@
 <context>
     <name>Widget::ModbusClientSetting</name>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="124"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="128"/>
         <source>RTU</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="125"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="129"/>
         <source>RTU-ASCll</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="126"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="130"/>
         <source>TCP</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="162"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="166"/>
         <source>无校验</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="163"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="167"/>
         <source>偶校验</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="164"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="168"/>
         <source>奇校验</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="165"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="169"/>
         <source>0 校验</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="166"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="170"/>
         <source>1 校验</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="170"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="174"/>
         <source>1 位</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="171"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="175"/>
         <source>1.5 位</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="172"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="176"/>
         <source>2 位</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="200"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="208"/>
         <source>连接类型:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="202"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="210"/>
         <source>路径:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="203"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="211"/>
         <source>波特率:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="204"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="212"/>
         <source>数据位:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="205"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="213"/>
         <source>校验位:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="206"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="214"/>
         <source>停止位:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="208"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="216"/>
         <source>主机:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="209"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="217"/>
         <source>端口:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="211"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="219"/>
         <source>设备 ID:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="212"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="220"/>
         <source>超时时间</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="213"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="221"/>
         <source>自动刷新</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="215"/>
-        <source>刷新间隔</source>
+        <location filename="../../src/widget/modbus_setting.cpp" line="223"/>
+        <source>刷新间隔(ms)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="232"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="251"/>
         <source>连接设置</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="265"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="284"/>
         <source>容量:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/modbus_setting.cpp" line="272"/>
+        <location filename="../../src/widget/modbus_setting.cpp" line="294"/>
         <source>图表</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1390,9 +1390,9 @@
     <message>
         <location filename="../../src/window/main_window.cpp" line="189"/>
         <location filename="../../src/window/main_window.cpp" line="336"/>
-        <location filename="../../src/window/main_window.cpp" line="604"/>
-        <location filename="../../src/window/main_window.cpp" line="627"/>
-        <location filename="../../src/window/main_window.cpp" line="1172"/>
+        <location filename="../../src/window/main_window.cpp" line="597"/>
+        <location filename="../../src/window/main_window.cpp" line="620"/>
+        <location filename="../../src/window/main_window.cpp" line="1162"/>
         <source>新建连接</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1445,148 +1445,148 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="702"/>
+        <location filename="../../src/window/main_window.cpp" line="695"/>
         <source>文件(&amp;F)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="703"/>
+        <location filename="../../src/window/main_window.cpp" line="696"/>
         <source>新建</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="704"/>
+        <location filename="../../src/window/main_window.cpp" line="697"/>
         <source>打开</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="707"/>
+        <location filename="../../src/window/main_window.cpp" line="700"/>
         <source>保存到 CSV</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="711"/>
+        <location filename="../../src/window/main_window.cpp" line="704"/>
         <source>保存到 Sqlite 数据库</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="719"/>
+        <location filename="../../src/window/main_window.cpp" line="712"/>
         <source>&amp;Help</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="720"/>
+        <location filename="../../src/window/main_window.cpp" line="713"/>
         <source>关于 Qt</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="790"/>
+        <location filename="../../src/window/main_window.cpp" line="783"/>
         <source>Dark blur</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="803"/>
+        <location filename="../../src/window/main_window.cpp" line="796"/>
         <source>Light blur</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="816"/>
+        <location filename="../../src/window/main_window.cpp" line="809"/>
         <source>No blur</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1015"/>
+        <location filename="../../src/window/main_window.cpp" line="1008"/>
         <source>确定要退出程序吗</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1157"/>
+        <location filename="../../src/window/main_window.cpp" line="1150"/>
         <source>设置</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1306"/>
-        <location filename="../../src/window/main_window.cpp" line="1333"/>
-        <location filename="../../src/window/main_window.cpp" line="1357"/>
-        <location filename="../../src/window/main_window.cpp" line="1383"/>
-        <location filename="../../src/window/main_window.cpp" line="1409"/>
-        <location filename="../../src/window/main_window.cpp" line="1433"/>
-        <location filename="../../src/window/main_window.cpp" line="1460"/>
+        <location filename="../../src/window/main_window.cpp" line="1296"/>
+        <location filename="../../src/window/main_window.cpp" line="1323"/>
+        <location filename="../../src/window/main_window.cpp" line="1344"/>
+        <location filename="../../src/window/main_window.cpp" line="1370"/>
+        <location filename="../../src/window/main_window.cpp" line="1393"/>
+        <location filename="../../src/window/main_window.cpp" line="1417"/>
+        <location filename="../../src/window/main_window.cpp" line="1444"/>
         <source>保存成功</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1311"/>
+        <location filename="../../src/window/main_window.cpp" line="1301"/>
         <source>未命名的串口连接</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1337"/>
+        <location filename="../../src/window/main_window.cpp" line="1327"/>
         <source>未命 TCP 客户端连接</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1361"/>
+        <location filename="../../src/window/main_window.cpp" line="1348"/>
         <source>未命名 UDP 连接</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1389"/>
+        <location filename="../../src/window/main_window.cpp" line="1376"/>
         <source>未命名的 MQTT 客户端</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1413"/>
+        <location filename="../../src/window/main_window.cpp" line="1397"/>
         <source>未命名的 Modbus 主机</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1437"/>
+        <location filename="../../src/window/main_window.cpp" line="1421"/>
         <source>未命名的 TCP 服务模拟端</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1464"/>
+        <location filename="../../src/window/main_window.cpp" line="1448"/>
         <source>未命名的 UDP 服务模拟端</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1526"/>
+        <location filename="../../src/window/main_window.cpp" line="1501"/>
         <source>简体中文</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1527"/>
+        <location filename="../../src/window/main_window.cpp" line="1502"/>
         <source>英文</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1528"/>
+        <location filename="../../src/window/main_window.cpp" line="1503"/>
         <source>法语</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1529"/>
+        <location filename="../../src/window/main_window.cpp" line="1504"/>
         <source>德语</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1530"/>
+        <location filename="../../src/window/main_window.cpp" line="1505"/>
         <source>日语</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1560"/>
+        <location filename="../../src/window/main_window.cpp" line="1535"/>
         <source>立马重启</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1561"/>
+        <location filename="../../src/window/main_window.cpp" line="1536"/>
         <source>稍后重启</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1562"/>
+        <location filename="../../src/window/main_window.cpp" line="1537"/>
         <source>已切换语言, 是否立马重启</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1594,76 +1594,81 @@
 <context>
     <name>Window::ModbusWindow</name>
     <message>
-        <location filename="../../src/window/modbus_window.cpp" line="85"/>
+        <location filename="../../src/window/modbus_window.cpp" line="87"/>
         <source>未读取正确的标题</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/modbus_window.cpp" line="209"/>
+        <location filename="../../src/window/modbus_window.cpp" line="137"/>
+        <source>读取配置成功</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/window/modbus_window.cpp" line="269"/>
         <source>未命名的 Modbus 主机</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/modbus_window.cpp" line="211"/>
+        <location filename="../../src/window/modbus_window.cpp" line="271"/>
         <source>未命名的 Modbus 设备模拟服务</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/modbus_window.cpp" line="259"/>
+        <location filename="../../src/window/modbus_window.cpp" line="319"/>
         <source>名称不能为空！</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/modbus_window.cpp" line="309"/>
+        <location filename="../../src/window/modbus_window.cpp" line="369"/>
         <source>线圈</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/modbus_window.cpp" line="310"/>
+        <location filename="../../src/window/modbus_window.cpp" line="370"/>
         <source>离散输入</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/modbus_window.cpp" line="311"/>
+        <location filename="../../src/window/modbus_window.cpp" line="371"/>
         <source>保持寄存器</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/modbus_window.cpp" line="312"/>
+        <location filename="../../src/window/modbus_window.cpp" line="372"/>
         <source>输入寄存器</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/modbus_window.cpp" line="491"/>
-        <location filename="../../src/window/modbus_window.cpp" line="554"/>
-        <location filename="../../src/window/modbus_window.cpp" line="605"/>
-        <location filename="../../src/window/modbus_window.cpp" line="677"/>
+        <location filename="../../src/window/modbus_window.cpp" line="558"/>
+        <location filename="../../src/window/modbus_window.cpp" line="622"/>
+        <location filename="../../src/window/modbus_window.cpp" line="673"/>
+        <location filename="../../src/window/modbus_window.cpp" line="745"/>
         <source>起始地址</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/modbus_window.cpp" line="493"/>
-        <location filename="../../src/window/modbus_window.cpp" line="556"/>
-        <location filename="../../src/window/modbus_window.cpp" line="607"/>
-        <location filename="../../src/window/modbus_window.cpp" line="679"/>
+        <location filename="../../src/window/modbus_window.cpp" line="560"/>
+        <location filename="../../src/window/modbus_window.cpp" line="624"/>
+        <location filename="../../src/window/modbus_window.cpp" line="675"/>
+        <location filename="../../src/window/modbus_window.cpp" line="747"/>
         <source>数量</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/modbus_window.cpp" line="495"/>
-        <location filename="../../src/window/modbus_window.cpp" line="558"/>
-        <location filename="../../src/window/modbus_window.cpp" line="609"/>
-        <location filename="../../src/window/modbus_window.cpp" line="681"/>
+        <location filename="../../src/window/modbus_window.cpp" line="562"/>
+        <location filename="../../src/window/modbus_window.cpp" line="626"/>
+        <location filename="../../src/window/modbus_window.cpp" line="677"/>
+        <location filename="../../src/window/modbus_window.cpp" line="749"/>
         <source>添加</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/modbus_window.cpp" line="514"/>
+        <location filename="../../src/window/modbus_window.cpp" line="581"/>
         <source>错误</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/modbus_window.cpp" line="515"/>
+        <location filename="../../src/window/modbus_window.cpp" line="582"/>
         <source>设备未配置或不支持此操作</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1676,43 +1681,48 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/mqtt_window.cpp" line="127"/>
-        <source>未命名的 MQTT 客户端</source>
+        <location filename="../../src/window/mqtt_window.cpp" line="98"/>
+        <source>读取配置成功</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../../src/window/mqtt_window.cpp" line="129"/>
+        <source>未命名的 MQTT 客户端</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/window/mqtt_window.cpp" line="131"/>
         <source>未命名的 MQTT 服务模拟端</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/mqtt_window.cpp" line="178"/>
+        <location filename="../../src/window/mqtt_window.cpp" line="180"/>
         <source>名称不能为空！</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/mqtt_window.cpp" line="198"/>
-        <location filename="../../src/window/mqtt_window.cpp" line="224"/>
+        <location filename="../../src/window/mqtt_window.cpp" line="200"/>
+        <location filename="../../src/window/mqtt_window.cpp" line="226"/>
         <source>订阅</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/mqtt_window.cpp" line="294"/>
+        <location filename="../../src/window/mqtt_window.cpp" line="296"/>
         <source>发送</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/mqtt_window.cpp" line="442"/>
+        <location filename="../../src/window/mqtt_window.cpp" line="444"/>
         <source>取消</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/mqtt_window.cpp" line="443"/>
+        <location filename="../../src/window/mqtt_window.cpp" line="445"/>
         <source>保存</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/mqtt_window.cpp" line="497"/>
+        <location filename="../../src/window/mqtt_window.cpp" line="499"/>
         <source>客户端未建立链接</source>
         <translation type="unfinished"></translation>
     </message>

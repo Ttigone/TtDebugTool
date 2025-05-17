@@ -202,12 +202,12 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     stack_->addWidget(history_link_list_);
     linkListLayout->addWidget(stack_, 1, 0, 1, 2);
     connect(history_link_list_->model(), &QAbstractItemModel::rowsInserted,
-            [=](const QModelIndex &parent, int first, int last) {
+            this, [=](const QModelIndex &parent, int first, int last) {
               if (history_link_list_->count() == 1) { // 从0变为1
                 stack_->setCurrentIndex(1);
               }
             });
-    connect(history_link_list_->model(), &QAbstractItemModel::rowsRemoved,
+    connect(history_link_list_->model(), &QAbstractItemModel::rowsRemoved, this,
             [=](const QModelIndex &parent, int first, int last) {
               if (history_link_list_->count() == 0) { // 从1变为0
                 stack_->setCurrentIndex(0);
@@ -218,7 +218,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     connect(addBtn, &Ui::TtSvgButton::clicked, this,
             &MainWindow::addSelectToolPage);
 
-    connect(refreshBtn, &Ui::TtSvgButton::clicked, [this, controller]() {
+    connect(refreshBtn, &Ui::TtSvgButton::clicked, this, [this, controller] {
       Ui::TtMessageBar::information(TtMessageBarType::Top, "无",
                                     tr("连接列表已刷新"), 1000, this);
     });
@@ -269,25 +269,25 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     stack_->addWidget(history_instruction_list_);
     instructionListLayout->addWidget(stack_, 1, 0, 1, 2);
     connect(history_instruction_list_->model(),
-            &QAbstractItemModel::rowsInserted,
+            &QAbstractItemModel::rowsInserted, this,
             [=](const QModelIndex &parent, int first, int last) {
               if (history_instruction_list_->count() == 1) { // 从0变为1
                 stack_->setCurrentIndex(1);
               }
             });
     connect(history_instruction_list_->model(),
-            &QAbstractItemModel::rowsRemoved,
+            &QAbstractItemModel::rowsRemoved, this,
             [=](const QModelIndex &parent, int first, int last) {
               if (history_instruction_list_->count() == 0) { // 从1变为0
                 stack_->setCurrentIndex(0);
               }
             });
-    connect(addLinkBtn, &QPushButton::clicked, [this, controller]() {
+    connect(addLinkBtn, &QPushButton::clicked, this, [this, controller]() {
       Window::InstructionWindow *instruction = new Window::InstructionWindow;
       tabWidget_->addNewTab(instruction, tr("未命名的指令"));
       tabWidget_->setCurrentWidget(instruction);
     });
-    connect(addBtn, &Ui::TtSvgButton::clicked, [this, controller]() {
+    connect(addBtn, &Ui::TtSvgButton::clicked, this, [this, controller]() {
       Window::InstructionWindow *instruction = new Window::InstructionWindow;
       tabWidget_->addNewTab(instruction, tr("未命名的指令"));
       tabWidget_->setCurrentWidget(instruction);
@@ -358,35 +358,35 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 
     // 监听 model 的行数变化
     connect(history_mock_list_->model(), &QAbstractItemModel::rowsInserted,
-            [=](const QModelIndex &parent, int first, int last) {
+            this, [=](const QModelIndex &parent, int first, int last) {
               if (history_mock_list_->count() == 1) { // 从0变为1
                 stack_->setCurrentIndex(1);
               }
             });
-    connect(history_mock_list_->model(), &QAbstractItemModel::rowsRemoved,
+    connect(history_mock_list_->model(), &QAbstractItemModel::rowsRemoved, this,
             [=](const QModelIndex &parent, int first, int last) {
               if (history_mock_list_->count() == 0) { // 从1变为0
                 stack_->setCurrentIndex(0);
               }
             });
-    connect(addLinkBtn, &QPushButton::clicked, [this, controller]() {
+    connect(addLinkBtn, &QPushButton::clicked, this, [this, controller] {
       SimulateFunctionSelectionWindow *simulate =
           new SimulateFunctionSelectionWindow();
       tabWidget_->addNewTab(simulate, tr("创建模拟器"));
       QObject::connect(
-          simulate, &SimulateFunctionSelectionWindow::switchRequested,
+          simulate, &SimulateFunctionSelectionWindow::switchRequested, this,
           [this](TtProtocolRole::Role role) {
             // 在 tab 上切换不同的 功能 widget
             tabWidget_->sessionSwitchPage(tabWidget_->currentIndex(), role);
           });
       tabWidget_->setCurrentWidget(simulate);
     });
-    connect(addBtn, &Ui::TtSvgButton::clicked, [this, controller]() {
+    connect(addBtn, &Ui::TtSvgButton::clicked, this, [this, controller] {
       SimulateFunctionSelectionWindow *simulate =
           new SimulateFunctionSelectionWindow();
       tabWidget_->addNewTab(simulate, tr("创建模拟器"));
       QObject::connect(
-          simulate, &SimulateFunctionSelectionWindow::switchRequested,
+          simulate, &SimulateFunctionSelectionWindow::switchRequested, this,
           [this](TtProtocolRole::Role role) {
             tabWidget_->sessionSwitchPage(tabWidget_->currentIndex(), role);
           });
@@ -403,7 +403,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 
   layout_->addWidget(mainSplitter);
 
-  connect(left_bar_logic_, &Ui::TtWidgetGroup::widgetClicked,
+  connect(left_bar_logic_, &Ui::TtWidgetGroup::widgetClicked, this,
           [leftPopUp, controller](int index) {
             // 打开
             if (controller->targetDrawerVisible()) {
@@ -561,6 +561,7 @@ void MainWindow::saveCsvFile() {
   Ui::TtContentDialog choseDialog(this);
   // choseDialog;
   // 非模态的
+  // 此处内存泄漏
   QWidget *selectSaveCsvData = new QWidget;
 
   auto widget =
@@ -1004,7 +1005,6 @@ void MainWindow::installWindowAgent() {
     Ui::TtContentDialog *dialog = new Ui::TtContentDialog(
         Qt::ApplicationModal, true,
         Ui::TtContentDialog::LayoutSelection::THREE_OPTIONS, this);
-
     dialog->setCenterText(tr("确定要退出程序吗"));
     dialog->setAttribute(Qt::WA_DeleteOnClose); // 二次删除的情况
     connect(dialog, &Ui::TtContentDialog::leftButtonClicked, dialog,
@@ -1023,11 +1023,9 @@ void MainWindow::installWindowAgent() {
         MainWindow::closeWindow();
       }
     } else {
-      qDebug() << "用户取消操作";
+      // qDebug() << "用户取消操作";
     }
   });
-  // 有bug, 进程崩溃
-
 #endif
 }
 
@@ -1138,7 +1136,7 @@ void MainWindow::connectSignals() {
             TabWindowManager::instance()->removeUuidTabPage(index);
           });
 
-  connect(function_select_, &FunctionSelectionWindow::switchRequested,
+  connect(function_select_, &FunctionSelectionWindow::switchRequested, this,
           [this](TtProtocolRole::Role role) {
             tabWidget_->sessionSwitchPage(tabWidget_->currentIndex(), role);
           });
@@ -1249,7 +1247,7 @@ void MainWindow::registerTabWidget() {
 
         Window::SerialWindow *serial = new Window::SerialWindow();
         // qDebug() << "Create SerialWindow: " << runtime.elapseMilliseconds();
-        connect(serial, &Window::SerialWindow::requestSaveConfig,
+        connect(serial, &Window::SerialWindow::requestSaveConfig, this,
                 [this, serial]() {
                   qDebug() << "request save";
                   // 能够找到 widget, 本窗口
@@ -1304,7 +1302,7 @@ void MainWindow::registerTabWidget() {
       [this]() {
         Window::TcpWindow *tcpClient =
             new Window::TcpWindow(TtProtocolType::Client);
-        connect(tcpClient, &Window::TcpWindow::requestSaveConfig,
+        connect(tcpClient, &Window::TcpWindow::requestSaveConfig, this,
                 [this, tcpClient]() {
                   const auto &uuid =
                       tabWidget_->getCurrentWidgetUUid(tcpClient);
@@ -1330,7 +1328,7 @@ void MainWindow::registerTabWidget() {
       [this]() {
         Window::UdpWindow *udpClient =
             new Window::UdpWindow(TtProtocolType::Client);
-        connect(udpClient, &Window::UdpWindow::requestSaveConfig,
+        connect(udpClient, &Window::UdpWindow::requestSaveConfig, this,
                 [this, udpClient]() {
                   const auto &uuid =
                       tabWidget_->getCurrentWidgetUUid(udpClient);
@@ -1352,7 +1350,7 @@ void MainWindow::registerTabWidget() {
       [this]() {
         Window::MqttWindow *mqttClient =
             new Window::MqttWindow(TtProtocolType::Client);
-        connect(mqttClient, &Window::MqttWindow::requestSaveConfig,
+        connect(mqttClient, &Window::MqttWindow::requestSaveConfig, this,
                 [this, mqttClient]() {
                   const auto &uuid =
                       tabWidget_->getCurrentWidgetUUid(mqttClient);
@@ -1379,7 +1377,7 @@ void MainWindow::registerTabWidget() {
       [this]() {
         Window::ModbusWindow *modbusClient =
             new Window::ModbusWindow(TtProtocolType::Client);
-        connect(modbusClient, &Window::ModbusWindow::requestSaveConfig,
+        connect(modbusClient, &Window::ModbusWindow::requestSaveConfig, this,
                 [this, modbusClient]() {
                   const auto &uuid =
                       tabWidget_->getCurrentWidgetUUid(modbusClient);
@@ -1400,7 +1398,7 @@ void MainWindow::registerTabWidget() {
       [this]() {
         Window::TcpWindow *tcpServer =
             new Window::TcpWindow(TtProtocolType::Server);
-        connect(tcpServer, &Window::TcpWindow::requestSaveConfig,
+        connect(tcpServer, &Window::TcpWindow::requestSaveConfig, this,
                 [this, tcpServer]() {
                   const auto &uuid =
                       tabWidget_->getCurrentWidgetUUid(tcpServer);
@@ -1426,7 +1424,7 @@ void MainWindow::registerTabWidget() {
       [this]() {
         Window::UdpWindow *udpServer =
             new Window::UdpWindow(TtProtocolType::Server);
-        connect(udpServer, &Window::UdpWindow::requestSaveConfig,
+        connect(udpServer, &Window::UdpWindow::requestSaveConfig, this,
                 [this, udpServer]() {
                   const auto &uuid =
                       tabWidget_->getCurrentWidgetUUid(udpServer);

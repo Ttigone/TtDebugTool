@@ -23,6 +23,8 @@
 
 #include "frame_window.h"
 
+#include "Def.h"
+
 class SerialPlot;
 
 QT_BEGIN_NAMESPACE
@@ -56,7 +58,7 @@ class SerialSetting;
 
 namespace Core {
 class SerialPortWorker;
-};
+}
 
 namespace Window {
 
@@ -107,7 +109,8 @@ private slots:
   void dataReceived(const QByteArray &data);
   void switchToEditMode();
   void switchToDisplayMode();
-  void setDisplayType(MsgType type);
+  // void setDisplayType(MsgType type);
+  void setDisplayType(TtTextFormat::Type type);
   void setHeartbeartContent();
 
 private:
@@ -129,9 +132,12 @@ private:
   void showMessage(const QString &data, bool out = true);
 
   // 发送 editor 的文本
-  void sendMessage(const QString &data, MsgType type = MsgType::TEXT);
+  // void sendMessage(const QString &data, MsgType type = MsgType::TEXT);
+  void sendMessage(const QString &data,
+                   TtTextFormat::Type type = TtTextFormat::TEXT);
   void parseBuffer();                                        // 解析数据
   void processFrame(quint8 type, const QByteArray &payload); // 解析帧
+  bool isEnableHeartbeart();
 
   Ui::TtVerticalLayout *main_layout_;
 
@@ -163,22 +169,26 @@ private:
 
   Ui::TtRadioButton *chose_text_;
   Ui::TtRadioButton *chose_hex_;
-  MsgType send_type_ = MsgType::TEXT;
+  TtTextFormat::Type send_type_ = TtTextFormat::TEXT;
 
   QWidget *original_widget_ = nullptr;
   QWidget *edit_widget_ = nullptr;
   Ui::TtLineEdit *title_edit_ = nullptr;
   QStackedWidget *stack_ = nullptr;
   QtMaterialFlatButton *sendBtn;
+  // TtFlatButton *sendBtn;
   Ui::TtTableWidget *instruction_table_;
-  MsgType display_type_ = MsgType::TEXT;
+  // MsgType display_type_ = MsgType::TEXT;
+  TtTextFormat::Type display_type_ = TtTextFormat::TEXT;
 
   uint16_t package_size_ = 0;
+  // 存储 QByteArray
   QQueue<QString> msg_queue_;
   QTimer *send_package_timer_;
 
   QTimer *heartbeat_timer_;
   QString heartbeat_;
+  QByteArray heartbeat_utf8_;
   uint32_t heartbeat_interval_;
 
   Ui::TtLuaInputBox *lua_code_;
@@ -224,6 +234,9 @@ private:
   QByteArray receive_buffer_; // 接收缓冲区
 
   QJsonObject config_;
+
+  TtTextFormat::Type heart_beat_type_;
+  // MsgType heart_beat_type_;
 };
 
 } // namespace Window

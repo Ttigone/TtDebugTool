@@ -5,7 +5,6 @@
 #include "qcustomplot/qcustomplot.h"
 #include "ui/controls/TtPlotItem.h"
 
-
 namespace Ui {
 
 TtSerialPortPlot::TtSerialPortPlot(QWidget* parent) : QCustomPlot(parent) {
@@ -22,7 +21,13 @@ TtSerialPortPlot::TtSerialPortPlot(QWidget* parent) : QCustomPlot(parent) {
     this->setOpenGl(true);
   }
 
-  setAntialiasedElements(QCP::aeAll);
+  // setAntialiasedElements(QCP::aeAll);
+
+  // 仅对线条使用抗锯齿，减少对其他元素的影响
+  setAntialiasedElements(QCP::aePlottables | QCP::aeAxes | QCP::aeScatters |
+                         QCP::aeGrid);
+  // 对于性能敏感的设备，可以完全禁用
+  // setNotAntialiasedElements(QCP::aeAll);
 }
 
 TtSerialPortPlot::~TtSerialPortPlot() {
@@ -87,17 +92,39 @@ void TtSerialPortPlot::addData(int channel, double value) {
         hasData = true;
       }
     }
+    // if (hasData) {
+    //   if (yMin >= yMax) {
+    //     double center = yMin;                           // 当yMin == yMax时
+    //     double margin = qMax(qAbs(center) * 0.2, 0.5);  // 20%或最小0.5单位
+    //     yMin = center - margin;
+    //     yMax = center + margin;
+    //   } else {
+    //     // 常规边距计算
+    //     double margin = (yMax - yMin) * 0.1;
+    //     yMin -= margin;
+    //     yMax += margin;
+    //   }
+    //   yAxis->setRange(yMin, yMax);
+    // }
     if (hasData) {
-      if (yMin >= yMax) {
-        double center = yMin;                           // 当yMin == yMax时
+      if (qFuzzyCompare(yMin, yMax)) {
+        // 值相同时同时增加合理边距
+        double center = yMin;  
         double margin = qMax(qAbs(center) * 0.2, 0.5);  // 20%或最小0.5单位
         yMin = center - margin;
         yMax = center + margin;
       } else {
-        // 常规边距计算
-        double margin = (yMax - yMin) * 0.1;
-        yMin -= margin;
-        yMax += margin;
+        double range = yMax - yMin;
+        double margin = range * 0.15;  
+        if (range < 1.0) {
+          double minRange = qMax(1.0, yMax * 0.1);  // 最小范围为1.0或10%
+          double center = (yMin + yMax) / 2.0;
+          yMin = center - minRange / 2.0;
+          yMax = center + minRange / 2.0;
+        } else {
+          yMin -= margin;
+          yMax += margin;
+        }
       }
       yAxis->setRange(yMin, yMax);
     }
@@ -145,6 +172,7 @@ void TtSerialPortPlot::saveWaveFormData() {
       qApp->applicationDirPath() + "/plot.csv", QString(tr("*.csv")));
 
   if (!dirpath.isEmpty()) {
+    // 文件不存在就创建
     QFile file(dirpath);
     // 方式：Append为追加，WriteOnly，ReadOnly
     if (!file.open(QIODevice::WriteOnly)) {
@@ -173,9 +201,10 @@ void TtSerialPortPlot::saveWaveFormData() {
         for (int iGraphData = 0; iGraphData < this->graph(0)->dataCount();
              iGraphData++) {
           // 添加时间轴
-          qDebug() << QString::number(
-              (this->graph(0)->data()->at(iGraphData)->key), 'f', 6);
-
+          // qDebug() << QString::number(
+          //     (this->graph(0)->data()->at(iGraphData)->key), 'f', 6);
+            
+          // 时间坐标, 图标的 key 值
           stream << (QString::number(
                          (this->graph(0)->data()->at(iGraphData)->key), 'f',
                          6) +
@@ -184,7 +213,7 @@ void TtSerialPortPlot::saveWaveFormData() {
           int iGraphIndex = 0;
           for (iGraphIndex = 0; iGraphIndex < this->graphCount() - 1;
                iGraphIndex++) {
-            // 添加数据
+            // 添加数据, 图标的 value 值(纵坐标)
             stream << (QString::number((this->graph(iGraphIndex)
                                             ->data()
                                             ->at(iGraphData)
@@ -218,10 +247,36 @@ void TtSerialPortPlot::addGraphs(int channel, const QColor& color) {
     CurveData newCurve;
     // 创建图形
     newCurve.graph = this->addGraph();
-    newCurve.graph->setPen(QPen(color, 3));
+    // 设置线条的宽度样式
+    // newCurve.graph->setPen(QPen(color, 3));
+    newCurve.graph->setPen(QPen(color, 1.5));
+    // 线条平滑样式
+    newCurve.graph->setLineStyle(QCPGraph::lsLine);
+    // 图表名字
     newCurve.graph->setName(QString("channel@%1").arg(channel));
-    newCurve.graph->setScatterStyle(QCPScatterStyle::ssCircle);
-    // newCurve.graph->setScatterStyle(QCPScatterStyle::ssDot);
+
+    // 动态改变的
+    if (points_nums_ <= 50) {
+      newCurve.graph->setScatterStyle(QCPScatterStyle::ssCircle);
+    } else if (points_nums_ <= 200) {
+      newCurve.graph->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDot));
+    } else {
+      // 数据量大时只显示线条，不显示散点
+      newCurve.graph->setScatterStyle(QCPScatterStyle::ssNone);
+    }
+
+    if (points_nums_ > 50) {
+      // 数据点较多时使用样条曲线平滑显示
+      newCurve.graph->setAdaptiveSampling(true);  // 启用自适应采样
+
+      // 可以考虑使用样条曲线，但需要QCustomPlot支持或自行实现
+      // 这需要修改QCustomPlot源码或使用其他方法实现
+      // newCurve.graph->setCurveStyle(QCPGraph::csCubicSpline);
+    }
+
+    // BUG 由外部决定是否采用数据点样式
+    // 数据点样式
+    // newCurve.graph->setScatterStyle(QCPScatterStyle::ssCircle);
     // newCurve.graph->setScatterStyle(QCPScatterStyle::ssDot);
     // newCurve.graph->setLineStyle()
 

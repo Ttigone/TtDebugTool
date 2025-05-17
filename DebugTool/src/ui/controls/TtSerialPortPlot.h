@@ -5,7 +5,6 @@
 #include <QObject>
 
 class QCustomPlot;
-class QCustomPlot;
 class QCPAxis;
 class QCPItemTracer;
 class QCPItemLine;

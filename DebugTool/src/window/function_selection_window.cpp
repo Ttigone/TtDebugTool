@@ -17,7 +17,7 @@ FunctionSelectionWindow::FunctionSelectionWindow(QWidget *parent)
 }
 
 FunctionSelectionWindow::~FunctionSelectionWindow() {
-  qDebug() << "delete " << __FUNCTION__;
+  // qDebug() << "delete " << __FUNCTION__;
 }
 
 void FunctionSelectionWindow::init() {

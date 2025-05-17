@@ -103,6 +103,7 @@ void SerialSetting::displayDefaultSetting() {
 }
 
 void SerialSetting::setOldSettings(const QJsonObject &config) {
+  // 保存之后, 如果在 2s 迅速打开, 从本地读取, 出现问题
   if (config.isEmpty()) {
     // 设置默认配置
     return;
@@ -131,6 +132,8 @@ void SerialSetting::setOldSettings(const QJsonObject &config) {
   int type = heartBeat.value("Type").toInt();
   QString content = heartBeat.value("Content").toString();
   QString interval = heartBeat.value("Interval").toString();
+  // 能够都出来
+  // qDebug() << content << interval;
 
   // 设置串口名
   for (int i = 0; i < serial_port_->body()->count(); ++i) {
@@ -511,7 +514,7 @@ void SerialSetting::init() {
 
   drawers << drawerHeartBeat;
 
-  connect(heartbeat_send_type_, &Ui::TtLabelComboBox::currentIndexChanged,
+  connect(heartbeat_send_type_, &Ui::TtLabelComboBox::currentIndexChanged, this,
           [this, heartbeatWidget, drawerHeartBeat](int index) {
             switch (index) {
             case 0: {
@@ -530,6 +533,8 @@ void SerialSetting::init() {
               break;
             }
             }
+            qDebug() << "switch index" << index;
+            emit heartbeatType(index);
             const auto event = new QResizeEvent(drawerHeartBeat->size(),
                                                 drawerHeartBeat->size());
             QCoreApplication::postEvent(drawerHeartBeat, event);
@@ -583,22 +588,18 @@ void SerialSetting::init() {
     }
   }
 
-  connect(
-      heartbeat_content_, &Ui::TtLabelLineEdit::currentTextChanged, this,
-      [this](const QString &text) {
-        if (heartbeat_send_type_->body()->currentIndex() == 1) {
-          emit heartbeatContentChanged(heartbeat_content_->currentText());
-        } else if (heartbeat_send_type_->body()->currentIndex() == 1) { // HEX
-          emit heartbeatContentChanged(
-              heartbeat_content_->currentText().toUtf8().toHex(' ').toUpper());
-        }
-      });
+  connect(heartbeat_content_, &Ui::TtLabelLineEdit::currentTextChanged, this,
+          [this](const QString &text) {
+            // 不需要区分索引, 直接传递原有的内容, 不足补齐 0
+            emit heartbeatContentChanged(text);
+          });
   connect(heartbeat_interval_, &Ui::TtLabelLineEdit::currentTextToUInt32, this,
           &SerialSetting::heartbeatInterval);
 }
 
 void SerialSetting::connnectSignals() {
   // 转换成 int32 类型
+  // 发送包间隔
   connect(send_package_interval_, &Ui::TtLabelLineEdit::currentTextToUInt32,
           this, &SerialSetting::sendPackageIntervalChanged);
   connect(send_package_max_size_, &Ui::TtLabelLineEdit::currentTextToUInt32,

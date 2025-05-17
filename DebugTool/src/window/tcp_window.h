@@ -7,11 +7,17 @@
 // #include "frame_window.h"
 #include "window/frame_window.h"
 
+#include <QtMaterialFlatButton.h>
+#include <QPlainTextEdit>
+
 QT_BEGIN_NAMESPACE
 class QStackedWidget;
 QT_END_NAMESPACE
 
+class QSplitter;
 namespace Ui {
+
+class TtRadioButton;
 class TtTableWidget;
 class TtNormalLabel;
 class CommonButton;
@@ -76,9 +82,9 @@ private:
   Ui::TtSvgButton *on_off_btn_;
 
   Ui::TtChatView *message_view_;
-  Ui::TtChatMessageModel *message_model_;
+  Ui::TtChatMessageModel *message_model_{nullptr};
 
-  Ui::TtTableWidget *instruction_table_;
+  Ui::TtTableWidget *instruction_table_{nullptr};
 
   Core::TcpClient *tcp_client_{nullptr};
   Core::TcpServer *tcp_server_{nullptr};
@@ -86,12 +92,14 @@ private:
   Widget::TcpServerSetting *tcp_server_setting_{nullptr};
   Widget::TcpClientSetting *tcp_client_setting_{nullptr};
 
-  Ui::TtNormalLabel *send_byte;
-  Ui::TtNormalLabel *recv_byte;
+  Ui::TtNormalLabel *send_byte{nullptr};
+  Ui::TtNormalLabel *recv_byte{nullptr};
   quint64 send_byte_count = 0;
   quint64 recv_byte_count = 0;
 
-  QsciScintilla *editor;
+  QsciScintilla *editor{nullptr};
+  Ui::TtRadioButton *chose_text_{nullptr};
+  Ui::TtRadioButton *chose_hex_{nullptr};
 
   QWidget *original_widget_{nullptr};
   QWidget *edit_widget_{nullptr};
@@ -102,6 +110,13 @@ private:
 
   TtProtocolType::ProtocolRole role_;
   QJsonObject config_;
+
+  QSplitter *main_splitter_;
+  Ui::TtSvgButton* clear_history_;
+  QPlainTextEdit* terminal_;
+  Ui::TtNormalLabel* send_byte_;
+  Ui::TtNormalLabel* recv_byte_;
+  QtMaterialFlatButton* sendBtn;
 };
 
 } // namespace Window

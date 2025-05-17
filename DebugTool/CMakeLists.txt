@@ -99,6 +99,7 @@ set(PROJECT_SOURCES
     ${src_loc}/ui/controls/TtChannelButton.h ${src_loc}/ui/controls/TtChannelButton.cpp
     ${src_loc}/ui/controls/TtChannelButtonEditorDialog.h ${src_loc}/ui/controls/TtChannelButtonEditorDialog.cpp
     ${src_loc}/ui/controls/TtSerialPortPlot.h ${src_loc}/ui/controls/TtSerialPortPlot.cpp
+    ${src_loc}/ui/controls/TtPlotWidget.h ${src_loc}/ui/controls/TtPlotWidget.cpp
 )
 
 # Apply the macro

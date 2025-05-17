@@ -711,7 +711,8 @@ void TabWindow::handleTabCloseRequested(int index) {
   // widgetInstances.contains(findWidget(widget))
   // 彻底删除
   if (widget) {
-    qDebug() << "delete";
+    // 原有的窗口调用了析构函数
+    // qDebug() << "delete";
     // 似乎没有删除 function select widget
     emit widgetDeleted(widget);
     widget->disconnect();
@@ -946,6 +947,7 @@ void TabWindow::handleTabClose(int index) {
       }
     }
   } else {
+    // 选择窗口, 直接 delete
     // function Select Widget 是否删除
     handleTabCloseRequested(index);
     qDebug() << "nullptr";

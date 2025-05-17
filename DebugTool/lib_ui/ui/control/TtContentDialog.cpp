@@ -426,7 +426,7 @@ TtContentDialog::~TtContentDialog() {
   if (d->main_window_) {
     d->main_window_->removeEventFilter(this);
   }
-  qDebug() << "test";
+  // qDebug() << "test";
 }
 
 void TtContentDialog::onLeftButtonClicked() {

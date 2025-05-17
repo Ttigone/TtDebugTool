@@ -43,6 +43,7 @@ signals:
   void sendPackageIntervalChanged(uint16_t interval);
   void heartbeatInterval(uint32_t interval);
   void heartbeatContentChanged(QString content);
+  void heartbeatType(TtTextFormat::Type type);
 
 public slots:
   void setSerialPortsName();
@@ -79,7 +80,7 @@ private:
   // 输入格式
   // Ui::TtLabelComboBox *framing_timeout_;
   // Ui::TtLabelComboBox *framing_fixed_length_;
-  Ui::TtLabelLineEdit *framing_timeout_;  
+  Ui::TtLabelLineEdit *framing_timeout_;
   Ui::TtLabelLineEdit *framing_fixed_length_;
 
   Ui::TtLabelComboBox *line_break_;

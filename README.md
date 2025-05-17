@@ -56,6 +56,9 @@
 | QWindowKit   | 1.2	| 无边框窗口标题栏            | Apache 2.0 License|
 | Qt-Advanced-Stylesheets | 1.0.4	| 切换样式表| LGPL 2.1 |
 | QtMqtt| 6.4.3 | 支持 Mqtt 功能|
+| libmodbus | 3.1.11 | 支持 ModBus 功能|
+| QCustomPlot | 2.1.0 | 数据可视化支持|
+
 
 
 ## Star 历史

@@ -49,6 +49,7 @@ set(PROJECT_SOURCES
     ${src_loc}/core/modbus_server.h ${src_loc}/core/modbus_server.cpp
     ${src_loc}/core/download.h ${src_loc}/core/download.cpp
     ${src_loc}/core/lua_kernel.h ${src_loc}/core/lua_kernel.cpp
+    ${src_loc}/core/frame_setting_helper.h ${src_loc}/core/frame_setting_helper.cpp
 
     # src/lang/ ${src_loc}/core/lua_kernel.cpp
     src/lang/translation_manager.h src/lang/translation_manager.cpp
@@ -65,6 +66,7 @@ set(PROJECT_SOURCES
     ${src_loc}/window/instruction_window.h ${src_loc}/window/instruction_window.cpp
     ${src_loc}/window/modbus_window.h ${src_loc}/window/modbus_window.cpp
 
+    ${src_loc}/widget/frame_setting.h ${src_loc}/widget/frame_setting.cpp
     ${src_loc}/widget/serial_setting.h ${src_loc}/widget/serial_setting.cpp
     ${src_loc}/widget/tcp_setting.h ${src_loc}/widget/tcp_setting.cpp
     ${src_loc}/widget/udp_setting.h ${src_loc}/widget/udp_setting.cpp

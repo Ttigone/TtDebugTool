@@ -39,12 +39,13 @@ private slots:
 private:
   // 每一行固定的显示控件
   struct TableRow {
-    TtSwitchButton *enableBtn = nullptr;
-    TtLineEdit *nameEdit = nullptr;
-    TtComboBox *typeCombo = nullptr;
-    TtLineEdit *contentEdit = nullptr;
-    QSpinBox *delaySpin = nullptr;
-    bool fromPool = false;
+    // TtSwitchButton *enableBtn = nullptr;
+    TtSwitchButton *checkBtn{nullptr};
+    TtLineEdit *nameEdit{nullptr};
+    TtComboBox *typeCombo{nullptr};
+    TtLineEdit *contentEdit{nullptr};
+    QSpinBox *delaySpin{nullptr};
+    bool fromPool{false};
   };
 
   // 对象池

@@ -126,6 +126,7 @@ PRIVATE
     ui/control/TtContentDialog_p.h
     ui/control/TtTextButton.h ui/control/TtTextButton.cpp
     ui/control/TtTextButton_p.h
+    ui/control/TtLoadingWidget.h ui/control/TtLoadingWidget.cpp
 
 
     ui/control/buttonbox/TtButtonBox.h ui/control/buttonbox/TtButtonBox.cpp

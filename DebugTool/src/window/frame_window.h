@@ -1,9 +1,26 @@
 #ifndef WINDOW_FRAME_WINDOW_H
 #define WINDOW_FRAME_WINDOW_H
 
+#include "Def.h"
+#include <QQueue>
 #include <QWidget>
+#include <QtMaterialFlatButton.h>
 
+QT_BEGIN_NAMESPACE
+class QPlainTextEdit;
+class QStackedWidget;
+QT_END_NAMESPACE
+
+class QsciScintilla;
+
+class QtMaterialTabs;
 namespace Ui {
+
+class TtElidedLabel;
+
+class TtWidgetGroup;
+
+class TtTextButton;
 
 class TtRadioButton;
 class TtTableWidget;
@@ -13,6 +30,7 @@ class TtImageButton;
 class TtSvgButton;
 class MessageDialog;
 class TtVerticalLayout;
+class TtHorizontalLayout;
 class TtLineEdit;
 
 class TtChatView;
@@ -35,36 +53,109 @@ public:
   Q_INVOKABLE virtual void saveSetting() = 0;
   Q_INVOKABLE virtual void setSetting(const QJsonObject &config) = 0;
 
-  // virtual void initUi();
+  ///
+  /// @brief serRightWidget
+  /// @param widget
+  /// 设置右侧显示窗口
+  void serRightWidget(QWidget *widget);
+
+  ///
+  /// @brief addDisplayWidget
+  /// @param btn
+  /// @param widget
+  /// 添加展示页面
+  void addDisplayWidget(Ui::TtSvgButton *btn, QWidget *widget);
+
+  ///
+  /// @brief initUi
+  /// 初始化 Ui 框架
+  virtual void initUi();
+
+  ///
+  /// @brief initSignalsConnection
+  /// 初始化信号槽链接
+  virtual void initSignalsConnection();
 
 protected:
+  virtual void switchToEditMode();
+  virtual void switchToDisplayMode();
+  ///
+  /// @brief setDisplayType
+  /// @param type
+  /// 切换显示 TEXT/HEX
+  virtual void setDisplayType(TtTextFormat::Type type);
+  ///
+  /// @brief refreshTerminalDisplay
+  /// 刷新 TEXT/HEX 界面
+  void refreshTerminalDisplay();
+
   // 初始状态下处于非保存状态
-  bool saved_{false};
+  bool saved_{false};  // 保存状态标志
+  bool opened_{false}; // 打开状态标志
 
-  // QSplitter *main_splitter_;
+  Ui::TtVerticalLayout *main_layout_{nullptr};
 
-  // Ui::TtVerticalLayout *main_layout_;
+  Ui::TtNormalLabel *title_{nullptr};          // 显示标题栏
+  Ui::TtSvgButton *modify_title_btn_{nullptr}; // 编辑标题栏按钮
+  Ui::TtSvgButton *save_btn_{nullptr};         // 保存按钮
+  Ui::TtSvgButton *on_off_btn_{nullptr};       // 打开关闭功能按钮
 
-  // Ui::TtNormalLabel *title_;
-  // Ui::TtSvgButton *modify_title_btn_;
-  // Ui::TtSvgButton *save_btn_;
-  // Ui::TtSvgButton *on_off_btn_;
+  Ui::TtTextButton *display_text_btn_{nullptr};
+  Ui::TtTextButton *display_hex_btn_{nullptr};
 
-  // Ui::TtChatView *message_view_;
-  // Ui::TtChatMessageModel *message_model_{nullptr};
+  QWidget *original_widget_{nullptr};
+  QWidget *edit_widget_{nullptr};
+  Ui::TtLineEdit *title_edit_{nullptr};
+  QStackedWidget *stack_{nullptr};
 
-  // Ui::TtTableWidget *instruction_table_{nullptr};
+  // 对应 message_stacked_view_ 的切换按钮界面
+  QWidget *page_btn_widget_;
+  Ui::TtHorizontalLayout *page_btn_layout_;
+  Ui::TtWidgetGroup *page_btn_logical_;
+  // 不同类型展示数据栈窗口
+  QStackedWidget *message_stacked_view_;
 
-  // Core::TcpClient *tcp_client_{nullptr};
-  // Core::TcpServer *tcp_server_{nullptr};
+  Ui::TtSvgButton *clear_history_{nullptr};        // 清楚历史记录按钮
+  Ui::TtChatView *message_view_{nullptr};          // 聊天显示
+  Ui::TtChatMessageModel *message_model_{nullptr}; // 聊先显示数据模型
 
-  // Widget::TcpServerSetting *tcp_server_setting_{nullptr};
-  // Widget::TcpClientSetting *tcp_client_setting_{nullptr};
+  QSplitter *main_splitter_{nullptr};
+  QPlainTextEdit *terminal_{nullptr}; // 终端显示
+  // Ui::TtNormalLabel *send_byte_{nullptr}; // 显示发送字节数
+  // Ui::TtNormalLabel *recv_byte_{nullptr}; // 显示接收字节数
+  Ui::TtElidedLabel *send_byte_{nullptr}; // 显示发送字节数
+  Ui::TtNormalLabel *recv_byte_{nullptr}; // 显示接收字节数
+  quint64 send_byte_count_ = 0;           // 存储发送字节数
+  quint64 recv_byte_count_ = 0;           // 接收发送字节数
 
-  // Ui::TtNormalLabel *send_byte{nullptr};
-  // Ui::TtNormalLabel *recv_byte{nullptr};
-  // quint64 send_byte_count = 0;
-  // quint64 recv_byte_count = 0;
+  // auto m_tabs = new QtMaterialTabs(tabs_and_count);
+  QtMaterialTabs *tabs_{nullptr};
+  QStackedWidget *display_widget_{nullptr};
+  QWidget *tabs_widget_{nullptr};
+
+  QsciScintilla *editor_{nullptr};             // 编辑框
+  Ui::TtRadioButton *chose_text_btn_{nullptr}; // 选择 TEXT 格式发送
+  Ui::TtRadioButton *chose_hex_btn_{nullptr};  // 选择 HEX 格式发送
+
+  QtMaterialFlatButton *send_btn_;       // 发送按钮
+  Ui::TtTableWidget *instruction_table_; // 片段指令表格
+
+  TtTextFormat::Type send_type_ = TtTextFormat::TEXT; // 底部选择发送类型
+  TtTextFormat::Type display_type_ = TtTextFormat::TEXT; // 顶部显示接收类型
+
+  uint16_t package_size_ = 0;  // 包大小
+  QQueue<QString> msg_queue_;  // 数据队列
+  QTimer *send_package_timer_; // 发送包定时器
+
+  QTimer *heartbeat_timer_;            // 心跳计时器
+  QString heartbeat_;                  // 心跳内容
+  QByteArray heartbeat_utf8_;          // utf8 格式心跳内容
+  uint32_t heartbeat_interval_;        // 心跳间隔
+  TtTextFormat::Type heart_beat_type_; // 心跳格式
+
+  QJsonObject config_; // 窗口配置
+
+private:
 };
 
 } // namespace Window

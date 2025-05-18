@@ -67,6 +67,7 @@ bool TtWidgetGroup::eventFilter(QObject *obj, QEvent *event) {
       return true; // 阻止事件继续传播
     }
   } else if (event->type() == QEvent::MouseButtonDblClick) {
+    qDebug() << "this double clicked";
     QWidget *widget = qobject_cast<QWidget *>(obj);
     emit widgetClicked(widgets_.indexOf(widget));
     // bug left 有问题

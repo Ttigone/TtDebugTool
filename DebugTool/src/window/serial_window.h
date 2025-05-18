@@ -65,8 +65,6 @@ namespace Window {
 class SerialWindow : public FrameWindow {
   Q_OBJECT
 public:
-  enum class MsgType { TEXT = 0x01, HEX = 0x02 };
-
   explicit SerialWindow(QWidget *parent = nullptr);
   ~SerialWindow();
 
@@ -82,6 +80,9 @@ public:
   Q_INVOKABLE void setSetting(const QJsonObject &config) override;
 
 signals:
+  ///
+  /// @brief requestSaveConfig
+  /// 信号: 请求保存配置
   void requestSaveConfig();
 
 protected:
@@ -105,23 +106,47 @@ private slots:
   /// @param times
   /// 在 times 时间后发送 data
   void sendMessageToPort(const QString &data, const int &times);
+
+  ///
+  /// @brief showErrorMessage
+  /// @param text
+  /// 展现错误信息
   void showErrorMessage(const QString &text);
+
+  ///
+  /// @brief dataReceived
+  /// @param data
+  /// 串口接收函数
   void dataReceived(const QByteArray &data);
-  void switchToEditMode();
-  void switchToDisplayMode();
-  // void setDisplayType(MsgType type);
-  void setDisplayType(TtTextFormat::Type type);
+
+  ///
+  /// @brief setHeartbeartContent
+  /// 发送心跳内容
   void setHeartbeartContent();
 
 private:
   void init();
-  void connectSignals();         // 信号槽链接
-  void setSerialSetting();       // 设置通讯配置
-  void saveSerialLog();          // 保存串口日志
-  void refreshTerminalDisplay(); // 显示方式刷新
+  void connectSignals();   // 信号槽链接
+  void setSerialSetting(); // 设置通讯配置
+
+  void saveSerialLog();
+
+  ///
+  /// @brief addChannel
+  /// @param blob
+  /// @param color
+  /// @param uuid
+  /// 添加新的通道信息
   void addChannel(const QByteArray &blob, const QColor &color,
                   const QString &uuid = "");
 
+  ///
+  /// @brief handleDialogData
+  /// @param label
+  /// @param channel
+  /// @param blob
+  /// @param colork
+  /// 处理编辑通道按钮信息
   void handleDialogData(const QString &label, quint16 channel,
                         const QByteArray &blob, const QColor &colork);
 
@@ -131,65 +156,36 @@ private:
   // 分开
   void showMessage(const QString &data, bool out = true);
 
-  // 发送 editor 的文本
-  // void sendMessage(const QString &data, MsgType type = MsgType::TEXT);
+  ///
+  /// @brief sendMessage
+  /// @param data
+  /// @param type
+  /// 发送串口消息
   void sendMessage(const QString &data,
                    TtTextFormat::Type type = TtTextFormat::TEXT);
-  void parseBuffer();                                        // 解析数据
+
+  ///
+  /// @brief parseBuffer
+  /// 解析缓存区数组
+  void parseBuffer(); // 解析数据
+
+  ///
+  /// @brief processFrame
+  /// @param type
+  /// @param payload
+  /// 解析帧数据
   void processFrame(quint8 type, const QByteArray &payload); // 解析帧
+
+  ///
+  /// @brief isEnableHeartbeart
+  /// @return
+  /// 是否使能心跳
   bool isEnableHeartbeart();
 
-  Ui::TtVerticalLayout *main_layout_;
-
-  Ui::TtNormalLabel *title_;
-  Ui::TtSvgButton *modify_title_btn_;
-  Ui::TtSvgButton *save_btn_;
-  Ui::TtSvgButton *on_off_btn_;
-
-  Ui::TtSvgButton *clear_history_;
-  Ui::TtChatView *message_view_;
-  Ui::TtChatMessageModel *message_model_;
-
-  QPlainTextEdit *terminal_;
-
-  bool serial_port_opened = false;
   QThread *worker_thread_ = nullptr;
   Core::SerialPortWorker *serial_port_;
 
-  QSplitter *main_splitter_;
-
   Widget::SerialSetting *serial_setting_;
-
-  Ui::TtNormalLabel *send_byte_;
-  Ui::TtNormalLabel *recv_byte_;
-  quint64 send_byte_count_ = 0;
-  quint64 recv_byte_count_ = 0;
-
-  QsciScintilla *editor;
-
-  Ui::TtRadioButton *chose_text_;
-  Ui::TtRadioButton *chose_hex_;
-  TtTextFormat::Type send_type_ = TtTextFormat::TEXT;
-
-  QWidget *original_widget_ = nullptr;
-  QWidget *edit_widget_ = nullptr;
-  Ui::TtLineEdit *title_edit_ = nullptr;
-  QStackedWidget *stack_ = nullptr;
-  QtMaterialFlatButton *sendBtn;
-  // TtFlatButton *sendBtn;
-  Ui::TtTableWidget *instruction_table_;
-  // MsgType display_type_ = MsgType::TEXT;
-  TtTextFormat::Type display_type_ = TtTextFormat::TEXT;
-
-  uint16_t package_size_ = 0;
-  // 存储 QByteArray
-  QQueue<QString> msg_queue_;
-  QTimer *send_package_timer_;
-
-  QTimer *heartbeat_timer_;
-  QString heartbeat_;
-  QByteArray heartbeat_utf8_;
-  uint32_t heartbeat_interval_;
 
   Ui::TtLuaInputBox *lua_code_;
 
@@ -230,13 +226,7 @@ private:
 
   // 每个通道, 保存对应的 lua 解析代码
   QMap<quint16, QString> lua_script_codes_;
-
   QByteArray receive_buffer_; // 接收缓冲区
-
-  QJsonObject config_;
-
-  TtTextFormat::Type heart_beat_type_;
-  // MsgType heart_beat_type_;
 };
 
 } // namespace Window

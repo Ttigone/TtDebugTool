@@ -43,7 +43,7 @@ TtLineEdit::TtLineEdit(QWidget *parent)
 }
 
 TtLineEdit::TtLineEdit(const QString &text, QWidget *parent)
-    : Ui::TtLineEdit(parent) {
+    : TtLineEdit(parent) {
   setText(text);
 }
 
@@ -297,8 +297,9 @@ TtLabelLineEdit::TtLabelLineEdit(Qt::AlignmentFlag flag, const QString &text,
 TtLabelLineEdit::TtLabelLineEdit(const QString &text, QWidget *parent)
     : TtLabelLineEdit(Qt::AlignLeft, text, parent) {}
 
-TtLabelLineEdit::~TtLabelLineEdit() {}
+TtLabelLineEdit::~TtLabelLineEdit() { qDebug() << "delete" << __FUNCTION__; }
 
+// 有问题
 TtLineEdit *TtLabelLineEdit::body() { return line_edit_; }
 
 void TtLabelLineEdit::setText(const QString &text) {

@@ -194,20 +194,6 @@ void SerialSetting::setOldSettings(const QJsonObject &config) {
 
   framing_timeout_->setText(timeout);
   framing_fixed_length_->setText(fixedLength);
-  // for (int i = 0; i < framing_timeout_->body()->count(); ++i) {
-  //   if (framing_timeout_->body()->itemData(i).toString() == timeout) {
-  //     framing_timeout_->body()->setCurrentIndex(i);
-  //     break;
-  //   }
-  // }
-
-  // for (int i = 0; i < framing_fixed_length_->body()->count(); ++i) {
-  //   if (framing_fixed_length_->body()->itemData(i).toString() == fixedLength)
-  //   {
-  //     framing_fixed_length_->body()->setCurrentIndex(i);
-  //     break;
-  //   }
-  // }
 
   for (int i = 0; i < line_break_->body()->count(); ++i) {
     if (line_break_->body()->itemData(i).toString() == lineBreak) {
@@ -430,16 +416,12 @@ void SerialSetting::init() {
   framing_model_->addItem(tr("无"));
   framing_model_->addItem(tr("超时时间"));
   framing_model_->addItem(tr("固定长度"));
-  // framing_timeout_ = new Ui::TtLabelComboBox(tr("时间: "));
-  // framing_fixed_length_ = new Ui::TtLabelComboBox(tr("长度: "));
-  framing_timeout_ = new Ui::TtLabelLineEdit(tr("时间: "));
-  framing_fixed_length_ = new Ui::TtLabelLineEdit(tr("长度: "));
+  framing_timeout_ = new Ui::TtLabelLineEdit(tr("时间:"));
+  framing_fixed_length_ = new Ui::TtLabelLineEdit(tr("长度:"));
 
   comboBoxes << framing_model_->body();
   lineEdits << framing_timeout_->body();
   lineEdits << framing_fixed_length_->body();
-  // comboBoxes << framing_timeout_->body();
-  // comboBoxes << framing_fixed_length_->body();
 
   framingWidgetLayout->addWidget(framing_model_);
   framingWidgetLayout->addWidget(framing_timeout_);
@@ -566,6 +548,7 @@ void SerialSetting::init() {
 
   main_layout_->addWidget(scroll);
 
+  // 链接改变的信号
   for (auto *comboBox : comboBoxes) {
     if (comboBox) {
       connect(comboBox,

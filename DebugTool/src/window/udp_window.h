@@ -68,39 +68,39 @@ private:
   void init();
   void connectSignals();
 
-  Ui::TtVerticalLayout *main_layout_;
+  // Ui::TtVerticalLayout *main_layout_;
 
-  Ui::TtNormalLabel *title_;          // 名称
-  Ui::TtSvgButton *modify_title_btn_; // 修改连接名称
-  Ui::TtSvgButton *save_btn_;         // 保存连接记录
-  Ui::TtSvgButton *on_off_btn_;       // 开启 or 关闭
+  // Ui::TtNormalLabel *title_;          // 名称
+  // Ui::TtSvgButton *modify_title_btn_; // 修改连接名称
+  // Ui::TtSvgButton *save_btn_;         // 保存连接记录
+  // Ui::TtSvgButton *on_off_btn_;       // 开启 or 关闭
 
-  Ui::TtChatView *message_view_;
-  Ui::TtChatMessageModel *message_model_;
-  Ui::TtTableWidget *instruction_table_;
+  // Ui::TtChatView *message_view_;
+  // Ui::TtChatMessageModel *message_model_;
+  // Ui::TtTableWidget *instruction_table_;
 
-  Core::UdpClient *udp_client_{nullptr};
-  Core::UdpServer *udp_server_{nullptr};
+  // Ui::TtNormalLabel *send_byte;
+  // Ui::TtNormalLabel *recv_byte;
+  // quint64 send_byte_count = 0;
+  // quint64 recv_byte_count = 0;
+
+  // QsciScintilla *editor;
+
+  // QWidget *original_widget_{nullptr};
+  // QWidget *edit_widget_{nullptr};
+  // Ui::TtLineEdit *title_edit_{nullptr};
+  // QStackedWidget *stack_{nullptr};
+
+  // bool opened_{false};
+
+  // QJsonObject config_;
 
   Widget::UdpServerSetting *udp_server_setting_{nullptr};
   Widget::UdpClientSetting *udp_client_setting_{nullptr};
 
-  Ui::TtNormalLabel *send_byte;
-  Ui::TtNormalLabel *recv_byte;
-  quint64 send_byte_count = 0;
-  quint64 recv_byte_count = 0;
-
-  QsciScintilla *editor;
-
-  QWidget *original_widget_{nullptr};
-  QWidget *edit_widget_{nullptr};
-  Ui::TtLineEdit *title_edit_{nullptr};
-  QStackedWidget *stack_{nullptr};
-
-  bool opened_{false};
-
   TtProtocolType::ProtocolRole role_;
-  QJsonObject config_;
+  Core::UdpClient *udp_client_{nullptr};
+  Core::UdpServer *udp_server_{nullptr};
 };
 
 } // namespace Window

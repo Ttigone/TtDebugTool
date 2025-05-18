@@ -1,5 +1,9 @@
 #include "window/modbus_window.h"
 
+#include "core/modbus_client.h"
+#include "ui/controls/TtModbusPlot.h"
+#include "ui/controls/TtTableView.h"
+#include "ui/widgets/message_bar.h"
 #include <ui/control/TableWidget/TtBaseTableWidget.h>
 #include <ui/control/TableWidget/TtHeaderView.h>
 #include <ui/control/TtComboBox.h>
@@ -14,10 +18,6 @@
 #include <ui/widgets/collapsible_panel.h>
 #include <ui/widgets/labels.h>
 #include <ui/widgets/message_bar.h>
-#include "core/modbus_client.h"
-#include "ui/controls/TtModbusPlot.h"
-#include "ui/controls/TtTableView.h"
-#include "ui/widgets/message_bar.h"
 
 // #include "ui/controls/TtModbusDelegate.h"
 #include "Def.h"
@@ -25,10 +25,8 @@
 
 namespace Window {
 
-ModbusWindow::ModbusWindow(TtProtocolType::ProtocolRole role, QWidget* parent)
-    : FrameWindow(parent),
-      role_(role),
-      modbus_plot_(new Ui::TtModbusPlot),
+ModbusWindow::ModbusWindow(TtProtocolType::ProtocolRole role, QWidget *parent)
+    : FrameWindow(parent), role_(role), modbus_plot_(new Ui::TtModbusPlot),
       modbus_master_(new Core::ModbusMaster) {
   init();
   connectSignals();
@@ -45,30 +43,17 @@ ModbusWindow::ModbusWindow(TtProtocolType::ProtocolRole role, QWidget* parent)
   });
 }
 
-ModbusWindow::~ModbusWindow() {
-  qDebug() << "delete ModbusWindow";
-}
+ModbusWindow::~ModbusWindow() { qDebug() << "delete ModbusWindow"; }
 
-QString ModbusWindow::getTitle() const {
-  return title_->text();
-}
+QString ModbusWindow::getTitle() const { return title_->text(); }
 
-QJsonObject ModbusWindow::getConfiguration() const {
-  return config_;
-}
+QJsonObject ModbusWindow::getConfiguration() const { return config_; }
 
-bool ModbusWindow::workState() const {
-  // return open
-  return opened_;
-}
+bool ModbusWindow::workState() const { return opened_; }
 
-bool ModbusWindow::saveState() {
-  return saved_;
-}
+bool ModbusWindow::saveState() { return saved_; }
 
-void ModbusWindow::setSaveState(bool state) {
-  saved_ = state;
-}
+void ModbusWindow::setSaveState(bool state) { saved_ = state; }
 
 void ModbusWindow::saveSetting() {
   config_.insert("Type", TtFunctionalCategory::Communication);
@@ -79,10 +64,9 @@ void ModbusWindow::saveSetting() {
   } else if (role_ == TtProtocolType::Server) {
   }
   // 循环插入所有 function_table_ 中的表格项
-
   for (auto it = function_table_.constBegin(); it != function_table_.constEnd();
        ++it) {
-    auto* widget = qobject_cast<Ui::TtModbusTableWidget*>(it.value());
+    auto *widget = qobject_cast<Ui::TtModbusTableWidget *>(it.value());
     config_.insert("InstructionTable+" + TYPE_NAMES.value(it.key()),
                    widget->getTableRecord());
   }
@@ -90,7 +74,7 @@ void ModbusWindow::saveSetting() {
   emit requestSaveConfig();
 }
 
-void ModbusWindow::setSetting(const QJsonObject& config) {
+void ModbusWindow::setSetting(const QJsonObject &config) {
   if (config.isEmpty()) {
     return;
   }
@@ -149,9 +133,9 @@ void ModbusWindow::setSetting(const QJsonObject& config) {
 }
 
 void ModbusWindow::switchToEditMode() {
-  QGraphicsOpacityEffect* effect = new QGraphicsOpacityEffect(title_edit_);
+  QGraphicsOpacityEffect *effect = new QGraphicsOpacityEffect(title_edit_);
   title_edit_->setGraphicsEffect(effect);
-  QPropertyAnimation* anim = new QPropertyAnimation(effect, "opacity");
+  QPropertyAnimation *anim = new QPropertyAnimation(effect, "opacity");
   anim->setDuration(300);
   anim->setStartValue(0);
   anim->setEndValue(1);
@@ -169,47 +153,47 @@ void ModbusWindow::switchToDisplayMode() {
 
 // void ModbusWindow::sloveDataReceived(const int& addr,
 //                                      const QVector<quint16>& data) {
-void ModbusWindow::sloveDataReceived(const QModbusDataUnit& dataUnit) {
+void ModbusWindow::sloveDataReceived(const QModbusDataUnit &dataUnit) {
   // 小于 100 ms
   // 修复发送的逻辑
   auto type = dataUnit.registerType();
   switch (type) {
-    case QModbusDataUnit::Coils: {
-      // 处理
-      coil_table_->setValue(dataUnit.startAddress(), dataUnit.values());
-      // 显示在 plot 上
-      updatePlot(TtModbusRegisterType::Coils, dataUnit.startAddress(),
-                 dataUnit.values().at(0));
+  case QModbusDataUnit::Coils: {
+    // 处理
+    coil_table_->setValue(dataUnit.startAddress(), dataUnit.values());
+    // 显示在 plot 上
+    updatePlot(TtModbusRegisterType::Coils, dataUnit.startAddress(),
+               dataUnit.values().at(0));
 
-      // 发送
-      break;
-    }
-    case QModbusDataUnit::DiscreteInputs: {
-      discrete_inputs_table_->setValue(dataUnit.startAddress(),
+    // 发送
+    break;
+  }
+  case QModbusDataUnit::DiscreteInputs: {
+    discrete_inputs_table_->setValue(dataUnit.startAddress(),
+                                     dataUnit.values());
+    updatePlot(TtModbusRegisterType::DiscreteInputs, dataUnit.startAddress(),
+               dataUnit.values().at(0));
+    break;
+  }
+  case QModbusDataUnit::HoldingRegisters: {
+    holding_registers_table_->setValue(dataUnit.startAddress(),
                                        dataUnit.values());
-      updatePlot(TtModbusRegisterType::DiscreteInputs, dataUnit.startAddress(),
-                 dataUnit.values().at(0));
-      break;
-    }
-    case QModbusDataUnit::HoldingRegisters: {
-      holding_registers_table_->setValue(dataUnit.startAddress(),
-                                         dataUnit.values());
-      updatePlot(TtModbusRegisterType::HoldingRegisters,
-                 dataUnit.startAddress(), dataUnit.values().at(0));
-      break;
-    }
-    case QModbusDataUnit::InputRegisters: {
-      qDebug() << "input";
-      input_registers_table_->setValue(dataUnit.startAddress(),
-                                       dataUnit.values());
-      updatePlot(TtModbusRegisterType::InputRegisters, dataUnit.startAddress(),
-                 dataUnit.values().at(0));
-      break;
-    }
-    case QModbusDataUnit::Invalid: {
-      // 无效类型
-      break;
-    }
+    updatePlot(TtModbusRegisterType::HoldingRegisters, dataUnit.startAddress(),
+               dataUnit.values().at(0));
+    break;
+  }
+  case QModbusDataUnit::InputRegisters: {
+    qDebug() << "input";
+    input_registers_table_->setValue(dataUnit.startAddress(),
+                                     dataUnit.values());
+    updatePlot(TtModbusRegisterType::InputRegisters, dataUnit.startAddress(),
+               dataUnit.values().at(0));
+    break;
+  }
+  case QModbusDataUnit::Invalid: {
+    // 无效类型
+    break;
+  }
   }
 }
 
@@ -285,7 +269,7 @@ void ModbusWindow::init() {
 
   // 创建原始界面
   original_widget_ = new QWidget(this);
-  Ui::TtHorizontalLayout* originalWidgetLayout =
+  Ui::TtHorizontalLayout *originalWidgetLayout =
       new Ui::TtHorizontalLayout(original_widget_);
   originalWidgetLayout->addSpacerItem(new QSpacerItem(10, 10));
   originalWidgetLayout->addWidget(title_, 0, Qt::AlignLeft);
@@ -297,7 +281,7 @@ void ModbusWindow::init() {
   edit_widget_ = new QWidget(this);
   title_edit_ = new Ui::TtLineEdit(this);
 
-  Ui::TtHorizontalLayout* edit_layout =
+  Ui::TtHorizontalLayout *edit_layout =
       new Ui::TtHorizontalLayout(edit_widget_);
   edit_layout->addSpacerItem(new QSpacerItem(10, 10));
   edit_layout->addWidget(title_edit_);
@@ -315,10 +299,10 @@ void ModbusWindow::init() {
   connect(modify_title_btn_, &Ui::TtSvgButton::clicked, this,
           &ModbusWindow::switchToEditMode);
 
-  Ui::TtHorizontalLayout* tmpP1 = new Ui::TtHorizontalLayout;
+  Ui::TtHorizontalLayout *tmpP1 = new Ui::TtHorizontalLayout;
   tmpP1->addWidget(stack_);
 
-  Ui::TtHorizontalLayout* tmpAll = new Ui::TtHorizontalLayout;
+  Ui::TtHorizontalLayout *tmpAll = new Ui::TtHorizontalLayout;
 
   // 保存 lambda 表达式
   auto handleSave = [this]() {
@@ -331,7 +315,7 @@ void ModbusWindow::init() {
 
   connect(title_edit_, &QLineEdit::editingFinished, this, handleSave);
 
-  Ui::TtHorizontalLayout* tmpl2 = new Ui::TtHorizontalLayout;
+  Ui::TtHorizontalLayout *tmpl2 = new Ui::TtHorizontalLayout;
   save_btn_ = new Ui::TtSvgButton(":/sys/save_cfg.svg", this);
   save_btn_->setSvgSize(18, 18);
 
@@ -350,18 +334,18 @@ void ModbusWindow::init() {
   main_layout_->addLayout(tmpAll);
 
   // 左右分隔器
-  QSplitter* mainSplitter = new QSplitter;
+  QSplitter *mainSplitter = new QSplitter;
   mainSplitter->setOrientation(Qt::Horizontal);
 
   // 上下分隔器
-  QSplitter* VSplitter = new QSplitter;
+  QSplitter *VSplitter = new QSplitter;
   VSplitter->setOrientation(Qt::Vertical);
   VSplitter->setContentsMargins(QMargins(0, 0, 0, 0));
 
   mainSplitter->addWidget(VSplitter);
 
-  QWidget* modbusRegisterWidget = new QWidget;
-  Ui::TtVerticalLayout* modbusRegisterWidgetLayout =
+  QWidget *modbusRegisterWidget = new QWidget;
+  Ui::TtVerticalLayout *modbusRegisterWidgetLayout =
       new Ui::TtVerticalLayout(modbusRegisterWidget);
 
   // 多标签选择
@@ -383,7 +367,7 @@ void ModbusWindow::init() {
   modbusRegisterWidgetLayout->addWidget(function_selection_);
 
   // 接收来自 tab 中的 widget
-  QStackedWidget* graphWidget = new QStackedWidget();
+  QStackedWidget *graphWidget = new QStackedWidget();
   graphWidget->addWidget(modbus_plot_.data());
 
   VSplitter->addWidget(modbusRegisterWidget);
@@ -506,7 +490,7 @@ void ModbusWindow::connectSignals() {
     }
   });
   connect(modbus_master_.data(), &Core::ModbusMaster::errorOccurred, this,
-          [this](const QString& error) {
+          [this](const QString &error) {
             Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""), error, 1500,
                                     this);
           });
@@ -514,8 +498,8 @@ void ModbusWindow::connectSignals() {
                    this, &Window::ModbusWindow::sloveDataReceived);
 }
 
-void ModbusWindow::updatePlot(TtModbusRegisterType::Type type, const int& addr,
-                              const double& value) {
+void ModbusWindow::updatePlot(TtModbusRegisterType::Type type, const int &addr,
+                              const double &value) {
   // BUG 如果存在相同的地址, 会被当作同一条曲线, 出了地址, 还有所在行
   if (modbus_plot_) {
     // qDebug() << addr << value;
@@ -530,27 +514,27 @@ void ModbusWindow::updatePlot(TtModbusRegisterType::Type type, const int& addr,
 void ModbusWindow::setFunctionTableState(bool state) {
   for (auto it = function_table_.constBegin(); it != function_table_.constEnd();
        ++it) {
-    Ui::TtModbusTableWidget* widget = it.value();
+    Ui::TtModbusTableWidget *widget = it.value();
     widget->setEnable(state);
   }
 }
 
-QWidget* ModbusWindow::createCoilWidget() {
+QWidget *ModbusWindow::createCoilWidget() {
   // 上部操作窗口
-  QWidget* coilsWidget = new QWidget;
-  Ui::TtVerticalLayout* coilsWidgetLayout =
+  QWidget *coilsWidget = new QWidget;
+  Ui::TtVerticalLayout *coilsWidgetLayout =
       new Ui::TtVerticalLayout(coilsWidget);
   // 底部的按钮操作栏
-  QWidget* bottomWidget = new QWidget;
-  Ui::TtHorizontalLayout* bottomWidgetLayout =
+  QWidget *bottomWidget = new QWidget;
+  Ui::TtHorizontalLayout *bottomWidgetLayout =
       new Ui::TtHorizontalLayout(bottomWidget);
   bottomWidgetLayout->addStretch();
-  Ui::TtLabelLineEdit* origin_address_ =
+  Ui::TtLabelLineEdit *origin_address_ =
       new Ui::TtLabelLineEdit(tr("起始地址"));
   bottomWidgetLayout->addWidget(origin_address_);
-  Ui::TtLabelLineEdit* quantity_ = new Ui::TtLabelLineEdit(tr("数量"));
+  Ui::TtLabelLineEdit *quantity_ = new Ui::TtLabelLineEdit(tr("数量"));
   bottomWidgetLayout->addWidget(quantity_);
-  QPushButton* plusButton = new QPushButton(tr("添加"));
+  QPushButton *plusButton = new QPushButton(tr("添加"));
   plusButton->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
   plusButton->setIcon(QIcon(":/sys/plus-circle.svg"));
   bottomWidgetLayout->addWidget(plusButton);
@@ -565,7 +549,7 @@ QWidget* ModbusWindow::createCoilWidget() {
 
   // 数据请求写入
   connect(coil_table_, &Ui::TtModbusTableWidget::valueConfirmed, this,
-          [this](const int& address, const int& value) {
+          [this](const int &address, const int &value) {
             if (!modbus_client_setting_) {
               qWarning()
                   << "modbus_client_setting_ is null, cannot write coils data";
@@ -584,7 +568,7 @@ QWidget* ModbusWindow::createCoilWidget() {
   // 不同通道的数据显示在图标上
   connect(
       coil_table_, &Ui::TtModbusTableWidget::requestShowGraph, this,
-      [this](TtModbusRegisterType::Type type, const int& addr, bool enable) {
+      [this](TtModbusRegisterType::Type type, const int &addr, bool enable) {
         // qDebug() << "show grah";
         if (!enable) {
           // BUG 清空后, 仍然有残留 plot
@@ -601,20 +585,20 @@ QWidget* ModbusWindow::createCoilWidget() {
   return coilsWidget;
 }
 
-QWidget* ModbusWindow::createDiscreteInputsWidget() {
-  QWidget* discreteInputsWidget = new QWidget;
-  Ui::TtVerticalLayout* discreteInputsWidgetLayout =
+QWidget *ModbusWindow::createDiscreteInputsWidget() {
+  QWidget *discreteInputsWidget = new QWidget;
+  Ui::TtVerticalLayout *discreteInputsWidgetLayout =
       new Ui::TtVerticalLayout(discreteInputsWidget);
-  QWidget* bottomWidget = new QWidget;
-  Ui::TtHorizontalLayout* bottomWidgetLayout =
+  QWidget *bottomWidget = new QWidget;
+  Ui::TtHorizontalLayout *bottomWidgetLayout =
       new Ui::TtHorizontalLayout(bottomWidget);
   bottomWidgetLayout->addStretch();
-  Ui::TtLabelLineEdit* origin_address_ =
+  Ui::TtLabelLineEdit *origin_address_ =
       new Ui::TtLabelLineEdit(tr("起始地址"));
   bottomWidgetLayout->addWidget(origin_address_);
-  Ui::TtLabelLineEdit* quantity_ = new Ui::TtLabelLineEdit(tr("数量"));
+  Ui::TtLabelLineEdit *quantity_ = new Ui::TtLabelLineEdit(tr("数量"));
   bottomWidgetLayout->addWidget(quantity_);
-  QPushButton* plusButton = new QPushButton(tr("添加"));
+  QPushButton *plusButton = new QPushButton(tr("添加"));
   plusButton->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
   plusButton->setIcon(QIcon(":/sys/plus-circle.svg"));
   bottomWidgetLayout->addWidget(plusButton);
@@ -630,7 +614,7 @@ QWidget* ModbusWindow::createDiscreteInputsWidget() {
   discreteInputsWidgetLayout->addWidget(bottomWidget, 0, Qt::AlignBottom);
 
   connect(discrete_inputs_table_, &Ui::TtModbusTableWidget::valueConfirmed,
-          this, [this](const int& address, const int& value) {
+          this, [this](const int &address, const int &value) {
             modbus_master_->writeDiscreteInputsData(
                 address, QVector<quint16>(1, value),
                 modbus_client_setting_->getModbusDeviceId());
@@ -638,7 +622,7 @@ QWidget* ModbusWindow::createDiscreteInputsWidget() {
 
   connect(
       discrete_inputs_table_, &Ui::TtModbusTableWidget::requestShowGraph, this,
-      [this](TtModbusRegisterType::Type type, const int& addr, bool enable) {
+      [this](TtModbusRegisterType::Type type, const int &addr, bool enable) {
         if (!enable) {
           modbus_plot_->removeGraphs(type, addr);
         } else {
@@ -652,20 +636,20 @@ QWidget* ModbusWindow::createDiscreteInputsWidget() {
   return discreteInputsWidget;
 }
 
-QWidget* ModbusWindow::createHoldingRegisterWidget() {
-  QWidget* holdingRegistersWidget = new QWidget;
-  Ui::TtVerticalLayout* coilsWidgetLayout =
+QWidget *ModbusWindow::createHoldingRegisterWidget() {
+  QWidget *holdingRegistersWidget = new QWidget;
+  Ui::TtVerticalLayout *coilsWidgetLayout =
       new Ui::TtVerticalLayout(holdingRegistersWidget);
-  QWidget* bottomWidget = new QWidget;
-  Ui::TtHorizontalLayout* bottomWidgetLayout =
+  QWidget *bottomWidget = new QWidget;
+  Ui::TtHorizontalLayout *bottomWidgetLayout =
       new Ui::TtHorizontalLayout(bottomWidget);
   bottomWidgetLayout->addStretch();
-  Ui::TtLabelLineEdit* origin_address_ =
+  Ui::TtLabelLineEdit *origin_address_ =
       new Ui::TtLabelLineEdit(tr("起始地址"));
   bottomWidgetLayout->addWidget(origin_address_);
-  Ui::TtLabelLineEdit* quantity_ = new Ui::TtLabelLineEdit(tr("数量"));
+  Ui::TtLabelLineEdit *quantity_ = new Ui::TtLabelLineEdit(tr("数量"));
   bottomWidgetLayout->addWidget(quantity_);
-  QPushButton* plusButton = new QPushButton(tr("添加"));
+  QPushButton *plusButton = new QPushButton(tr("添加"));
   plusButton->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
   plusButton->setIcon(QIcon(":/sys/plus-circle.svg"));
   bottomWidgetLayout->addWidget(plusButton);
@@ -700,7 +684,7 @@ QWidget* ModbusWindow::createHoldingRegisterWidget() {
 
   // 写入
   connect(holding_registers_table_, &Ui::TtModbusTableWidget::valueConfirmed,
-          [this](const int& address, const int& value) {
+          [this](const int &address, const int &value) {
             modbus_master_->writeHoldingData(
                 address, QVector<quint16>(1, value),
                 modbus_client_setting_->getModbusDeviceId());
@@ -708,7 +692,7 @@ QWidget* ModbusWindow::createHoldingRegisterWidget() {
 
   connect(
       holding_registers_table_, &Ui::TtModbusTableWidget::requestShowGraph,
-      [this](TtModbusRegisterType::Type type, const int& addr, bool enable) {
+      [this](TtModbusRegisterType::Type type, const int &addr, bool enable) {
         if (!enable) {
           modbus_plot_->removeGraphs(type, addr);
         } else {
@@ -724,20 +708,20 @@ QWidget* ModbusWindow::createHoldingRegisterWidget() {
   return holdingRegistersWidget;
 }
 
-QWidget* ModbusWindow::createInputRegisterWidget() {
-  QWidget* inputRegistersWidget = new QWidget;
-  Ui::TtVerticalLayout* coilsWidgetLayout =
+QWidget *ModbusWindow::createInputRegisterWidget() {
+  QWidget *inputRegistersWidget = new QWidget;
+  Ui::TtVerticalLayout *coilsWidgetLayout =
       new Ui::TtVerticalLayout(inputRegistersWidget);
-  QWidget* bottomWidget = new QWidget;
-  Ui::TtHorizontalLayout* bottomWidgetLayout =
+  QWidget *bottomWidget = new QWidget;
+  Ui::TtHorizontalLayout *bottomWidgetLayout =
       new Ui::TtHorizontalLayout(bottomWidget);
   bottomWidgetLayout->addStretch();
-  Ui::TtLabelLineEdit* origin_address_ =
+  Ui::TtLabelLineEdit *origin_address_ =
       new Ui::TtLabelLineEdit(tr("起始地址"));
   bottomWidgetLayout->addWidget(origin_address_);
-  Ui::TtLabelLineEdit* quantity_ = new Ui::TtLabelLineEdit(tr("数量"));
+  Ui::TtLabelLineEdit *quantity_ = new Ui::TtLabelLineEdit(tr("数量"));
   bottomWidgetLayout->addWidget(quantity_);
-  QPushButton* plusButton = new QPushButton(tr("添加"));
+  QPushButton *plusButton = new QPushButton(tr("添加"));
   plusButton->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
   plusButton->setIcon(QIcon(":/sys/plus-circle.svg"));
   bottomWidgetLayout->addWidget(plusButton);
@@ -752,7 +736,7 @@ QWidget* ModbusWindow::createInputRegisterWidget() {
   coilsWidgetLayout->addWidget(bottomWidget, 0, Qt::AlignBottom);
 
   connect(input_registers_table_, &Ui::TtModbusTableWidget::valueConfirmed,
-          [this](const int& address, const int& value) {
+          [this](const int &address, const int &value) {
             modbus_master_->writeInputRegistersData(
                 address, QVector<quint16>(1, value),
                 modbus_client_setting_->getModbusDeviceId());
@@ -760,7 +744,7 @@ QWidget* ModbusWindow::createInputRegisterWidget() {
 
   connect(
       input_registers_table_, &Ui::TtModbusTableWidget::requestShowGraph,
-      [this](TtModbusRegisterType::Type type, const int& addr, bool enable) {
+      [this](TtModbusRegisterType::Type type, const int &addr, bool enable) {
         if (!enable) {
           modbus_plot_->removeGraphs(type, addr);
         } else {
@@ -774,4 +758,4 @@ QWidget* ModbusWindow::createInputRegisterWidget() {
   return inputRegistersWidget;
 }
 
-}  // namespace Window
+} // namespace Window

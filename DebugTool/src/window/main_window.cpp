@@ -1077,6 +1077,7 @@ void MainWindow::setLeftBar() {
   left_bar_ = new QWidget(this);
   left_bar_logic_ = new Ui::TtWidgetGroup(this);
   left_bar_logic_->setExclusive(true);
+  // BUG 按钮的状态与 open_close 状态不一致, svgbutton 的双击问题
   communication_connection_ =
       new Ui::TtSvgButton(":/sys/communicating-junctions.svg", left_bar_);
   communication_connection_->setColors(Qt::black, Qt::blue);

@@ -88,7 +88,7 @@ Q_END_ENUM_CREATE(TtModbusRegisterType)
 
 Q_BEGIN_ENUM_CREATE_SRC(TtTextFormat)
 enum Type {
-  None,
+  None = 0,
   TEXT,
   HEX,
   ASCALL,

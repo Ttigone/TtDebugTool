@@ -70,6 +70,10 @@ SerialWindow::SerialWindow(QWidget *parent)
 }
 
 SerialWindow::~SerialWindow() {
+  // BUG 执行析构的时候, 没有释放消息资源
+  message_model_->clearModelData();
+  terminal_->clear();
+
   qDebug() << "delete SerialWindow";
   // worker_thread_->quit();
   // // worker_thread_->exit();
@@ -126,7 +130,8 @@ void SerialWindow::saveWaveFormData() {
 
 bool SerialWindow::workState() const {
   // 如果打开的是异常串口, 同时又保存了, 有问题
-  return serial_port_opened;
+  // return opened_;
+  return opened_;
 }
 
 bool SerialWindow::saveState() {
@@ -159,41 +164,28 @@ void SerialWindow::saveSetting() {
     QString base64Data = QString::fromLatin1(it.value().data.toBase64());
     channelData["data"] = base64Data;
 
-    // 名字的方式存储
     channelData["color"] = it.value().color.name();
 
-    // 使用 UUID 作为键
     channelInfoJson[it.key()] = channelData;
   }
-  // channelInfo 下面有多个 uuid 为 key 的 jsonobject
   config_.insert("ChannelInfo", channelInfoJson);
 
-  // rules 由 data 解析得来
-  // // 添加 rules_ 相关配置（如果需要）
-  // // 规则不是要了, 直接
-  // QJsonObject rulesConfig;
-  // for (auto it = rules_.constBegin(); it != rules_.constEnd(); ++it) {
-  //   // 遍历存在的 rule
-  //   QJsonObject ruleData;
-  //   ruleData["enabled"] = it.value().enable;
-  //   ruleData["channel"] = static_cast<int>(it.value().channel);
-  //   ruleData["headerHex"] = QString::fromLatin1(it.value().header.toHex());
-  //   ruleData["headerLen"] = it.value().header_len;
-  //   ruleData["typeOffset"] = it.value().type_offset;
-  //   ruleData["lenOffset"] = it.value().len_offset;
-
-  //   rulesConfig[it.key()] = ruleData;
-  // }
-  // config_.insert("ChannelRules", rulesConfig);
-
-  // 能够保存 LUA 代码了, 但是每个通道对应的 lua 代码不同, 保存一次, 就多一个
-  // 通道
   QJsonObject luaScripts;
   for (auto it = lua_script_codes_.constBegin();
        it != lua_script_codes_.constEnd(); ++it) {
     luaScripts[QString::number(it.key())] = it.value();
   }
   config_.insert("LuaScripts", luaScripts);
+
+  // qDebug() << "send DIs";
+  qDebug() << int(send_type_);
+  qDebug() << int(display_type_);
+
+  // 没有保存 ???
+  config_.insert("SendType", QJsonValue(int(send_type_)));
+
+  // 显示类型互斥有问题
+  config_.insert("DisplayType", QJsonValue(int(display_type_)));
 
   saved_ = true;
   // 支持保存到了 config_ 中,
@@ -238,6 +230,30 @@ void SerialWindow::setSetting(const QJsonObject &config) {
     }
   }
 
+  int sendType = config.value("SendType").toInt();
+  send_type_ = static_cast<TtTextFormat::Type>(sendType);
+  if (sendType == 1) {
+    chose_text_btn_->setChecked(true);
+  } else if (sendType == 2) {
+    chose_hex_btn_->setChecked(true);
+  } else if (sendType == 3) {
+  } else {
+  }
+
+  int displayType = config.value("DisplayType").toInt();
+  display_type_ = static_cast<TtTextFormat::Type>(displayType);
+  if (displayType == 1) {
+    display_text_btn_->setChecked(true);
+    display_hex_btn_->setChecked(false);
+  } else if (displayType == 2) {
+    display_text_btn_->setChecked(false);
+    display_hex_btn_->setChecked(true);
+  }
+  // BUG 保存成功, 但是还原失败
+  QJsonObject instructionTableData =
+      config.value("InstructionTable").toObject();
+  instruction_table_->setupTable(instructionTableData);
+
   saved_ = true; // 初始时 saved_ 为真
   Ui::TtMessageBar::success(TtMessageBarType::Top, tr(""), tr("读取配置成功"),
                             1500);
@@ -245,48 +261,6 @@ void SerialWindow::setSetting(const QJsonObject &config) {
 
 bool SerialWindow::eventFilter(QObject *watched, QEvent *event) {
   return SerialWindow::eventFilter(watched, event);
-}
-
-void SerialWindow::switchToEditMode() {
-  QGraphicsOpacityEffect *effect = new QGraphicsOpacityEffect(title_edit_);
-  title_edit_->setGraphicsEffect(effect);
-  QPropertyAnimation *anim = new QPropertyAnimation(effect, "opacity");
-  anim->setDuration(300);
-  anim->setStartValue(0);
-  anim->setEndValue(1);
-  anim->start(QAbstractAnimation::DeleteWhenStopped);
-
-  // 预先获取之前的标题
-  title_edit_->setText(title_->text());
-  // 显示 edit 模式
-  stack_->setCurrentWidget(edit_widget_);
-  // 获取焦点
-  title_edit_->setFocus(); // 自动聚焦输入框
-}
-
-void SerialWindow::switchToDisplayMode() {
-  // QGraphicsOpacityEffect* effect = new
-  // QGraphicsOpacityEffect(original_widget_);
-  // original_widget_->setGraphicsEffect(effect);
-  // QPropertyAnimation* anim = new QPropertyAnimation(effect, "opacity");
-  // anim->setDuration(300);
-  // anim->setStartValue(0);
-  // anim->setEndValue(1);
-  // anim->start(QAbstractAnimation::DeleteWhenStopped);
-  //  切换显示模式
-  if (title_->text() != title_edit_->text()) {
-    title_->setText(title_edit_->text());
-    saved_ = false;
-  }
-  stack_->setCurrentWidget(original_widget_);
-}
-
-void SerialWindow::setDisplayType(TtTextFormat::Type type) {
-  if (display_type_ != type) {
-    display_type_ = type;
-    refreshTerminalDisplay();
-    saved_ = false;
-  }
 }
 
 void SerialWindow::setHeartbeartContent() {
@@ -316,36 +290,6 @@ void SerialWindow::saveSerialLog() {
   //     }
   //   }
   // });
-}
-
-void SerialWindow::refreshTerminalDisplay() {
-  terminal_->clear();
-  terminal_->setUpdatesEnabled(false);
-
-  // 遍历模型生成内容
-  for (int i = 0; i < message_model_->rowCount(); ++i) {
-    QModelIndex idx = message_model_->index(i);
-
-    Ui::TtChatMessage *msg = qobject_cast<Ui::TtChatMessage *>(
-        idx.data(Ui::TtChatMessageModel::MessageObjectRole).value<QObject *>());
-
-    QString header = msg->isOutgoing() ? "[Tx]" : "[Rx]";
-    header.append(' ');
-    header.append(msg->timestamp().toString("[yyyy-MM-dd hh:mm:ss.zzz]"));
-    header.append(' ');
-    //  text 发送, 点击 text 时，文本消失 content 为 0
-    QString content;
-    if (display_type_ == TtTextFormat::HEX) {
-      content = msg->contentAsHex().trimmed();
-    } else if (display_type_ == TtTextFormat::TEXT) {
-      content = msg->contentAsText();
-    }
-    header.append(content);
-    // qDebug() << header;
-    terminal_->appendPlainText(header);
-  }
-
-  terminal_->setUpdatesEnabled(true);
 }
 
 void SerialWindow::addChannel(const QByteArray &blob, const QColor &color,
@@ -420,12 +364,29 @@ void SerialWindow::addChannel(const QByteArray &blob, const QColor &color,
                        // // 小端序解析 (低字节在前)
                        size_t len = payload.size();
                        quint16 value = 0;
-                       for (int i = 0; i < len; ++i) {
-                         value += static_cast<quint8>(payload[i]);
+                       //  for (int i = 0; i < len; ++i) {
+                       //    value += static_cast<quint8>(payload[i]);
+                       //  }
+
+                       // 为什么 "\x00\x01" 解析的值是 256 呢???
+                       if (len >= 2) {
+                         value = (static_cast<quint8>(payload[1]) << 8) |
+                                 static_cast<quint8>(payload[0]);
+                       } else if (len == 1) {
+                         value = static_cast<quint8>(payload[0]);
                        }
-                       // quint16 value = (static_cast<quint8>(payload[1]) << 8)
-                       // |
-                       //                 static_cast<quint8>(payload[0]);
+                       qDebug() << "解析的整数值:" << value;
+
+                       //  // 或者按大端序解析 (高字节在前)
+                       //  quint16 valueBeEndian = 0;
+                       //  if (payload.size() >= 2) {
+                       //    valueBeEndian =
+                       //        (static_cast<quint8>(payload[0]) << 8) |
+                       //        static_cast<quint8>(payload[1]);
+                       //  } else if (payload.size() == 1) {
+                       //    valueBeEndian = static_cast<quint8>(payload[0]);
+                       //  }
+                       //  qDebug() << "大端序解析的整数值:" << valueBeEndian;
 
                        Core::LuaKernel kernel;
                        //  qDebug() << luaCode;
@@ -542,13 +503,6 @@ void SerialWindow::handleDialogData(const QString &uuid, quint16 channel,
 }
 
 void SerialWindow::showMessage(const QByteArray &data, bool out) {
-
-  if (out) {
-    send_byte_count_ += data.size();
-  } else {
-    recv_byte_count_ += data.size();
-  }
-
   QDateTime now = QDateTime::currentDateTime();
   QString timestamp = now.toString("[yyyy-MM-dd hh:mm:ss.zzz]");
   QString formattedMessage;
@@ -579,8 +533,12 @@ void SerialWindow::showMessage(const QByteArray &data, bool out) {
   msg->setTimestamp(now);
   if (out) {
     msg->setOutgoing(true);
+    send_byte_count_ += data.size();
+    send_byte_->setText(QString(tr("发送字节数:%1 B")).arg(send_byte_count_));
   } else {
     msg->setOutgoing(false);
+    recv_byte_count_ += data.size();
+    recv_byte_->setText(QString(tr("接收字节数:%1 B")).arg(recv_byte_count_));
   }
   msg->setBubbleColor(QColor("#DCF8C6"));
   QList<Ui::TtChatMessage *> list;
@@ -590,20 +548,8 @@ void SerialWindow::showMessage(const QByteArray &data, bool out) {
 }
 
 void SerialWindow::showMessage(const QString &data, bool out) {
-
-  // false 返回 ?
-  // 文本 1234
-  qDebug() << out << data;
+  // qDebug() << out << data;
   QByteArray dataUtf8 = data.toUtf8();
-
-  // qDebug() << out << dataUtf8;
-
-  if (out) {
-    send_byte_count_ += data.size();
-  } else {
-    recv_byte_count_ += data.size();
-  }
-
   QDateTime now = QDateTime::currentDateTime();
   QString timestamp = now.toString("[yyyy-MM-dd hh:mm:ss.zzz]");
   QString formattedMessage;
@@ -634,17 +580,17 @@ void SerialWindow::showMessage(const QString &data, bool out) {
   msg->setTimestamp(now);
   if (out) {
     msg->setOutgoing(true);
+    send_byte_count_ += data.size();
+    send_byte_->setText(QString(tr("发送字节数:%1 B")).arg(send_byte_count_));
   } else {
     msg->setOutgoing(false);
+    recv_byte_count_ += data.size();
+    recv_byte_->setText(QString(tr("接收字节数:%1 B")).arg(recv_byte_count_));
   }
   msg->setBubbleColor(QColor("#DCF8C6"));
   QList<Ui::TtChatMessage *> list;
   list.append(msg);
   message_model_->appendMessages(list);
-  if (out) {
-    send_byte_->setText(QString("发送字节数: %1 B").arg(send_byte_count_));
-  } else {
-  }
   message_view_->scrollToBottom();
 }
 
@@ -658,31 +604,8 @@ void SerialWindow::sendMessage(const QString &data, TtTextFormat::Type type) {
     // 移除所有非十六进制字符
     hexStr = hexStr.remove(QRegularExpression("[^0-9A-Fa-f]"));
     if (hexStr.length() % 2 != 0) {
-      // QString properHexStr;
-      // int i = 0;
-      // // 处理可能的前导单字符
-      // if (hexStr.length() % 2 != 0) {
-      //   properHexStr.append('0');
-      //   properHexStr.append(hexStr[0]);
-      //   i = 1;
-      // }
-      // // 处理剩余的字符对
-      // for (; i < hexStr.length(); i += 2) {
-      //   if (i + 1 < hexStr.length()) {
-      //     properHexStr.append(hexStr[i]);
-      //     properHexStr.append(hexStr[i + 1]);
-      //   } else {
-      //     // 最后一个单字符
-      //     properHexStr.append('0');
-      //     properHexStr.append(hexStr[i]);
-      //   }
-      // }
-      // qDebug() << "HEX字符串长度为奇数，正确补0后: " << properHexStr;
-      // hexStr = properHexStr;
-      // 从右向左扫描，最终会得到正确的字节对齐效果
       for (int i = 0; i < hexStr.length(); i += 2) {
         if (i + 1 >= hexStr.length()) {
-          // 在未成对的位置前插入0
           hexStr.insert(i, '0');
           qDebug() << "在位置" << i << "插入0，结果:" << hexStr;
         }
@@ -738,7 +661,7 @@ void SerialWindow::sendMessage(const QString &data, TtTextFormat::Type type) {
     // }
   } else {
     // 没有分包, 直接发送
-    if (!serial_port_opened) {
+    if (!opened_) {
       Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""), tr("串口未打开"),
                               1500, this);
       return;
@@ -882,6 +805,7 @@ void SerialWindow::parseBuffer() {
       receive_buffer_.remove(0, bestPos);
     }
     // 长度没问题
+    // 长度是 6, 也没有问题
     qDebug() << "size: " << receive_buffer_.size();
     // qDebug() << bestRule->header_len + bestRule->len_offset +
     //                 bestRule->len_bytes;
@@ -905,39 +829,70 @@ void SerialWindow::parseBuffer() {
     // len_offset 是 2
     quint32 payloadLen = 0;
 
-    // 长度是 1
+    // BUG, 获取的是 BB, 长度转换后是非常大的数据, 有问题
+
     // 获取长度字段
-    payloadLen = receive_buffer_[bestRule->len_offset];
+    // payloadLen = receive_buffer_[bestRule->len_offset];
+
+    // 无符号强制转变
+    payloadLen = static_cast<quint8>(receive_buffer_[bestRule->len_offset]);
+
+    // 长度字段偏移是 1,
 
     // 长度为 3， 负载为 2
-    qDebug() << bestRule->len_offset << payloadLen;
+    qDebug() << "len_offset: " << bestRule->len_offset << "payloadLen"
+             << payloadLen;
 
-    // 1 + 1 + 1 + 0 + 0 = 3 + 1
+    // 2 1 1 的配置
+    // 帧头给了 2
+    // 类型字段与长度字段相同, 都是 BB, 转换成十进制
 
-    // 2 + 1 + 1 + 2 + 0 + 0
+    const int maxAllowedPayloadLen = 1024; // 最大允许的负载长度
+    if (payloadLen > maxAllowedPayloadLen) {
+      qDebug() << "检测到异常长度字段值:" << payloadLen
+               << "，可能是无效帧或协议错误";
+      // 丢弃当前帧头，继续查找下一个帧
+      receive_buffer_.remove(0, 1);
+      continue;
+    }
+
     const int fullSize = bestRule->header_len + 1 +
                          (bestRule->len_offset - bestRule->header_len) +
                          payloadLen + bestRule->tail_len +
                          (bestRule->has_checksum ? 1 : 0);
 
-    // 输出6
-    qDebug() << "size: " << fullSize;
-
-    if (receive_buffer_.size() < fullSize) {
-      return;
+    if (fullSize <= 0 ||
+        fullSize > receive_buffer_.size() + maxAllowedPayloadLen) {
+      qWarning() << "计算的帧长度无效:" << fullSize << "，丢弃当前帧头";
+      receive_buffer_.remove(0, 1);
+      continue;
     }
+    // 输出的是 负数
+    // qDebug() << "size: " << fullSize;
+    // if (fullSize < 0) {
+    //   // 但是没有进入后续的情况了, 需要删除前面的数据吗???
+    //   qWarning("截取的帧长度为负数, 提供了长度字段过大");
+    //   return;
+    // }
+    // if (receive_buffer_.size() < fullSize) {
+    //   return;
+    // }
 
     // 切出一整帧
     QByteArray frame = receive_buffer_.left(fullSize);
 
+    // 这个后面就出现了问题
     // 可选校验
     if (bestRule->has_checksum && !bestRule->validate(frame)) {
       if (!bestRule->validate(frame)) {
+        qDebug() << "校验失败";
         // 校验失败，丢弃这个 header 字节，重试
         receive_buffer_.remove(0, 1);
         continue;
       }
     }
+
+    // 解析帧有问题
 
     qDebug() << "frame: " << frame;
 
@@ -952,6 +907,7 @@ void SerialWindow::parseBuffer() {
      * 1 字节长度字段
      * 剩余是 数据字段 + cs
      */
+    // 截取出现问题
     QByteArray payload = frame.mid(
         bestRule->header_len + 1 + bestRule->len_offset - bestRule->header_len,
         payloadLen);
@@ -979,7 +935,7 @@ bool SerialWindow::isEnableHeartbeart() {
 void SerialWindow::showErrorMessage(const QString &text) {
   Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""), text, 1500, this);
   on_off_btn_->setChecked(false);
-  serial_port_opened = false;
+  opened_ = false;
   serial_setting_->setControlState(true);
   send_package_timer_->stop();
   heartbeat_timer_->stop();
@@ -1010,10 +966,11 @@ void SerialWindow::dataReceived(const QByteArray &data) {
 }
 
 void SerialWindow::sendMessageToPort() {
-  // 从 editor 获取内容
-  QString editorText = editor->text();
-  if (editor->text().isEmpty()) {
-    qDebug() << "empty";
+  // 使能状态
+  // 从 editor_ 获取内容
+  QString editorText = editor_->text();
+  if (editor_->text().isEmpty()) {
+    // qDebug() << "empty";
     return;
   }
   // radio button 切换发送类型
@@ -1032,7 +989,7 @@ void SerialWindow::sendMessageToPort(const QString &data) {
 void SerialWindow::sendMessageToPort(const QString &data, const int &times) {
   // 定时发送
   QTimer::singleShot(times, this, [this, data]() {
-    if (!serial_port_opened) {
+    if (!opened_) {
       Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""), tr("串口未打开"),
                               1500, this);
       return;
@@ -1044,191 +1001,13 @@ void SerialWindow::sendMessageToPort(const QString &data, const int &times) {
 }
 
 void SerialWindow::init() {
-  main_layout_ = new Ui::TtVerticalLayout(this);
+  initUi();
+  title_->setText(tr("未命名的串口链接"));
 
-  title_ = new Ui::TtNormalLabel(tr("未命名串口连接"));
-  // 编辑命名按钮
-  modify_title_btn_ = new Ui::TtSvgButton(":/sys/edit.svg", this);
-  modify_title_btn_->setSvgSize(18, 18);
-
-  // 创建原始界面
-  original_widget_ = new QWidget(this);
-  Ui::TtHorizontalLayout *tmpl = new Ui::TtHorizontalLayout(original_widget_);
-  tmpl->addSpacerItem(new QSpacerItem(10, 10));
-  tmpl->addWidget(title_, 0, Qt::AlignLeft);
-  tmpl->addSpacerItem(new QSpacerItem(10, 10));
-  tmpl->addWidget(modify_title_btn_);
-  tmpl->addStretch();
-
-  // 创建编辑界面
-  edit_widget_ = new QWidget(this);
-  title_edit_ = new Ui::TtLineEdit(this);
-
-  Ui::TtHorizontalLayout *edit_layout =
-      new Ui::TtHorizontalLayout(edit_widget_);
-  edit_layout->addSpacerItem(new QSpacerItem(10, 10));
-  edit_layout->addWidget(title_edit_);
-  edit_layout->addStretch();
-
-  // 使用堆叠布局
-  stack_ = new QStackedWidget(this);
-  stack_->setMaximumHeight(40);
-  stack_->addWidget(original_widget_);
-  stack_->addWidget(edit_widget_);
-
-  connect(modify_title_btn_, &Ui::TtSvgButton::clicked, this,
-          &SerialWindow::switchToEditMode);
-
-  Ui::TtHorizontalLayout *tmpP1 = new Ui::TtHorizontalLayout;
-  tmpP1->addWidget(stack_);
-
-  Ui::TtHorizontalLayout *tmpAll = new Ui::TtHorizontalLayout;
-
-  auto handleSave = [this]() {
-    if (!title_edit_->text().isEmpty()) {
-      switchToDisplayMode();
-    } else {
-      title_edit_->setPlaceholderText(tr("名称不能为空！"));
-    }
-  };
-
-  connect(title_edit_, &QLineEdit::editingFinished, this, handleSave);
-
-  Ui::TtHorizontalLayout *tmpl2 = new Ui::TtHorizontalLayout;
-  // 保存按钮
-  save_btn_ = new Ui::TtSvgButton(":/sys/save_cfg.svg", this);
-  save_btn_->setSvgSize(18, 18);
-
-  // 删除按钮, 是需要保存在 leftbar 才会添加的
-
-  // 开关按钮
-  on_off_btn_ = new Ui::TtSvgButton(":/sys/start_up.svg", this);
-  on_off_btn_->setColors(Qt::black, Qt::red);
-  on_off_btn_->setSvgSize(18, 18);
-
-  tmpl2->addWidget(save_btn_);
-  tmpl2->addWidget(on_off_btn_, 0, Qt::AlignRight);
-  tmpl2->addSpacerItem(new QSpacerItem(10, 10));
-
-  tmpAll->addLayout(tmpP1);
-  tmpAll->addLayout(tmpl2);
-
-  main_layout_->addLayout(tmpAll);
-
-  // 左右分隔器
-  main_splitter_ = new QSplitter;
-  main_splitter_->setOrientation(Qt::Horizontal);
-
-  // 上方功能按钮
-  QWidget *chose_function = new QWidget;
-  Ui::TtHorizontalLayout *chose_function_layout = new Ui::TtHorizontalLayout;
-  chose_function_layout->setSpacing(5);
-  chose_function->setLayout(chose_function_layout);
-
-  // 切换
-  QWidget *twoBtnForGroup = new QWidget(chose_function);
-  QHBoxLayout *layouttest = new QHBoxLayout(twoBtnForGroup);
-  Ui::TtSvgButton *terminalButton =
-      new Ui::TtSvgButton(":/sys/terminal.svg", twoBtnForGroup);
-  terminalButton->setSvgSize(18, 18);
-  terminalButton->setColors(Qt::black, Qt::blue);
-
-  // qDebug() << "terminal: " << terminalButton;
-  // leftBtn->setEnableHoldToCheck(true);
-  Ui::TtSvgButton *chatButton =
-      new Ui::TtSvgButton(":/sys/chat.svg", twoBtnForGroup);
-  chatButton->setSvgSize(18, 18);
-  chatButton->setColors(Qt::black, Qt::blue);
-  // qDebug() << "chat: " << chatButton;
-  // rightBtn->setEnableHoldToCheck(true);
-
-  Ui::TtSvgButton *graphBtn =
-      new Ui::TtSvgButton(":/sys/graph-up.svg", twoBtnForGroup);
-  graphBtn->setSvgSize(18, 18);
-  graphBtn->setColors(Qt::black, Qt::blue);
-  // qDebug() << "graph: " << graphBtn;
-
-  layouttest->addWidget(terminalButton);
-  layouttest->addWidget(chatButton);
-  layouttest->addWidget(graphBtn);
-
-  // QAction *test = new QAction;
-  // 图标颜色显示有问题
-  // 互斥
-  Ui::TtWidgetGroup *showStyle = new Ui::TtWidgetGroup(this);
-  showStyle->setHoldingChecked(true);
-  showStyle->addWidget(terminalButton);
-  showStyle->addWidget(chatButton);
-  showStyle->addWidget(graphBtn);
-  showStyle->setExclusive(true);
-  showStyle->setCheckedIndex(0);
-  chose_function_layout->addWidget(twoBtnForGroup);
-  chose_function_layout->addStretch();
-
-  // 点击多次有 bug
-  clear_history_ = new Ui::TtSvgButton(":/sys/trash.svg", chose_function);
-  clear_history_->setSvgSize(18, 18);
-
-  //// 选择 text/hex
-  Ui::TtWidgetGroup *styleGroup = new Ui::TtWidgetGroup(this);
-  styleGroup->setHoldingChecked(true);
-  // 点击切换后
-  // 时间戳消失, 渲染有问题
-  Ui::TtTextButton *textBtn = new Ui::TtTextButton(QColor(Qt::blue), "TEXT");
-  // textBtn->setLightDefaultColor(QColor(0, 102, 180));
-  // textBtn->setLightHoverColor(QColor(0, 112, 198));
-  textBtn->setCheckedColor(QColor(0, 102, 180));
-  Ui::TtTextButton *hexBtn = new Ui::TtTextButton(QColor(Qt::blue), "HEX");
-  // hexBtn->setLightDefaultColor(QColor(0, 102, 180));
-  // hexBtn->setLightHoverColor(QColor(0, 112, 198));
-  hexBtn->setCheckedColor(QColor(0, 102, 180));
-
-  styleGroup->addWidget(textBtn);
-  styleGroup->addWidget(hexBtn);
-  styleGroup->setCheckedIndex(0);
-  styleGroup->setExclusive(true);
-  chose_function_layout->addWidget(textBtn);
-  chose_function_layout->addWidget(hexBtn);
-  textBtn->setChecked(true);
-  connect(styleGroup, &Ui::TtWidgetGroup::widgetClicked,
-          [this](const int &index) {
-            setDisplayType(index == 1 ? TtTextFormat::HEX : TtTextFormat::TEXT);
-          });
-
-  // 清除历史按钮
-  chose_function_layout->addWidget(clear_history_);
-
-  QSplitter *VSplitter = new QSplitter;
-  VSplitter->setOrientation(Qt::Vertical);
-  VSplitter->setContentsMargins(QMargins());
-  VSplitter->setSizes(QList<int>() << 500 << 200);
-
-  // 上方选择功能以及信息框
-  QWidget *contentWidget = new QWidget;
-  Ui::TtVerticalLayout *contentWidgetLayout =
-      new Ui::TtVerticalLayout(contentWidget);
-
-  QStackedWidget *messageStackedView = new QStackedWidget(contentWidget);
-
-  terminal_ = new QPlainTextEdit(this);
-  terminal_->setReadOnly(true);
-  terminal_->setFrameStyle(QFrame::NoFrame);
-  SerialHighlighter *lexer = new SerialHighlighter(terminal_->document());
-
-  messageStackedView->addWidget(terminal_);
-
-  message_view_ = new Ui::TtChatView(messageStackedView);
-  message_view_->setResizeMode(QListView::Adjust);
-  message_view_->setUniformItemSizes(false); // 允许每个项具有不同的大小
-  message_view_->setMouseTracking(true);
-  message_view_->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
-  messageStackedView->addWidget(message_view_);
+  serial_setting_ = new Widget::SerialSetting;
+  serRightWidget(serial_setting_);
 
   QSplitter *graphSpiltter = new QSplitter;
-
-  // 每一个窗口都需要一个 ???
-
-  // 为什么不同的窗口, 会实现同一份数据
   serial_plot_ = new Ui::TtSerialPortPlot;
   graphSpiltter->addWidget(serial_plot_);
 
@@ -1267,11 +1046,6 @@ void SerialWindow::init() {
           TtChannelButtonEditorDialog editorDialog(this);
           if (editorDialog.exec() == QDialog::Accepted) {
             saved_ = false;
-            // 颜色生成
-            // 创建 button, 添加 channel 信息
-            // 随机生成的颜色保存在 editorDialog 中
-            // addChannel(channelBtn->getCheckBlockColor(),
-            // editorDialog.metaInfo());
             addChannel(editorDialog.metaInfo(), editorDialog.checkBlockColor());
           }
         } else if (item) {
@@ -1299,34 +1073,24 @@ void SerialWindow::init() {
               rules_.remove(btn->getUuid());
             }
             auto *deleteItem =
-                serialDataList->takeItem(serialDataList->row(item)); // 删除项
-
-            qDebug() << "delete";
+                serialDataList->takeItem(serialDataList->row(item)); //
+            // 删除项
+            // qDebug() << "delete";
             delete deleteItem;
 
           } else if (selectedAction == editAction) {
             if (auto *btn = qobject_cast<TtChannelButton *>(
                     serialDataList->itemWidget(item))) {
               saved_ = false;
-              // 数据保存在 info 中
-              // 根据存在的 btn
-              // 编辑状态
               TtChannelButtonEditorDialog editorDialog(btn, this);
               // 设置编辑的数据
               editorDialog.setMetaInfo(
                   channel_info_.value(btn->getUuid()).data);
               if (editorDialog.exec() == QDialog::Accepted) {
-                // 编辑成功
                 qDebug() << editorDialog.checkBlockColor();
-                // BUG 编辑和添加有冲突
-                // 通道信息中存储的是 0
-                // 但是修改后, 新增加不同的值后, 变为了 1, 就一直是 1
-                // BUG 获取的值是错误的 1
-                // 一直都是同一个 uuid 的 button
-                // 但是获取的对应的通道号 是 1
-                qDebug() << "编辑时的(关乎于 button 的特定值) channel uuid: "
-                         << btn->getUuid()
-                         << channel_info_.value(btn->getUuid()).channel_num_;
+                // qDebug() << "编辑时的(关乎于 button 的特定值) channel uuid: "
+                // << btn->getUuid()
+                // << channel_info_.value(btn->getUuid()).channel_num_;
 
                 handleDialogData(
                     btn->getUuid(),
@@ -1367,154 +1131,12 @@ void SerialWindow::init() {
   graphSpiltter->setStretchFactor(0, 1);
   graphSpiltter->setStretchFactor(1, 0);
 
-  messageStackedView->addWidget(graphSpiltter);
+  // messageStackedView->addWidget(graphSpiltter);
 
-  contentWidgetLayout->addWidget(chose_function);
-  contentWidgetLayout->addWidget(messageStackedView);
-
-  connect(showStyle, &Ui::TtWidgetGroup::widgetClicked, this,
-          [this, messageStackedView, textBtn, hexBtn](const int &idx) {
-            messageStackedView->setCurrentIndex(idx);
-            if (idx != 0) {
-              // 图表
-              textBtn->setVisible(false);
-              hexBtn->setVisible(false);
-            } else {
-              textBtn->setVisible(true);
-              hexBtn->setVisible(true);
-            }
-          });
-
-  base::DetectRunningTime runtime;
-
-  message_model_ = new Ui::TtChatMessageModel;
-
-  message_view_->setModel(message_model_);
-  message_view_->scrollToBottom();
-
-  QWidget *bottomAll = new QWidget;
-  Ui::TtVerticalLayout *bottomAllLayout = new Ui::TtVerticalLayout(bottomAll);
-  bottomAll->setLayout(bottomAllLayout);
-
-  // 下方自定义指令
-  QWidget *tabs_and_count = new QWidget(this);
-  Ui::TtHorizontalLayout *tacLayout = new Ui::TtHorizontalLayout();
-  tabs_and_count->setLayout(tacLayout);
-
-  auto m_tabs = new QtMaterialTabs(tabs_and_count);
-  m_tabs->addTab(tr("手动"));
-  m_tabs->addTab(tr("片段"));
-  // m_tabs->setFixedHeight(30);
-  m_tabs->setBackgroundColor(QColor(192, 120, 196));
-  // m_tabs->setMinimumWidth(80);
-
-  tacLayout->addWidget(m_tabs);
-  tacLayout->addStretch();
-
-  // 显示发送字节和接收字节数
-  send_byte_ = new Ui::TtNormalLabel(tr("发送字节数: 0 B"), tabs_and_count);
-  send_byte_->setFixedHeight(30);
-  recv_byte_ = new Ui::TtNormalLabel(tr("接收字节数: 0 B"), tabs_and_count);
-  recv_byte_->setFixedHeight(30);
-
-  tacLayout->addWidget(send_byte_);
-  tacLayout->addWidget(recv_byte_);
-
-  QWidget *la_w = new QWidget(this);
-  QStackedLayout *layout = new QStackedLayout(la_w);
-  layout->setContentsMargins(QMargins());
-  layout->setSpacing(0);
-
-  QWidget *messageEdit = new QWidget(la_w);
-  QVBoxLayout *messageEditLayout = new QVBoxLayout;
-  messageEdit->setLayout(messageEditLayout);
-  messageEditLayout->setContentsMargins(3, 0, 3, 0);
-  messageEditLayout->setSpacing(0);
-
-  editor = new QsciScintilla(messageEdit);
-  editor->setWrapMode(QsciScintilla::WrapWord);
-  editor->setWrapVisualFlags(QsciScintilla::WrapFlagInMargin,
-                             QsciScintilla::WrapFlagInMargin, 0);
-  editor->setCaretWidth(10);
-  editor->setMarginType(1, QsciScintilla::NumberMargin);
-  editor->setFrameStyle(QFrame::NoFrame);
-
-  messageEditLayout->addWidget(editor);
-
-  QWidget *bottomBtnWidget = new QWidget(messageEdit);
-  bottomBtnWidget->setMinimumHeight(40);
-  Ui::TtHorizontalLayout *bottomBtnWidgetLayout =
-      new Ui::TtHorizontalLayout(bottomBtnWidget);
-
-  // 发送的格式
-  chose_text_ = new Ui::TtRadioButton("TEXT", bottomBtnWidget);
-  chose_hex_ = new Ui::TtRadioButton("HEX", bottomBtnWidget);
-  chose_text_->setChecked(true);
-
-  sendBtn = new QtMaterialFlatButton(bottomBtnWidget);
-  sendBtn->setIcon(QIcon(":/sys/send.svg"));
-  bottomBtnWidgetLayout->addWidget(chose_text_);
-  bottomBtnWidgetLayout->addWidget(chose_hex_);
-  bottomBtnWidgetLayout->addStretch();
-  bottomBtnWidgetLayout->addWidget(sendBtn);
-
-  messageEditLayout->addWidget(bottomBtnWidget);
-
-  instruction_table_ = new Ui::TtTableWidget(la_w);
-
-  layout->addWidget(messageEdit);
-  layout->addWidget(instruction_table_);
-
-  connect(instruction_table_, &Ui::TtTableWidget::sendRowMsg, this,
-          qOverload<const QString &>(&SerialWindow::sendMessageToPort));
-
-  connect(instruction_table_, &Ui::TtTableWidget::sendRowsMsg, this,
-          [this](const QVector<QPair<QString, int>> &datas) {
-            if (datas.isEmpty()) {
-              return;
-            }
-            foreach (const auto &pair, datas) {
-              sendMessageToPort(pair.first, pair.second);
-            }
-          });
-  connect(instruction_table_, &Ui::TtTableWidget::rowsChanged, this,
-          [this]() { saved_ = false; });
-
-  layout->setCurrentIndex(0);
-
-  connect(m_tabs, &QtMaterialTabs::currentChanged,
-          [this, layout](int index) { layout->setCurrentIndex(index); });
-
-  // 显示, 并输入 lua 脚本
-  // lua_code_ = new Ui::TtLuaInputBox(this);
-  // lua_actuator_ = new Core::LuaKernel;
-
-  bottomAllLayout->addWidget(tabs_and_count);
-  bottomAllLayout->addWidget(la_w);
-
-  VSplitter->addWidget(contentWidget);
-  VSplitter->addWidget(bottomAll);
-  VSplitter->setCollapsible(0, false);
-
-  main_splitter_->addWidget(VSplitter);
-  serial_setting_ = new Widget::SerialSetting;
-  main_splitter_->addWidget(serial_setting_);
-  main_splitter_->setSizes(QList<int>() << 500 << 220);
-  main_splitter_->setCollapsible(0, false);
-  main_splitter_->setCollapsible(1, true);
-
-  main_splitter_->setStretchFactor(0, 3);
-  main_splitter_->setStretchFactor(1, 2);
-
-  // 主界面是左右分隔
-  main_layout_->addWidget(main_splitter_);
-
-  send_package_timer_ = new QTimer(this);
-  send_package_timer_->setTimerType(Qt::TimerType::PreciseTimer);
-  send_package_timer_->setInterval(0);
-  heartbeat_timer_ = new QTimer(this);
-  heartbeat_timer_->setTimerType(Qt::TimerType::PreciseTimer);
-  heartbeat_timer_->setInterval(0);
+  Ui::TtSvgButton *graphBtn = new Ui::TtSvgButton(":/sys/graph-up.svg", this);
+  graphBtn->setSvgSize(18, 18);
+  graphBtn->setColors(Qt::black, Qt::blue);
+  addDisplayWidget(graphBtn, graphSpiltter);
 }
 
 void SerialWindow::setSerialSetting() {
@@ -1529,6 +1151,8 @@ void SerialWindow::setSerialSetting() {
 }
 
 void SerialWindow::connectSignals() {
+  initSignalsConnection();
+
   connect(save_btn_, &Ui::TtSvgButton::clicked, this,
           &SerialWindow::saveSetting);
 
@@ -1536,13 +1160,13 @@ void SerialWindow::connectSignals() {
     // // 检查是否处于打开状态
     // serial_port 已经移动到了 工作线程中
     // 将openSerialPort的调用通过Qt的信号槽机制排队到worker_thread_中执行，而不是直接在主线程调用
-    if (serial_port_opened) {
+    if (opened_) {
       qDebug() << "close";
       // 关闭串口时也需跨线程调用
       QMetaObject::invokeMethod(serial_port_, "closeSerialPort",
                                 Qt::QueuedConnection);
       // serial_port_->closeSerialPort();
-      serial_port_opened = false;
+      opened_ = false;
       serial_setting_->setControlState(true);
       on_off_btn_->setChecked(false);
       send_package_timer_->stop();
@@ -1557,7 +1181,7 @@ void SerialWindow::connectSignals() {
                                 Qt::QueuedConnection,
                                 Q_ARG(Core::SerialPortConfiguration, cfg));
       qDebug() << "serialopen";
-      serial_port_opened = true;
+      opened_ = true;
       serial_setting_->setControlState(false);
       on_off_btn_->setChecked(true);
 
@@ -1574,14 +1198,11 @@ void SerialWindow::connectSignals() {
   });
 
   connect(clear_history_, &Ui::TtSvgButton::clicked, [this]() {
-    // 多次点击出现问题
     message_model_->clearModelData();
     terminal_->clear();
-    // or
-    // QCoreApplication::processEvents();
   });
 
-  connect(sendBtn, &QtMaterialFlatButton::clicked, this,
+  connect(send_btn_, &QtMaterialFlatButton::clicked, this,
           qOverload<>(&SerialWindow::sendMessageToPort));
   connect(serial_setting_, &Widget::SerialSetting::showScriptSetting,
           [this]() { lua_code_->show(); });
@@ -1597,7 +1218,6 @@ void SerialWindow::connectSignals() {
 
   connect(serial_setting_, &Widget::SerialSetting::sendPackageIntervalChanged,
           this, [this](const uint32_t &interval) {
-            // 设置发送包间隔
             qDebug() << "interval: " << interval;
             send_package_timer_->setInterval(interval);
           });
@@ -1612,13 +1232,31 @@ void SerialWindow::connectSignals() {
 
   connect(serial_setting_, &Widget::SerialSetting::heartbeatType, this,
           [this](TtTextFormat::Type type) {
-            // 切换 None 时, 仍然在发送
             heart_beat_type_ = type;
-            qDebug() << heart_beat_type_;
+            // qDebug() << heart_beat_type_;
+          });
+
+  connect(serial_setting_, &Widget::SerialSetting::heartbeatContentChanged,
+          this, [this](const QString &content) {
+            qDebug() << content;
+            if (heartbeat_ != content) {
+              heartbeat_ = content;
+              heartbeat_utf8_ = heartbeat_.toUtf8().toHex(' ');
+            }
+          });
+
+  connect(serial_setting_, &Widget::SerialSetting::heartbeatInterval, this,
+          [this](const uint32_t times) {
+            qDebug() << times;
+            if (heartbeat_interval_ != times) {
+              heartbeat_interval_ = times;
+              qDebug() << heartbeat_interval_;
+              heartbeat_timer_->setInterval(times);
+            }
           });
 
   connect(send_package_timer_, &QTimer::timeout, this, [this] {
-    if (!serial_port_opened) {
+    if (!opened_) {
       Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""), tr("串口未打开"),
                               1500, this);
       msg_queue_.clear();
@@ -1652,10 +1290,9 @@ void SerialWindow::connectSignals() {
                                   Qt::QueuedConnection,
                                   Q_ARG(QByteArray, dataUtf8));
 
-        // 更新显示
         send_byte_count_ += dataUtf8.size();
         send_byte_->setText(QString("发送字节数: %1 B").arg(send_byte_count_));
-
+        // qDebug() << "send_package utf8" << dataUtf8;
         // 在UI中显示
         showMessage(dataUtf8, true);
       }
@@ -1667,37 +1304,12 @@ void SerialWindow::connectSignals() {
     setHeartbeartContent(); // 适用于发送包间隔
   });
 
-  connect(serial_setting_, &Widget::SerialSetting::heartbeatContentChanged,
-          this, [this](const QString &content) {
-            qDebug() << content;
-            // 心跳的内容改变
-            // 对应的 bytearray 也需要改变
-            if (heartbeat_ != content) {
-              // 如果是一个字符 A, 转换成 HEX 的时候, 需要在前面补齐 0
-              heartbeat_ = content;
-              // qDebug() << "GET contenr: " << heartbeat_;
-              heartbeat_utf8_ = heartbeat_.toUtf8().toHex(' ');
-              // qDebug() << "HeartBeat Utf8: " << heartbeat_utf8_;
-            }
-          });
-
-  connect(serial_setting_, &Widget::SerialSetting::heartbeatInterval, this,
-          [this](const uint32_t times) {
-            qDebug() << times;
-            // 如果为 0, 不生效
-            if (heartbeat_interval_ != times) {
-              heartbeat_interval_ = times;
-              qDebug() << heartbeat_interval_;
-              heartbeat_timer_->setInterval(times);
-              // qDebug() << "GET interval" << heartbeat_timer_->interval();
-            }
-          });
-  connect(chose_hex_, &Ui::TtRadioButton::toggled, [this](bool checked) {
+  connect(chose_hex_btn_, &Ui::TtRadioButton::toggled, [this](bool checked) {
     if (checked) {
       send_type_ = TtTextFormat::HEX;
     }
   });
-  connect(chose_text_, &Ui::TtRadioButton::toggled, [this](bool checked) {
+  connect(chose_text_btn_, &Ui::TtRadioButton::toggled, [this](bool checked) {
     if (checked) {
       send_type_ = TtTextFormat::TEXT;
     }

@@ -72,10 +72,7 @@ private:
 
   int findRowIndex(QWidget *context, const int &col, bool deep = false) const;
 
-  bool isRowVisible(int row) {
-    return row >= verticalScrollBar()->value() &&
-           row <= verticalScrollBar()->value() + visibleRowCount();
-  }
+  bool isRowVisible(int row);
 
   // UI 创建
   QWidget *createHeaderCell(const QString &text, bool border = true);

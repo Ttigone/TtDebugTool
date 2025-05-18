@@ -95,7 +95,8 @@ void TcpWindow::setSetting(const QJsonObject &config) {
   }
   config_.insert("InstructionTable", instruction_table_->getTableRecord());
 
-  int sendType = config_.value("SendType").toInt();
+  int sendType = config.value("SendType").toInt();
+  send_type_ = static_cast<TtTextFormat::Type>(sendType);
   if (sendType == 1) {
     chose_text_btn_->setChecked(true);
   } else if (sendType == 2) {
@@ -104,10 +105,13 @@ void TcpWindow::setSetting(const QJsonObject &config) {
     // ascll 格式
   }
   // 上方显示
-  int displayType = config_.value("DisplayType").toInt();
+  int displayType = config.value("DisplayType").toInt();
+  display_type_ = static_cast<TtTextFormat::Type>(displayType);
   if (displayType == 1) {
     display_text_btn_->setChecked(true);
+    display_hex_btn_->setChecked(false);
   } else if (displayType == 2) {
+    display_text_btn_->setChecked(false);
     display_hex_btn_->setChecked(true);
   }
   saved_ = true;
@@ -172,8 +176,8 @@ void TcpWindow::saveSetting() {
                    tcp_server_setting_->getTcpServerSetting());
   }
   config_.insert("InstructionTable", instruction_table_->getTableRecord());
-  config_.insert("SendType", QJsonValue(send_type_));
-  config_.insert("DisplayType", QJsonValue(display_type_));
+  config_.insert("SendType", QJsonValue(int(send_type_)));
+  config_.insert("DisplayType", QJsonValue(int(display_type_)));
   saved_ = true;
   emit requestSaveConfig();
 }
@@ -188,17 +192,6 @@ void TcpWindow::updateServerStatus() {
 }
 
 void TcpWindow::dataReceived(const QByteArray &data) {
-  // qDebug() << "Received data:" << data;
-  // recv_byte_count += data.size();
-  // auto tmp = new Ui::TtChatMessage();
-  // tmp->setContent(data);
-  // tmp->setOutgoing(false);
-  // tmp->setBubbleColor(QColor("#0ea5e9"));
-  // QList<Ui::TtChatMessage *> list;
-  // list.append(tmp);
-  // message_model_->appendMessages(list);
-  // recv_byte->setText(QString("接收字节数: %1 B").arg(recv_byte_count));
-  // message_view_->scrollToBottom();
   showMessage(data, false);
 }
 

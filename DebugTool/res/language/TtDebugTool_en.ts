@@ -417,28 +417,28 @@
 <context>
     <name>Ui::TtModbusTableWidget</name>
     <message>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="1751"/>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="2318"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="1746"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="2313"/>
         <source>名称</source>
         <translation>name</translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="1751"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="1746"/>
         <source>值</source>
         <translation>value</translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="1751"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="1746"/>
         <source>描述</source>
         <translation>Description</translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="1761"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="1756"/>
         <source>地址(HEX)</source>
         <translation>Address (HEX)</translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="1761"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="1756"/>
         <source>地址(DEC)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -447,17 +447,17 @@
         <translation type="vanished">Address (DEX)</translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="2347"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="2342"/>
         <source>TEXT</source>
         <translation>TEXT</translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="2347"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="2342"/>
         <source>HEX</source>
         <translation>HEX</translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="2362"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="2357"/>
         <source>内容</source>
         <translation>content</translation>
     </message>
@@ -548,45 +548,45 @@
     <name>Ui::TtTableWidget</name>
     <message>
         <location filename="../../src/ui/controls/TtTableView.cpp" line="99"/>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="462"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="455"/>
         <source>启用</source>
         <translation>enable</translation>
     </message>
     <message>
         <location filename="../../src/ui/controls/TtTableView.cpp" line="100"/>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="462"/>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="750"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="455"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="745"/>
         <source>名称</source>
         <translation>name</translation>
     </message>
     <message>
         <location filename="../../src/ui/controls/TtTableView.cpp" line="101"/>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="462"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="455"/>
         <source>格式</source>
         <translation>format</translation>
     </message>
     <message>
         <location filename="../../src/ui/controls/TtTableView.cpp" line="102"/>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="462"/>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="795"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="455"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="790"/>
         <source>内容</source>
         <translation>content</translation>
     </message>
     <message>
         <location filename="../../src/ui/controls/TtTableView.cpp" line="103"/>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="463"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="456"/>
         <source>延时</source>
         <translation>delay</translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="543"/>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="780"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="537"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="775"/>
         <source>TEXT</source>
         <translation>TEXT</translation>
     </message>
     <message>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="543"/>
-        <location filename="../../src/ui/controls/TtTableView.cpp" line="780"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="538"/>
+        <location filename="../../src/ui/controls/TtTableView.cpp" line="775"/>
         <source>HEX</source>
         <translation>HEX</translation>
     </message>

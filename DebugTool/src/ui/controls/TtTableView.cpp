@@ -158,29 +158,8 @@ void TtTableWidget::setupTable(const QJsonObject &record) {
     // setup 需要全包 可视状态
     qDebug() << "table setup Row";
     setupRow(newRow);
-    // 如果rowsData_大小不足，可能是setupRow没有正确创建控件
-    // rowsData 逐渐递增的
-    // 有问题, rowsData_.size() 一直是 0
-    // 检查行是否成功添加到rowsData_
-    // 这里还是有问题
-    // rowsData_ 保存行, 初始 0 开头
-    // 但是 newRow 是 1 开头的
-    // if (rowsData_.isEmpty() || rowsData_.size() < newRow) {
-    //   qDebug() << "行数据未正确创建，跳过行" << rowIndex;
-    //   // 还是进入了
-
-    //   // 强制创建控件，确保行显示
-    //   if (!isRowVisible(newRow)) {
-    //     scrollToItem(item(newRow, 0));
-    //     setupRow(newRow);  // 再次尝试创建
-    //   }
-
-    //   // 如果仍然无法创建，跳过此行
-    //   if (rowsData_.isEmpty() || rowsData_.size() < newRow) {
-    //     continue;
-    //   }
-    // }
     if (rowsData_.isEmpty()) {
+      // BUG 进入了这里, 之前创建为空
       qDebug() << "行数据未正确创建，跳过行" << rowIndex;
       // 还是进入了
       // 强制创建控件，确保行显示
@@ -214,7 +193,7 @@ void TtTableWidget::setupTable(const QJsonObject &record) {
 
     // 设置类型
     if (rowData.size() > dataOffset && row.typeCombo) {
-      int type = rowData.at(dataOffset).toString();
+      int type = rowData.at(dataOffset).toInt();
       for (int i = 0; i < row.typeCombo->count(); ++i) {
         if (row.typeCombo->itemData(i).toInt() == type) {
           row.typeCombo->setCurrentIndex(i);
@@ -472,12 +451,11 @@ void TtTableWidget::initHeader() {
 void TtTableWidget::setupRow(int row) {
   if (!isRowVisible(row)) {
     // 可见时才创建控件
+    qDebug() << "不可视";
     return;
   }
 
   TableRow data;
-  // data.enableBtn = createSwitchButton();
-  // data.enableBtn->setChecked(true);
   data.checkBtn = createSwitchButton();
   data.checkBtn->setChecked(true);
   data.nameEdit = new TtLineEdit(this);
@@ -489,7 +467,6 @@ void TtTableWidget::setupRow(int row) {
     return createCellWrapper(content);
   };
 
-  // setCellWidget(row, 0, makeCell(data.enableBtn));
   setCellWidget(row, 0, makeCell(data.checkBtn));
   setCellWidget(row, 1, makeCell(data.nameEdit));
   setCellWidget(row, 2, makeCell(data.typeCombo));
@@ -592,6 +569,36 @@ int TtTableWidget::findRowIndex(QWidget *context, const int &col,
     }
   }
   return -1;
+}
+
+bool TtTableWidget::isRowVisible(int row) {
+  // return row >= verticalScrollBar()->value() &&
+  //        row <= verticalScrollBar()->value() + visibleRowCount();
+  if (row < 0 || row > rowCount()) {
+    // 这里退出了
+    qDebug() << "this exit";
+    return false;
+  }
+
+  // 当前垂直滚动条的位置
+  int scrollPos = verticalScrollBar()->value();
+
+  // 当前可视行数
+  int calculatedVisibleRows = visibleRowCount();
+
+  // 动态调整预加载行数，基于当前可见行数
+  int extraRows = qMax(2, calculatedVisibleRows / 5);
+  int visibleCount = calculatedVisibleRows + extraRows;
+
+  // qDebug() << "Row:" << row << "ScrollPos:" << scrollPos;
+  // qDebug() << "Visible rows:" << calculatedVisibleRows;  // 可见行数 11
+  // qDebug() << "Extra rows:" << extraRows;  // 额外预加载行数 2
+  // qDebug() << "Total visible count:" << visibleCount;  // 前者相加
+
+  // 判断行是否在可见范围内
+  // qDebug() << "return: "
+  //          << (row >= scrollPos && row <= (scrollPos + visibleCount));
+  return (row >= scrollPos && row <= (scrollPos + visibleCount));
 }
 
 QWidget *TtTableWidget::createHeaderCell(const QString &text, bool border) {
@@ -848,21 +855,45 @@ QWidget *TtTableWidget::createSeventhColumnWidget() {
 }
 
 int TtTableWidget::visibleRowCount() {
-  // 计算表格视图中可见的行数
-  if (!isVisible() || height() <= horizontalHeader()->height()) {
-    return 0;
+  // // 计算表格视图中可见的行数
+  // if (!isVisible() || height() <= horizontalHeader()->height()) {
+  //   return 0;
+  // }
+
+  // // 可见区域高度减去表头高度
+  // int availableHeight = viewport()->height();
+
+  // // 没有行或行高为0则返回0
+  // if (rowCount() <= 0 || rowHeight(0) <= 0) {
+  //   return 0;
+  // }
+
+  // // 假设所有行高度相同
+  // return availableHeight / rowHeight(0);
+  if (!isVisible()) {
+    return 10; // 如果不可见，返回默认值
   }
 
-  // 可见区域高度减去表头高度
+  // qDebug() << "Height:" << height();
+  // qDebug() << "Header height:" << horizontalHeader()->height();
+
+  // 可见区域的高度
   int availableHeight = viewport()->height();
+  // qDebug() << "Available height:" << availableHeight;  // 正确获取高度
 
-  // 没有行或行高为0则返回0
-  if (rowCount() <= 0 || rowHeight(0) <= 0) {
-    return 0;
+  // 使用第1行的高度作为标准行高（第0行可能是标题行）
+  int standardRowHeight = (rowCount() > 1) ? rowHeight(1) : 30;
+  if (standardRowHeight <= 0) {
+    standardRowHeight = 30; // 默认行高
   }
+  // qDebug() << "Standard row height:" << standardRowHeight;  // 30
 
-  // 假设所有行高度相同
-  return availableHeight / rowHeight(0);
+  // 计算实际可见行数，不强制最小值为10
+  int calculatedRows = availableHeight / standardRowHeight;
+  // qDebug() << "Calculated rows:" << calculatedRows;  // 11
+
+  // 如果计算结果合理，则使用它；否则使用默认值
+  return calculatedRows > 0 ? calculatedRows : 10;
 }
 
 TtTableWidget::HeaderWidget::~HeaderWidget() {}
@@ -1777,8 +1808,8 @@ void TtModbusTableWidget::setupRow(int row) {
   }
 
   TableRow data;
-  qDebug() << "this "
-           << this; // 往下移动的时候, 才会动态创建, 创建之后, 就固定存在了
+  // qDebug() << "this "
+  //          << this; // 往下移动的时候, 才会动态创建, 创建之后, 就固定存在了
   switch (type_) {
   case TtModbusRegisterType::Coils: {
     data.checkBtn = createCheckButton();

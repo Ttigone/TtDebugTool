@@ -178,8 +178,8 @@ void SerialWindow::saveSetting() {
   config_.insert("LuaScripts", luaScripts);
 
   // qDebug() << "send DIs";
-  qDebug() << int(send_type_);
-  qDebug() << int(display_type_);
+  // qDebug() << int(send_type_);
+  // qDebug() << int(display_type_);
 
   // 没有保存 ???
   config_.insert("SendType", QJsonValue(int(send_type_)));
@@ -196,6 +196,11 @@ void SerialWindow::setSetting(const QJsonObject &config) {
   title_->setText(config.value("WindowTitle").toString(tr("未读取正确的标题")));
   serial_setting_->setOldSettings(
       config.value("SerialSetting").toObject(QJsonObject()));
+
+  // BUG 保存成功, 但是还原失败
+  QJsonObject instructionTableData =
+      config.value("InstructionTable").toObject();
+  instruction_table_->setupTable(instructionTableData);
 
   // 读取 channel_info_
   if (config.contains("ChannelInfo")) {
@@ -237,9 +242,7 @@ void SerialWindow::setSetting(const QJsonObject &config) {
   } else if (sendType == 2) {
     chose_hex_btn_->setChecked(true);
   } else if (sendType == 3) {
-  } else {
   }
-
   int displayType = config.value("DisplayType").toInt();
   display_type_ = static_cast<TtTextFormat::Type>(displayType);
   if (displayType == 1) {
@@ -249,10 +252,6 @@ void SerialWindow::setSetting(const QJsonObject &config) {
     display_text_btn_->setChecked(false);
     display_hex_btn_->setChecked(true);
   }
-  // BUG 保存成功, 但是还原失败
-  QJsonObject instructionTableData =
-      config.value("InstructionTable").toObject();
-  instruction_table_->setupTable(instructionTableData);
 
   saved_ = true; // 初始时 saved_ 为真
   Ui::TtMessageBar::success(TtMessageBarType::Top, tr(""), tr("读取配置成功"),

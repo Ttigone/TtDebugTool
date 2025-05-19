@@ -16,12 +16,12 @@
 
 #include "ui/controls/TtTableView.h"
 
+#include "ui/controls/TtTerminalLexer.h"
 #include <lib/qtmaterialcheckable.h>
 #include <qtmaterialflatbutton.h>
 #include <qtmaterialradiobutton.h>
 #include <qtmaterialsnackbar.h>
 #include <qtmaterialtabs.h>
-#include <ui/controls/TtSerialLexer.h>
 
 #include <QTableView>
 #include <Qsci/qsciscintilla.h>
@@ -100,6 +100,7 @@ void FrameWindow::initUi() {
   Ui::TtHorizontalLayout *operationButtonLayout = new Ui::TtHorizontalLayout;
 
   save_btn_ = new Ui::TtSvgButton(":/sys/save_cfg.svg", this);
+  // 再次点击的颜色又有不同
   save_btn_->setSvgSize(18, 18);
 
   on_off_btn_ = new Ui::TtSvgButton(":/sys/start_up.svg", this);
@@ -201,8 +202,7 @@ void FrameWindow::initUi() {
   terminal_ = new QPlainTextEdit(this);
   terminal_->setReadOnly(true);
   terminal_->setFrameStyle(QFrame::NoFrame);
-  // BUG 内存泄漏
-  SerialHighlighter *lexer = new SerialHighlighter(terminal_->document());
+  lexer_ = std::make_unique<Ui::TtTerminalHighlighter>(terminal_->document());
 
   message_stacked_view_->addWidget(terminal_);
 
@@ -306,7 +306,6 @@ void FrameWindow::initUi() {
 
   // 栈显示窗口
   display_widget_->addWidget(messageEdit);
-  // BUG 缺少显示窗口
   display_widget_->addWidget(instruction_table_);
 
   display_widget_->setCurrentIndex(0);
@@ -345,14 +344,137 @@ void FrameWindow::initUi() {
   heartbeat_timer_ = new QTimer(this);
   heartbeat_timer_->setTimerType(Qt::TimerType::PreciseTimer);
   heartbeat_timer_->setInterval(0);
+
+  initSignalsConnection();
 }
 
 void FrameWindow::initSignalsConnection() {
   // Ui 界面的信号槽
   connect(instruction_table_, &Ui::TtTableWidget::rowsChanged, this,
-          [this]() { saved_ = false; });
+          // [this]() { saved_ = false; });
+          [this]() {
+            qDebug() << "table row changed";
+            setSaveStatus(false);
+          });
   connect(tabs_, &QtMaterialTabs::currentChanged, this,
           [this](int index) { display_widget_->setCurrentIndex(index); });
+  // BUG 缺少 title 的值改变信号
+  // connect(title)
+
+  connect(clear_history_, &Ui::TtSvgButton::clicked, [this]() {
+    message_model_->clearModelData();
+    terminal_->clear();
+  });
+
+  connect(this, &FrameWindow::savedChanged, this, [this](bool saved) {
+    // BUG 会进入两次的信号
+    // 有对应的信号, 但是 btn 的颜色没有改变
+    // 槽函数没有执行
+    qDebug() << "保存状态已改变";
+    if (saved) {
+      // 已保存状态 - 使用正常颜色
+      qDebug() << "Saving";
+      // 为什么显示的是第二个颜色
+      save_btn_->setColors(QColor("#2196F3"), QColor("#2196F3")); // 黑色/蓝色
+      save_btn_->setToolTip(tr("配置已保存"));
+      // 进入了并成功保存
+    } else {
+      // 为什么会进入两次
+      qDebug() << "no Saving";
+      // 未保存状态 - 使用提示颜色
+      save_btn_->setColors(QColor("#F44336"), QColor("#FF5252")); // 红色系
+      save_btn_->setToolTip(tr("有未保存的更改，点击保存"));
+    }
+  });
+  // emit savedChanged(saved_); // 初始化时发出信号
+}
+
+bool FrameWindow::isValidHexString(const QString &hexString,
+                                   QString *errorMsg) {
+  // 1. 检查空字符串
+  if (hexString.isEmpty()) {
+    if (errorMsg)
+      *errorMsg = QObject::tr("十六进制字符串不能为空");
+    return false;
+  }
+
+  // 2. 移除所有空白字符
+  QString trimmed = hexString.simplified().remove(' ');
+
+  // 3. 检查是否只包含有效的十六进制字符 (0-9, A-F, a-f)
+  QRegularExpression hexPattern("^[0-9A-Fa-f]+$");
+  QRegularExpressionMatch match = hexPattern.match(trimmed);
+
+  if (!match.hasMatch()) {
+    // 找出第一个无效字符及其位置
+    for (int i = 0; i < trimmed.length(); ++i) {
+      QChar ch = trimmed[i];
+      if (!((ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'F') ||
+            (ch >= 'a' && ch <= 'f'))) {
+        if (errorMsg) {
+          if (ch.unicode() > 127) {
+            // 非ASCII字符（可能是中文等）
+            *errorMsg =
+                QObject::tr("字符串包含非法字符(如中文或特殊符号)，位置: %1")
+                    .arg(i + 1);
+          } else {
+            // ASCII字符但不是十六进制
+            *errorMsg = QObject::tr("字符串包含非十六进制字符 '%1'，位置: %2")
+                            .arg(ch)
+                            .arg(i + 1);
+          }
+        }
+        return false;
+      }
+    }
+  }
+
+  // 4. 检查长度是否为偶数
+  if (trimmed.length() % 2 != 0) {
+    if (errorMsg)
+      *errorMsg = QObject::tr("十六进制字符串长度必须为偶数");
+    return false;
+  }
+
+  return true;
+}
+
+QString FrameWindow::getValidHexString(const QString &input,
+                                       QString *errorMsg) {
+  // 移除所有非十六进制字符
+  QString hexStr = input.remove(QRegularExpression("[^0-9A-Fa-f]"));
+
+  // 检查处理后的字符串是否为空
+  if (hexStr.isEmpty()) {
+    if (errorMsg)
+      *errorMsg = QObject::tr("输入不包含有效的十六进制字符");
+    return QString();
+  }
+
+  // 处理奇数长度
+  if (hexStr.length() % 2 != 0) {
+    for (int i = 0; i < hexStr.length(); i += 2) {
+      if (i + 1 >= hexStr.length()) {
+        hexStr.insert(i, '0');
+        break;
+      }
+    }
+  }
+
+  return hexStr;
+}
+
+void FrameWindow::setSaveStatus(bool state) {
+  // t f f f f f f t, 最后是 t 点击保存也是 t
+
+  qDebug() << "save: " << state;
+  // 相等的状态
+  if (saved_ != state) {
+    saved_ = state;
+    // 信号没有发送
+    qDebug() << "send signals: ";
+    emit savedChanged(state);
+  }
 }
 
 void FrameWindow::switchToEditMode() {
@@ -381,8 +503,10 @@ void FrameWindow::switchToDisplayMode() {
   // anim->setStartValue(0);
   // anim->setEndValue(1);
   // anim->start(QAbstractAnimation::DeleteWhenStopped);
+  // 改变显示的文本
   //  切换显示模式
   title_->setText(title_edit_->text());
+  setSaveStatus(false);
   stack_->setCurrentWidget(original_widget_);
 }
 
@@ -422,6 +546,91 @@ void FrameWindow::refreshTerminalDisplay() {
   }
 
   terminal_->setUpdatesEnabled(true);
+}
+
+void FrameWindow::showMessage(const QByteArray &data, bool out) {
+  QDateTime now = QDateTime::currentDateTime();
+  QString timestamp = now.toString("[yyyy-MM-dd hh:mm:ss.zzz]");
+  QString formattedMessage;
+
+  if (out) {
+    formattedMessage += "[Tx]";
+  } else {
+    formattedMessage += "[Rx]";
+  }
+
+  formattedMessage += ' ';
+  formattedMessage.append(timestamp);
+  formattedMessage += ' ';
+
+  if (display_type_ == TtTextFormat::TEXT) {
+    formattedMessage.append(data);
+  } else if (display_type_ == TtTextFormat::HEX) {
+    formattedMessage.append(data.toHex(' ').toUpper().trimmed());
+  }
+  terminal_->appendPlainText(formattedMessage);
+
+  auto *msg = new Ui::TtChatMessage();
+  msg->setContent(data);
+  msg->setRawData(data);
+  msg->setTimestamp(now);
+  if (out) {
+    msg->setOutgoing(true);
+    send_byte_count_ += data.size();
+    send_byte_->setText(QString(tr("发送字节数:%1 B")).arg(send_byte_count_));
+  } else {
+    msg->setOutgoing(false);
+    recv_byte_count_ += data.size();
+    recv_byte_->setText(QString(tr("接收字节数:%1 B")).arg(recv_byte_count_));
+  }
+  msg->setBubbleColor(QColor("#DCF8C6"));
+  QList<Ui::TtChatMessage *> list;
+  list.append(msg);
+  message_model_->appendMessages(list);
+  message_view_->scrollToBottom();
+}
+
+void FrameWindow::showMessage(const QString &data, bool out) {
+  QByteArray dataUtf8 = data.toUtf8();
+  QDateTime now = QDateTime::currentDateTime();
+  QString timestamp = now.toString("[yyyy-MM-dd hh:mm:ss.zzz]");
+  QString formattedMessage;
+  if (out) {
+    formattedMessage += "[Tx]";
+  } else {
+    formattedMessage += "[Rx]";
+  }
+  formattedMessage += ' ';
+  formattedMessage.append(timestamp);
+  formattedMessage += ' ';
+
+  if (display_type_ == TtTextFormat::TEXT) {
+    // TEXT 格式, data 保持, 有问题
+    formattedMessage.append(data);
+  } else if (display_type_ == TtTextFormat::HEX) {
+    qDebug() << "hear" << dataUtf8.toHex(' ').toUpper().trimmed();
+    formattedMessage.append(dataUtf8.toHex(' ').toUpper().trimmed());
+  }
+  terminal_->appendPlainText(formattedMessage);
+
+  auto *msg = new Ui::TtChatMessage();
+  msg->setContent(data);
+  msg->setRawData(data.toUtf8());
+  msg->setTimestamp(now);
+  if (out) {
+    msg->setOutgoing(true);
+    send_byte_count_ += data.size();
+    send_byte_->setText(QString(tr("发送字节数:%1 B")).arg(send_byte_count_));
+  } else {
+    msg->setOutgoing(false);
+    recv_byte_count_ += data.size();
+    recv_byte_->setText(QString(tr("接收字节数:%1 B")).arg(recv_byte_count_));
+  }
+  msg->setBubbleColor(QColor("#DCF8C6"));
+  QList<Ui::TtChatMessage *> list;
+  list.append(msg);
+  message_model_->appendMessages(list);
+  message_view_->scrollToBottom();
 }
 
 } // namespace Window

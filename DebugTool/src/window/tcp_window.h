@@ -10,6 +10,7 @@
 #include <QQueue>
 #include <QtMaterialFlatButton.h>
 
+#include "data/communication_metadata.h"
 #include <ui/controls/TtLuaInputBox.h>
 
 QT_BEGIN_NAMESPACE
@@ -84,10 +85,6 @@ private slots:
   /// 在 times 时间后发送 data
   void sendMessageToPort(const QString &data, const int &times);
 
-  ///
-  /// @brief setHeartbeartContent
-  /// 发送心跳内容
-  void setHeartbeartContent();
   void updateServerStatus();
   ///
   /// @brief dataReceived
@@ -95,17 +92,53 @@ private slots:
   /// 数据接收
   void dataReceived(const QByteArray &data);
 
+  ///
+  /// @brief setHeartbeartContent
+  /// 发送心跳内容
+  void setHeartbeartContent();
+
+  ///
+  /// @brief sendInstructionTableContent
+  /// @param text 消息本体
+  /// @param type   类型
+  /// @param times  间隔时间
+  /// 发送表格的内容
+  void sendInstructionTableContent(const QString &text, TtTextFormat::Type type,
+                                   uint32_t times);
+  ///
+  /// @brief sendInstructionTableContent
+  /// @param msg
+  /// 构造 MsgInfo
+  void sendInstructionTableContent(const Data::MsgInfo &msg);
+
 private:
   void init();
   void connectSignals();
+
+  ///
+  /// @brief setControlState
+  /// @param state
+  /// 设置主界面控件状态
+  void setControlState(bool state);
+
   void sendMessage(const QString &data,
                    TtTextFormat::Type type = TtTextFormat::TEXT);
-  // 文本发送 hex 格式 并显示
-  // 数据接收显示 hex
-  void showMessage(const QByteArray &data, bool out = true); // 为 hex 进制提供
-  // 分开
-  void showMessage(const QString &data, bool out = true);
+
+  // // 文本发送 hex 格式 并显示
+  // // 数据接收显示 hex
+  // void showMessage(const QByteArray &data, bool out = true); // 为 hex
+  // 进制提供
+  // // 分开
+  // void showMessage(const QString &data, bool out = true);
+
   bool isEnableHeartbeart();
+
+  ///
+  /// @brief sendPackagedData
+  /// @param data
+  /// @param isHeartbeat
+  /// 处理分包发送
+  void sendPackagedData(const QByteArray &data, bool isHeartbeat = false);
 
   Core::TcpClient *tcp_client_{nullptr};
   Core::TcpServer *tcp_server_{nullptr};

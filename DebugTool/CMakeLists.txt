@@ -38,6 +38,8 @@ set(PROJECT_SOURCES
     ${src_loc}/pch.h
     ${src_loc}/Def.h
 
+    ${src_loc}/data/communication_metadata.h
+
     ${src_loc}/core/serial_port.h ${src_loc}/core/serial_port.cpp
     ${src_loc}/core/serial_helper.h ${src_loc}/core/serial_helper.cpp
     ${src_loc}/core/udp_server.h ${src_loc}/core/udp_server.cpp
@@ -94,7 +96,6 @@ set(PROJECT_SOURCES
     ${src_loc}/ui/controls/TtTableView.h ${src_loc}/ui/controls/TtTableView.cpp
     ${src_loc}/ui/controls/TtModbusPlot.h ${src_loc}/ui/controls/TtModbusPlot.cpp
     ${src_loc}/ui/controls/TtDownloadDialog.h ${src_loc}/ui/controls/TtDownloadDialog.cpp
-    ${src_loc}/ui/controls/TtSerialLexer.h ${src_loc}/ui/controls/TtSerialLexer.cpp
     ${src_loc}/ui/controls/TtQCPItemRichText.h ${src_loc}/ui/controls/TtQCPItemRichText.cpp
     ${src_loc}/ui/controls/TtQCPItemRichText.h ${src_loc}/ui/controls/TtQCPItemRichText.cpp
     ${src_loc}/ui/controls/TtLuaInputBox.h ${src_loc}/ui/controls/TtLuaInputBox.cpp
@@ -102,6 +103,7 @@ set(PROJECT_SOURCES
     ${src_loc}/ui/controls/TtChannelButtonEditorDialog.h ${src_loc}/ui/controls/TtChannelButtonEditorDialog.cpp
     ${src_loc}/ui/controls/TtSerialPortPlot.h ${src_loc}/ui/controls/TtSerialPortPlot.cpp
     ${src_loc}/ui/controls/TtPlotWidget.h ${src_loc}/ui/controls/TtPlotWidget.cpp
+    ${src_loc}/ui/controls/TtTerminalLexer.h ${src_loc}/ui/controls/TtTerminalLexer.cpp
 )
 
 # Apply the macro

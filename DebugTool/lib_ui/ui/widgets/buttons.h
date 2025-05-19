@@ -313,6 +313,7 @@ protected:
   void leaveEvent(QEvent *event) override;
   void mousePressEvent(QMouseEvent *event) override;
   void mouseReleaseEvent(QMouseEvent *event) override;
+  void mouseDoubleClickEvent(QMouseEvent *event) override;
   QSize sizeHint() const override;
 
 private:

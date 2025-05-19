@@ -1,10 +1,11 @@
 #include "udp_window.h"
 
-#include <io.h>
 #include <ui/control/ChatWidget/TtChatMessage.h>
 #include <ui/control/ChatWidget/TtChatMessageModel.h>
 #include <ui/control/ChatWidget/TtChatView.h>
 #include <ui/control/TtLineEdit.h>
+#include <ui/control/TtRadioButton.h>
+#include <ui/control/TtTextButton.h>
 #include <ui/layout/horizontal_layout.h>
 #include <ui/layout/vertical_layout.h>
 #include <ui/widgets/buttons.h>
@@ -34,12 +35,7 @@ UdpWindow::UdpWindow(TtProtocolType::ProtocolRole role, QWidget *parent)
   } else if (role_ == TtProtocolType::Server) {
     connect(udp_server_, &Core::UdpServer::datagramReceived,
             [this](const QString &peerInfo, const quint16 &peerPort,
-                   const QByteArray &message) {
-              // 显示
-              onDataReceived(message);
-              // qDebug() << "From" << peerInfo << "Received:" << peerPort;
-              // qDebug() << "Data:" << message;
-            });
+                   const QByteArray &message) { dataReceived(message); });
 
     QObject::connect(udp_server_, &Core::UdpServer::errorOccurred,
                      [this](const QString &error) {
@@ -61,7 +57,7 @@ bool UdpWindow::saveState() { return saved_; }
 void UdpWindow::setSaveState(bool state) { saved_ = state; }
 
 void UdpWindow::saveSetting() {
-  config_.insert("Type", TtFunctionalCategory::Communication);
+  // 外部调用 saveSetting
   config_.insert("WindowTitle", title_->text());
   if (role_ == TtProtocolType::Client) {
     config_.insert("Type", TtFunctionalCategory::Communication);
@@ -73,7 +69,7 @@ void UdpWindow::saveSetting() {
                    udp_server_setting_->getUdpServerSetting());
   }
   config_.insert("InstructionTable", instruction_table_->getTableRecord());
-  saved_ = true;
+  setSaveStatus(true);
   emit requestSaveConfig();
 }
 
@@ -86,43 +82,35 @@ void UdpWindow::setSetting(const QJsonObject &config) {
     udp_server_setting_->setOldSettings(
         config.value("UdpServerSetting").toObject(QJsonObject()));
   }
-  saved_ = true;
+  QJsonObject instructionTableData =
+      config.value("InstructionTable").toObject();
+  instruction_table_->setupTable(instructionTableData);
+
+  int sendType = config.value("SendType").toInt();
+  send_type_ = static_cast<TtTextFormat::Type>(sendType);
+  if (sendType == 1) {
+    chose_text_btn_->setChecked(true);
+  } else if (sendType == 2) {
+    chose_hex_btn_->setChecked(true);
+  } else if (sendType == 3) {
+  }
+  int displayType = config.value("DisplayType").toInt();
+  display_type_ = static_cast<TtTextFormat::Type>(displayType);
+  if (displayType == 1) {
+    display_text_btn_->setChecked(true);
+    display_hex_btn_->setChecked(false);
+  } else if (displayType == 2) {
+    display_text_btn_->setChecked(false);
+    display_hex_btn_->setChecked(true);
+  }
+
+  // 读取配置
+  setSaveStatus(true);
   Ui::TtMessageBar::success(TtMessageBarType::Top, tr(""), tr("读取配置成功"),
                             1500);
 }
 
 QString UdpWindow::getTitle() const { return title_->text(); }
-
-void UdpWindow::switchToEditMode() {
-  QGraphicsOpacityEffect *effect = new QGraphicsOpacityEffect(title_edit_);
-  title_edit_->setGraphicsEffect(effect);
-  QPropertyAnimation *anim = new QPropertyAnimation(effect, "opacity");
-  anim->setDuration(300);
-  anim->setStartValue(0);
-  anim->setEndValue(1);
-  anim->start(QAbstractAnimation::DeleteWhenStopped);
-
-  // 预先获取之前的标题
-  title_edit_->setText(title_->text());
-  // 显示 edit 模式
-  stack_->setCurrentWidget(edit_widget_);
-  // 获取焦点
-  title_edit_->setFocus(); // 自动聚焦输入框
-}
-
-void UdpWindow::switchToDisplayMode() {
-  // QGraphicsOpacityEffect* effect = new
-  // QGraphicsOpacityEffect(original_widget_);
-  // original_widget_->setGraphicsEffect(effect);
-  // QPropertyAnimation* anim = new QPropertyAnimation(effect, "opacity");
-  // anim->setDuration(300);
-  // anim->setStartValue(0);
-  // anim->setEndValue(1);
-  // anim->start(QAbstractAnimation::DeleteWhenStopped);
-  //  切换显示模式
-  title_->setText(title_edit_->text());
-  stack_->setCurrentWidget(original_widget_);
-}
 
 void UdpWindow::updateServerStatus() {
   // const bool running = tcp_server_->isRunning();
@@ -131,280 +119,97 @@ void UdpWindow::updateServerStatus() {
   // qDebug() << text;
 }
 
-void UdpWindow::onDataReceived(const QByteArray &data) {
+void UdpWindow::dataReceived(const QByteArray &data) {
   // recv_byte_count += data.size();
-  recv_byte_count_ += data.size();
-  auto tmp = new Ui::TtChatMessage();
-  tmp->setContent(data);
-  tmp->setOutgoing(false);
-  tmp->setBubbleColor(QColor("#0ea5e9"));
-  QList<Ui::TtChatMessage *> list;
-  list.append(tmp);
-  message_model_->appendMessages(list);
-  recv_byte_->setText(QString("接收字节数: %1 B").arg(recv_byte_count_));
-  message_view_->scrollToBottom();
+  // recv_byte_count_ += data.size();
+  // auto tmp = new Ui::TtChatMessage();
+  // tmp->setContent(data);
+  // tmp->setOutgoing(false);
+  // tmp->setBubbleColor(QColor("#0ea5e9"));
+  // QList<Ui::TtChatMessage *> list;
+  // list.append(tmp);
+  // message_model_->appendMessages(list);
+  // recv_byte_->setText(QString("接收字节数: %1 B").arg(recv_byte_count_));
+  // message_view_->scrollToBottom();
+  qDebug() << "data: " << data;
+  showMessage(data, false);
+}
+
+void UdpWindow::sendMessageToPort() {
+  QString editorText = editor_->text();
+  if (editor_->text().isEmpty()) {
+    return;
+  }
+  // radio button 切换发送类型
+  // 适用于 分包机制
+  sendMessage(editorText, send_type_);
+}
+
+void UdpWindow::sendMessageToPort(const QString &data) {
+  qDebug() << "udp send" << data;
+  // 原有的
+  // 心跳不需要添加
+  // 平均有 10ms 的延时
+  // 如果有分包, 需要应用分包, 否则直接发送
+  sendMessage(data);
+}
+
+void UdpWindow::sendMessageToPort(const QString &data, const int &times) {
+  QTimer::singleShot(times, this, [this, data]() {
+    if (!opened_) {
+      Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""), tr("串口未打开"),
+                              1500, this);
+      return;
+    }
+    if (role_ == TtProtocolType::Client) {
+      udp_client_->sendMessage(data.toUtf8());
+    } else {
+      // udp_server_->sendMessageToClients(data.toUtf8());
+      udp_server_->sendMessage(data.toUtf8());
+      ;
+    }
+    showMessage(data);
+  });
 }
 
 void UdpWindow::init() {
-
-  // main_layout_ = new Ui::TtVerticalLayout(this);
-
-  // if (role_ == TtProtocolType::Client) {
-  //   udp_client_ = new Core::UdpClient;
-  //   title_ = new Ui::TtNormalLabel(tr("未命名的 UDP 连接"));
-  // } else if (role_ == TtProtocolType::Server) {
-  //   udp_server_ = new Core::UdpServer;
-  //   title_ = new Ui::TtNormalLabel(tr("未命名的 UDP 模拟服务"));
-  // }
-  // // 编辑命名按钮
-  // modify_title_btn_ = new Ui::TtSvgButton(":/sys/edit_name.svg", this);
-  // modify_title_btn_->setSvgSize(18, 18);
-
-  // // 创建原始界面
-  // original_widget_ = new QWidget(this);
-  // Ui::TtHorizontalLayout *tmpl = new
-  // Ui::TtHorizontalLayout(original_widget_); tmpl->addSpacerItem(new
-  // QSpacerItem(10, 10)); tmpl->addWidget(title_, 0, Qt::AlignLeft);
-  // tmpl->addSpacerItem(new QSpacerItem(10, 10));
-  // tmpl->addWidget(modify_title_btn_);
-  // tmpl->addStretch();
-
-  // // 创建编辑界面
-  // edit_widget_ = new QWidget(this);
-  // title_edit_ = new Ui::TtLineEdit(this);
-
-  // Ui::TtHorizontalLayout *edit_layout =
-  //     new Ui::TtHorizontalLayout(edit_widget_);
-  // edit_layout->addSpacerItem(new QSpacerItem(10, 10));
-  // edit_layout->addWidget(title_edit_);
-  // edit_layout->addStretch();
-
-  // // 使用堆叠布局
-  // stack_ = new QStackedWidget(this);
-  // stack_->setMaximumHeight(40);
-  // stack_->addWidget(original_widget_);
-  // stack_->addWidget(edit_widget_);
-
-  // // 优化后的信号连接（仅需2个连接点）
-  // connect(modify_title_btn_, &Ui::TtSvgButton::clicked, this,
-  //         &UdpWindow::switchToEditMode);
-
-  // Ui::TtHorizontalLayout *tmpP1 = new Ui::TtHorizontalLayout;
-  // tmpP1->addWidget(stack_);
-
-  // Ui::TtHorizontalLayout *tmpAll = new Ui::TtHorizontalLayout;
-
-  // // 保存 lambda 表达式
-  // auto handleSave = [this]() {
-  //   // qDebug() << "失去";
-  //   if (!title_edit_->text().isEmpty()) {
-  //     switchToDisplayMode();
-  //   } else {
-  //     title_edit_->setPlaceholderText(tr("名称不能为空！"));
-  //   }
-  // };
-
-  // connect(title_edit_, &QLineEdit::editingFinished, this, handleSave);
-
-  // Ui::TtHorizontalLayout *tmpl2 = new Ui::TtHorizontalLayout;
-  // // 保存按钮
-  // save_btn_ = new Ui::TtSvgButton(":/sys/save_cfg.svg", this);
-  // save_btn_->setSvgSize(18, 18);
-  // // 删除按钮, 是需要保存在 leftbar 才会添加的
-
-  // // 开关按钮
-  // on_off_btn_ = new Ui::TtSvgButton(":/sys/start_up.svg", this);
-  // on_off_btn_->setSvgSize(18, 18);
-  // on_off_btn_->setColors(Qt::black, Qt::red);
-
-  // tmpl2->addWidget(save_btn_);
-  // tmpl2->addWidget(on_off_btn_, 0, Qt::AlignRight);
-  // tmpl2->addSpacerItem(new QSpacerItem(10, 10));
-
-  // tmpAll->addLayout(tmpP1);
-  // tmpAll->addLayout(tmpl2);
-
-  // main_layout_->addLayout(tmpAll);
-
-  // // 左右分隔器
-  // QSplitter *mainSplitter = new QSplitter;
-  // mainSplitter->setOrientation(Qt::Horizontal);
-
-  // // 上方功能按钮
-  // QWidget *chose_function = new QWidget;
-  // Ui::TtHorizontalLayout *chose_function_layout = new Ui::TtHorizontalLayout;
-  // chose_function_layout->setSpacing(5);
-  // chose_function->setLayout(chose_function_layout);
-
-  // chose_function_layout->addStretch();
-  // Ui::TtSvgButton *clear_history =
-  //     new Ui::TtSvgButton(":/sys/trash.svg", chose_function);
-  // clear_history->setSvgSize(18, 18);
-
-  // // auto bgr = new CustomButtonGroup(chose_function);
-  // //  选择 text/hex
-  // // chose_function_layout->addWidget(bgr);
-
-  // // 清除历史按钮
-  // chose_function_layout->addWidget(clear_history);
-
-  // // 中间的弹簧
-
-  // // 上下分隔器
-  // QSplitter *VSplitter = new QSplitter;
-  // VSplitter->setOrientation(Qt::Vertical);
-  // VSplitter->setContentsMargins(QMargins());
-  // // VSplitter->setSizes();
-
-  // // 上方选择功能以及信息框
-  // QWidget *cont = new QWidget;
-  // Ui::TtVerticalLayout *cont_layout = new Ui::TtVerticalLayout(cont);
-
-  // message_view_ = new Ui::TtChatView(cont);
-  // message_view_->setResizeMode(QListView::Adjust);
-  // message_view_->setUniformItemSizes(false); // 允许每个项具有不同的大小
-  // message_view_->setMouseTracking(true);
-  // message_view_->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
-  // cont_layout->addWidget(chose_function);
-  // cont_layout->addWidget(message_view_);
-
-  // message_model_ = new Ui::TtChatMessageModel;
-  // QList<Ui::TtChatMessage *> list;
-
-  // message_view_->setModel(message_model_);
-  // message_view_->scrollToBottom();
-
-  // QWidget *bottomAll = new QWidget;
-  // Ui::TtVerticalLayout *bottomAllLayout = new
-  // Ui::TtVerticalLayout(bottomAll);
-
-  // // 下方自定义指令
-  // QWidget *tabs_and_count = new QWidget(this);
-  // Ui::TtHorizontalLayout *tacLayout = new Ui::TtHorizontalLayout();
-  // tabs_and_count->setLayout(tacLayout);
-
-  // auto m_tabs = new QtMaterialTabs;
-  // // m_tabs->setBackgroundColor()
-  // m_tabs->addTab(tr("手动"));
-  // // m_tabs
-  // m_tabs->addTab(tr("片段"));
-  // // m_tabs->setBackgroundColor(QColor::fromRgbF(255, 255, 255));
-  // m_tabs->setMinimumWidth(80);
-
-  // tacLayout->addWidget(m_tabs);
-  // tacLayout->addStretch();
-
-  // // 显示发送字节和接收字节数
-  // send_byte = new Ui::TtNormalLabel(tr("发送字节数: 0 B"), tabs_and_count);
-  // send_byte->setFixedHeight(30);
-  // recv_byte = new Ui::TtNormalLabel(tr("接收字节数: 0 B"), tabs_and_count);
-  // recv_byte->setFixedHeight(30);
-
-  // tacLayout->addWidget(send_byte);
-  // tacLayout->addWidget(recv_byte);
-
-  // QStackedLayout *layout = new QStackedLayout;
-  // layout->setContentsMargins(QMargins());
-  // layout->setSpacing(0);
-  // QWidget *basicWidget = new QWidget(this);
-  // basicWidget->setLayout(layout);
-
-  // QWidget *messageEdit = new QWidget(basicWidget);
-  // // messageEdit
-  // QVBoxLayout *messageEditLayout = new QVBoxLayout;
-  // messageEdit->setLayout(messageEditLayout);
-  // messageEditLayout->setContentsMargins(3, 3, 3, 3);
-  // messageEditLayout->setSpacing(0);
-
-  // editor = new QsciScintilla(messageEdit);
-  // editor->setWrapMode(QsciScintilla::WrapWord);
-  // editor->setWrapVisualFlags(QsciScintilla::WrapFlagInMargin,
-  //                            QsciScintilla::WrapFlagInMargin, 0);
-  // editor->setCaretWidth(10);
-  // editor->setMarginType(1, QsciScintilla::NumberMargin);
-
-  // messageEditLayout->addWidget(editor);
-
-  // QWidget *bottomBtnWidget = new QWidget(messageEdit);
-  // bottomBtnWidget->setMinimumHeight(40);
-  // // bottomBtnWidget->setStyleSheet("back)ground-color: red");
-  // Ui::TtHorizontalLayout *bottomBtnWidgetLayout = new Ui::TtHorizontalLayout;
-  // bottomBtnWidgetLayout->setContentsMargins(QMargins());
-  // bottomBtnWidgetLayout->setSpacing(0);
-  // bottomBtnWidget->setLayout(bottomBtnWidgetLayout);
-
-  // QtMaterialRadioButton *choseText = new
-  // QtMaterialRadioButton(bottomBtnWidget); QtMaterialRadioButton *choseHex =
-  // new QtMaterialRadioButton(bottomBtnWidget); choseText->setText("TEXT");
-  // choseHex->setText("HEX");
-
-  // QtMaterialFlatButton *sendBtn = new QtMaterialFlatButton(bottomBtnWidget);
-  // sendBtn->setIcon(QIcon(":/sys/send.svg"));
-  // bottomBtnWidgetLayout->addWidget(choseText);
-  // bottomBtnWidgetLayout->addWidget(choseHex);
-  // bottomBtnWidgetLayout->addStretch();
-  // bottomBtnWidgetLayout->addWidget(sendBtn);
-
-  // messageEditLayout->addWidget(bottomBtnWidget);
-
-  // instruction_table_ = new Ui::TtTableWidget(basicWidget);
-
-  // layout->addWidget(messageEdit);
-  // layout->addWidget(instruction_table_);
-  // layout->setCurrentIndex(0);
-
-  // connect(m_tabs, &QtMaterialTabs::currentChanged,
-  //         [this, layout](int index) { layout->setCurrentIndex(index); });
-
-  // bottomAllLayout->addWidget(tabs_and_count);
-  // bottomAllLayout->addWidget(basicWidget);
-
-  // VSplitter->addWidget(cont);
-  // VSplitter->addWidget(bottomAll);
-
-  // // 左右分区
-  // mainSplitter->addWidget(VSplitter);
-
-  // // 根据不同的角色，选择添加不同的窗口
-  // if (role_ == TtProtocolType::Client) {
-  //   udp_client_setting_ = new Widget::UdpClientSetting;
-  //   mainSplitter->addWidget(udp_client_setting_);
-  // } else {
-  //   udp_server_setting_ = new Widget::UdpServerSetting;
-  //   mainSplitter->addWidget(udp_server_setting_);
-  // }
-
-  // // 主界面是左右分隔
-  // main_layout_->addWidget(mainSplitter);
-
   initUi();
-
   if (role_ == TtProtocolType::Client) {
     udp_client_ = new Core::UdpClient;
-    title_ = new Ui::TtNormalLabel(tr("未命名的 UDP 连接"));
-    udp_client_setting_ = new Widget::UdpClientSetting;
+    title_->setText(tr("未命名的 UDP 连接"));
+    udp_client_setting_ = new Widget::UdpClientSetting(this);
     serRightWidget(udp_client_setting_);
   } else if (role_ == TtProtocolType::Server) {
     udp_server_ = new Core::UdpServer;
-    title_ = new Ui::TtNormalLabel(tr("未命名的 UDP 模拟服务"));
-    udp_server_setting_ = new Widget::UdpServerSetting;
+    title_->setText(tr("未命名的 UDP 模拟服务"));
+    udp_server_setting_ = new Widget::UdpServerSetting(this);
     serRightWidget(udp_client_setting_);
   }
 }
 
 void UdpWindow::connectSignals() {
+  initSignalsConnection();
+
   connect(save_btn_, &Ui::TtSvgButton::clicked, this, &UdpWindow::saveSetting);
-  connect(on_off_btn_, &Ui::TtSvgButton::clicked, [this]() {
+
+  connect(on_off_btn_, &Ui::TtSvgButton::clicked, this, [this]() {
     if (opened_) {
       if (role_ == TtProtocolType::Client) {
         udp_client_->close();
       } else if (role_ == TtProtocolType::Server) {
         udp_server_->close();
       }
+      opened_ = false;
+      on_off_btn_->setChecked(false);
+      send_package_timer_->stop();
+      heartbeat_timer_->stop();
+      msg_queue_.clear();
     } else {
       if (role_ == TtProtocolType::Client) {
+        // 客户端
         udp_client_->connect(udp_client_setting_->getUdpClientConfiguration());
       } else if (role_ == TtProtocolType::Server) {
+        // 服务端
         if (udp_server_->listen(
                 udp_server_setting_->getUdpServerConfiguration())) {
           opened_ = true;
@@ -412,32 +217,320 @@ void UdpWindow::connectSignals() {
           opened_ = false;
         }
       }
+      opened_ = true;
+
+      send_package_timer_->start();
+      // 心跳需要间隔
+      if (heartbeat_timer_->interval() != 0) {
+        heartbeat_timer_->start();
+      } else {
+        heartbeat_timer_->stop();
+      }
+    }
+    setControlState(!opened_);
+  });
+
+  connect(send_btn_, &QtMaterialFlatButton::clicked, this,
+          qOverload<>(&UdpWindow::sendMessageToPort));
+
+  if (role_ == TtProtocolType::Client) {
+    connect(udp_client_setting_,
+            &Widget::UdpClientSetting::sendPackageMaxSizeChanged, this,
+            [this](const uint16_t size) {
+              if (package_size_ != size) {
+                package_size_ = size;
+                qDebug() << "packageSize: " << package_size_;
+              }
+            });
+    connect(udp_client_setting_, &Widget::FrameSetting::settingChanged, this,
+            [this]() {
+              qDebug() << "changed savestate";
+              setSaveStatus(false);
+            });
+
+    connect(udp_client_setting_,
+            &Widget::FrameSetting::sendPackageIntervalChanged, this,
+            [this](const uint32_t &interval) {
+              qDebug() << "interval: " << interval;
+              send_package_timer_->setInterval(interval);
+            });
+
+  } else if (role_ == TtProtocolType::Server) {
+    connect(udp_server_setting_, &Widget::FrameSetting::settingChanged, this,
+            [this]() {
+              // qDebug() << "saved Changed false";
+              // saved_ = false;
+              setSaveStatus(false);
+            });
+  }
+
+  connect(send_package_timer_, &QTimer::timeout, this, [this] {
+    if (!opened_) {
+      Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""), tr("端口未链接"),
+                              1500, this);
+      msg_queue_.clear();
+      return;
+    }
+    if (!msg_queue_.isEmpty()) {
+      QString package = msg_queue_.dequeue();
+      send_byte_count_ += package.size();
+      QByteArray dataUtf8;
+      bool isHexMode =
+          (send_type_ == TtTextFormat::HEX) ||
+          (heart_beat_type_ == TtTextFormat::HEX && isEnableHeartbeart());
+      if (isHexMode) {
+        QString hexStr = package.remove(QRegularExpression("[^0-9A-Fa-f]"));
+        for (int i = 0; i < hexStr.length(); i += 2) {
+          if (i + 1 >= hexStr.length()) {
+            // 在未成对的位置前插入0
+            hexStr.insert(i, '0');
+          }
+        }
+        dataUtf8 = QByteArray::fromHex(hexStr.toUtf8());
+      } else {
+        dataUtf8 = package.toUtf8();
+      }
+      if (!dataUtf8.isEmpty()) {
+        if (role_ == TtProtocolType::Client) {
+          udp_client_->sendMessage(dataUtf8);
+        } else if (role_ == TtProtocolType::Server) {
+          // tcp_server_->sendMessageToClients(dataUtf8);
+        }
+
+        send_byte_count_ += dataUtf8.size();
+        send_byte_->setText(QString("发送字节数: %1 B").arg(send_byte_count_));
+        showMessage(dataUtf8, true);
+      }
     }
   });
 
-  connect(clear_history_, &Ui::TtSvgButton::clicked,
-          [this]() { message_model_->clearModelData(); });
+  connect(heartbeat_timer_, &QTimer::timeout, this, [this] {
+    setHeartbeartContent(); // 适用于发送包间隔
+  });
 
-  connect(send_btn_, &QtMaterialFlatButton::clicked, [this]() {
-    QString data = editor_->text();
-    send_byte_count_ += data.size();
-    auto tmp = new Ui::TtChatMessage();
-    tmp->setContent(data);
-    tmp->setOutgoing(true);
-    tmp->setBubbleColor(QColor("#DCF8C6"));
-    QList<Ui::TtChatMessage *> list;
-    list.append(tmp);
-    message_model_->appendMessages(list);
+  connect(chose_hex_btn_, &Ui::TtRadioButton::toggled, this,
+          [this](bool checked) {
+            if (checked) {
+              // 一直点击
+              if (send_type_ != TtTextFormat::HEX) {
+                send_type_ = TtTextFormat::HEX;
+                setSaveStatus(false);
+              }
+            }
+          });
+  connect(chose_text_btn_, &Ui::TtRadioButton::toggled, this,
+          [this](bool checked) {
+            if (checked) {
+              if (send_type_ != TtTextFormat::TEXT) {
+                send_type_ = TtTextFormat::TEXT;
+                setSaveStatus(false);
+              }
+            }
+          });
+
+  connect(instruction_table_, &Ui::TtTableWidget::sendRowMsg, this,
+          qOverload<const QString &, TtTextFormat::Type, uint32_t>(
+              &UdpWindow::sendInstructionTableContent));
+  connect(instruction_table_, &Ui::TtTableWidget::sendRowsMsg, this,
+          [this](const std::vector<Data::MsgInfo> &msgs) {
+            if (msgs.size() == 0) {
+              return;
+            }
+            foreach (const auto &msg, msgs) {
+              sendInstructionTableContent(msg);
+            }
+          });
+}
+
+void UdpWindow::sendMessage(const QString &data, TtTextFormat::Type type) {
+  QByteArray dataUtf8;
+  // 预处理的数据
+  QString processedText = data;
+  // 判断发送的类型
+  if (type == TtTextFormat::HEX) {
+    QString hexStr = data;
+    // 移除所有非十六进制字符
+    hexStr = hexStr.remove(QRegularExpression("[^0-9A-Fa-f]"));
+    if (hexStr.length() % 2 != 0) {
+      for (int i = 0; i < hexStr.length(); i += 2) {
+        if (i + 1 >= hexStr.length()) {
+          hexStr.insert(i, '0');
+          qDebug() << "在位置" << i << "插入0，结果:" << hexStr;
+        }
+      }
+    }
+    processedText = hexStr;
+    dataUtf8 = QByteArray::fromHex(hexStr.toUtf8());
+
+  } else if (type == TtTextFormat::TEXT) {
+    dataUtf8 = data.toUtf8();
+  }
+  if (package_size_ > 0) {
+    // 根据格式不同存储
+    if (type == TtTextFormat::HEX) {
+      // 按照 16 进制分包
+      int byteSize = package_size_;
+      int charSize = byteSize * 2; // 每个字节转换为两个十六进制字符
+      for (int i = 0; i < processedText.length(); i += charSize) {
+        // 截取固定字符数的十六进制字符串片段
+        QString chunk = processedText.mid(i, charSize);
+        msg_queue_.enqueue(chunk);
+        qDebug() << "分包HEX: " << chunk;
+      }
+    } else {
+      for (int i = 0; i < dataUtf8.size(); i += package_size_) {
+        QByteArray chunk = dataUtf8.mid(i, package_size_);
+        msg_queue_.enqueue(QString::fromUtf8(chunk));
+        qDebug() << "分包TEXT: " << QString::fromUtf8(chunk);
+      }
+    }
+  } else {
+    if (!opened_) {
+      Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""), tr("串口未打开"),
+                              1500, this);
+      return;
+    }
 
     if (role_ == TtProtocolType::Client) {
-      udp_client_->sendMessage(data.toUtf8());
+      udp_client_->sendMessage(dataUtf8);
     } else if (role_ == TtProtocolType::Server) {
-      udp_server_->sendMessage(data.toUtf8());
+      udp_server_->sendMessage(dataUtf8);
     }
 
+    showMessage(dataUtf8, true);
+  }
+}
+
+void UdpWindow::setControlState(bool state) {
+  if (state) {
+    if (role_ == TtProtocolType::Client) {
+      udp_client_setting_->setControlState(true);
+    } else if (role_ == TtProtocolType::Server) {
+      udp_server_setting_->setControlState(true);
+    }
+    instruction_table_->setEnabled(true);
+    send_btn_->setEnabled(false);
+  } else {
+    if (role_ == TtProtocolType::Client) {
+      udp_client_setting_->setControlState(false);
+    } else if (role_ == TtProtocolType::Server) {
+      udp_server_setting_->setControlState(false);
+    }
+    instruction_table_->setEnabled(false);
+    send_btn_->setEnabled(true);
+  }
+}
+
+void UdpWindow::setHeartbeartContent() {
+  if (!heartbeat_.isEmpty() && heartbeat_interval_ != 0) {
+    QByteArray dataUtf8;
+    if (heart_beat_type_ == TtTextFormat::TEXT) {
+      dataUtf8 = heartbeat_.toUtf8();
+    } else if (heart_beat_type_ == TtTextFormat::HEX) {
+      QString hexStr = heartbeat_.remove(QRegularExpression("[^0-9A-Fa-f]"));
+
+      if (hexStr.isEmpty()) {
+        qDebug() << "存在无效的十六进制字符";
+        return;
+      }
+
+      // 确保字节对齐
+      if (hexStr.length() % 2 != 0) {
+        for (int i = 0; i < hexStr.length(); i += 2) {
+          if (i + 1 >= hexStr.length()) {
+            hexStr.insert(i, '0');
+          }
+        }
+      }
+      // 将十六进制字符串转换为字节数组
+      dataUtf8 = QByteArray::fromHex(hexStr.toUtf8());
+    }
+
+    if (!dataUtf8.isEmpty()) {
+      // 作为心跳数据发送
+      sendPackagedData(dataUtf8, true);
+    }
+  }
+}
+
+void UdpWindow::sendInstructionTableContent(const QString &text,
+                                            TtTextFormat::Type type,
+                                            uint32_t times) {
+  QByteArray dataUtf8;
+  if (type == TtTextFormat::TEXT) {
+    dataUtf8 = text.toUtf8();
+  } else if (type == TtTextFormat::HEX) {
+    QString hexStr = text.remove(QRegularExpression("[^0-9A-Fa-f]"));
+
+    if (hexStr.isEmpty()) {
+      qDebug() << "存在无效的十六进制字符";
+      return;
+    }
+
+    // 确保字节对齐
+    if (hexStr.length() % 2 != 0) {
+      for (int i = 0; i < hexStr.length(); i += 2) {
+        if (i + 1 >= hexStr.length()) {
+          hexStr.insert(i, '0');
+        }
+      }
+    }
+    // 将十六进制字符串转换为字节数组
+    dataUtf8 = QByteArray::fromHex(hexStr.toUtf8());
+  }
+  if (!dataUtf8.isEmpty()) {
+    // 定时发送效果, 单次触发
+    QTimer::singleShot(time, Qt::PreciseTimer, this,
+                       [this, dataUtf8] { sendPackagedData(dataUtf8, true); });
+  }
+}
+
+void UdpWindow::sendInstructionTableContent(const Data::MsgInfo &msg) {
+  sendInstructionTableContent(msg.text, msg.type, msg.time);
+}
+
+void UdpWindow::sendPackagedData(const QByteArray &data, bool isHeartbeat) {
+  if (!opened_) {
+    if (!isHeartbeat) {
+      Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""), tr("串口未打开"),
+                              1500, this);
+    }
+    return;
+  }
+
+  if (package_size_ > 0) {
+    // 分包发送
+    for (int i = 0; i < data.size(); i += package_size_) {
+      QByteArray chunk = data.mid(i, package_size_);
+
+      // QMetaObject::invokeMethod(serial_port_, "sendData",
+      // Qt::QueuedConnection,
+      //                           Q_ARG(QByteArray, chunk));
+      // 更新统计
+      send_byte_count_ += chunk.size();
+      send_byte_->setText(QString("发送字节数: %1 B").arg(send_byte_count_));
+      // 显示消息
+      showMessage(chunk, true);
+    }
+  } else {
+    // 不分包，直接发送
+    // QMetaObject::invokeMethod(serial_port_, "sendData",
+    // Qt::QueuedConnection,
+    //                           Q_ARG(QByteArray, data));
+    // 更新统计
+    send_byte_count_ += data.size();
     send_byte_->setText(QString("发送字节数: %1 B").arg(send_byte_count_));
-    message_view_->scrollToBottom();
-  });
+    // 显示消息
+    showMessage(data, true);
+  }
+}
+
+bool UdpWindow::isEnableHeartbeart() {
+  // 使能了当前的条件
+  if (!heartbeat_.isEmpty() && heartbeat_interval_ != 0) {
+    return true;
+  }
+  return false;
 }
 
 } // namespace Window

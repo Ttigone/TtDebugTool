@@ -636,6 +636,10 @@ void TtSvgButton::mouseReleaseEvent(QMouseEvent *event) {
   QWidget::mouseReleaseEvent(event);
 }
 
+void TtSvgButton::mouseDoubleClickEvent(QMouseEvent *event) {
+  qDebug() << "double";
+}
+
 QSize TtSvgButton::sizeHint() const {
   QFontMetrics fm(font());
   int textWidth = fm.horizontalAdvance(text_);

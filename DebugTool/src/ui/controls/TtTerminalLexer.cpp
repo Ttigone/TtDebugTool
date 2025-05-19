@@ -1,4 +1,4 @@
-#include "TtSerialLexer.h"
+#include "ui/controls/TtTerminalLexer.h"
 
 // SerialHighlighter::SerialHighlighter(QTextDocument* parent)
 //     : QSyntaxHighlighter(parent) {
@@ -13,7 +13,8 @@
 //   m_rxTagPattern = QRegularExpression("\\[Rx\\]");
 //   m_timeStampPattern = QRegularExpression(
 //       "\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}\\]");
-//   m_hexDataPattern = QRegularExpression("^([0-9A-Fa-f]{2}\\s)+[0-9A-Fa-f]{2}$");
+//   m_hexDataPattern =
+//   QRegularExpression("^([0-9A-Fa-f]{2}\\s)+[0-9A-Fa-f]{2}$");
 
 //   // 初始化格式
 //   m_txFormat.setForeground(QColor("#25C2A0"));  // 发送标签颜色 - 绿色
@@ -22,7 +23,8 @@
 //   m_rxFormat.setForeground(QColor("#0ea5e9"));  // 接收标签颜色 - 蓝色
 //   m_rxFormat.setFontWeight(QFont::Bold);
 
-//   m_timestampFormat.setForeground(QColor(128, 128, 0));  // 时间戳颜色 - 暗黄色
+//   m_timestampFormat.setForeground(QColor(128, 128, 0));  // 时间戳颜色 -
+//   暗黄色
 
 //   m_hexDataFormat.setForeground(Qt::darkMagenta);  // 十六进制数据颜色
 
@@ -46,10 +48,12 @@
 // //   }
 
 // //   // 检查是否在多行数据模式中（上一行的延续）
-// //   if (previousState == SendMessageState || previousState == RecvMessageState) {
+// //   if (previousState == SendMessageState || previousState ==
+// RecvMessageState) {
 // //     // 这一行是之前消息的继续，格式应保持一致
 // //     QTextCharFormat format =
-// //         (previousState == SendMessageState) ? m_txTextFormat : m_rxTextFormat;
+// //         (previousState == SendMessageState) ? m_txTextFormat :
+// m_rxTextFormat;
 
 // //     // 应用与数据类型相匹配的格式
 // //     setFormat(0, text.length(), format);
@@ -65,7 +69,8 @@
 // //     return;
 // //   }
 
-// //   if (previousState == SendMessageState || previousState == RecvMessageState) {
+// //   if (previousState == SendMessageState || previousState ==
+// RecvMessageState) {
 // //     setCurrentBlockState(NoneState);
 // //     if (!isCompleteMessage(text)) {
 // //       // 延续
@@ -116,23 +121,28 @@
 // //         QString dataContent = text.mid(dataStart).trimmed();
 
 // //         // 检查是否为十六进制数据格式
-// //         QRegularExpressionMatch hexMatch = m_hexDataPattern.match(dataContent);
+// //         QRegularExpressionMatch hexMatch =
+// m_hexDataPattern.match(dataContent);
 // //         bool isHex = hexMatch.hasMatch();
 
 // //         // 根据消息类型和数据格式应用格式
 // //         if (isHex) {
-// //           setFormat(dataStart, text.length() - dataStart, m_hexDataFormat);
+// //           setFormat(dataStart, text.length() - dataStart,
+// m_hexDataFormat);
 // //         } else {
 // //           setFormat(dataStart, text.length() - dataStart,
 // //                     isTxMessage ? m_txTextFormat : m_rxTextFormat);
 // //         }
 
 // //         // // 设置块状态，用于跨行消息
-// //         // setCurrentBlockState(isTxMessage ? SendMessageState : RecvMessageState);
+// //         // setCurrentBlockState(isTxMessage ? SendMessageState :
+// RecvMessageState);
 
 // //         // // 检查文本中是否包含换行符，如有则下一行将是相同状态
-// //         // if (dataContent.contains("\r\n") || dataContent.contains("\\r\\n") ||
-// //         //     dataContent.contains("\n") || dataContent.contains("\\n")) {
+// //         // if (dataContent.contains("\r\n") ||
+// dataContent.contains("\\r\\n") ||
+// //         //     dataContent.contains("\n") || dataContent.contains("\\n"))
+// {
 // //         //   // 确保设置状态，让下一行继承当前格式
 // //         //   setCurrentBlockState(isTxMessage ? SendMessageState
 // //         //                                    : RecvMessageState);
@@ -151,7 +161,8 @@
 // //     // 普通行，无标签 - 检查是否为前一行的延续
 // //     if (previousState != NoneState) {
 // //       QTextCharFormat format =
-// //           (previousState == SendMessageState) ? m_txTextFormat : m_rxTextFormat;
+// //           (previousState == SendMessageState) ? m_txTextFormat :
+// m_rxTextFormat;
 // //       setFormat(0, text.length(), format);
 
 // //       // 有换行符号, 保持
@@ -181,10 +192,12 @@
 //   }
 
 //   // 检查是否在多行数据模式中（上一行的延续）
-//   if (previousState == SendMessageState || previousState == RecvMessageState) {
+//   if (previousState == SendMessageState || previousState == RecvMessageState)
+//   {
 //     // 这一行是之前消息的继续，格式应保持一致
 //     QTextCharFormat format =
-//         (previousState == SendMessageState) ? m_txTextFormat : m_rxTextFormat;
+//         (previousState == SendMessageState) ? m_txTextFormat :
+//         m_rxTextFormat;
 
 //     // 应用与数据类型相匹配的格式
 //     setFormat(0, text.length(), format);
@@ -200,7 +213,8 @@
 //     return;
 //   }
 
-//   if (previousState == SendMessageState || previousState == RecvMessageState) {
+//   if (previousState == SendMessageState || previousState == RecvMessageState)
+//   {
 //     setCurrentBlockState(NoneState);
 //     if (!isCompleteMessage(text)) {
 //       // 延续
@@ -252,7 +266,8 @@
 //                 isTxMessage ? m_txTextFormat : m_rxTextFormat);
 
 //       if (containsNewlineSequence(dataContent)) {
-//         setCurrentBlockState(isTxMessage ? SendMessageState : RecvMessageState);
+//         setCurrentBlockState(isTxMessage ? SendMessageState :
+//         RecvMessageState);
 //       } else {
 //         setCurrentBlockState(NoneState);
 //       }
@@ -263,7 +278,8 @@
 //     // 普通行，无标签 - 检查是否为前一行的延续
 //     if (previousState != NoneState) {
 //       QTextCharFormat format =
-//           (previousState == SendMessageState) ? m_txTextFormat : m_rxTextFormat;
+//           (previousState == SendMessageState) ? m_txTextFormat :
+//           m_rxTextFormat;
 //       setFormat(0, text.length(), format);
 
 //       // 有换行符号, 保持
@@ -288,10 +304,13 @@
 // bool SerialHighlighter::containsNewlineSequence(const QString& text) const {
 //   // return text.contains("\r\n") || text.contains("\\r\\n") ||
 //   //        text.contains("\n") || text.contains("\\n");
-//   return text.contains(QLatin1Char('\r')) || text.contains(QLatin1Char('\n'));
+//   return text.contains(QLatin1Char('\r')) ||
+//   text.contains(QLatin1Char('\n'));
 // }
 
-SerialHighlighter::SerialHighlighter(QTextDocument* parent)
+namespace Ui {
+
+TtTerminalHighlighter::TtTerminalHighlighter(QTextDocument *parent)
     : QSyntaxHighlighter(parent) {
   // 只有在行首同时出现 [Tx]/[Rx] 和后面的时间戳，才视为“新消息”
   m_messageStartPattern = QRegularExpression(
@@ -321,7 +340,11 @@ SerialHighlighter::SerialHighlighter(QTextDocument* parent)
   setCurrentBlockState(NoneState);
 }
 
-void SerialHighlighter::highlightBlock(const QString& text) {
+TtTerminalHighlighter::~TtTerminalHighlighter() {
+  qDebug() << "delete" << __FUNCTION__;
+}
+
+void TtTerminalHighlighter::highlightBlock(const QString &text) {
   // 默认黑色
   setFormat(0, text.length(), Qt::black);
 
@@ -380,11 +403,13 @@ void SerialHighlighter::highlightBlock(const QString& text) {
   if (dataStart < text.length()) {
     QString payload = text.mid(dataStart);
     bool isHex = m_hexDataPattern.match(payload).hasMatch();
-    setFormat(
-        dataStart, payload.length(),
-        isHex ? m_hexDataFormat : (isTx ? m_txTextFormat : m_rxTextFormat));
+    setFormat(dataStart, payload.length(),
+              isHex ? m_hexDataFormat
+                    : (isTx ? m_txTextFormat : m_rxTextFormat));
   }
 
   // 4) 新消息第一行永远重新开始状态
   setCurrentBlockState(isTx ? SendMessageState : RecvMessageState);
 }
+
+} // namespace Ui

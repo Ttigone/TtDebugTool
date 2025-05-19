@@ -12,16 +12,11 @@ class QStackedWidget;
 QT_END_NAMESPACE
 
 class QsciScintilla;
-
 class QtMaterialTabs;
 namespace Ui {
-
 class TtElidedLabel;
-
 class TtWidgetGroup;
-
 class TtTextButton;
-
 class TtRadioButton;
 class TtTableWidget;
 class TtNormalLabel;
@@ -32,9 +27,11 @@ class MessageDialog;
 class TtVerticalLayout;
 class TtHorizontalLayout;
 class TtLineEdit;
+class TtTerminalHighlighter;
 
 class TtChatView;
 class TtChatMessageModel;
+
 } // namespace Ui
 
 class QSplitter;
@@ -42,6 +39,9 @@ namespace Window {
 
 class FrameWindow : public QWidget {
   Q_OBJECT
+  Q_PROPERTY(
+      bool saved READ saveStatus WRITE setSaveStatus NOTIFY savedChanged);
+
 public:
   explicit FrameWindow(QWidget *parent = nullptr);
   virtual ~FrameWindow();
@@ -56,7 +56,7 @@ public:
   ///
   /// @brief serRightWidget
   /// @param widget
-  /// 设置右侧显示窗口
+  /// 设置右侧显示设置窗口
   void serRightWidget(QWidget *widget);
 
   ///
@@ -74,7 +74,33 @@ public:
   ///
   /// @brief initSignalsConnection
   /// 初始化信号槽链接
-  virtual void initSignalsConnection();
+  void initSignalsConnection();
+
+  ///
+  /// @brief isValidHexString
+  /// @param hexString
+  /// @param errorMsg
+  /// @return
+  /// 检查字符串是否包含有效的十六进制字符
+  bool isValidHexString(const QString &hexString, QString *errorMsg = nullptr);
+
+  ///
+  /// @brief getValidHexString
+  /// @param input
+  /// @param errorMsg
+  /// @return
+  /// 获取有效的十六进制字符串（移除无效字符并处理奇数长度）
+  QString getValidHexString(const QString &input, QString *errorMsg = nullptr);
+
+  bool saveStatus() { return saved_; }
+  ///
+  /// @brief setSaveStatus
+  /// @param state
+  /// 调用内部原有的通用槽函数实现
+  void setSaveStatus(bool state);
+
+signals:
+  void savedChanged(bool saved); // 保存状态改变信号
 
 protected:
   virtual void switchToEditMode();
@@ -88,6 +114,13 @@ protected:
   /// @brief refreshTerminalDisplay
   /// 刷新 TEXT/HEX 界面
   void refreshTerminalDisplay();
+
+  // 文本发送 hex 格式 并显示
+  // 数据接收显示 hex
+  virtual void showMessage(const QByteArray &data,
+                           bool out = true); // 为 hex 进制提供
+  // 分开
+  virtual void showMessage(const QString &data, bool out = true);
 
   // 初始状态下处于非保存状态
   bool saved_{false};  // 保存状态标志
@@ -120,7 +153,8 @@ protected:
   Ui::TtChatMessageModel *message_model_{nullptr}; // 聊先显示数据模型
 
   QSplitter *main_splitter_{nullptr};
-  QPlainTextEdit *terminal_{nullptr}; // 终端显示
+  QPlainTextEdit *terminal_{nullptr};                // 终端显示
+  std::unique_ptr<Ui::TtTerminalHighlighter> lexer_; // 终端字符高亮显示
   // Ui::TtNormalLabel *send_byte_{nullptr}; // 显示发送字节数
   // Ui::TtNormalLabel *recv_byte_{nullptr}; // 显示接收字节数
   Ui::TtElidedLabel *send_byte_{nullptr}; // 显示发送字节数
@@ -128,7 +162,6 @@ protected:
   quint64 send_byte_count_ = 0;           // 存储发送字节数
   quint64 recv_byte_count_ = 0;           // 接收发送字节数
 
-  // auto m_tabs = new QtMaterialTabs(tabs_and_count);
   QtMaterialTabs *tabs_{nullptr};
   QStackedWidget *display_widget_{nullptr};
   QWidget *tabs_widget_{nullptr};

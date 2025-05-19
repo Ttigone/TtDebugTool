@@ -415,6 +415,10 @@ void TcpClientSetting::setOldSettings(const QJsonObject &config) {
 }
 
 void TcpClientSetting::setControlState(bool state) {
+  target_host_->setEnabled(state);
+  target_port_->setEnabled(state);
+  self_host_->setEnabled(state);
+  self_port_->setEnabled(state);
   framing_model_->setEnabled(state);
   framing_timeout_->setEnabled(state);
   framing_fixed_length_->setEnabled(state);
@@ -423,6 +427,7 @@ void TcpClientSetting::setControlState(bool state) {
   heartbeat_send_type_->setEnabled(state);
   heartbeat_interval_->setEnabled(state);
   heartbeat_content_->setEnabled(state);
+  retransmission_->setEnabled(state);
 }
 
 void TcpClientSetting::setHostAddress() {

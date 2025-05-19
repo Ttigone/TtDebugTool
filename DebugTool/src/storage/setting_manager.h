@@ -107,8 +107,8 @@ private:
   bool recoverFromBackup();
 
   QString file_path_;
-  mutable QMutex mutex;
-  QJsonObject settings;
+  mutable QMutex mutex_;
+  QJsonObject settings_;
   bool dirty_{false};
   QTimer *save_timer_{nullptr};
   int save_delay_ms_{1000};

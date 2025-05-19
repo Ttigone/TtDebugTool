@@ -410,6 +410,65 @@ void TtTableWidget::setCellWidget(int row, int column, QWidget *widget) {
   cellWidgetCache_[widget][row] = widget; // 缓存控件
 }
 
+void TtTableWidget::setEnabled(bool enable) {
+  // 首先调用基类方法，确保整体状态正确
+  QTableWidget::setEnabled(true); // 总是启用表格本身，以允许某些列可用
+
+  QWidget *plus = cellWidget(0, 5);
+  if (plus) {
+    plus->setEnabled(enable); // 启用添加行按钮
+  }
+  QWidget *sent = cellWidget(0, 6);
+  if (sent) {
+    sent->setEnabled(!enable); // 启用添加行按钮
+  }
+  // 遍历所有行
+  for (int row = 1; row < rowCount(); ++row) {
+
+    // 仅在 rowsData_ 有效范围内处理
+    if (row - 1 < rowsData_.size()) {
+      TableRow &rowData = rowsData_[row - 1];
+
+      // 设置每一列的控件启用状态
+      if (rowData.checkBtn)
+        rowData.checkBtn->setEnabled(enable);
+
+      if (rowData.nameEdit)
+        rowData.nameEdit->setEnabled(enable);
+
+      if (rowData.typeCombo)
+        rowData.typeCombo->setEnabled(enable);
+
+      if (rowData.contentEdit)
+        rowData.contentEdit->setEnabled(enable);
+
+      if (rowData.delaySpin)
+        rowData.delaySpin->setEnabled(enable);
+    }
+
+    // 处理第七列（发送按钮列）
+    // 获取第七列的单元格小部件
+    QWidget *sendBtnWidget = cellWidget(row, 6); // 假设第七列索引为6
+    if (sendBtnWidget) {
+      // 查找发送按钮（通常包装在一个容器内）
+      QList<QPushButton *> buttons =
+          sendBtnWidget->findChildren<QPushButton *>();
+      for (QPushButton *btn : buttons) {
+        // for (auto *btn : qAsConst(buttons)) {
+        // 发送按钮在禁用模式下启用，启用模式下禁用
+        btn->setEnabled(!enable);
+      }
+    }
+  }
+
+  // 保存当前状态，以便其他方法可以检查
+  setProperty("customEnabled", enable);
+
+  // 更新样式，确保视觉反馈正确
+  style()->unpolish(this);
+  style()->polish(this);
+}
+
 void TtTableWidget::onAddRowButtonClicked() {
   // 在表格末尾插入新行
   int newRowIndex = rowCount();
@@ -428,6 +487,7 @@ void TtTableWidget::onAddRowButtonClicked() {
   // // 确保调整大小
   resizeRowsToContents();
   resizeColumnsToContents();
+  emit rowsChanged(newRowIndex); // 发出行数变化信号
 }
 
 void TtTableWidget::initHeader() {
@@ -446,6 +506,7 @@ void TtTableWidget::initHeader() {
 
     setCellWidget(0, col, header);
   }
+  // 缺少发送函数
 }
 
 void TtTableWidget::setupRow(int row) {
@@ -510,7 +571,6 @@ TtComboBox *TtTableWidget::createTypeComboBox() {
   TtComboBox *combo =
       comboPool_.isEmpty() ? new TtComboBox(this) : comboPool_.takeLast();
   combo->clear();
-  // combo->addItems({tr("TEXT"), tr("HEX")});
   combo->addItem(tr("TEXT"), TtTextFormat::TEXT);
   combo->addItem(tr("HEX"), TtTextFormat::HEX);
   return combo;
@@ -629,25 +689,37 @@ QWidget *TtTableWidget::createSendButton() {
   // 群发
   connect(btn, &QPushButton::clicked, this, [this]() {
     qDebug() << "clicked";
-    QVector<QPair<QString, int>> msg;
+    std::vector<Data::MsgInfo> msgs;
+    // 遍历存放的数组中
+    // QVector<QPair<QString, int>> msg;
     for (int i = 1; i < rowCount(); ++i) {
       // if (rowsData_.at(i - 1).enableBtn->isChecked()) {
       //   // 还有延时部分
       //   msg.append(qMakePair(rowsData_.at(i - 1).contentEdit->text(),
       //                        rowsData_.at(i - 1).delaySpin->text().toInt()));
       // }
+      // 遍历 rowsData 全部行
+      // if (rowsData_.at(i - 1).checkBtn->isChecked()) {
+      //   // 还有延时部分
+      //   msg.append(qMakePair(rowsData_.at(i - 1).contentEdit->text(),
+      //                        rowsData_.at(i - 1).delaySpin->text().toInt()));
+      // }
+      // 只有勾选的部分才需要
       if (rowsData_.at(i - 1).checkBtn->isChecked()) {
-        // 还有延时部分
-        msg.append(qMakePair(rowsData_.at(i - 1).contentEdit->text(),
-                             rowsData_.at(i - 1).delaySpin->text().toInt()));
+        msgs.emplace_back(
+            rowsData_.at(i - 1).contentEdit->text(),
+            static_cast<TtTextFormat::Type>(
+                rowsData_.at(i - 1).typeCombo->currentData().toInt()),
+            rowsData_.at(i - 1).delaySpin->value());
       }
     }
-    emit sendRowsMsg(msg);
+    emit sendRowsMsg(msgs);
   });
   return createCellWrapper(btn);
 }
 
 QWidget *TtTableWidget::createDeleteButton() {
+  // BUG 回收控件失败
   auto *btn = new QPushButton(QIcon(":/sys/trash.svg"), "");
   btn->setFlat(true);
   connect(btn, &QPushButton::clicked, this, [this] {
@@ -659,6 +731,7 @@ QWidget *TtTableWidget::createDeleteButton() {
         // 移除行
         removeRow(row);
         rowsData_.remove(row - 1);
+        emit rowsChanged(row - 1);
       }
     }
   });
@@ -670,9 +743,18 @@ QWidget *TtTableWidget::createRowSendButton() {
   btn->setFlat(true);
   connect(btn, &QPushButton::clicked, this, [this] {
     if (auto *btn = qobject_cast<QPushButton *>(sender())) {
+      // 发送了, 但是那边没有接受到
+      qDebug() << "发送信息";
       int row = findRowIndex(btn, 6);
       if (row > 0) {
-        emit sendRowMsg(rowsData_[row - 1].contentEdit->text());
+        //  还有当前的 comboBox
+        // 查找到行
+        // 缺少时长
+        emit sendRowMsg(
+            rowsData_[row - 1].contentEdit->text(),
+            static_cast<TtTextFormat::Type>(
+                rowsData_[row - 1].typeCombo->currentData().toInt()),
+            rowsData_[row - 1].delaySpin->value());
       }
     }
   });

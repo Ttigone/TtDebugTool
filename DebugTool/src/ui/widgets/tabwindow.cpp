@@ -668,33 +668,19 @@ void TabWindow::switchByReadingDisk(const QString &index,
   // 初始时不存在, 根据 已有的 uuid 创建特定表示窗口
   // qDebug() << "create by disk";
   // qDebug() << "switch uuid: " << index;
-
-  // qDebug() << "TEST1";
-  // qDebug() << currentIndex() + 1;
-  // 当前索引加 1?
-  // switchByAlreadyExistingWidget(currentIndex() + 1, index, config, role);
-  // 当前的数量加 1
-  // switchByAlreadyExistingWidget(count() + 1, index, config, role);
   // 当前 count() 作为索引
   switchByAlreadyExistingWidget(count(), index, config, role);
-  // qDebug() << "TEST2";
 }
 
 void TabWindow::sessionSwitchPage(int tabIndex, TtProtocolRole::Role role) {
-  // 进入的是这个
-  // 根据鼠标位置, 获取当前的 tabWindow
-  // 切换处于后, 将会导致 tabIndex 不匹配
-  qDebug() << "switch index: " << tabIndex;
-
-  // 索引对应的 tabWidget_ ???
-  // switchToWidget(tabIndex, role);  // widgetId = 2 是 widget2
+  // qDebug() << "switch index: " << tabIndex;
   switchByCreateWidget(tabIndex, role); // widgetId = 2 是 widget2
 }
 
 void TabWindow::handleAddNewTab() { addNewTab("新建立"); }
 
 void TabWindow::handleTabCloseRequested(int index) {
-  qDebug() << "handle delete index: " << index;
+  // qDebug() << "handle delete index: " << index;
   // 关闭按钮的 close, 要从 widgetInstance 中删除掉
   QWidget *widget = this->widget(index);
 
@@ -703,12 +689,7 @@ void TabWindow::handleTabCloseRequested(int index) {
   if (widgetInstances.contains(uuid)) {
     widgetInstances.remove(uuid);
   }
-
-  // 有问题, remove, 导致 多一个
   removeTab(index);
-
-  // widgetInstances.removeIf();
-  // widgetInstances.contains(findWidget(widget))
   // 彻底删除
   if (widget) {
     // 原有的窗口调用了析构函数

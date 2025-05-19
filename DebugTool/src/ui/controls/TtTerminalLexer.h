@@ -42,17 +42,20 @@
 //   };
 // };
 
-class SerialHighlighter : public QSyntaxHighlighter {
+namespace Ui {
+
+class TtTerminalHighlighter : public QSyntaxHighlighter {
   Q_OBJECT
 
- public:
-  explicit SerialHighlighter(QTextDocument* parent = nullptr);
+public:
+  explicit TtTerminalHighlighter(QTextDocument *parent = nullptr);
+  ~TtTerminalHighlighter();
 
- protected:
-  void highlightBlock(const QString& text) override;
+protected:
+  void highlightBlock(const QString &text) override;
 
- private:
-  QRegularExpression m_messageStartPattern;  // 只匹配行首 “[Tx] [YYYY-MM-DD...”
+private:
+  QRegularExpression m_messageStartPattern; // 只匹配行首 “[Tx] [YYYY-MM-DD...”
   QRegularExpression m_txTagPattern;
   QRegularExpression m_rxTagPattern;
   QRegularExpression m_timeStampPattern;
@@ -68,4 +71,6 @@ class SerialHighlighter : public QSyntaxHighlighter {
   enum { NoneState = -1, SendMessageState = 1, RecvMessageState = 2 };
 };
 
-#endif  // TTSERIALLEXER_H
+} // namespace Ui
+
+#endif // TTSERIALLEXER_H

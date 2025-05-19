@@ -41,6 +41,41 @@ void TtWidgetGroup::setHoldingChecked(bool enable) { holding_state_ = enable; }
 bool TtWidgetGroup::holdingChecked() const { return holding_state_; }
 
 bool TtWidgetGroup::eventFilter(QObject *obj, QEvent *event) {
+  // // 鼠标点击事件
+  // if (event->type() == QEvent::MouseButtonPress) {
+  //   // if (event->type() == QEvent::MouseButtonPress ||
+  //   //     event->type() == QEvent::MouseButtonDblClick) {
+  //   QWidget *widget = qobject_cast<QWidget *>(obj);
+  //   if (widget && widgets_.contains(widget)) {
+  //     // 获取 check 属性
+  //     // 有 bug, 为什么会突然变为 false
+  //     bool currentChecked = widget->property("checked").toBool();
+  //     qDebug() << "当前的 check" << currentChecked;
+
+  //     // 保持状态
+  //     if (holding_state_) { // true
+  //       // check 状态, 当前 widget
+  //       // 第一次进入 check_widget 为空
+  //       if (currentChecked && widget == checked_widget_) {
+  //         emit widgetClicked(widgets_.indexOf(widget));
+  //         return true;
+  //       }
+  //     }
+  //     bool checked = !currentChecked;
+  //     updateWidgetState(widget, checked);
+  //     emit widgetClicked(widgets_.indexOf(widget));
+  //     return true; // 阻止事件继续传播
+  //   }
+  // } else if (event->type() == QEvent::MouseButtonDblClick) {
+  //   // 触发了双击事件, 有问题
+  //   qDebug() << "this double clicked";
+  //   QWidget *widget = qobject_cast<QWidget *>(obj);
+  //   emit widgetClicked(widgets_.indexOf(widget));
+  //   // bug left 有问题
+  //   return true;
+  // }
+  // return QObject::eventFilter(obj, event);
+
   // 鼠标点击事件
   if (event->type() == QEvent::MouseButtonPress) {
     // if (event->type() == QEvent::MouseButtonPress ||
@@ -52,8 +87,10 @@ bool TtWidgetGroup::eventFilter(QObject *obj, QEvent *event) {
       bool currentChecked = widget->property("checked").toBool();
       qDebug() << "当前的 check" << currentChecked;
 
+      // 不会进入
       // 保持状态
-      if (holding_state_) { // true
+      if (holding_state_) {
+        qDebug() << "is holding state";
         // check 状态, 当前 widget
         // 第一次进入 check_widget 为空
         if (currentChecked && widget == checked_widget_) {
@@ -61,17 +98,12 @@ bool TtWidgetGroup::eventFilter(QObject *obj, QEvent *event) {
           return true;
         }
       }
+
       bool checked = !currentChecked;
       updateWidgetState(widget, checked);
       emit widgetClicked(widgets_.indexOf(widget));
       return true; // 阻止事件继续传播
     }
-  } else if (event->type() == QEvent::MouseButtonDblClick) {
-    qDebug() << "this double clicked";
-    QWidget *widget = qobject_cast<QWidget *>(obj);
-    emit widgetClicked(widgets_.indexOf(widget));
-    // bug left 有问题
-    return true;
   }
   return QObject::eventFilter(obj, event);
 }

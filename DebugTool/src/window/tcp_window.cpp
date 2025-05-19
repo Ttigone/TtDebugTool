@@ -19,7 +19,6 @@
 #include <qtmaterialradiobutton.h>
 #include <qtmaterialsnackbar.h>
 #include <qtmaterialtabs.h>
-#include <ui/controls/TtSerialLexer.h>
 
 #include <QTableView>
 
@@ -44,13 +43,14 @@ TcpWindow::TcpWindow(TtProtocolType::ProtocolRole role, QWidget *parent)
             &TcpWindow::dataReceived);
     connect(tcp_client_, &Core::TcpClient::errorOccurred, this,
             [this](const QString &text) {
-              // Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""), error,
-              //                         1500, this);
               Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""), text, 1500,
                                       this);
-              on_off_btn_->setChecked(false);
-              tcp_client_setting_->setControlState(true);
               opened_ = false;
+              on_off_btn_->setChecked(false);
+              setControlState(!opened_);
+              send_package_timer_->stop();
+              heartbeat_timer_->stop();
+              msg_queue_.clear();
             });
   } else {
     connect(tcp_server_, &Core::TcpServer::serverStarted, this,
@@ -85,7 +85,6 @@ void TcpWindow::setSaveState(bool state) { saved_ = state; }
 void TcpWindow::setSetting(const QJsonObject &config) {
   title_->setText(config.value("WindowTitle").toString(tr("未读取正确的标题")));
   if (role_ == TtProtocolType::Client) {
-    config_.insert("Type", TtFunctionalCategory::Communication);
     tcp_client_setting_->setOldSettings(
         config.value("TcpClientSetting").toObject(QJsonObject()));
   } else if (role_ == TtProtocolType::Server) {
@@ -93,7 +92,10 @@ void TcpWindow::setSetting(const QJsonObject &config) {
     tcp_server_setting_->setOldSettings(
         config.value("TcpClientSetting").toObject(QJsonObject()));
   }
-  config_.insert("InstructionTable", instruction_table_->getTableRecord());
+
+  QJsonObject instructionTableData =
+      config.value("InstructionTable").toObject();
+  instruction_table_->setupTable(instructionTableData);
 
   int sendType = config.value("SendType").toInt();
   send_type_ = static_cast<TtTextFormat::Type>(sendType);
@@ -114,7 +116,7 @@ void TcpWindow::setSetting(const QJsonObject &config) {
     display_text_btn_->setChecked(false);
     display_hex_btn_->setChecked(true);
   }
-  saved_ = true;
+  setSaveStatus(true);
   Ui::TtMessageBar::success(TtMessageBarType::Top, tr(""), tr("读取配置成功"),
                             1500);
 }
@@ -155,30 +157,86 @@ void TcpWindow::sendMessageToPort(const QString &data, const int &times) {
 
 void TcpWindow::setHeartbeartContent() {
   if (!heartbeat_.isEmpty() && heartbeat_interval_ != 0) {
+    QByteArray dataUtf8;
     if (heart_beat_type_ == TtTextFormat::TEXT) {
-      // qDebug() << "发送心跳的 TEXT 格式内容";
-      sendMessage(heartbeat_, TtTextFormat::TEXT);
+      dataUtf8 = heartbeat_.toUtf8();
     } else if (heart_beat_type_ == TtTextFormat::HEX) {
-      sendMessage(heartbeat_, TtTextFormat::HEX);
-    } else if (heart_beat_type_ == TtTextFormat::None) {
+      QString hexStr = heartbeat_.remove(QRegularExpression("[^0-9A-Fa-f]"));
+
+      if (hexStr.isEmpty()) {
+        qDebug() << "存在无效的十六进制字符";
+        return;
+      }
+
+      // 确保字节对齐
+      if (hexStr.length() % 2 != 0) {
+        for (int i = 0; i < hexStr.length(); i += 2) {
+          if (i + 1 >= hexStr.length()) {
+            hexStr.insert(i, '0');
+          }
+        }
+      }
+      // 将十六进制字符串转换为字节数组
+      dataUtf8 = QByteArray::fromHex(hexStr.toUtf8());
+    }
+
+    if (!dataUtf8.isEmpty()) {
+      // 作为心跳数据发送
+      sendPackagedData(dataUtf8, true);
     }
   }
 }
 
+void TcpWindow::sendInstructionTableContent(const QString &text,
+                                            TtTextFormat::Type type,
+                                            uint32_t time) {
+  QByteArray dataUtf8;
+  if (type == TtTextFormat::TEXT) {
+    dataUtf8 = text.toUtf8();
+  } else if (type == TtTextFormat::HEX) {
+    QString hexStr = text.remove(QRegularExpression("[^0-9A-Fa-f]"));
+
+    if (hexStr.isEmpty()) {
+      qDebug() << "存在无效的十六进制字符";
+      return;
+    }
+    if (hexStr.length() % 2 != 0) {
+      for (int i = 0; i < hexStr.length(); i += 2) {
+        if (i + 1 >= hexStr.length()) {
+          hexStr.insert(i, '0');
+        }
+      }
+    }
+    dataUtf8 = QByteArray::fromHex(hexStr.toUtf8());
+  }
+  if (!dataUtf8.isEmpty()) {
+    QTimer::singleShot(time, Qt::PreciseTimer, this,
+                       [this, dataUtf8] { sendPackagedData(dataUtf8, true); });
+  }
+}
+
+void TcpWindow::sendInstructionTableContent(const Data::MsgInfo &msg) {
+  // 进入了
+  qDebug() << "send Mess";
+  sendInstructionTableContent(msg.text, msg.type, msg.time);
+}
+
 void TcpWindow::saveSetting() {
-  config_.insert("Type", TtFunctionalCategory::Communication);
   config_.insert("WindowTitle", title_->text());
   if (role_ == TtProtocolType::Client) {
+    config_.insert("Type", TtFunctionalCategory::Communication);
     config_.insert("TcpClientSetting",
                    tcp_client_setting_->getTcpClientSetting());
   } else if (role_ == TtProtocolType::Server) {
+    config_.insert("Type", TtFunctionalCategory::Simulate);
     config_.insert("TcpServerSetting",
                    tcp_server_setting_->getTcpServerSetting());
   }
   config_.insert("InstructionTable", instruction_table_->getTableRecord());
   config_.insert("SendType", QJsonValue(int(send_type_)));
   config_.insert("DisplayType", QJsonValue(int(display_type_)));
-  saved_ = true;
+
+  setSaveStatus(true);
   emit requestSaveConfig();
 }
 
@@ -197,16 +255,13 @@ void TcpWindow::dataReceived(const QByteArray &data) {
 
 void TcpWindow::init() {
   initUi();
-  // 初始化虚基类
   if (role_ == TtProtocolType::Client) {
     tcp_client_ = new Core::TcpClient;
     title_->setText(tr("未命名的 TCP 连接"));
-    // setting_ = new Widget::TcpClientSetting(this);
     tcp_client_setting_ = new Widget::TcpClientSetting(this);
     serRightWidget(tcp_client_setting_);
   } else if (role_ == TtProtocolType::Server) {
     tcp_server_ = new Core::TcpServer;
-    // setting_ = new Widget::TcpServerSetting(this);
     tcp_server_setting_ = new Widget::TcpServerSetting(this);
     title_->setText(tr("未命名的 TCP 服务模拟端"));
     serRightWidget(tcp_server_setting_);
@@ -214,18 +269,26 @@ void TcpWindow::init() {
 }
 
 void TcpWindow::connectSignals() {
+  initSignalsConnection();
+
   connect(save_btn_, &Ui::TtSvgButton::clicked, this, &TcpWindow::saveSetting);
 
   connect(on_off_btn_, &Ui::TtSvgButton::clicked, this, [this] {
     if (opened_) {
+      qDebug() << "closed";
       if (role_ == TtProtocolType::Client) {
-        qDebug() << "test";
         tcp_client_->disconnectFromServer();
         tcp_client_setting_->setControlState(true);
       } else if (role_ == TtProtocolType::Server) {
         tcp_server_->close();
         tcp_client_setting_->setControlState(true);
       }
+      opened_ = false;
+      on_off_btn_->setChecked(false);
+      send_package_timer_->stop();
+      heartbeat_timer_->stop();
+      msg_queue_.clear();
+
     } else {
       // 转换成对应的实际子类
       if (role_ == TtProtocolType::Client) {
@@ -238,11 +301,18 @@ void TcpWindow::connectSignals() {
             tcp_server_setting_->getTcpServerConfiguration());
         tcp_server_setting_->setControlState(false);
       }
-    }
-  });
+      opened_ = true;
 
-  connect(clear_history_, &Ui::TtSvgButton::clicked, this,
-          [this]() { message_model_->clearModelData(); });
+      send_package_timer_->start();
+      // 心跳需要间隔
+      if (heartbeat_timer_->interval() != 0) {
+        heartbeat_timer_->start();
+      } else {
+        heartbeat_timer_->stop();
+      }
+    }
+    setControlState(!opened_);
+  });
 
   connect(send_btn_, &QtMaterialFlatButton::clicked, this,
           qOverload<>(&TcpWindow::sendMessageToPort));
@@ -254,31 +324,39 @@ void TcpWindow::connectSignals() {
     connect(tcp_client_setting_,
             &Widget::TcpClientSetting::sendPackageMaxSizeChanged, this,
             [this](const uint16_t size) {
-              // 不设定的时候异常数字
               if (package_size_ != size) {
                 package_size_ = size;
                 qDebug() << "packageSize: " << package_size_;
               }
             });
-    // 链接不同的信号槽
     connect(tcp_client_setting_, &Widget::FrameSetting::settingChanged, this,
             [this]() {
-              qDebug() << "saved Changed false";
-              saved_ = false;
+              qDebug() << "changed savestate";
+              setSaveStatus(false);
             });
+
+    connect(tcp_client_setting_,
+            &Widget::FrameSetting::sendPackageIntervalChanged, this,
+            [this](const uint32_t &interval) {
+              qDebug() << "interval: " << interval;
+              send_package_timer_->setInterval(interval);
+            });
+
   } else if (role_ == TtProtocolType::Server) {
     // 链接不同的信号槽
     connect(tcp_server_setting_, &Widget::FrameSetting::settingChanged, this,
             [this]() {
-              qDebug() << "saved Changed false";
-              saved_ = false;
+              // qDebug() << "saved Changed false";
+              // saved_ = false;
+              setSaveStatus(false);
             });
   }
 
   connect(send_package_timer_, &QTimer::timeout, this, [this] {
-    qDebug() << "send package timer";
+    // 有问题
+    // qDebug() << "send package timer";
     if (!opened_) {
-      Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""), tr("串口未打开"),
+      Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""), tr("端口未链接"),
                               1500, this);
       msg_queue_.clear();
       return;
@@ -325,28 +403,66 @@ void TcpWindow::connectSignals() {
     setHeartbeartContent(); // 适用于发送包间隔
   });
 
-  connect(chose_hex_btn_, &Ui::TtRadioButton::toggled, [this](bool checked) {
-    if (checked) {
-      send_type_ = TtTextFormat::HEX;
-    }
-  });
-  connect(chose_text_btn_, &Ui::TtRadioButton::toggled, [this](bool checked) {
-    if (checked) {
-      send_type_ = TtTextFormat::TEXT;
-    }
-  });
-
-  connect(instruction_table_, &Ui::TtTableWidget::sendRowMsg, this,
-          qOverload<const QString &>(&TcpWindow::sendMessageToPort));
-  connect(instruction_table_, &Ui::TtTableWidget::sendRowsMsg, this,
-          [this](const QVector<QPair<QString, int>> &datas) {
-            if (datas.isEmpty()) {
-              return;
-            }
-            foreach (const auto &pair, datas) {
-              sendMessageToPort(pair.first, pair.second);
+  connect(chose_hex_btn_, &Ui::TtRadioButton::toggled, this,
+          [this](bool checked) {
+            if (checked) {
+              // 一直点击
+              if (send_type_ != TtTextFormat::HEX) {
+                send_type_ = TtTextFormat::HEX;
+                setSaveStatus(false);
+              }
             }
           });
+  connect(chose_text_btn_, &Ui::TtRadioButton::toggled, this,
+          [this](bool checked) {
+            if (checked) {
+              if (send_type_ != TtTextFormat::TEXT) {
+                send_type_ = TtTextFormat::TEXT;
+                setSaveStatus(false);
+              }
+            }
+          });
+
+  connect(instruction_table_, &Ui::TtTableWidget::sendRowMsg, this,
+          qOverload<const QString &, TtTextFormat::Type, uint32_t>(
+              &TcpWindow::sendInstructionTableContent));
+  connect(instruction_table_, &Ui::TtTableWidget::sendRowsMsg, this,
+          [this](const std::vector<Data::MsgInfo> &msgs) {
+            // 群发进入了
+            qDebug() << "群发消息";
+            // 群发消息
+            // 没有延时的能够立马发送
+            if (msgs.size() == 0) {
+              return;
+            }
+            foreach (const auto &msg, msgs) {
+              sendInstructionTableContent(msg);
+            }
+          });
+}
+
+void TcpWindow::setControlState(bool state) {
+  if (state) {
+    // 启用控件
+    if (role_ == TtProtocolType::Client) {
+      tcp_client_setting_->setControlState(true);
+    } else if (role_ == TtProtocolType::Server) {
+      tcp_server_setting_->setControlState(true);
+    }
+    instruction_table_->setEnabled(true);
+    send_btn_->setEnabled(false);
+  } else {
+    // 禁用控件
+    // 启用控件
+    if (role_ == TtProtocolType::Client) {
+      tcp_client_setting_->setControlState(false);
+    } else if (role_ == TtProtocolType::Server) {
+      tcp_server_setting_->setControlState(false);
+    }
+    // instruction_table_->setEnabled(false);
+    instruction_table_->setEnabled(false);
+    send_btn_->setEnabled(true);
+  }
 }
 
 void TcpWindow::sendMessage(const QString &data, TtTextFormat::Type type) {
@@ -387,9 +503,6 @@ void TcpWindow::sendMessage(const QString &data, TtTextFormat::Type type) {
         qDebug() << "分包HEX: " << chunk;
       }
     } else {
-      // 没有设置间隔, 可以直接秒发送
-      // TEXT模式：直接按字节分包
-      // 加入多个到 msg_ 中
       for (int i = 0; i < dataUtf8.size(); i += package_size_) {
         QByteArray chunk = dataUtf8.mid(i, package_size_);
         msg_queue_.enqueue(QString::fromUtf8(chunk));
@@ -397,7 +510,6 @@ void TcpWindow::sendMessage(const QString &data, TtTextFormat::Type type) {
       }
     }
   } else {
-    // 没有分包, 直接发送
     if (!opened_) {
       Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""), tr("串口未打开"),
                               1500, this);
@@ -408,110 +520,8 @@ void TcpWindow::sendMessage(const QString &data, TtTextFormat::Type type) {
     } else if (role_ == TtProtocolType::Server) {
       tcp_server_->sendMessageToClients(dataUtf8);
     }
-    // QMetaObject::invokeMethod(serial_port_, "sendData", Qt::QueuedConnection,
-    //                           Q_ARG(QByteArray, dataUtf8));
-
     showMessage(dataUtf8, true);
   }
-}
-
-void TcpWindow::showMessage(const QByteArray &data, bool out) {
-  if (out) {
-    send_byte_count_ += data.size();
-  } else {
-    recv_byte_count_ += data.size();
-  }
-
-  QDateTime now = QDateTime::currentDateTime();
-  QString timestamp = now.toString("[yyyy-MM-dd hh:mm:ss.zzz]");
-  QString formattedMessage;
-
-  if (out) {
-    formattedMessage += "[Tx]";
-  } else {
-    formattedMessage += "[Rx]";
-  }
-
-  formattedMessage += ' ';
-  formattedMessage.append(timestamp);
-  formattedMessage += ' ';
-
-  // 出现问题
-  if (display_type_ == TtTextFormat::TEXT) {
-    // 直接追加文本
-    formattedMessage.append(data);
-  } else if (display_type_ == TtTextFormat::HEX) {
-    // 转换成 utf8 -> hex
-    formattedMessage.append(data.toHex(' ').toUpper().trimmed());
-  }
-  terminal_->appendPlainText(formattedMessage);
-
-  auto *msg = new Ui::TtChatMessage();
-  msg->setContent(data);
-  msg->setRawData(data);
-  msg->setTimestamp(now);
-  if (out) {
-    msg->setOutgoing(true);
-  } else {
-    msg->setOutgoing(false);
-  }
-  msg->setBubbleColor(QColor("#DCF8C6"));
-  QList<Ui::TtChatMessage *> list;
-  list.append(msg);
-  message_model_->appendMessages(list);
-  message_view_->scrollToBottom();
-}
-
-void TcpWindow::showMessage(const QString &data, bool out) {
-  // qDebug() << out << data;
-  QByteArray dataUtf8 = data.toUtf8();
-
-  if (out) {
-    send_byte_count_ += data.size();
-  } else {
-    recv_byte_count_ += data.size();
-  }
-
-  QDateTime now = QDateTime::currentDateTime();
-  QString timestamp = now.toString("[yyyy-MM-dd hh:mm:ss.zzz]");
-  QString formattedMessage;
-  if (out) {
-    formattedMessage += "[Tx]";
-  } else {
-    formattedMessage += "[Rx]";
-  }
-  formattedMessage += ' ';
-  formattedMessage.append(timestamp);
-  formattedMessage += ' ';
-
-  // 出现问题
-  if (display_type_ == TtTextFormat::TEXT) {
-    // TEXT 格式, data 保持, 有问题
-    formattedMessage.append(data);
-  } else if (display_type_ == TtTextFormat::HEX) {
-    // qDebug() << "hear" << dataUtf8.toHex(' ').toUpper().trimmed();
-    formattedMessage.append(dataUtf8.toHex(' ').toUpper().trimmed());
-  }
-  terminal_->appendPlainText(formattedMessage);
-
-  auto *msg = new Ui::TtChatMessage();
-  msg->setContent(data);
-  msg->setRawData(data.toUtf8());
-  msg->setTimestamp(now);
-  if (out) {
-    msg->setOutgoing(true);
-  } else {
-    msg->setOutgoing(false);
-  }
-  msg->setBubbleColor(QColor("#DCF8C6"));
-  QList<Ui::TtChatMessage *> list;
-  list.append(msg);
-  message_model_->appendMessages(list);
-  if (out) {
-    send_byte_->setText(QString("发送字节数: %1 B").arg(send_byte_count_));
-  } else {
-  }
-  message_view_->scrollToBottom();
 }
 
 bool TcpWindow::isEnableHeartbeart() {
@@ -520,6 +530,42 @@ bool TcpWindow::isEnableHeartbeart() {
     return true;
   }
   return false;
+}
+
+void TcpWindow::sendPackagedData(const QByteArray &data, bool isHeartbeat) {
+  if (!opened_) {
+    if (!isHeartbeat) {
+      // 非心跳数据
+      Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""), tr("串口未打开"),
+                              1500, this);
+    }
+    return;
+  }
+
+  if (package_size_ > 0) {
+    for (int i = 0; i < data.size(); i += package_size_) {
+      QByteArray chunk = data.mid(i, package_size_);
+      if (role_ == TtProtocolType::Client) {
+        tcp_client_->sendMessage(chunk);
+      } else if (role_ == TtProtocolType::Server) {
+        tcp_server_->sendMessageToClients(chunk);
+      }
+      send_byte_count_ += chunk.size();
+      send_byte_->setText(QString("发送字节数: %1 B").arg(send_byte_count_));
+      // 显示消息
+      showMessage(chunk, true);
+    }
+  } else {
+    if (role_ == TtProtocolType::Client) {
+      tcp_client_->sendMessage(data);
+    } else if (role_ == TtProtocolType::Server) {
+      tcp_server_->sendMessageToClients(data);
+    }
+    send_byte_count_ += data.size();
+    send_byte_->setText(QString("发送字节数: %1 B").arg(send_byte_count_));
+    // 显示消息
+    showMessage(data, true);
+  }
 }
 
 } // namespace Window

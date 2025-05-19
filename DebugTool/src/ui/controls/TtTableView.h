@@ -3,6 +3,7 @@
 #include <QTableWidget>
 
 #include "Def.h"
+#include "data/communication_metadata.h"
 #include <ui/control/TtLineEdit.h>
 
 class QSpinBox;
@@ -28,10 +29,14 @@ public:
 
   void setCellWidget(int row, int column, QWidget *widget);
 
+  void setEnabled(bool enable);
+
 signals:
   void rowsChanged(quint16 rows);
-  void sendRowMsg(const QString &msg);
-  void sendRowsMsg(const QVector<QPair<QString, int>> &msg);
+  // void sendRowMsg(const QString &msg, TtTextFormat::Type type, quint32
+  // times);
+  void sendRowMsg(const QString &msg, TtTextFormat::Type type, uint32_t times);
+  void sendRowsMsg(const std::vector<Data::MsgInfo> &msgs);
 
 private slots:
   void onAddRowButtonClicked();

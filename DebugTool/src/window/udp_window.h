@@ -4,6 +4,7 @@
 #include <Qsci/qsciscintilla.h>
 
 #include "Def.h"
+#include "data/communication_metadata.h"
 #include "window/frame_window.h"
 
 QT_BEGIN_NAMESPACE
@@ -59,41 +60,67 @@ signals:
   void requestSaveConfig();
 
 private slots:
-  void switchToEditMode();
-  void switchToDisplayMode();
   void updateServerStatus();
-  void onDataReceived(const QByteArray &data);
+  void dataReceived(const QByteArray &data);
+
+  ///
+  /// @brief sendMessageToPort
+  /// editor 编辑器发送编辑数据
+  void sendMessageToPort();
+  ///
+  /// @brief sendMessageToPort
+  /// @param data
+  /// 立刻发送 data
+  /// 用于发送心跳内容, 发送指令表格的内容 sendRowMsg 信号
+  void sendMessageToPort(const QString &data);
+
+  ///
+  /// @brief sendMessageToPort
+  /// @param data
+  /// @param times
+  /// 在 times 时间后发送 data
+  void sendMessageToPort(const QString &data, const int &times);
 
 private:
   void init();
   void connectSignals();
 
-  // Ui::TtVerticalLayout *main_layout_;
+  void sendMessage(const QString &data,
+                   TtTextFormat::Type type = TtTextFormat::TEXT);
 
-  // Ui::TtNormalLabel *title_;          // 名称
-  // Ui::TtSvgButton *modify_title_btn_; // 修改连接名称
-  // Ui::TtSvgButton *save_btn_;         // 保存连接记录
-  // Ui::TtSvgButton *on_off_btn_;       // 开启 or 关闭
+  ///
+  /// @brief setControlState
+  /// @param state
+  /// 设置主界面控件状态
+  void setControlState(bool state);
 
-  // Ui::TtChatView *message_view_;
-  // Ui::TtChatMessageModel *message_model_;
-  // Ui::TtTableWidget *instruction_table_;
+  ///
+  /// @brief setHeartbeartContent
+  /// 发送心跳内容
+  void setHeartbeartContent();
 
-  // Ui::TtNormalLabel *send_byte;
-  // Ui::TtNormalLabel *recv_byte;
-  // quint64 send_byte_count = 0;
-  // quint64 recv_byte_count = 0;
+  ///
+  /// @brief sendInstructionTableContent
+  /// @param text 消息本体
+  /// @param type   类型
+  /// @param times  间隔时间
+  /// 发送表格的内容
+  void sendInstructionTableContent(const QString &text, TtTextFormat::Type type,
+                                   uint32_t times);
+  ///
+  /// @brief sendInstructionTableContent
+  /// @param msg
+  /// 构造 MsgInfo
+  void sendInstructionTableContent(const Data::MsgInfo &msg);
 
-  // QsciScintilla *editor;
+  ///
+  /// @brief sendPackagedData
+  /// @param data
+  /// @param isHeartbeat
+  /// 处理分包发送
+  void sendPackagedData(const QByteArray &data, bool isHeartbeat = false);
 
-  // QWidget *original_widget_{nullptr};
-  // QWidget *edit_widget_{nullptr};
-  // Ui::TtLineEdit *title_edit_{nullptr};
-  // QStackedWidget *stack_{nullptr};
-
-  // bool opened_{false};
-
-  // QJsonObject config_;
+  bool isEnableHeartbeart();
 
   Widget::UdpServerSetting *udp_server_setting_{nullptr};
   Widget::UdpClientSetting *udp_client_setting_{nullptr};

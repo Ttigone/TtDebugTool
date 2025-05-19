@@ -3,6 +3,8 @@
 
 #include <QWidget>
 
+#include "widget/frame_setting.h"
+
 namespace Ui {
 class TtLabelComboBox;
 class TtLabelBtnComboBox;
@@ -20,7 +22,8 @@ struct UdpClientConfiguration;
 
 namespace Widget {
 
-class UdpServerSetting : public QWidget {
+// class UdpServerSetting : public QWidget {
+class UdpServerSetting : public FrameSetting {
   Q_OBJECT
 public:
   explicit UdpServerSetting(QWidget *parent = nullptr);
@@ -30,7 +33,10 @@ public:
   const QJsonObject &getUdpServerSetting();
 
   void setOldSettings(const QJsonObject &config);
-  const QJsonObject &getSerialSetting();
+
+public slots:
+  void setControlState(bool state);
+  quint32 getRefreshInterval();
 
 signals:
 
@@ -50,19 +56,22 @@ private:
   QJsonObject udp_server_save_config_;
 };
 
-class UdpClientSetting : public QWidget {
+// class UdpClientSetting : public QWidget {
+class UdpClientSetting : public FrameSetting {
   Q_OBJECT
 public:
   explicit UdpClientSetting(QWidget *parent = nullptr);
   ~UdpClientSetting();
 
   Core::UdpClientConfiguration getUdpClientConfiguration();
-
   const QJsonObject &getUdpClientSetting();
-
   void setOldSettings(const QJsonObject &config);
 
 signals:
+
+public slots:
+  void setControlState(bool state);
+  quint32 getRefreshInterval();
 
 private:
   void setLinkMode();

@@ -554,6 +554,7 @@ void MainWindow::compileTsFilesFinished() {
 }
 
 void MainWindow::saveCsvFile() {
+  // BUG
   // 弹出一个串口, 选择你要保存的 csv 文件.
   // 当前的界面的 csv
   // 获取的是当前的 窗口, 当如果是跨越窗口呢 ?
@@ -580,16 +581,11 @@ void MainWindow::switchToOtherTabPage(const QString &uuid, const int &type) {
     tabWidget_->switchByReadingMem(uuid,
                                    static_cast<TtProtocolRole::Role>(type));
   } else {
-    base::DetectRunningTime test;
-    // 只有第一次运行才会慢, 包行了创建首个窗口的缓存
-    qDebug() << "switch uuid " << uuid;
-
+    // BUG 本地读取, 但是时间小于 2s, 会导致没有读取得到, 怎么做???
     tabWidget_->switchByReadingDisk(
         uuid, static_cast<TtProtocolRole::Role>(type),
-
         getSpecificConfiguration(uuid,
                                  static_cast<TtProtocolRole::Role>(type)));
-    qDebug() << test.elapseMilliseconds();
   }
 }
 
@@ -1074,14 +1070,15 @@ void MainWindow::loadStyleSheet(Theme theme) {
 }
 
 void MainWindow::setLeftBar() {
+  // BUG 缺少双击事件
   left_bar_ = new QWidget(this);
   left_bar_logic_ = new Ui::TtWidgetGroup(this);
   left_bar_logic_->setExclusive(true);
-  // BUG 按钮的状态与 open_close 状态不一致, svgbutton 的双击问题
   communication_connection_ =
       new Ui::TtSvgButton(":/sys/communicating-junctions.svg", left_bar_);
   communication_connection_->setColors(Qt::black, Qt::blue);
   communication_connection_->setEnableHoldToCheck(false);
+  // communication_instruction_
 
   communication_instruction_ =
       new Ui::TtSvgButton(":/sys/Instruction-configuration.svg", left_bar_);
@@ -1194,8 +1191,6 @@ void MainWindow::connectSignals() {
 }
 
 void MainWindow::registerTabWidget() {
-  // 注册 串口窗口
-  // tabWidget 分离出去了
   tabWidget_->registerWidget(
       TtProtocolRole::Serial,
       [this]() {
@@ -1250,50 +1245,19 @@ void MainWindow::registerTabWidget() {
         // qDebug() << "Create SerialWindow: " << runtime.elapseMilliseconds();
         connect(serial, &Window::SerialWindow::requestSaveConfig, this,
                 [this, serial]() {
-                  qDebug() << "request save";
-                  // 能够找到 widget, 本窗口
-                  // tabWidget_.find
-
-                  // 所有的 uuid 保存在
-                  // 当前 tabWidget_ 不是所处的 tabWindow
-                  // 获取当前所在 tabWindow
-                  // 这样才能获取正确的 uuid
-
-                  // 有成功保存到 leftbar 中, 但是 uuid 获取失败
-                  // 获取当前窗口的独特值(uuid), 是否已经保存到 listwidget,
-
-                  // 获取的 uuid 全部有问题
-                  // 应该使用实例获取
-
-                  // 有 widget, 寻找 uuid
-
+                  // qDebug() << "request save";
                   const auto &uuid = tabWidget_->getCurrentWidgetUUid(serial);
-
-                  addDifferentConfiguration(
-                      TtFunctionalCategory::Communication,
-                      TtProtocolRole::Serial, serial->getTitle(),
-                      // tabWidget_->getCurrentWidgetUUid());
-                      // tabWidget_->getCurrentWidgetUUid(serial));
-                      uuid);
-                  // 设置对应的 tabTitle
-                  // 设置的也有问题
-
-                  // 有 uuid
-
-                  // tabWidget_->setTabTitle(serial->getTitle());
+                  addDifferentConfiguration(TtFunctionalCategory::Communication,
+                                            TtProtocolRole::Serial,
+                                            serial->getTitle(), uuid);
                   tabWidget_->setTabTitle(uuid, serial->getTitle());
-
-                  // 直接保存到本地
-                  // 从磁盘读取，又从磁盘写入, 怎么区分 ?
-                  // 重新开启应用时, 从磁盘读取内容, 有 uuid, 则不需要创建
-                  // 直接保存到磁盘
+                  // 保存有问题, 如果在保存关闭后的一瞬间, 重新打开, 2s
+                  // 之内没有保存到本地, 将会导致读取的是前 2s 的本地原有数据
                   Storage::SettingsManager::instance().setSetting(
-                      // "Serial+" + tabWidget_->getCurrentWidgetUUid(),
                       "Serial+" + uuid, serial->getConfiguration());
-
                   Ui::TtMessageBar::success(TtMessageBarType::Top, "",
                                             tr("保存成功"), 1000, this);
-                  qDebug() << "save sucess";
+                  // qDebug() << "save sucess";
                 });
         return serial;
       },
@@ -1308,15 +1272,11 @@ void MainWindow::registerTabWidget() {
                   const auto &uuid =
                       tabWidget_->getCurrentWidgetUUid(tcpClient);
 
-                  addDifferentConfiguration(
-                      TtFunctionalCategory::Communication,
-                      TtProtocolRole::TcpClient, tcpClient->getTitle(),
-                      // tabWidget_->getCurrentWidgetUUid());
-                      uuid);
-                  // tabWidget_->setTabTitle(tcpClient->getTitle());
+                  addDifferentConfiguration(TtFunctionalCategory::Communication,
+                                            TtProtocolRole::TcpClient,
+                                            tcpClient->getTitle(), uuid);
                   tabWidget_->setTabTitle(uuid, tcpClient->getTitle());
                   Storage::SettingsManager::instance().setSetting(
-                      // "TcpClient+" + tabWidget_->getCurrentWidgetUUid(),
                       "TcpClient+" + uuid, tcpClient->getConfiguration());
                   Ui::TtMessageBar::success(TtMessageBarType::Top, "",
                                             tr("保存成功"), 1000);
@@ -1346,7 +1306,6 @@ void MainWindow::registerTabWidget() {
       },
       tr("未命名 UDP 连接"));
   tabWidget_->registerWidget(
-      // 有问题, 会影响主窗口的变化
       TtProtocolRole::MqttClient,
       [this]() {
         Window::MqttWindow *mqttClient =
@@ -1355,21 +1314,16 @@ void MainWindow::registerTabWidget() {
                 [this, mqttClient]() {
                   const auto &uuid =
                       tabWidget_->getCurrentWidgetUUid(mqttClient);
-                  addDifferentConfiguration(
-                      TtFunctionalCategory::Communication,
-                      TtProtocolRole::MqttClient, mqttClient->getTitle(),
-                      // tabWidget_->getCurrentWidgetUUid());
-                      uuid);
+                  addDifferentConfiguration(TtFunctionalCategory::Communication,
+                                            TtProtocolRole::MqttClient,
+                                            mqttClient->getTitle(), uuid);
                   tabWidget_->setTabTitle(mqttClient->getTitle());
                   Storage::SettingsManager::instance().setSetting(
-                      // "MqttClient+" + tabWidget_->getCurrentWidgetUUid(),
                       "MqttClient+" + uuid, mqttClient->getConfiguration());
 
                   Ui::TtMessageBar::success(TtMessageBarType::Top, "",
                                             tr("保存成功"), 1000, this);
                 });
-        // bug
-        qDebug() << "create";
         return mqttClient;
       },
       tr("未命名的 MQTT 客户端"));
@@ -1403,14 +1357,11 @@ void MainWindow::registerTabWidget() {
                 [this, tcpServer]() {
                   const auto &uuid =
                       tabWidget_->getCurrentWidgetUUid(tcpServer);
-                  addDifferentConfiguration(
-                      TtFunctionalCategory::Simulate, TtProtocolRole::TcpServer,
-                      tcpServer->getTitle(),
-                      // tabWidget_->getCurrentWidgetUUid());
-                      uuid);
+                  addDifferentConfiguration(TtFunctionalCategory::Simulate,
+                                            TtProtocolRole::TcpServer,
+                                            tcpServer->getTitle(), uuid);
                   tabWidget_->setTabTitle(uuid, tcpServer->getTitle());
                   Storage::SettingsManager::instance().setSetting(
-                      // "TcpServer+" + tabWidget_->getCurrentWidgetUUid(),
                       "TcpServer+" + uuid, tcpServer->getConfiguration());
                   Ui::TtMessageBar::success(TtMessageBarType::Top, "",
                                             tr("保存成功"), 1000);
@@ -1429,14 +1380,11 @@ void MainWindow::registerTabWidget() {
                 [this, udpServer]() {
                   const auto &uuid =
                       tabWidget_->getCurrentWidgetUUid(udpServer);
-                  addDifferentConfiguration(
-                      TtFunctionalCategory::Simulate, TtProtocolRole::UdpServer,
-                      udpServer->getTitle(),
-                      // tabWidget_->getCurrentWidgetUUid());
-                      uuid);
+                  addDifferentConfiguration(TtFunctionalCategory::Simulate,
+                                            TtProtocolRole::UdpServer,
+                                            udpServer->getTitle(), uuid);
                   tabWidget_->setTabTitle(uuid, udpServer->getTitle());
                   Storage::SettingsManager::instance().setSetting(
-                      // "UdpServer+" + tabWidget_->getCurrentWidgetUUid(),
                       "UdpServer+" + uuid, udpServer->getConfiguration());
 
                   Ui::TtMessageBar::success(TtMessageBarType::Top, "",
@@ -1669,16 +1617,33 @@ void MainWindow::readingProjectConfiguration() {
 
 QJsonObject MainWindow::getSpecificConfiguration(const QString index,
                                                  TtProtocolRole::Role role) {
-  const auto configs =
-      Storage::SettingsManager::instance().getHistorySettings();
+  // 切换时都会读取本地全部配置
+  // 获取全部的配置
+  // 获取前缀
+  // 之前内存保存的
   auto prefix = configMappingTable.value(role);
-  for (const QString &key : configs.keys()) {
-    if (key.startsWith(prefix)) {
-      QString uuid = key.sliced(prefix.length());
-      if (uuid == index) {
-        QJsonValue value = configs.value(key);
-        if (value.isObject()) {
-          return value.toObject();
+  QString key = prefix + index;
+  QJsonValue value = Storage::SettingsManager::instance().getSetting(key);
+  if (value.isObject()) {
+    qDebug() << "find";
+    return value.toObject();
+  } else {
+    const auto configs =
+        Storage::SettingsManager::instance().getHistorySettings();
+    // 获取前缀
+    auto prefix = configMappingTable.value(role);
+    // 遍历本地的 key
+    for (QString key : configs.keys()) {
+      // 对应不同类型的前缀匹配了
+      if (key.startsWith(prefix)) {
+        // 分隔 uuid
+        QString uuid = key.sliced(prefix.length());
+        if (uuid == index) {
+          // 匹配到了 uuid
+          QJsonValue value = configs.value(key);
+          if (value.isObject()) {
+            return value.toObject();
+          }
         }
       }
     }

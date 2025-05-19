@@ -21,7 +21,8 @@
 #include "qtmaterialflatbutton.h"
 #include <Qsci/qsciscintilla.h>
 
-#include "frame_window.h"
+#include "data/communication_metadata.h"
+#include "window/frame_window.h"
 
 #include "Def.h"
 
@@ -79,6 +80,8 @@ public:
   Q_INVOKABLE void saveSetting() override;
   Q_INVOKABLE void setSetting(const QJsonObject &config) override;
 
+  void setSaveStatus(bool state);
+
 signals:
   ///
   /// @brief requestSaveConfig
@@ -124,12 +127,30 @@ private slots:
   /// 发送心跳内容
   void setHeartbeartContent();
 
+  ///
+  /// @brief sendInstructionTableContent
+  /// @param text 消息本体
+  /// @param type   类型
+  /// @param times  间隔时间
+  /// 发送表格的内容
+  void sendInstructionTableContent(const QString &text, TtTextFormat::Type type,
+                                   uint32_t times);
+  ///
+  /// @brief sendInstructionTableContent
+  /// @param msg
+  /// 构造 MsgInfo
+  void sendInstructionTableContent(const Data::MsgInfo &msg);
+
 private:
   void init();
   void connectSignals();   // 信号槽链接
   void setSerialSetting(); // 设置通讯配置
-
   void saveSerialLog();
+  ///
+  /// @brief setControlState
+  /// @param state
+  /// 设置主界面控件状态
+  void setControlState(bool state);
 
   ///
   /// @brief addChannel
@@ -150,11 +171,12 @@ private:
   void handleDialogData(const QString &label, quint16 channel,
                         const QByteArray &blob, const QColor &colork);
 
-  // 文本发送 hex 格式 并显示
-  // 数据接收显示 hex
-  void showMessage(const QByteArray &data, bool out = true); // 为 hex 进制提供
-  // 分开
-  void showMessage(const QString &data, bool out = true);
+  // // 文本发送 hex 格式 并显示
+  // // 数据接收显示 hex
+  // void showMessage(const QByteArray &data, bool out = true); // 为 hex
+  // 进制提供
+  // // 分开
+  // void showMessage(const QString &data, bool out = true);
 
   ///
   /// @brief sendMessage
@@ -182,15 +204,19 @@ private:
   /// 是否使能心跳
   bool isEnableHeartbeart();
 
+  ///
+  /// @brief sendPackagedData
+  /// @param data
+  /// @param isHeartbeat
+  /// 处理分包发送
+  void sendPackagedData(const QByteArray &data, bool isHeartbeat = false);
+
   QThread *worker_thread_ = nullptr;
   Core::SerialPortWorker *serial_port_;
-
-  Widget::SerialSetting *serial_setting_;
-
-  Ui::TtLuaInputBox *lua_code_;
-
-  Ui::TtSerialPortPlot *serial_plot_;
-  QListWidget *serialDataList;
+  Widget::SerialSetting *serial_setting_{nullptr};
+  Ui::TtLuaInputBox *lua_code_{nullptr};
+  Ui::TtSerialPortPlot *serial_plot_{nullptr};
+  QListWidget *serialDataList{nullptr};
 
   struct ParserRule {
     bool enable;       // 是否使能

@@ -109,6 +109,7 @@ SerialWindow::~SerialWindow() {
     // QMetaObject::invokeMethod(serial_port_, "deleteLater",
     //                           Qt::QueuedConnection);
   }
+  qDebug() << "delete serialwindow exit";
 }
 
 QString SerialWindow::getTitle() { return title_->text(); }
@@ -286,14 +287,15 @@ void SerialWindow::setHeartbeartContent() {
   }
 }
 
-void SerialWindow::sendInstructionTableContent(const QString &msg,
+void SerialWindow::sendInstructionTableContent(const QString &text,
                                                TtTextFormat::Type type,
                                                uint32_t time) {
   QByteArray dataUtf8;
   if (type == TtTextFormat::TEXT) {
-    dataUtf8 = msg.toUtf8();
+    dataUtf8 = text.toUtf8();
   } else if (type == TtTextFormat::HEX) {
-    QString hexStr = msg.remove(QRegularExpression("[^0-9A-Fa-f]"));
+    QString hexStr = QString(text);
+    hexStr.remove(QRegularExpression("[^0-9A-Fa-f]"));
 
     if (hexStr.isEmpty()) {
       qDebug() << "存在无效的十六进制字符";
@@ -343,13 +345,11 @@ void SerialWindow::saveSerialLog() {
 void SerialWindow::setControlState(bool state) {
   if (state) {
     // 启用控件
-    // serial_setting_->setEnabled(true);
     serial_setting_->setControlState(true);
     instruction_table_->setEnabled(true);
     send_btn_->setEnabled(false);
   } else {
     // 禁用控件
-    // serial_setting_->setEnabled(false);
     serial_setting_->setControlState(false);
     instruction_table_->setEnabled(false);
     send_btn_->setEnabled(true);
@@ -1235,6 +1235,7 @@ void SerialWindow::connectSignals() {
                                 Q_ARG(Core::SerialPortConfiguration, cfg));
       qDebug() << "serialopen";
       opened_ = true;
+      on_off_btn_->setChecked(true);
       // 发送包可以不需要间隔
       send_package_timer_->start();
 

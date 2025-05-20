@@ -77,9 +77,9 @@ bool TtWidgetGroup::eventFilter(QObject *obj, QEvent *event) {
   // return QObject::eventFilter(obj, event);
 
   // 鼠标点击事件
-  if (event->type() == QEvent::MouseButtonPress) {
-    // if (event->type() == QEvent::MouseButtonPress ||
-    //     event->type() == QEvent::MouseButtonDblClick) {
+  // if (event->type() == QEvent::MouseButtonPress) {
+  if (event->type() == QEvent::MouseButtonPress ||
+      event->type() == QEvent::MouseButtonDblClick) {
     QWidget *widget = qobject_cast<QWidget *>(obj);
     if (widget && widgets_.contains(widget)) {
       // 获取 check 属性

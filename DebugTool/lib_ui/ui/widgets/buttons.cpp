@@ -637,7 +637,7 @@ void TtSvgButton::mouseReleaseEvent(QMouseEvent *event) {
 }
 
 void TtSvgButton::mouseDoubleClickEvent(QMouseEvent *event) {
-  qDebug() << "double";
+  // qDebug() << "double";
 }
 
 QSize TtSvgButton::sizeHint() const {

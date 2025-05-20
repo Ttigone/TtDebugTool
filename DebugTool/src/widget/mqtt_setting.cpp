@@ -70,8 +70,8 @@ void MqttClientSetting::setOldSettings(const QJsonObject &config) {
   QJsonObject testament = config.value("Testament").toObject();
   QString topic = testament.value("Topic").toString();
   QString load = testament.value("Load").toString();
-  QString qos = testament.value("QoS").toString();
-  QString retain = testament.value("Retain").toString();
+  int qos = testament.value("QoS").toInt();
+  bool retain = testament.value("Retain").toBool();
 
   link_->setText(link);
   port_->setText(port);
@@ -87,6 +87,14 @@ void MqttClientSetting::setOldSettings(const QJsonObject &config) {
   hold_timeout_->setText(holdTimeout);
   reconnection_period_->setText(reconnectionPeriod);
   clear_conversation_->setChecked(clearConversation);
+  topic_->setText(topic);
+  load_->setText(load);
+  for (int i = 0; i < qos_->body()->count(); ++i) {
+    if (qos == qos_->body()->itemData(i).toInt()) {
+      qos_->setCurrentItem(i);
+    }
+  }
+  retain_->setChecked(retain);
 }
 
 void MqttClientSetting::init() {
@@ -165,9 +173,9 @@ void MqttClientSetting::setProtocolVersion() {
 }
 
 void MqttClientSetting::setQoS() {
-  qos_->addItem("0", "0");
-  qos_->addItem("1");
-  qos_->addItem("2");
+  qos_->addItem("0", 0);
+  qos_->addItem("1", 1);
+  qos_->addItem("2", 2);
 }
 
 } // namespace Widget

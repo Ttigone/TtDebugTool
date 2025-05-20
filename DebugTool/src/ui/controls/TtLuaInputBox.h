@@ -1,44 +1,45 @@
 #ifndef UI_CONTROLS_LUAINPUTBOX_H
 #define UI_CONTROLS_LUAINPUTBOX_H
 
-#include <Qsci/qsciscintilla.h>
-#include <QsciAPIs.h>
+// #include <Qsci/qsciscintilla.h>
+#include "qsciscintilla.h"
 #include <QDialog>
+#include <QsciAPIs.h>
 
 namespace Ui {
 
 class TtLuaInputBox : public QDialog {
   Q_OBJECT
- public:
-  explicit TtLuaInputBox(bool enableSaveSetting, QWidget* parent = nullptr);
+public:
+  explicit TtLuaInputBox(bool enableSaveSetting, QWidget *parent = nullptr);
   ~TtLuaInputBox();
 
-  void setLuaCode(const QString& code);
+  void setLuaCode(const QString &code);
   QString getLuaCode() const;
 
   // void setEnableSaveSetting(bool enable);
 
- signals:
+signals:
   void closed();
 
- private slots:
+private slots:
   void applyChanges();
 
- private:
+private:
   void init();
   void connectSignals();
-  void addLuaApis(QsciAPIs* apis);
-  void enhanceCompletion(QsciScintilla* editor);
+  void addLuaApis(QsciAPIs *apis);
+  void enhanceCompletion(QsciScintilla *editor);
   void updateLineNumberWidth();
-  void appendCodeToEnd(QsciScintilla* editor, const QString& code);
+  void appendCodeToEnd(QsciScintilla *editor, const QString &code);
 
-  QsciScintilla* edit_lua_code_;
+  QsciScintilla *edit_lua_code_;
 
   QMap<QString, QString> lua_code_;
 
   bool save_setting_ = true;
 };
 
-}  // namespace Ui
+} // namespace Ui
 
-#endif  // UI_CONTROLS_LUAINPUTBOX_H
+#endif // UI_CONTROLS_LUAINPUTBOX_H

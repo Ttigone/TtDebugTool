@@ -1,3 +1,6 @@
+#ifndef UI_CONTROLS_TTTABLEVIEW_H
+#define UI_CONTROLS_TTTABLEVIEW_H
+
 #include <QHeaderView>
 #include <QScrollBar>
 #include <QTableWidget>
@@ -23,18 +26,13 @@ public:
   ~TtTableWidget();
 
   void setupHeaderRow();
-
   void setupTable(const QJsonObject &record);
   QJsonObject getTableRecord();
-
   void setCellWidget(int row, int column, QWidget *widget);
-
   void setEnabled(bool enable);
 
 signals:
   void rowsChanged(quint16 rows);
-  // void sendRowMsg(const QString &msg, TtTextFormat::Type type, quint32
-  // times);
   void sendRowMsg(const QString &msg, TtTextFormat::Type type, uint32_t times);
   void sendRowsMsg(const std::vector<Data::MsgInfo> &msgs);
 
@@ -42,6 +40,19 @@ private slots:
   void onAddRowButtonClicked();
 
 private:
+  class HeaderWidget : public QWidget {
+  public:
+    HeaderWidget(QWidget *parent = nullptr) : QWidget(parent), paint_(true) {}
+    ~HeaderWidget();
+
+    void setPaintRightBorder(bool isPaint) { paint_ = isPaint; }
+
+  protected:
+    void paintEvent(QPaintEvent *event) override;
+
+  private:
+    bool paint_;
+  };
   // 每一行固定的显示控件
   struct TableRow {
     // TtSwitchButton *enableBtn = nullptr;
@@ -53,10 +64,14 @@ private:
     bool fromPool{false};
   };
 
+  // 每个对象池的最大大小
+  static const int MAX_POOL_SIZE = 100;
+
   // 对象池
   QList<TtComboBox *> comboPool_;
   QList<TtSwitchButton *> switchPool_;
   QList<QSpinBox *> spinPool_;
+  QList<TtLineEdit *> lineEditPool_;
   QList<QWidget *> widgetPool_;
 
   QVector<TableRow> rowsData_;
@@ -69,6 +84,7 @@ private:
   TtSwitchButton *createSwitchButton();
   TtComboBox *createTypeComboBox();
   QSpinBox *createDelaySpin();
+  TtLineEdit *createLineEdit(const QString &placeholderText = "");
 
   /// @brief 创建一个单元格的包装器
   /// @param content 包装的内容
@@ -86,20 +102,6 @@ private:
   QWidget *createSendButton();
   QWidget *createDeleteButton();
   QWidget *createRowSendButton();
-
-  class HeaderWidget : public QWidget {
-  public:
-    HeaderWidget(QWidget *parent = nullptr) : QWidget(parent), paint_(true) {}
-    ~HeaderWidget();
-
-    void setPaintRightBorder(bool isPaint) { paint_ = isPaint; }
-
-  protected:
-    void paintEvent(QPaintEvent *event) override;
-
-  private:
-    bool paint_;
-  };
 
   QWidget *createHeaderWidget(const QString &text, bool paintBorder);
 
@@ -330,3 +332,5 @@ private:
 };
 
 } // namespace Ui
+
+#endif // UI_CONTROLS_TTTABLEVIEW_H

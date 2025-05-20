@@ -4,23 +4,7 @@
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS
     Core
-    Widgets
-    SerialPort
-    SerialBus
-    Qml
-    Svg
-    SvgWidgets
-    StateMachine
-    PrintSupport
-    Concurrent
-    OpenGL
-    Core5Compat
-#    Mqtt
-)
-
-
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS
-    Core
+    # Gui
     Widgets
     SerialPort
     SerialBus
@@ -35,7 +19,31 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS
     # Mqtt
 )
 
-#set(Qt6_Mqtt_DIR "")
+
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS
+    Core
+    # Gui
+    Widgets
+    SerialPort
+    SerialBus
+    Qml
+    Svg
+    SvgWidgets
+    StateMachine
+    PrintSupport
+    Concurrent
+    OpenGL
+    Core5Compat
+    # Mqtt
+)
+
+# # 验证找到的 Qt
+# if(NOT Qt6_FOUND)
+#     message(FATAL_ERROR "Qt6 not found. Please set CMAKE_PREFIX_PATH to your Qt installation.")
+# endif()
+
+# # 打印 Qt 版本信息
+# message(STATUS "Found Qt ${Qt6_VERSION} at ${Qt6_DIR}")
 
 if(NOT Qt6OpenGL_FOUND)
     message(FATAL_ERROR "Qt6 OpenGL module not found!")

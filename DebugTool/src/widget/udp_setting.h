@@ -36,9 +36,6 @@ public:
 
 public slots:
   void setControlState(bool state);
-  quint32 getRefreshInterval();
-
-signals:
 
 private:
   QVBoxLayout *main_layout_;

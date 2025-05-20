@@ -460,7 +460,9 @@ void UdpWindow::sendInstructionTableContent(const QString &text,
   if (type == TtTextFormat::TEXT) {
     dataUtf8 = text.toUtf8();
   } else if (type == TtTextFormat::HEX) {
-    QString hexStr = text.remove(QRegularExpression("[^0-9A-Fa-f]"));
+    QString hexStr = QString(text);
+    hexStr.remove(QRegularExpression("[^0-9A-Fa-f]"));
+    // QString hexStr = text.remove(QRegularExpression("[^0-9A-Fa-f]"));
 
     if (hexStr.isEmpty()) {
       qDebug() << "存在无效的十六进制字符";

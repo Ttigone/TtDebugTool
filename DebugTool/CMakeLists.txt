@@ -33,81 +33,11 @@ macro(absolute_path_list VAR)
     set(${VAR} ${ABSOLUTE_LIST} CACHE INTERNAL "")
 endmacro()
 
-set(PROJECT_SOURCES
-    ${src_loc}/main.cpp
-    ${src_loc}/pch.h
-    ${src_loc}/Def.h
-
-    ${src_loc}/data/communication_metadata.h
-
-    ${src_loc}/core/serial_port.h ${src_loc}/core/serial_port.cpp
-    ${src_loc}/core/serial_helper.h ${src_loc}/core/serial_helper.cpp
-    ${src_loc}/core/udp_server.h ${src_loc}/core/udp_server.cpp
-    ${src_loc}/core/tcp_server.h ${src_loc}/core/tcp_server.cpp
-    ${src_loc}/core/tcp_client.h ${src_loc}/core/tcp_client.cpp
-    ${src_loc}/core/udp_client.h ${src_loc}/core/udp_client.cpp
-    ${src_loc}/core/mqtt_client.h ${src_loc}/core/mqtt_client.cpp
-    ${src_loc}/core/modbus_client.h ${src_loc}/core/modbus_client.cpp
-    ${src_loc}/core/modbus_server.h ${src_loc}/core/modbus_server.cpp
-    ${src_loc}/core/download.h ${src_loc}/core/download.cpp
-    ${src_loc}/core/lua_kernel.h ${src_loc}/core/lua_kernel.cpp
-    ${src_loc}/core/frame_setting_helper.h ${src_loc}/core/frame_setting_helper.cpp
-
-    # src/lang/ ${src_loc}/core/lua_kernel.cpp
-    src/lang/translation_manager.h src/lang/translation_manager.cpp
-
-    ${src_loc}/window/frame_window.h ${src_loc}/window/frame_window.cpp
-    ${src_loc}/window/main_window.h ${src_loc}/window/main_window.cpp
-    ${src_loc}/window/left_bar.h ${src_loc}/window/left_bar.cpp
-    ${src_loc}/window/popup_window.h ${src_loc}/window/popup_window.cpp
-    ${src_loc}/window/function_selection_window.h ${src_loc}/window/function_selection_window.cpp
-    ${src_loc}/window/serial_window.h ${src_loc}/window/serial_window.cpp
-    ${src_loc}/window/udp_window.h ${src_loc}/window/udp_window.cpp
-    ${src_loc}/window/tcp_window.h ${src_loc}/window/tcp_window.cpp
-    ${src_loc}/window/mqtt_window.h ${src_loc}/window/mqtt_window.cpp
-    ${src_loc}/window/instruction_window.h ${src_loc}/window/instruction_window.cpp
-    ${src_loc}/window/modbus_window.h ${src_loc}/window/modbus_window.cpp
-
-    ${src_loc}/widget/frame_setting.h ${src_loc}/widget/frame_setting.cpp
-    ${src_loc}/widget/serial_setting.h ${src_loc}/widget/serial_setting.cpp
-    ${src_loc}/widget/tcp_setting.h ${src_loc}/widget/tcp_setting.cpp
-    ${src_loc}/widget/udp_setting.h ${src_loc}/widget/udp_setting.cpp
-    ${src_loc}/widget/mqtt_setting.h ${src_loc}/widget/mqtt_setting.cpp
-    ${src_loc}/widget/subscripition_widget.h ${src_loc}/widget/subscripition_widget.cpp
-    ${src_loc}/widget/modbus_setting.h ${src_loc}/widget/modbus_setting.cpp
-    ${src_loc}/widget/mqtt_meta_setting_widget.h ${src_loc}/widget/mqtt_meta_setting_widget.cpp
-
-    ${src_loc}/storage/setting_manager.h ${src_loc}/storage/setting_manager.cpp
-    ${src_loc}/storage/csv_handler.h ${src_loc}/storage/csv_handler.cpp
-    ${src_loc}/storage/configs_manager.h ${src_loc}/storage/configs_manager.cpp
-
-    ${src_loc}/ui/widgets/text_widget.h ${src_loc}/ui/widgets/text_widget.cpp
-    ${src_loc}/ui/widgets/pop_widget.h ${src_loc}/ui/widgets/pop_widget.cpp
-    ${src_loc}/ui/widgets/session_manager.h ${src_loc}/ui/widgets/session_manager.cpp
-    # ${src_loc}/ui/widgets/data_presentation_widget.h ${src_loc}/ui/widgets/data_presentation_widget.cpp
-    ${src_loc}/ui/widgets/subscripition_manager.h ${src_loc}/ui/widgets/subscripition_manager.cpp
-    ${src_loc}/ui/widgets/setting_widget.h ${src_loc}/ui/widgets/setting_widget.cpp
-    ${src_loc}/ui/widgets/tabwindow.h ${src_loc}/ui/widgets/tabwindow.cpp
-
-
-    ${src_loc}/ui/controls/TtQCustomPlot.h ${src_loc}/ui/controls/TtQCustomPlot.cpp
-    ${src_loc}/ui/controls/TtPlotItem.h ${src_loc}/ui/controls/TtPlotItem.cpp
-    ${src_loc}/ui/controls/TtModbusDelegate.h ${src_loc}/ui/controls/TtModbusDelegate.cpp
-    ${src_loc}/ui/controls/TtTableView.h ${src_loc}/ui/controls/TtTableView.cpp
-    ${src_loc}/ui/controls/TtModbusPlot.h ${src_loc}/ui/controls/TtModbusPlot.cpp
-    ${src_loc}/ui/controls/TtDownloadDialog.h ${src_loc}/ui/controls/TtDownloadDialog.cpp
-    ${src_loc}/ui/controls/TtQCPItemRichText.h ${src_loc}/ui/controls/TtQCPItemRichText.cpp
-    ${src_loc}/ui/controls/TtQCPItemRichText.h ${src_loc}/ui/controls/TtQCPItemRichText.cpp
-    ${src_loc}/ui/controls/TtLuaInputBox.h ${src_loc}/ui/controls/TtLuaInputBox.cpp
-    ${src_loc}/ui/controls/TtChannelButton.h ${src_loc}/ui/controls/TtChannelButton.cpp
-    ${src_loc}/ui/controls/TtChannelButtonEditorDialog.h ${src_loc}/ui/controls/TtChannelButtonEditorDialog.cpp
-    ${src_loc}/ui/controls/TtSerialPortPlot.h ${src_loc}/ui/controls/TtSerialPortPlot.cpp
-    ${src_loc}/ui/controls/TtPlotWidget.h ${src_loc}/ui/controls/TtPlotWidget.cpp
-    ${src_loc}/ui/controls/TtTerminalLexer.h ${src_loc}/ui/controls/TtTerminalLexer.cpp
+# 自动查找所有源文件和头文件
+file(GLOB_RECURSE PROJECT_SOURCES
+    "${src_loc}/*.cpp"
+    "${src_loc}/*.h"
 )
-
-# Apply the macro
-absolute_path_list(PROJECT_SOURCES)
 
 
 FILE(GLOB PROJECT_HEADER_FILES
@@ -117,9 +47,6 @@ FILE(GLOB PROJECT_HEADER_FILES
 FILE(GLOB PROJECT_SOURCE_FILES
     ${third_party}/qcustomplot/*.cpp
 )
-
-absolute_path_list(PROJECT_HEADER_FILES)
-absolute_path_list(PROJECT_SOURCE_FILES)
 
 set(RES_QRC
     res/shared.qrc
@@ -196,10 +123,17 @@ add_subdirectory(lib_ui)
 include_directories(src)
 include_directories(${third_party})
 
-if(MINGW)
-    target_include_directories(${PROJECT_NAME} PRIVATE ${third_party}/qtmqtt_mingw64/include)
-    target_link_directories(${PROJECT_NAME} PRIVATE ${third_party}/qtmqtt_mingw64/lib)
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    target_include_directories(${PROJECT_NAME} PRIVATE "${third_party}/qtmqtt/6_6_3_msvc2019_64/include")
+    target_link_directories(${PROJECT_NAME} PRIVATE "${third_party}/qtmqtt/6_6_3_msvc2019_64/lib")
     target_link_libraries(${PROJECT_NAME} PRIVATE Qt6Mqtt)
+    message("TEST MSVC")
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_include_directories(${PROJECT_NAME} PRIVATE "${third_party}/qtmqtt/6_6_3_mingw_64/include")
+    target_link_directories(${PROJECT_NAME} PRIVATE "${third_party}/qtmqtt/6_6_3_mingw_64/lib")
+    target_link_libraries(${PROJECT_NAME} PRIVATE Qt6Mqtt)
+    message("TEST MINGW")
 endif()
 
 
@@ -211,7 +145,6 @@ target_link_libraries(${PROJECT_NAME}
 PRIVATE
   desktop-app::lib_base
   lib_ui
-  # desktop-app::lib_ui
   QWindowKit::Widgets
   external_qtadvancedcss
   external_qt-material
@@ -226,7 +159,7 @@ PRIVATE
   OpenGL::GL           # 系统OpenGL
   OpenGL::GLU          # 系统GLU（可选
   lua5.4.7
-  modbus
+  # modbus
 )
 # 查看链接的库
 get_target_property(LINK_LIBS ${PROJECT_NAME} LINK_LIBRARIES)

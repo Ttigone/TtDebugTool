@@ -151,20 +151,6 @@ void UdpServerSetting::setOldSettings(const QJsonObject &config) {
     }
   }
 
-  // for (int i = 0; i < framing_timeout_->body()->count(); ++i) {
-  //   if (framing_timeout_->body()->itemData(i).toString() == timeout) {
-  //     framing_timeout_->body()->setCurrentIndex(i);
-  //     break;
-  //   }
-  // }
-
-  // for (int i = 0; i < framing_fixed_length_->body()->count(); ++i) {
-  //   if (framing_fixed_length_->body()->itemData(i).toString() == fixedLength)
-  //   {
-  //     framing_fixed_length_->body()->setCurrentIndex(i);
-  //     break;
-  //   }
-  // }
   framing_timeout_->setText(timeout);
   framing_fixed_length_->setText(fixedLength);
 
@@ -185,9 +171,6 @@ void UdpServerSetting::setControlState(bool state) {
   retransmission_->setEnabled(state);
 }
 
-quint32 UdpServerSetting::getRefreshInterval() {}
-
-// UdpClientSetting::UdpClientSetting(QWidget *parent) : QWidget(parent) {
 UdpClientSetting::UdpClientSetting(QWidget *parent) : FrameSetting(parent) {
 
   main_layout_ = new QVBoxLayout(this);
@@ -399,7 +382,7 @@ void UdpClientSetting::setControlState(bool state) {
   retransmission_->setEnabled(state);
 }
 
-quint32 UdpClientSetting::getRefreshInterval() {}
+quint32 UdpClientSetting::getRefreshInterval() { return 1000; }
 
 void UdpClientSetting::setLinkMode() {
   mode_->addItem(tr("单播"), TtUdpMode::Unicast);

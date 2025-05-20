@@ -1,7 +1,8 @@
 ﻿#ifndef WINDOW_TCP_WINDOW_H
 #define WINDOW_TCP_WINDOW_H
 
-#include <Qsci/qsciscintilla.h>
+// #include <Qsci/qsciscintilla.h>
+#include <Qscintilla/include/Qsci/qsciscintilla.h>
 
 #include "Def.h"
 #include "window/frame_window.h"

@@ -3,7 +3,8 @@
 
 #include <QScrollArea>
 #include <QWidget>
-#include <Qsci/qsciscintilla.h>
+// #include <Qsci/qsciscintilla.h>
+#include <Qscintilla/include/Qsci/qsciscintilla.h>
 
 #include "Def.h"
 #include "window/frame_window.h"

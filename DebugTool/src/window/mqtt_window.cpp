@@ -81,15 +81,14 @@ void MqttWindow::saveSetting() {
 }
 
 void MqttWindow::setSetting(const QJsonObject &config) {
+  qDebug() << "set Old Config";
   title_->setText(config.value("WindowTitle").toString(tr("未读取正确的标题")));
   if (role_ == TtProtocolType::Client) {
     config_.insert("Type", TtFunctionalCategory::Communication);
     mqtt_client_setting_->setOldSettings(
-        config.value("TcpClientSetting").toObject(QJsonObject()));
+        config.value("MqttSetting").toObject(QJsonObject()));
   } else if (role_ == TtProtocolType::Server) {
     config_.insert("Type", TtFunctionalCategory::Simulate);
-    // tcp_server_setting_->setOldSettings(
-    //     config.value("TcpClientSetting").toObject(QJsonObject()));
   }
   if (subscripition_widget_) {
     subscripition_widget_->setOldSettings(

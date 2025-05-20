@@ -120,18 +120,19 @@ bool LuaKernel::doLuaCode(const QString &code, const QVariantList &args,
       qDebug() << "Unsupported type:" << arg.typeName();
       lua_pop(L, lua_gettop(L));
       result = 0;
-      return;
+      return false;
     }
   }
   if (lua_pcall(L, args.size(), 1, 0) != LUA_OK) {
     qDebug() << "Function Error:" << lua_tostring(L, -1);
     lua_pop(L, 1);
     result = 0;
-    return;
+    return false;
   }
   // 处理返回值
   result = lua_tonumber(L, -1);
   lua_pop(L, 1);
+  return true;
 }
 
 } // namespace Core

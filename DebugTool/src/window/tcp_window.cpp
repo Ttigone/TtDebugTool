@@ -194,7 +194,9 @@ void TcpWindow::sendInstructionTableContent(const QString &text,
   if (type == TtTextFormat::TEXT) {
     dataUtf8 = text.toUtf8();
   } else if (type == TtTextFormat::HEX) {
-    QString hexStr = text.remove(QRegularExpression("[^0-9A-Fa-f]"));
+    // QString hexStr = text.remove(QRegularExpression("[^0-9A-Fa-f]"));
+    QString hexStr = QString(text);
+    hexStr.remove(QRegularExpression("[^0-9A-Fa-f]"));
 
     if (hexStr.isEmpty()) {
       qDebug() << "存在无效的十六进制字符";
@@ -271,6 +273,7 @@ void TcpWindow::init() {
 void TcpWindow::connectSignals() {
   initSignalsConnection();
 
+  // BUG 为什么需要首次点击保存后, 才会保存
   connect(save_btn_, &Ui::TtSvgButton::clicked, this, &TcpWindow::saveSetting);
 
   connect(on_off_btn_, &Ui::TtSvgButton::clicked, this, [this] {

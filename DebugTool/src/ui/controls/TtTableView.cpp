@@ -2,6 +2,7 @@
 
 #include <qcombobox.h>
 #include <qjsonarray.h>
+#include <qlayoutitem.h>
 #include <qlogging.h>
 #include <qoverload.h>
 #include <qtablewidget.h>
@@ -93,7 +94,22 @@ TtTableWidget::TtTableWidget(QWidget *parent) : QTableWidget(1, 7, parent) {
   initHeader();
 }
 
-TtTableWidget::~TtTableWidget() {}
+TtTableWidget::~TtTableWidget() {
+  // qDebug() << "delete" << __FUNCTION__;
+  // 清理所有对象池
+  qDeleteAll(switchPool_);
+  qDeleteAll(comboPool_);
+  qDeleteAll(spinPool_);
+  qDeleteAll(lineEditPool_);
+  qDeleteAll(widgetPool_);
+
+  // 清空池列表
+  switchPool_.clear();
+  comboPool_.clear();
+  spinPool_.clear();
+  lineEditPool_.clear();
+  widgetPool_.clear();
+}
 
 void TtTableWidget::setupHeaderRow() {
   setCellWidget(0, 0, createHeaderWidget(tr("启用"), true));
@@ -519,9 +535,11 @@ void TtTableWidget::setupRow(int row) {
   TableRow data;
   data.checkBtn = createSwitchButton();
   data.checkBtn->setChecked(true);
-  data.nameEdit = new TtLineEdit(this);
+  // data.nameEdit = new TtLineEdit(this);
+  data.nameEdit = createLineEdit("名称");
   data.typeCombo = createTypeComboBox();
-  data.contentEdit = new TtLineEdit(this);
+  // data.contentEdit = new TtLineEdit(this);
+  data.contentEdit = createLineEdit("内容");
   data.delaySpin = createDelaySpin();
 
   auto makeCell = [this](QWidget *content) {
@@ -537,25 +555,75 @@ void TtTableWidget::setupRow(int row) {
   setCellWidget(row, 6, createRowSendButton());
 
   rowsData_.append(data);
+
+  // 设置行中各控件的启用状态（根据当前表格状态）
+  bool isEnabled = property("customEnabled").toBool();
+  if (data.checkBtn)
+    data.checkBtn->setEnabled(isEnabled);
+  if (data.nameEdit)
+    data.nameEdit->setEnabled(isEnabled);
+  if (data.typeCombo)
+    data.typeCombo->setEnabled(isEnabled);
+  if (data.contentEdit)
+    data.contentEdit->setEnabled(isEnabled);
+  if (data.delaySpin)
+    data.delaySpin->setEnabled(isEnabled);
 }
 
 void TtTableWidget::recycleRow(TableRow &row) {
-  // if (row.enableBtn) {
-  //   row.enableBtn->hide();
-  //   switchPool_.append(row.enableBtn);
-  // }
-  // if (row.typeCombo) {
-  //   row.typeCombo->hide();
-  //   comboPool_.append(row.typeCombo);
-  // }
-  // if (row.delaySpin) {
-  //   row.delaySpin->hide();
-  //   spinPool_.append(row.delaySpin);
-  // }
-  // if (row.nameEdit) {
-  //   row.nameEdit->hide();
-  //   spinPool_.append(row.nameEdit);
-  // }
+  // BUG 没有回收控件
+  qDebug() << "recycleRow";
+  // 回收复选框
+  if (row.checkBtn) {
+    row.checkBtn->setChecked(false); // 重置状态
+    row.checkBtn->hide();
+    if (switchPool_.size() < MAX_POOL_SIZE) {
+      // 仅在池未满时回收
+      switchPool_.append(row.checkBtn);
+    } else {
+      // 池满了，直接删除
+      row.checkBtn->deleteLater();
+    }
+    // switchPool_.append(row.checkBtn);
+    row.checkBtn = nullptr;
+  }
+
+  // 回收类型下拉框
+  if (row.typeCombo) {
+    row.typeCombo->setCurrentIndex(0); // 重置选择
+    row.typeCombo->hide();
+    comboPool_.append(row.typeCombo);
+    row.typeCombo = nullptr;
+  }
+
+  // 回收延时微调框
+  if (row.delaySpin) {
+    row.delaySpin->setValue(0); // 重置值
+    row.delaySpin->hide();
+    spinPool_.append(row.delaySpin);
+    row.delaySpin = nullptr;
+  }
+
+  // 回收名称和内容编辑框
+  // 注意：这里需要确保这些控件的所有权已转移到对象池
+  if (row.nameEdit) {
+    row.nameEdit->clear(); // 清除文本
+    row.nameEdit->hide();
+    // row.nameEdit->deleteLater();  // 使用deleteLater确保安全删除
+    lineEditPool_.append(row.nameEdit);
+    row.nameEdit = nullptr;
+  }
+
+  if (row.contentEdit) {
+    row.contentEdit->clear();
+    row.contentEdit->hide();
+    // row.contentEdit->deleteLater();
+    lineEditPool_.append(row.contentEdit);
+    row.contentEdit = nullptr;
+  }
+
+  // 记录该行已回收
+  row.fromPool = false;
 }
 
 TtSwitchButton *TtTableWidget::createSwitchButton() {
@@ -580,24 +648,55 @@ QSpinBox *TtTableWidget::createDelaySpin() {
   QSpinBox *spin =
       spinPool_.isEmpty() ? new QSpinBox(this) : spinPool_.takeLast();
   spin->setMinimum(0);
-  spin->setMaximum(9999);
+  // spin->setMaximum(9999);
   return spin;
 }
 
+TtLineEdit *TtTableWidget::createLineEdit(const QString &placeholderText) {
+  TtLineEdit *lineEdit = nullptr;
+  if (!lineEditPool_.isEmpty()) {
+    lineEdit = lineEditPool_.takeLast();
+    lineEdit->clear();
+    lineEdit->show();
+  } else {
+    lineEdit = new TtLineEdit(this);
+  }
+
+  if (!placeholderText.isEmpty()) {
+    lineEdit->setPlaceholderText(placeholderText);
+  }
+  return lineEdit;
+}
+
 QWidget *TtTableWidget::createCellWrapper(QWidget *content) {
+  // if (content->metaObject()->className() == QString("TtVerticalLayout")) {
+  //   return content;
+  // }
   // QWidget* wrapper =
   //     widgetPool_.isEmpty() ? new QWidget : widgetPool_.takeLast();
   // Ui::TtVerticalLayout* layout = new Ui::TtVerticalLayout(wrapper);
+  // layout->setContentsMargins(2, 2, 2, 2);
   // layout->addWidget(content);
   // return wrapper;
-  if (content->metaObject()->className() == QString("TtVerticalLayout")) {
-    return content;
-  }
   QWidget *wrapper =
-      widgetPool_.isEmpty() ? new QWidget : widgetPool_.takeLast();
+      widgetPool_.isEmpty() ? new QWidget(this) : widgetPool_.takeLast();
+  // 之前存在布局
+  if (wrapper->layout()) {
+    QLayoutItem *item;
+    while ((item = wrapper->layout()->takeAt(0)) != nullptr) {
+      if (item->widget()) {
+        // 断开父子关系但不删除
+        item->widget()->setParent(nullptr);
+      }
+      delete item;
+    }
+    delete wrapper->layout();
+  }
   Ui::TtVerticalLayout *layout = new Ui::TtVerticalLayout(wrapper);
   layout->setContentsMargins(2, 2, 2, 2);
   layout->addWidget(content);
+  // 显示包装器
+  wrapper->show();
   return wrapper;
 }
 
@@ -1736,20 +1835,12 @@ void TtModbusTableWidget::onSwitchButtonToggle(bool toggled) {
   // rowsData 的索引从 0 开始
   for (int i = 0; i < rowsData_.size(); ++i) {
     if (rowsData_[i].valueButton == btn) {
-      // BUG 前面没有被赋值, 处于 setTable 的地方
       int addr = rowsData_[i].currentAddress;
-      // 地址 -1 没有行遭到
-      // 全部都是 -1 ???
-      // qDebug() << "find addr" << addr << rowsData_[i].address;
-      // 为什么读取的 addr 全部是错误的 ???
-      qDebug() << "find addr" << addr << rowsData_[i].address->text();
+      // qDebug() << "find addr" << addr << rowsData_[i].address->text();
       if (addr >= 0) {
         // 发出信号, 通知外部 switchbutton 状态改变
         emit valueConfirmed(addr, toggled ? 1 : 0);
       }
-      // // 发出信号, 通知外部 switchbutton 状态改变
-      // emit valueConfirmed(rowsData_[i].address->text().toInt(),
-      //                     toggled ? 1 : 0);
       break;
     }
   }

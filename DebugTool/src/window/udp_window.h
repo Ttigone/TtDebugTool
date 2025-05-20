@@ -1,7 +1,8 @@
 #ifndef WINDOW_UDP_WINDOW_H
 #define WINDOW_UDP_WINDOW_H
 
-#include <Qsci/qsciscintilla.h>
+// #include <Qsci/qsciscintilla.h>
+#include <Qscintilla/include/Qsci/qsciscintilla.h>
 
 #include "Def.h"
 #include "data/communication_metadata.h"

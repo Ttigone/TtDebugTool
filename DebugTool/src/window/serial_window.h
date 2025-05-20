@@ -19,7 +19,9 @@
 #include <QWidget>
 
 #include "qtmaterialflatbutton.h"
-#include <Qsci/qsciscintilla.h>
+
+// #include <Qsci/qsciscintilla.h>
+#include <Qscintilla/include/Qsci/qsciscintilla.h>
 
 #include "data/communication_metadata.h"
 #include "window/frame_window.h"

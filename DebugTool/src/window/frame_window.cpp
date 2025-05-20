@@ -25,6 +25,7 @@
 
 #include <QTableView>
 #include <Qsci/qsciscintilla.h>
+// #include <Qscintilla/include/Qsci/qsciscintilla.h>
 
 namespace Window {
 
@@ -465,8 +466,6 @@ QString FrameWindow::getValidHexString(const QString &input,
 }
 
 void FrameWindow::setSaveStatus(bool state) {
-  // t f f f f f f t, 最后是 t 点击保存也是 t
-
   qDebug() << "save: " << state;
   // 相等的状态
   if (saved_ != state) {

@@ -4,6 +4,8 @@
 #include "Def.h"
 #include <QWidget>
 
+#include "widget/frame_setting.h"
+
 namespace Ui {
 class TtLabelComboBox;
 class TtLabelBtnComboBox;
@@ -28,7 +30,6 @@ public:
   const QJsonObject &getMqttClientSetting();
 
   void setOldSettings(const QJsonObject &config);
-  const QJsonObject &getSerialSetting();
 
 signals:
   void mqttVersionChanged(TtMqttProcotol::Version version);

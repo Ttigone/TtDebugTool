@@ -96,9 +96,6 @@ void SettingsManager::loadSettings(const QString &filePath) {
 }
 
 QJsonObject SettingsManager::getHistorySettings() const {
-  // BUG 每次从本地恢复某个标签页的时候, 都会调用函数
-  // 是否需要检查 settings_ 中有无该值, 然后从 settings_ 中恢复
-  // 初始化的时候, 有调用这个
   QMutexLocker locker(&mutex_);
   QString targetFile = getConfigFilePath(file_path_);
   if (targetFile.isEmpty()) {
@@ -122,7 +119,6 @@ QJsonObject SettingsManager::getHistorySettings() const {
 }
 
 void SettingsManager::setSetting(const QString &key, const QJsonValue &value) {
-  // BUG
   QMutexLocker locker(&mutex_);
   loadSettingsIfNeeded();
   if (settings_.contains(key) && settings_[key] == value) {

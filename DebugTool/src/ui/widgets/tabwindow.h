@@ -58,6 +58,8 @@ public:
   TabWindow *rootWindow() const;
   void setRootWindow(TabWindow *root);
 
+  TabWindow *findTabWindowWithClosedTab(const QString &uuid);
+
 signals:
   // BUG 这个信号没有使用
   void tabCloseRequested(QWidget *widget, TabWindow *window);
@@ -215,9 +217,7 @@ private:
   };
 
   QToolButton *add_button_;
-  // BUG 这个也有问题, 当最后一个运行状态的标签页被关闭后, 该何去何从?
-  // 行为是恢复到 root 窗口去
-  // uuid, 存储已关闭的标签页信息
+  // 每个实例类保存一个, 处理自己的 show 与 hide 关系, close 直接保存到 root
   QList<QPair<QString, TabData>> closedTabs_;
   // 最大保存历史数量
   const int maxClosedTabs_ = 10;

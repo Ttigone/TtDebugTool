@@ -9,6 +9,7 @@
 // #include "qtmqtt_mingw64/include/qmqttclient.h"
 // #include "qmqttclient.h"
 // BUG 找不到 Qt6Mqtt 模块
+// BUG 区分 MSVC 与 MINGW
 #include <QtMqtt/6_6_3_mingw_64/include/qmqttclient.h>
 // #include "qmqttclient.h"
 

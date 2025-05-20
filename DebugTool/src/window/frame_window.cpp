@@ -359,8 +359,6 @@ void FrameWindow::initSignalsConnection() {
           });
   connect(tabs_, &QtMaterialTabs::currentChanged, this,
           [this](int index) { display_widget_->setCurrentIndex(index); });
-  // BUG 缺少 title 的值改变信号
-  // connect(title)
 
   connect(clear_history_, &Ui::TtSvgButton::clicked, [this]() {
     message_model_->clearModelData();

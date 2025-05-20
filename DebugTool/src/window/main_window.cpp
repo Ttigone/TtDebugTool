@@ -1,6 +1,5 @@
 #include "window/main_window.h"
 
-#include <qtconcurrentrun.h>
 #include <QActionGroup>
 #include <QApplication>
 #include <QCoreApplication>
@@ -14,6 +13,7 @@
 #include <QTimer>
 #include <QVBoxLayout>
 #include <QtWidgets/QStyle>
+#include <qtconcurrentrun.h>
 
 #include <QWKWidgets/widgetwindowagent.h>
 #include <Qt-Advanced-Stylesheets/src/QtAdvancedStylesheet.h>
@@ -48,12 +48,12 @@
 
 #include "ui/widgets/session_manager.h"
 
-#include <ui/window/title/window_button.h>
 #include "storage/configs_manager.h"
 #include "storage/setting_manager.h"
+#include <ui/window/title/window_button.h>
 
-#include <ui/widgets/widget_group.h>
 #include "window/instruction_window.h"
+#include <ui/widgets/widget_group.h>
 
 #include "lang/translation_manager.h"
 #include "ui/widgets/setting_widget.h"
@@ -70,14 +70,14 @@ QMap<TtProtocolRole::Role, QString> configMappingTable = {
     {TtProtocolRole::ModbusClient, ModbusPrefix},
 };
 
-static inline void emulateLeaveEvent(QWidget* widget) {
+static inline void emulateLeaveEvent(QWidget *widget) {
   Q_ASSERT(widget);
   if (!widget) {
     return;
   }
   QTimer::singleShot(0, widget, [widget]() {
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 14, 0))
-    const QScreen* screen = widget->screen();
+    const QScreen *screen = widget->screen();
 #else
         const QScreen *screen = widget->windowHandle()->screen();
 #endif
@@ -108,7 +108,7 @@ static inline void emulateLeaveEvent(QWidget* widget) {
   });
 }
 
-MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 
   // BUG 状态栏可以保存当前正在运行的窗口的按钮
 
@@ -143,9 +143,9 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
   TabWindowManager::instance()->setRootWindow(tabWidget_);
 
   // // 容纳一定了 widget, 以供外部切换, 直接存放 widget, 而非设定
-  auto* leftPopUp = new Window::PopUpWindow();
+  auto *leftPopUp = new Window::PopUpWindow();
 
-  QSplitter* mainSplitter = new QSplitter(this);
+  QSplitter *mainSplitter = new QSplitter(this);
   mainSplitter->setContentsMargins(QMargins(0, 0, 0, 0));
   mainSplitter->addWidget(leftPopUp);
   leftPopUp->setMinimumWidth(1);
@@ -157,23 +157,23 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
   mainSplitter->setCollapsible(0, true);
   mainSplitter->setCollapsible(1, false);
   // 创建 AnimatedDrawer 控制器
-  Ui::TtAnimatedDrawer* controller =
+  Ui::TtAnimatedDrawer *controller =
       new Ui::TtAnimatedDrawer(mainSplitter, leftPopUp, tabWidget_, this);
 
   {
-    QWidget* linkList = new QWidget;
+    QWidget *linkList = new QWidget;
     auto linkListLayout = new QGridLayout(linkList);
 
-    Ui::TtNormalLabel* title = new Ui::TtNormalLabel(tr("连接列表"), linkList);
+    Ui::TtNormalLabel *title = new Ui::TtNormalLabel(tr("连接列表"), linkList);
 
-    QWidget* btnWidget = new QWidget(linkList);
-    Ui::TtHorizontalLayout* btnWidgetLayout =
+    QWidget *btnWidget = new QWidget(linkList);
+    Ui::TtHorizontalLayout *btnWidgetLayout =
         new Ui::TtHorizontalLayout(btnWidget);
-    Ui::TtSvgButton* addBtn =
-        new Ui::TtSvgButton(":/sys/plus-circle.svg", btnWidget);  // 刷新
+    Ui::TtSvgButton *addBtn =
+        new Ui::TtSvgButton(":/sys/plus-circle.svg", btnWidget); // 刷新
     addBtn->setSvgSize(QSize(18, 18));
-    Ui::TtSvgButton* refreshBtn =
-        new Ui::TtSvgButton(":/sys/refresh-normal.svg", btnWidget);  // 新建
+    Ui::TtSvgButton *refreshBtn =
+        new Ui::TtSvgButton(":/sys/refresh-normal.svg", btnWidget); // 新建
     refreshBtn->setEnableHoldToCheck(true);
     refreshBtn->setSvgSize(QSize(18, 18));
     refreshBtn->setColors(Qt::black, Qt::blue);
@@ -183,15 +183,15 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
 
     linkListLayout->addWidget(title, 0, 0, Qt::AlignTop);
     linkListLayout->addWidget(btnWidget, 0, 1, Qt::AlignRight);
-    Ui::TtNormalLabel* displayInfo = new Ui::TtNormalLabel();
+    Ui::TtNormalLabel *displayInfo = new Ui::TtNormalLabel();
     displayInfo->setPixmap(
         QPixmap::fromImage(QImage(":/sys/tmp.png").scaled(88, 88)));
-    Ui::TtNormalLabel* displayWords =
+    Ui::TtNormalLabel *displayWords =
         new Ui::TtNormalLabel(tr("暂时没有可用的连接"));
     auto addLinkBtn = new QPushButton(tr("新建连接"));
     addLinkBtn->setMinimumSize(100, 28);
     auto original_widget_ = new QWidget();
-    Ui::TtVerticalLayout* tmpl = new Ui::TtVerticalLayout(original_widget_);
+    Ui::TtVerticalLayout *tmpl = new Ui::TtVerticalLayout(original_widget_);
     tmpl->addStretch();
     tmpl->addSpacerItem(new QSpacerItem(0, 20));
     tmpl->addWidget(displayWords, 0, Qt::AlignHCenter);
@@ -204,14 +204,14 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     stack_->addWidget(history_link_list_);
     linkListLayout->addWidget(stack_, 1, 0, 1, 2);
     connect(history_link_list_->model(), &QAbstractItemModel::rowsInserted,
-            this, [=](const QModelIndex& parent, int first, int last) {
-              if (history_link_list_->count() == 1) {  // 从0变为1
+            this, [=](const QModelIndex &parent, int first, int last) {
+              if (history_link_list_->count() == 1) { // 从0变为1
                 stack_->setCurrentIndex(1);
               }
             });
     connect(history_link_list_->model(), &QAbstractItemModel::rowsRemoved, this,
-            [=](const QModelIndex& parent, int first, int last) {
-              if (history_link_list_->count() == 0) {  // 从1变为0
+            [=](const QModelIndex &parent, int first, int last) {
+              if (history_link_list_->count() == 0) { // 从1变为0
                 stack_->setCurrentIndex(0);
               }
             });
@@ -228,20 +228,20 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
   }
 
   {
-    QWidget* instructionList = new QWidget;
+    QWidget *instructionList = new QWidget;
     instructionList->setObjectName("instructionList");
     auto instructionListLayout = new QGridLayout(instructionList);
 
-    Ui::TtNormalLabel* title =
+    Ui::TtNormalLabel *title =
         new Ui::TtNormalLabel(tr("指令"), instructionList);
 
-    QWidget* btnWidget = new QWidget(instructionList);
-    Ui::TtHorizontalLayout* btnWidgetLayout =
+    QWidget *btnWidget = new QWidget(instructionList);
+    Ui::TtHorizontalLayout *btnWidgetLayout =
         new Ui::TtHorizontalLayout(btnWidget);
-    Ui::TtSvgButton* addBtn =
+    Ui::TtSvgButton *addBtn =
         new Ui::TtSvgButton(":/sys/plus-circle.svg", btnWidget);
     addBtn->setSvgSize(QSize(18, 18));
-    Ui::TtSvgButton* refreshBtn =
+    Ui::TtSvgButton *refreshBtn =
         new Ui::TtSvgButton(":/sys/refresh-normal.svg", btnWidget);
     refreshBtn->setSvgSize(QSize(18, 18));
     refreshBtn->setColors(Qt::black, Qt::blue);
@@ -253,12 +253,12 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     instructionListLayout->addWidget(title, 0, 0, Qt::AlignTop);
     instructionListLayout->addWidget(btnWidget, 0, 1, Qt::AlignRight);
 
-    Ui::TtNormalLabel* displayWords = new Ui::TtNormalLabel(tr("指令列表未空"));
+    Ui::TtNormalLabel *displayWords = new Ui::TtNormalLabel(tr("指令列表未空"));
     auto addLinkBtn = new QPushButton(tr("新建指令"));
     addLinkBtn->resize(100, 28);
 
     auto original_widget_ = new QWidget();
-    Ui::TtVerticalLayout* tmpl = new Ui::TtVerticalLayout(original_widget_);
+    Ui::TtVerticalLayout *tmpl = new Ui::TtVerticalLayout(original_widget_);
     tmpl->addStretch();
     tmpl->addSpacerItem(new QSpacerItem(0, 20));
     tmpl->addWidget(displayWords, 0, Qt::AlignHCenter);
@@ -272,25 +272,25 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     instructionListLayout->addWidget(stack_, 1, 0, 1, 2);
     connect(history_instruction_list_->model(),
             &QAbstractItemModel::rowsInserted, this,
-            [=](const QModelIndex& parent, int first, int last) {
-              if (history_instruction_list_->count() == 1) {  // 从0变为1
+            [=](const QModelIndex &parent, int first, int last) {
+              if (history_instruction_list_->count() == 1) { // 从0变为1
                 stack_->setCurrentIndex(1);
               }
             });
     connect(history_instruction_list_->model(),
             &QAbstractItemModel::rowsRemoved, this,
-            [=](const QModelIndex& parent, int first, int last) {
-              if (history_instruction_list_->count() == 0) {  // 从1变为0
+            [=](const QModelIndex &parent, int first, int last) {
+              if (history_instruction_list_->count() == 0) { // 从1变为0
                 stack_->setCurrentIndex(0);
               }
             });
     connect(addLinkBtn, &QPushButton::clicked, this, [this, controller]() {
-      Window::InstructionWindow* instruction = new Window::InstructionWindow;
+      Window::InstructionWindow *instruction = new Window::InstructionWindow;
       tabWidget_->addNewTab(instruction, tr("未命名的指令"));
       tabWidget_->setCurrentWidget(instruction);
     });
     connect(addBtn, &Ui::TtSvgButton::clicked, this, [this, controller]() {
-      Window::InstructionWindow* instruction = new Window::InstructionWindow;
+      Window::InstructionWindow *instruction = new Window::InstructionWindow;
       tabWidget_->addNewTab(instruction, tr("未命名的指令"));
       tabWidget_->setCurrentWidget(instruction);
     });
@@ -302,21 +302,21 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
   }
 
   {
-    QWidget* mockList = new QWidget;
+    QWidget *mockList = new QWidget;
     mockList->setObjectName("mockList");
     auto mockListLayout = new QGridLayout(mockList);
 
-    Ui::TtNormalLabel* title = new Ui::TtNormalLabel(tr("模拟"), mockList);
+    Ui::TtNormalLabel *title = new Ui::TtNormalLabel(tr("模拟"), mockList);
 
-    QWidget* btnWidget = new QWidget(mockList);
-    Ui::TtHorizontalLayout* btnWidgetLayout =
+    QWidget *btnWidget = new QWidget(mockList);
+    Ui::TtHorizontalLayout *btnWidgetLayout =
         new Ui::TtHorizontalLayout(btnWidget);
     // // 以下两个会消失
-    Ui::TtSvgButton* addBtn =
-        new Ui::TtSvgButton(":/sys/plus-circle.svg", btnWidget);  // 刷新
+    Ui::TtSvgButton *addBtn =
+        new Ui::TtSvgButton(":/sys/plus-circle.svg", btnWidget); // 刷新
     addBtn->setSvgSize(QSize(18, 18));
-    Ui::TtSvgButton* refreshBtn =
-        new Ui::TtSvgButton(":/sys/refresh-normal.svg", btnWidget);  // 新建
+    Ui::TtSvgButton *refreshBtn =
+        new Ui::TtSvgButton(":/sys/refresh-normal.svg", btnWidget); // 新建
     refreshBtn->setSvgSize(QSize(18, 18));
     refreshBtn->setColors(Qt::black, Qt::blue);
     btnWidgetLayout->addWidget(addBtn);
@@ -328,19 +328,19 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
 
     // 首页界面
     // 显示的图片
-    Ui::TtNormalLabel* displayInfo = new Ui::TtNormalLabel();
+    Ui::TtNormalLabel *displayInfo = new Ui::TtNormalLabel();
     displayInfo->setPixmap(
         QPixmap::fromImage(QImage(":/sys/tmp.png").scaled(88, 88)));
 
     // 图片底下的文字
-    Ui::TtNormalLabel* displayWords =
+    Ui::TtNormalLabel *displayWords =
         new Ui::TtNormalLabel(tr("没有可用的模拟服务"));
     auto addLinkBtn = new QPushButton(tr("新建连接"));
     addLinkBtn->setMinimumSize(100, 28);
 
     // 创建原始界面
     auto original_widget_ = new QWidget();
-    Ui::TtVerticalLayout* tmpl = new Ui::TtVerticalLayout(original_widget_);
+    Ui::TtVerticalLayout *tmpl = new Ui::TtVerticalLayout(original_widget_);
     tmpl->addStretch();
     tmpl->addSpacerItem(new QSpacerItem(0, 20));
     tmpl->addWidget(displayWords, 0, Qt::AlignHCenter);
@@ -360,19 +360,19 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
 
     // 监听 model 的行数变化
     connect(history_mock_list_->model(), &QAbstractItemModel::rowsInserted,
-            this, [=](const QModelIndex& parent, int first, int last) {
-              if (history_mock_list_->count() == 1) {  // 从0变为1
+            this, [=](const QModelIndex &parent, int first, int last) {
+              if (history_mock_list_->count() == 1) { // 从0变为1
                 stack_->setCurrentIndex(1);
               }
             });
     connect(history_mock_list_->model(), &QAbstractItemModel::rowsRemoved, this,
-            [=](const QModelIndex& parent, int first, int last) {
-              if (history_mock_list_->count() == 0) {  // 从1变为0
+            [=](const QModelIndex &parent, int first, int last) {
+              if (history_mock_list_->count() == 0) { // 从1变为0
                 stack_->setCurrentIndex(0);
               }
             });
     connect(addLinkBtn, &QPushButton::clicked, this, [this, controller] {
-      SimulateFunctionSelectionWindow* simulate =
+      SimulateFunctionSelectionWindow *simulate =
           new SimulateFunctionSelectionWindow();
       tabWidget_->addNewTab(simulate, tr("创建模拟器"));
       QObject::connect(
@@ -384,7 +384,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
       tabWidget_->setCurrentWidget(simulate);
     });
     connect(addBtn, &Ui::TtSvgButton::clicked, this, [this, controller] {
-      SimulateFunctionSelectionWindow* simulate =
+      SimulateFunctionSelectionWindow *simulate =
           new SimulateFunctionSelectionWindow();
       tabWidget_->addNewTab(simulate, tr("创建模拟器"));
       QObject::connect(
@@ -453,13 +453,13 @@ void MainWindow::initLanguageMenu() {
   QStringList tsFileList =
       languageDir.entryList(QStringList("*.ts"), QDir::Files);
   QStringList tsFilePathList;
-  for (const QString& tsFile : tsFileList) {
+  for (const QString &tsFile : tsFileList) {
     // 绝对路径
     tsFilePathList.append(languageDir.filePath(tsFile));
   }
 
   // 为每个TS文件单独调用lrelease
-  for (const QString& tsFile : tsFileList) {
+  for (const QString &tsFile : tsFileList) {
     QString tsFilePath = languageDir.absoluteFilePath(tsFile);
     QString qmFilePath = tsFilePath;
     qmFilePath.replace(QRegularExpression("\\.ts$"), ".qm");
@@ -467,7 +467,7 @@ void MainWindow::initLanguageMenu() {
     QStringList args;
     args << tsFilePath << "-qm" << qmFilePath;
 
-    QProcess* process = new QProcess(this);
+    QProcess *process = new QProcess(this);
     process->start("F:/MyProject/DebugTool/DebugTool/res/lrelease/lrelease.exe",
                    args);
 
@@ -481,7 +481,7 @@ void MainWindow::initLanguageMenu() {
                 static int processedCount = 0;
                 if (++processedCount >= tsFileList.size()) {
                   compileTsFilesFinished();
-                  processedCount = 0;  // 重置计数器
+                  processedCount = 0; // 重置计数器
                 }
               }
               process->deleteLater();
@@ -520,12 +520,12 @@ void MainWindow::closeWindow() {
 }
 
 void MainWindow::compileTsFilesFinished() {
-  QMenuBar* menuBar =
-      qobject_cast<Ui::WindowBar*>(window_agent_->titleBar())->menuBar();
-  QActionGroup* actionGroup = new QActionGroup(this);
+  QMenuBar *menuBar =
+      qobject_cast<Ui::WindowBar *>(window_agent_->titleBar())->menuBar();
+  QActionGroup *actionGroup = new QActionGroup(this);
   actionGroup->setExclusive(true);
   // 固定插入到最后
-  QMenu* languageMenu = menuBar->addMenu(tr("语言"));
+  QMenu *languageMenu = menuBar->addMenu(tr("语言"));
   // 搜索获取 .qm 文件列表 qmFiles
   QDir languageDir("F:/MyProject/DebugTool/DebugTool/res/language/");
   if (!languageDir.exists()) {
@@ -539,9 +539,9 @@ void MainWindow::compileTsFilesFinished() {
   // 搜索 .qm
   QStringList qmFiles = languageDir.entryList(QStringList("*.qm"), QDir::Files);
   // 动态生成语言菜单
-  for (const QString& qmFile : qmFiles) {
-    QString languageName = extractLanguageName(qmFile);  // 解析语言名称
-    QAction* action = new QAction(languageName, this);
+  for (const QString &qmFile : qmFiles) {
+    QString languageName = extractLanguageName(qmFile); // 解析语言名称
+    QAction *action = new QAction(languageName, this);
     action->setCheckable(true);
     languageMenu->addAction(action);
     actionGroup->addAction(action);
@@ -565,10 +565,10 @@ void MainWindow::saveCsvFile() {
   // choseDialog;
   // 非模态的
   // 此处内存泄漏
-  QWidget* selectSaveCsvData = new QWidget;
+  QWidget *selectSaveCsvData = new QWidget;
 
   auto widget =
-      qobject_cast<Window::SerialWindow*>(tabWidget_->currentWidget());
+      qobject_cast<Window::SerialWindow *>(tabWidget_->currentWidget());
   if (widget) {
     qDebug() << "保存窗口 csv";
     // qDebug() << widget->getTitle();
@@ -576,35 +576,53 @@ void MainWindow::saveCsvFile() {
   }
 }
 
-void MainWindow::switchToOtherTabPage(const QString& uuid, const int& type) {
+void MainWindow::switchToOtherTabPage(const QString &uuid, const int &type) {
+  // if (tabWidget_->isCurrentDisplayedPage(uuid)) {
+  //   // 处于 widgetInstance 中的窗口
+  //   tabWidget_->switchByPage(uuid);
+  // } else if (tabWidget_->isStoredInMem(uuid)) {
+  //   // 被移出了 widgetInstance 中, 但是没有被关闭
+  //   // BUG 每个 TabWindow 都有自己的 closed_tabs, 这里有问题
+  //   tabWidget_->switchByReadingMem(uuid,
+  //                                  static_cast<TtProtocolRole::Role>(type));
+  // } else {
+  //   tabWidget_->switchByReadingDisk(
+  //       uuid, static_cast<TtProtocolRole::Role>(type),
+  //       getSpecificConfiguration(uuid,
+  //                                static_cast<TtProtocolRole::Role>(type)));
+  // }
   if (tabWidget_->isCurrentDisplayedPage(uuid)) {
-    // 处于 widgetInstance 中的窗口
     tabWidget_->switchByPage(uuid);
-  } else if (tabWidget_->isStoredInMem(uuid)) {
-    // 被移出了 widgetInstance 中, 但是没有被关闭
-    // BUG 每个 TabWindow 都有自己的 closed_tabs, 这里有问题
-    tabWidget_->switchByReadingMem(uuid,
-                                   static_cast<TtProtocolRole::Role>(type));
   } else {
-    tabWidget_->switchByReadingDisk(
-        uuid, static_cast<TtProtocolRole::Role>(type),
-        getSpecificConfiguration(uuid,
-                                 static_cast<TtProtocolRole::Role>(type)));
+    // 查找哪个 TabWindow 包含这个 UUID 的已关闭标签页
+    TabWindow *targetWindow =
+        TabWindowManager::instance()->findTabWindowWithClosedTab(uuid);
+    if (targetWindow) {
+      // 如果找到了，在该窗口中恢复标签页
+      targetWindow->switchByReadingMem(uuid,
+                                       static_cast<TtProtocolRole::Role>(type));
+    } else {
+      // 如果没有找到，则从磁盘读取
+      tabWidget_->switchByReadingDisk(
+          uuid, static_cast<TtProtocolRole::Role>(type),
+          getSpecificConfiguration(uuid,
+                                   static_cast<TtProtocolRole::Role>(type)));
+    }
   }
 }
 
 void MainWindow::addSelectToolPage() {
-  FunctionSelectionWindow* selectTool = new FunctionSelectionWindow();
+  FunctionSelectionWindow *selectTool = new FunctionSelectionWindow();
   tabWidget_->addNewTab(selectTool, tr("新建连接"));
   QObject::connect(
       selectTool, &FunctionSelectionWindow::switchRequested, selectTool,
       [this, selectTool](TtProtocolRole::Role role) {
         if (selectTool) {
           if (selectTool->parentWidget()) {
-            auto* parent = selectTool->parentWidget();
+            auto *parent = selectTool->parentWidget();
 
             while (parent) {
-              if (auto* tabWindow = qobject_cast<TabWindow*>(parent)) {
+              if (auto *tabWindow = qobject_cast<TabWindow *>(parent)) {
                 tabWindow->sessionSwitchPage(tabWindow->currentIndex(), role);
                 return;
               }
@@ -617,7 +635,7 @@ void MainWindow::addSelectToolPage() {
 }
 
 void MainWindow::addSelectAllToolPage() {
-  AllFunctionSelectionWindow* selectAllTool = new AllFunctionSelectionWindow();
+  AllFunctionSelectionWindow *selectAllTool = new AllFunctionSelectionWindow();
   tabWidget_->addNewTab(selectAllTool, tr("新建连接"));
   QObject::connect(
       selectAllTool, &AllFunctionSelectionWindow::switchRequested,
@@ -625,10 +643,10 @@ void MainWindow::addSelectAllToolPage() {
         if (selectAllTool) {
           // 根据 父对象 获取 TabWindow
           if (selectAllTool->parentWidget()) {
-            auto* parent = selectAllTool->parentWidget();
+            auto *parent = selectAllTool->parentWidget();
 
             while (parent) {
-              if (auto* tabWindow = qobject_cast<TabWindow*>(parent)) {
+              if (auto *tabWindow = qobject_cast<TabWindow *>(parent)) {
                 // 在父对象中显示对应的 tabWidget
                 tabWindow->sessionSwitchPage(tabWindow->currentIndex(), role);
                 return;
@@ -641,32 +659,32 @@ void MainWindow::addSelectAllToolPage() {
   tabWidget_->setCurrentWidget(selectAllTool);
 }
 
-bool MainWindow::event(QEvent* event) {
+bool MainWindow::event(QEvent *event) {
   switch (event->type()) {
-    case QEvent::WindowActivate: {
-      auto menu = menuWidget();
-      if (menu) {
-        menu->setProperty("bar-active", true);
-        style()->polish(menu);
-      }
-      break;
+  case QEvent::WindowActivate: {
+    auto menu = menuWidget();
+    if (menu) {
+      menu->setProperty("bar-active", true);
+      style()->polish(menu);
     }
-    case QEvent::WindowDeactivate: {
-      auto menu = menuWidget();
-      if (menu) {
-        menu->setProperty("bar-active", false);
-        style()->polish(menu);
-      }
-      break;
+    break;
+  }
+  case QEvent::WindowDeactivate: {
+    auto menu = menuWidget();
+    if (menu) {
+      menu->setProperty("bar-active", false);
+      style()->polish(menu);
     }
+    break;
+  }
 
-    default:
-      break;
+  default:
+    break;
   }
   return QMainWindow::event(event);
 }
 
-void MainWindow::closeEvent(QCloseEvent* event) {
+void MainWindow::closeEvent(QCloseEvent *event) {
   // 关闭所有窗口
   // 写入文件
   // Storage::SettingsManager::instance().saveSettings();
@@ -676,7 +694,7 @@ void MainWindow::closeEvent(QCloseEvent* event) {
   // 先关闭所有 TabWindow
   auto manager = TabWindowManager::instance();
   for (auto w : manager->windows()) {
-    w->close();  // 触发 TabWindow 的 closeEvent
+    w->close(); // 触发 TabWindow 的 closeEvent
   }
 
   // 再执行默认关闭逻辑
@@ -710,8 +728,8 @@ void MainWindow::installWindowAgent() {
     // edit->addAction(new QAction(tr("Redo(&R)"), menuBar));
 
     // 创建帮助菜单
-    QMenu* helpMenu = menuBar->addMenu(tr("Help(&H)"));
-    QAction* aboutQtAction = new QAction(tr("关于 Qt"), menuBar);
+    QMenu *helpMenu = menuBar->addMenu(tr("Help(&H)"));
+    QAction *aboutQtAction = new QAction(tr("关于 Qt"), menuBar);
     helpMenu->addAction(aboutQtAction);
     connect(aboutQtAction, &QAction::triggered, qApp, &QApplication::aboutQt);
     // 添加"关于应用"选项
@@ -907,10 +925,10 @@ void MainWindow::installWindowAgent() {
   window_agent_->setHitTestVisible(topButton, true);
 
 #ifdef Q_OS_MAC
-  windowAgent->setSystemButtonAreaCallback([](const QSize& size) {
+  windowAgent->setSystemButtonAreaCallback([](const QSize &size) {
     static constexpr const int width = 75;
     return QRect(QPoint(size.width() - width, 0),
-                 QSize(width, size.height()));  //
+                 QSize(width, size.height())); //
   });
 #endif
 
@@ -938,7 +956,7 @@ void MainWindow::installWindowAgent() {
           });
 
   connect(windowBar, &Ui::WindowBar::topRequest, this, [this](bool top) {
-    auto* window = this->windowHandle();
+    auto *window = this->windowHandle();
 
     if (window) {
 #ifdef Q_OS_WIN
@@ -1002,17 +1020,17 @@ void MainWindow::installWindowAgent() {
     //     Qt::ApplicationModal, true,
     //     Ui::TtContentDialog::LayoutSelection::THREE_OPTIONS, this));
 
-    Ui::TtContentDialog* dialog = new Ui::TtContentDialog(
+    Ui::TtContentDialog *dialog = new Ui::TtContentDialog(
         Qt::ApplicationModal, true,
         Ui::TtContentDialog::LayoutSelection::THREE_OPTIONS, this);
     dialog->setCenterText(tr("确定要退出程序吗"));
-    dialog->setAttribute(Qt::WA_DeleteOnClose);  // 二次删除的情况
+    dialog->setAttribute(Qt::WA_DeleteOnClose); // 二次删除的情况
     connect(dialog, &Ui::TtContentDialog::leftButtonClicked, dialog,
             &QDialog::reject);
     connect(dialog, &Ui::TtContentDialog::middleButtonClicked, dialog,
-            &QDialog::accept);  // 中间按钮 -> accept()
+            &QDialog::accept); // 中间按钮 -> accept()
     connect(dialog, &Ui::TtContentDialog::rightButtonClicked, dialog,
-            &QDialog::accept);  // 右侧按钮 -> accept()
+            &QDialog::accept); // 右侧按钮 -> accept()
     const int result = dialog->exec();
     if (result == QDialog::Accepted) {
       // 获取最后点击的按钮类型
@@ -1074,7 +1092,6 @@ void MainWindow::loadStyleSheet(Theme theme) {
 }
 
 void MainWindow::setLeftBar() {
-  // BUG 缺少双击事件
   left_bar_ = new QWidget(this);
   left_bar_logic_ = new Ui::TtWidgetGroup(this);
   left_bar_logic_->setExclusive(true);
@@ -1102,7 +1119,7 @@ void MainWindow::setLeftBar() {
   left_bar_logic_->addWidget(communication_instruction_);
   left_bar_logic_->addWidget(realistic_simulation_);
 
-  Ui::TtVerticalLayout* left_bar_layout = new Ui::TtVerticalLayout(left_bar_);
+  Ui::TtVerticalLayout *left_bar_layout = new Ui::TtVerticalLayout(left_bar_);
 
   left_bar_layout->addSpacerItem(new QSpacerItem(0, 10));
   left_bar_layout->addWidget(communication_connection_, 0, Qt::AlignTop);
@@ -1123,7 +1140,7 @@ void MainWindow::connectSignals() {
   connect(history_link_list_, &Ui::SessionManager::uuidsChanged, buttonGroup,
           &Ui::WidgetGroup::updateUuid);
   connect(history_link_list_, &Ui::SessionManager::uuidsChanged,
-          [](const QString& index, TtProtocolRole::Role role) {
+          [](const QString &index, TtProtocolRole::Role role) {
             // 删除 tab 页面
             TabWindowManager::instance()->removeUuidTabPage(index);
             // 本地删除
@@ -1134,7 +1151,7 @@ void MainWindow::connectSignals() {
           &Ui::WidgetGroup::updateUuid);
 
   connect(history_mock_list_, &Ui::SessionManager::uuidsChanged,
-          [](const QString& index) {
+          [](const QString &index) {
             TabWindowManager::instance()->removeUuidTabPage(index);
           });
 
@@ -1155,38 +1172,38 @@ void MainWindow::connectSignals() {
   connect(buttonGroup, &Ui::WidgetGroup::currentIndexChanged, this,
           &MainWindow::switchToOtherTabPage);
 
-  connect(
-      TabWindowManager::instance(), &TabWindowManager::tabCreateRequested, this,
-      [this](TabWindow* sourceWindow) {
-        AllFunctionSelectionWindow* selectAllTool =
-            new AllFunctionSelectionWindow;
-        sourceWindow->addNewTab(selectAllTool, tr("新建连接"));
-        sourceWindow->setCurrentWidget(selectAllTool);
+  connect(TabWindowManager::instance(), &TabWindowManager::tabCreateRequested,
+          this, [this](TabWindow *sourceWindow) {
+            AllFunctionSelectionWindow *selectAllTool =
+                new AllFunctionSelectionWindow;
+            sourceWindow->addNewTab(selectAllTool, tr("新建连接"));
+            sourceWindow->setCurrentWidget(selectAllTool);
 
-        QObject::connect(
-            selectAllTool, &AllFunctionSelectionWindow::switchRequested,
-            selectAllTool, [selectAllTool](TtProtocolRole::Role role) {
-              if (selectAllTool) {
-                if (selectAllTool->parentWidget()) {
-                  auto* parent = selectAllTool->parentWidget();
-                  while (parent) {
-                    if (auto* tabWindow = qobject_cast<TabWindow*>(parent)) {
-                      int index = tabWindow->indexOf(selectAllTool);
-                      if (index != -1) {
-                        tabWindow->sessionSwitchPage(index, role);
-                        break;
+            QObject::connect(
+                selectAllTool, &AllFunctionSelectionWindow::switchRequested,
+                selectAllTool, [selectAllTool](TtProtocolRole::Role role) {
+                  if (selectAllTool) {
+                    if (selectAllTool->parentWidget()) {
+                      auto *parent = selectAllTool->parentWidget();
+                      while (parent) {
+                        if (auto *tabWindow =
+                                qobject_cast<TabWindow *>(parent)) {
+                          int index = tabWindow->indexOf(selectAllTool);
+                          if (index != -1) {
+                            tabWindow->sessionSwitchPage(index, role);
+                            break;
+                          }
+                        }
+                        parent = parent->parentWidget();
                       }
                     }
-                    parent = parent->parentWidget();
                   }
-                }
-              }
-            });
-      });
+                });
+          });
 
   connect(
       tabWidget_, &TabWindow::widgetDeleted, this,
-      [this](QWidget* deleteWidget) {
+      [this](QWidget *deleteWidget) {
         if (setting_widget_ == deleteWidget) {
           setting_widget_ = nullptr;
         }
@@ -1245,12 +1262,12 @@ void MainWindow::registerTabWidget() {
         // qDebug() << "Create SerialWindow: " << runtime.elapseMilliseconds();
         // return widget;
 
-        Window::SerialWindow* serial = new Window::SerialWindow();
+        Window::SerialWindow *serial = new Window::SerialWindow();
         // qDebug() << "Create SerialWindow: " << runtime.elapseMilliseconds();
         connect(serial, &Window::SerialWindow::requestSaveConfig, this,
                 [this, serial]() {
                   // qDebug() << "request save";
-                  const auto& uuid = tabWidget_->getCurrentWidgetUUid(serial);
+                  const auto &uuid = tabWidget_->getCurrentWidgetUUid(serial);
                   addDifferentConfiguration(TtFunctionalCategory::Communication,
                                             TtProtocolRole::Serial,
                                             serial->getTitle(), uuid);
@@ -1269,11 +1286,11 @@ void MainWindow::registerTabWidget() {
   tabWidget_->registerWidget(
       TtProtocolRole::TcpClient,
       [this]() {
-        Window::TcpWindow* tcpClient =
+        Window::TcpWindow *tcpClient =
             new Window::TcpWindow(TtProtocolType::Client);
         connect(tcpClient, &Window::TcpWindow::requestSaveConfig, this,
                 [this, tcpClient]() {
-                  const auto& uuid =
+                  const auto &uuid =
                       tabWidget_->getCurrentWidgetUUid(tcpClient);
 
                   addDifferentConfiguration(TtFunctionalCategory::Communication,
@@ -1291,11 +1308,11 @@ void MainWindow::registerTabWidget() {
   tabWidget_->registerWidget(
       TtProtocolRole::UdpClient,
       [this]() {
-        Window::UdpWindow* udpClient =
+        Window::UdpWindow *udpClient =
             new Window::UdpWindow(TtProtocolType::Client);
         connect(udpClient, &Window::UdpWindow::requestSaveConfig, this,
                 [this, udpClient]() {
-                  const auto& uuid =
+                  const auto &uuid =
                       tabWidget_->getCurrentWidgetUUid(udpClient);
                   addDifferentConfiguration(TtFunctionalCategory::Communication,
                                             TtProtocolRole::UdpClient,
@@ -1312,11 +1329,11 @@ void MainWindow::registerTabWidget() {
   tabWidget_->registerWidget(
       TtProtocolRole::MqttClient,
       [this]() {
-        Window::MqttWindow* mqttClient =
+        Window::MqttWindow *mqttClient =
             new Window::MqttWindow(TtProtocolType::Client);
         connect(mqttClient, &Window::MqttWindow::requestSaveConfig, this,
                 [this, mqttClient]() {
-                  const auto& uuid =
+                  const auto &uuid =
                       tabWidget_->getCurrentWidgetUUid(mqttClient);
                   addDifferentConfiguration(TtFunctionalCategory::Communication,
                                             TtProtocolRole::MqttClient,
@@ -1334,11 +1351,11 @@ void MainWindow::registerTabWidget() {
   tabWidget_->registerWidget(
       TtProtocolRole::ModbusClient,
       [this]() {
-        Window::ModbusWindow* modbusClient =
+        Window::ModbusWindow *modbusClient =
             new Window::ModbusWindow(TtProtocolType::Client);
         connect(modbusClient, &Window::ModbusWindow::requestSaveConfig, this,
                 [this, modbusClient]() {
-                  const auto& uuid =
+                  const auto &uuid =
                       tabWidget_->getCurrentWidgetUUid(modbusClient);
                   addDifferentConfiguration(TtFunctionalCategory::Communication,
                                             TtProtocolRole::ModbusClient,
@@ -1355,11 +1372,11 @@ void MainWindow::registerTabWidget() {
   tabWidget_->registerWidget(
       TtProtocolRole::TcpServer,
       [this]() {
-        Window::TcpWindow* tcpServer =
+        Window::TcpWindow *tcpServer =
             new Window::TcpWindow(TtProtocolType::Server);
         connect(tcpServer, &Window::TcpWindow::requestSaveConfig, this,
                 [this, tcpServer]() {
-                  const auto& uuid =
+                  const auto &uuid =
                       tabWidget_->getCurrentWidgetUUid(tcpServer);
                   addDifferentConfiguration(TtFunctionalCategory::Simulate,
                                             TtProtocolRole::TcpServer,
@@ -1378,11 +1395,11 @@ void MainWindow::registerTabWidget() {
   tabWidget_->registerWidget(
       TtProtocolRole::UdpServer,
       [this]() {
-        Window::UdpWindow* udpServer =
+        Window::UdpWindow *udpServer =
             new Window::UdpWindow(TtProtocolType::Server);
         connect(udpServer, &Window::UdpWindow::requestSaveConfig, this,
                 [this, udpServer]() {
-                  const auto& uuid =
+                  const auto &uuid =
                       tabWidget_->getCurrentWidgetUUid(udpServer);
                   addDifferentConfiguration(TtFunctionalCategory::Simulate,
                                             TtProtocolRole::UdpServer,
@@ -1423,32 +1440,32 @@ void MainWindow::registerTabWidget() {
 
 void MainWindow::addDifferentConfiguration(TtFunctionalCategory::Category type,
                                            TtProtocolRole::Role role,
-                                           const QString& title,
-                                           const QString& uuid) {
-  Ui::TtSpecialDeleteButton* button = new Ui::TtSpecialDeleteButton(
+                                           const QString &title,
+                                           const QString &uuid) {
+  Ui::TtSpecialDeleteButton *button = new Ui::TtSpecialDeleteButton(
       title, ":/sys/displayport.svg", ":/sys/delete.svg", this);
 
   switch (type) {
-    case TtFunctionalCategory::Communication: {
-      history_link_list_->addAdaptiveWidget(title, std::make_pair(uuid, role),
-                                            button);
-      break;
-    }
-    case TtFunctionalCategory::Instruction: {
-      break;
-    }
-    case TtFunctionalCategory::Simulate: {
-      history_mock_list_->addAdaptiveWidget(title, std::make_pair(uuid, role),
-                                            button);
-      break;
-    }
-    default:
-      break;
+  case TtFunctionalCategory::Communication: {
+    history_link_list_->addAdaptiveWidget(title, std::make_pair(uuid, role),
+                                          button);
+    break;
+  }
+  case TtFunctionalCategory::Instruction: {
+    break;
+  }
+  case TtFunctionalCategory::Simulate: {
+    history_mock_list_->addAdaptiveWidget(title, std::make_pair(uuid, role),
+                                          button);
+    break;
+  }
+  default:
+    break;
   }
   buttonGroup->addButton(uuid, static_cast<int>(role), button);
 }
 
-QString MainWindow::extractLanguageName(const QString& qmFile) {
+QString MainWindow::extractLanguageName(const QString &qmFile) {
   QMap<QString, QString> mapLanguage = {{"_zh", tr("简体中文")},
                                         {"_en", tr("英文")},
                                         {"_fr", tr("法语")},
@@ -1462,7 +1479,7 @@ QString MainWindow::extractLanguageName(const QString& qmFile) {
   return qmFile;
 }
 
-void MainWindow::changeLanguage(const QString& qmFile) {
+void MainWindow::changeLanguage(const QString &qmFile) {
 
   // 如果一直切换语言, 则以最后一次切换为准
   // 保存到配置文件
@@ -1482,7 +1499,7 @@ void MainWindow::changeLanguage(const QString& qmFile) {
 
   // dialog->show();
 
-  Ui::TtContentDialog* dialog = new Ui::TtContentDialog(this);
+  Ui::TtContentDialog *dialog = new Ui::TtContentDialog(this);
   dialog->setLeftButtonText(tr("立马重启"));
   dialog->setRightButtonText(tr("稍后重启"));
   dialog->setCenterText(tr("已切换语言, 是否立马重启"));
@@ -1520,7 +1537,7 @@ void MainWindow::changeLanguage(const QString& qmFile) {
   // }
 }
 
-void MainWindow::saveLanguageSetting(const QString& language) {
+void MainWindow::saveLanguageSetting(const QString &language) {
   // QSettings settings("MyCompany", "MyApp");
   // language 是 xxx.qm 前缀
   // QSettings settings(QCoreApplication::applicationDirPath() + "config.ini");
@@ -1541,7 +1558,7 @@ void MainWindow::restartApplication() {
   }
   // 添加新的语言参数（例如 "--lang zh_CN"）
   arguments << "--lang"
-            << savedLanguage_;  // savedLanguage_ 是成员变量，保存当前语言
+            << savedLanguage_; // savedLanguage_ 是成员变量，保存当前语言
 
   // 启动新进程
   QProcess::startDetached(program, arguments);
@@ -1568,7 +1585,7 @@ void MainWindow::readingProjectConfiguration() {
 
   // 使用迭代器高效遍历
   for (auto it = configs.constBegin(); it != configs.constEnd(); ++it) {
-    const QString& key = it.key();
+    const QString &key = it.key();
 
     // 使用引用避免创建临时字符串
     if (key.startsWith(SerialPrefix)) {
@@ -1656,15 +1673,15 @@ QJsonObject MainWindow::getSpecificConfiguration(const QString index,
 }
 
 void MainWindow::processConfigsByType(
-    const QHash<QString, QJsonObject>& configs,
+    const QHash<QString, QJsonObject> &configs,
     TtProtocolRole::Role protocolRole) {
 
   // 不同类型的配置项
   // uuid, config
   for (auto it = configs.constBegin(); it != configs.constEnd(); ++it) {
     qDebug() << "uuid";
-    const QString& uuid = it.key();       // uuid
-    const QJsonObject& obj = it.value();  // obj
+    const QString &uuid = it.key();      // uuid
+    const QJsonObject &obj = it.value(); // obj
 
     // 分开不同的 leftbar
     // 获取功能分类
@@ -1685,4 +1702,4 @@ void MainWindow::processConfigsByType(
   }
 }
 
-}  // namespace Window
+} // namespace Window

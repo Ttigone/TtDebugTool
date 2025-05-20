@@ -211,27 +211,27 @@
 <context>
     <name>QObject</name>
     <message>
-        <location filename="../../src/window/frame_window.cpp" line="398"/>
+        <location filename="../../src/window/frame_window.cpp" line="396"/>
         <source>十六进制字符串不能为空</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/frame_window.cpp" line="419"/>
+        <location filename="../../src/window/frame_window.cpp" line="417"/>
         <source>字符串包含非法字符(如中文或特殊符号)，位置: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/frame_window.cpp" line="423"/>
+        <location filename="../../src/window/frame_window.cpp" line="421"/>
         <source>字符串包含非十六进制字符 &apos;%1&apos;，位置: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/frame_window.cpp" line="436"/>
+        <location filename="../../src/window/frame_window.cpp" line="434"/>
         <source>十六进制字符串长度必须为偶数</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/frame_window.cpp" line="451"/>
+        <location filename="../../src/window/frame_window.cpp" line="449"/>
         <source>输入不包含有效的十六进制字符</source>
         <translation type="unfinished"></translation>
     </message>
@@ -331,27 +331,32 @@
 <context>
     <name>Ui::TabWindow</name>
     <message>
-        <location filename="../../src/ui/widgets/tabwindow.cpp" line="452"/>
+        <location filename="../../src/ui/widgets/tabwindow.cpp" line="474"/>
         <source>新增连接</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/widgets/tabwindow.cpp" line="836"/>
+        <location filename="../../src/ui/widgets/tabwindow.cpp" line="949"/>
         <source>取消</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/widgets/tabwindow.cpp" line="837"/>
+        <location filename="../../src/ui/widgets/tabwindow.cpp" line="950"/>
         <source>确定</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/widgets/tabwindow.cpp" line="838"/>
+        <location filename="../../src/ui/widgets/tabwindow.cpp" line="951"/>
         <source>通讯链接配置已修改, 是否保存</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/widgets/tabwindow.cpp" line="769"/>
+        <location filename="../../src/ui/widgets/tabwindow.cpp" line="1031"/>
+        <source>新建立</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../src/ui/widgets/tabwindow.cpp" line="882"/>
         <source>New Tab</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1394,24 +1399,24 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/frame_window.cpp" line="380"/>
+        <location filename="../../src/window/frame_window.cpp" line="378"/>
         <source>配置已保存</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/frame_window.cpp" line="387"/>
+        <location filename="../../src/window/frame_window.cpp" line="385"/>
         <source>有未保存的更改，点击保存</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/frame_window.cpp" line="579"/>
-        <location filename="../../src/window/frame_window.cpp" line="622"/>
+        <location filename="../../src/window/frame_window.cpp" line="577"/>
+        <location filename="../../src/window/frame_window.cpp" line="620"/>
         <source>发送字节数:%1 B</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/frame_window.cpp" line="583"/>
-        <location filename="../../src/window/frame_window.cpp" line="626"/>
+        <location filename="../../src/window/frame_window.cpp" line="581"/>
+        <location filename="../../src/window/frame_window.cpp" line="624"/>
         <source>接收字节数:%1 B</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1504,9 +1509,9 @@
     <message>
         <location filename="../../src/window/main_window.cpp" line="191"/>
         <location filename="../../src/window/main_window.cpp" line="338"/>
-        <location filename="../../src/window/main_window.cpp" line="595"/>
-        <location filename="../../src/window/main_window.cpp" line="618"/>
-        <location filename="../../src/window/main_window.cpp" line="1159"/>
+        <location filename="../../src/window/main_window.cpp" line="616"/>
+        <location filename="../../src/window/main_window.cpp" line="639"/>
+        <location filename="../../src/window/main_window.cpp" line="1179"/>
         <source>新建连接</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1559,148 +1564,148 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="693"/>
+        <location filename="../../src/window/main_window.cpp" line="714"/>
         <source>文件(&amp;F)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="694"/>
+        <location filename="../../src/window/main_window.cpp" line="715"/>
         <source>新建</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="695"/>
+        <location filename="../../src/window/main_window.cpp" line="716"/>
         <source>打开</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="698"/>
+        <location filename="../../src/window/main_window.cpp" line="719"/>
         <source>保存到 CSV</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="702"/>
+        <location filename="../../src/window/main_window.cpp" line="723"/>
         <source>保存到 Sqlite 数据库</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="710"/>
+        <location filename="../../src/window/main_window.cpp" line="731"/>
         <source>Help(&amp;H)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="711"/>
+        <location filename="../../src/window/main_window.cpp" line="732"/>
         <source>关于 Qt</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="781"/>
+        <location filename="../../src/window/main_window.cpp" line="802"/>
         <source>Dark blur</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="794"/>
+        <location filename="../../src/window/main_window.cpp" line="815"/>
         <source>Light blur</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="807"/>
+        <location filename="../../src/window/main_window.cpp" line="828"/>
         <source>No blur</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1005"/>
+        <location filename="../../src/window/main_window.cpp" line="1026"/>
         <source>确定要退出程序吗</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1147"/>
+        <location filename="../../src/window/main_window.cpp" line="1167"/>
         <source>设置</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1260"/>
-        <location filename="../../src/window/main_window.cpp" line="1283"/>
-        <location filename="../../src/window/main_window.cpp" line="1304"/>
-        <location filename="../../src/window/main_window.cpp" line="1326"/>
-        <location filename="../../src/window/main_window.cpp" line="1347"/>
-        <location filename="../../src/window/main_window.cpp" line="1368"/>
-        <location filename="../../src/window/main_window.cpp" line="1392"/>
+        <location filename="../../src/window/main_window.cpp" line="1280"/>
+        <location filename="../../src/window/main_window.cpp" line="1303"/>
+        <location filename="../../src/window/main_window.cpp" line="1324"/>
+        <location filename="../../src/window/main_window.cpp" line="1346"/>
+        <location filename="../../src/window/main_window.cpp" line="1367"/>
+        <location filename="../../src/window/main_window.cpp" line="1388"/>
+        <location filename="../../src/window/main_window.cpp" line="1412"/>
         <source>保存成功</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1265"/>
+        <location filename="../../src/window/main_window.cpp" line="1285"/>
         <source>未命名的串口连接</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1287"/>
+        <location filename="../../src/window/main_window.cpp" line="1307"/>
         <source>未命 TCP 客户端连接</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1308"/>
+        <location filename="../../src/window/main_window.cpp" line="1328"/>
         <source>未命名 UDP 连接</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1330"/>
+        <location filename="../../src/window/main_window.cpp" line="1350"/>
         <source>未命名的 MQTT 客户端</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1351"/>
+        <location filename="../../src/window/main_window.cpp" line="1371"/>
         <source>未命名的 Modbus 主机</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1372"/>
+        <location filename="../../src/window/main_window.cpp" line="1392"/>
         <source>未命名的 TCP 服务模拟端</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1396"/>
+        <location filename="../../src/window/main_window.cpp" line="1416"/>
         <source>未命名的 UDP 服务模拟端</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1449"/>
+        <location filename="../../src/window/main_window.cpp" line="1469"/>
         <source>简体中文</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1450"/>
+        <location filename="../../src/window/main_window.cpp" line="1470"/>
         <source>英文</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1451"/>
+        <location filename="../../src/window/main_window.cpp" line="1471"/>
         <source>法语</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1452"/>
+        <location filename="../../src/window/main_window.cpp" line="1472"/>
         <source>德语</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1453"/>
+        <location filename="../../src/window/main_window.cpp" line="1473"/>
         <source>日语</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1483"/>
+        <location filename="../../src/window/main_window.cpp" line="1503"/>
         <source>立马重启</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1484"/>
+        <location filename="../../src/window/main_window.cpp" line="1504"/>
         <source>稍后重启</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/window/main_window.cpp" line="1485"/>
+        <location filename="../../src/window/main_window.cpp" line="1505"/>
         <source>已切换语言, 是否立马重启</source>
         <translation type="unfinished"></translation>
     </message>

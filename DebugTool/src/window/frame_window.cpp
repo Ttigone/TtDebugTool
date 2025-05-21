@@ -101,8 +101,9 @@ void FrameWindow::initUi() {
   Ui::TtHorizontalLayout *operationButtonLayout = new Ui::TtHorizontalLayout;
 
   save_btn_ = new Ui::TtSvgButton(":/sys/save_cfg.svg", this);
-  // 再次点击的颜色又有不同
   save_btn_->setSvgSize(18, 18);
+  // 默认显示蓝色
+  save_btn_->setColors(QColor("#2196F3"), QColor("#2196F3"));
 
   on_off_btn_ = new Ui::TtSvgButton(":/sys/start_up.svg", this);
   on_off_btn_->setColors(Qt::black, Qt::red);

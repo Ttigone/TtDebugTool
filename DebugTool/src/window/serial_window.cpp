@@ -116,12 +116,63 @@ QString SerialWindow::getTitle() { return title_->text(); }
 
 QJsonObject SerialWindow::getConfiguration() const { return config_; }
 
-void SerialWindow::saveWaveFormData() {
-  // save to csv data
-  if (serial_plot_) {
-    qDebug() << "csv";
-    serial_plot_->saveWaveFormData();
+bool SerialWindow::saveWaveFormData(const QString &fileName) {
+  // if (serial_plot_) {
+  //   qDebug() << "csv";
+  //   serial_plot_->saveWaveFormData();
+  //   return true;
+  // }
+  if (!serial_plot_) {
+    Ui::TtMessageBar::warning(TtMessageBarType::Top, tr("保存失败"),
+                              tr("没有可用的波形数据"), 1500, this);
+    return false;
   }
+  QString actualFileName;
+
+  if (fileName.isEmpty()) {
+    // 如果没有提供文件名，弹出保存对话框让用户选择
+    QString defaultName =
+        getTitle().isEmpty() ? tr("未命名波形数据") : getTitle();
+    defaultName.replace(QRegularExpression("[\\\\/:*?\"<>|]"),
+                        "_"); // 移除文件名中的非法字符
+
+    actualFileName = QFileDialog::getSaveFileName(
+        this, tr("保存波形数据"), QDir::homePath() + "/" + defaultName + ".csv",
+        tr("CSV文件 (*.csv);;所有文件 (*.*)"));
+
+    if (actualFileName.isEmpty()) {
+      // 用户取消操作
+      return false;
+    }
+  } else {
+    // 使用提供的文件名，确保有正确的扩展名
+    actualFileName = fileName;
+    if (!actualFileName.contains("/") && !actualFileName.contains("\\")) {
+      // 如果只有文件名没有路径，添加默认路径
+      actualFileName = QDir::homePath() + "/" + actualFileName;
+    }
+
+    // 确保有.csv扩展名
+    if (!actualFileName.endsWith(".csv", Qt::CaseInsensitive)) {
+      actualFileName += ".csv";
+    }
+  }
+
+  // 调用绘图组件的保存函数
+  bool success = serial_plot_->saveWaveFormData(actualFileName);
+
+  if (success) {
+    Ui::TtMessageBar::success(
+        TtMessageBarType::Top, tr("保存成功"),
+        tr("波形数据已保存到: %1").arg(QFileInfo(actualFileName).fileName()),
+        1500, this);
+  } else {
+    Ui::TtMessageBar::error(TtMessageBarType::Top, tr("保存失败"),
+                            tr("无法保存波形数据，请检查文件权限或磁盘空间"),
+                            1500, this);
+  }
+  return success;
+  // return false;
 }
 
 bool SerialWindow::workState() const {

@@ -539,7 +539,8 @@ void MainWindow::compileTsFilesFinished() {
   // 搜索 .qm
   QStringList qmFiles = languageDir.entryList(QStringList("*.qm"), QDir::Files);
   // 动态生成语言菜单
-  for (const QString &qmFile : qmFiles) {
+  // for (const QString &qmFile : qmFiles) {
+  for (auto &qmFile : qmFiles) {
     QString languageName = extractLanguageName(qmFile); // 解析语言名称
     QAction *action = new QAction(languageName, this);
     action->setCheckable(true);
@@ -556,41 +557,253 @@ void MainWindow::compileTsFilesFinished() {
 }
 
 void MainWindow::saveCsvFile() {
-  // BUG
-  // 弹出一个串口, 选择你要保存的 csv 文件.
-  // 当前的界面的 csv
-  // 获取的是当前的 窗口, 当如果是跨越窗口呢 ?
-  // 弹出一个 dialog, 里面有多个选择, 你要保存哪一个窗口的 csv
-  Ui::TtContentDialog choseDialog(this);
-  // choseDialog;
-  // 非模态的
-  // 此处内存泄漏
-  QWidget *selectSaveCsvData = new QWidget;
+  // 收集所有打开的 SerialWindow
+  QList<QPair<QString, Window::SerialWindow *>> serialWindows;
 
-  auto widget =
+  // 1. 先检查当前活动窗口
+  auto currentWidget =
       qobject_cast<Window::SerialWindow *>(tabWidget_->currentWidget());
-  if (widget) {
-    qDebug() << "保存窗口 csv";
-    // qDebug() << widget->getTitle();
-    widget->saveWaveFormData();
+  if (currentWidget) {
+    serialWindows.append(qMakePair(
+        tabWidget_->tabText(tabWidget_->currentIndex()), currentWidget));
   }
+
+  // 2. 搜索所有TabWindow中的SerialWindow
+  auto allWindows = TabWindowManager::instance()->windows();
+  for (TabWindow *window : allWindows) {
+    for (int i = 0; i < window->count(); ++i) {
+      auto widget = qobject_cast<Window::SerialWindow *>(window->widget(i));
+      if (widget && widget != currentWidget) { // 避免重复添加当前窗口
+        serialWindows.append(qMakePair(window->tabText(i), widget));
+      }
+    }
+  }
+  // 如果没有找到可以保存的串口窗口
+  if (serialWindows.isEmpty()) {
+    Ui::TtMessageBar::warning(TtMessageBarType::Top, tr("无法保存"),
+                              tr("没有找到可以保存数据的串口窗口"), 2000, this);
+    return;
+  }
+
+  // // 如果只有一个串口窗口，直接保存
+  // if (serialWindows.size() == 1) {
+  //   auto serialWindow = serialWindows.first().second;
+  //   serialWindow->saveWaveFormData();
+  //   Ui::TtMessageBar::success(
+  //       TtMessageBarType::Top, tr("保存成功"),
+  //       tr("已将 %1
+  //       的波形数据保存为CSV文件").arg(serialWindows.first().first), 1500,
+  //       this);
+  //   return;
+  // }
+
+  // 如果有多个串口窗口，显示选择对话框
+  Ui::TtContentDialog *dialog = new Ui::TtContentDialog(
+      Qt::ApplicationModal, false,
+      Ui::TtContentDialog::LayoutSelection::TWO_OPTIONS, this);
+  dialog->setWindowTitle(tr("保存数据"));
+  // dialog->setCenterText(tr("请选择要保存波形数据的串口窗口："));
+
+  // 创建窗口列表
+  QWidget *container = new QWidget(dialog);
+  // QVBoxLayout *layout = new QVBoxLayout(container);
+  QVBoxLayout *mainLayout = new QVBoxLayout(container);
+  // QButtonGroup *buttonGroup = new QButtonGroup(container);
+  // 添加说明文本
+  QLabel *infoLabel =
+      new QLabel(tr("请选择要保存的窗口和设置文件名:"), container);
+  mainLayout->addWidget(infoLabel);
+
+  // 添加分隔线
+  QFrame *line = new QFrame(container);
+  line->setFrameShape(QFrame::HLine);
+  line->setFrameShadow(QFrame::Sunken);
+  mainLayout->addWidget(line);
+
+  // 保存所有创建的复选框和文件名输入框
+  QList<QPair<QCheckBox *, QLineEdit *>> windowControls;
+
+  // 为每个窗口添加选择框和文件名输入
+  for (int i = 0; i < serialWindows.size(); ++i) {
+    // QRadioButton* radio = new QRadioButton(serialWindows[i].first,
+    // container); if (i == 0)
+    //   radio->setChecked(true);  // 默认选中第一个
+    // layout->addWidget(radio);
+    // buttonGroup->addButton(radio, i);
+    // 创建一个水平布局容器
+    QWidget *rowWidget = new QWidget(container);
+    QHBoxLayout *rowLayout = new QHBoxLayout(rowWidget);
+    rowLayout->setContentsMargins(0, 0, 0, 0);
+
+    // 创建复选框
+    QCheckBox *checkbox = new QCheckBox(serialWindows[i].first, rowWidget);
+    checkbox->setChecked(i == 0); // 默认选中第一个
+    rowLayout->addWidget(checkbox, 1);
+
+    // 创建文件名输入框
+    QLineEdit *fileNameEdit = new QLineEdit(rowWidget);
+    // 使用窗口标题作为默认文件名，去除特殊字符
+    QString defaultFileName = serialWindows[i].first;
+    defaultFileName.replace(QRegularExpression("[\\\\/:*?\"<>|]"), "_");
+    fileNameEdit->setText(defaultFileName);
+    fileNameEdit->setPlaceholderText(tr("输入保存文件名"));
+    rowLayout->addWidget(fileNameEdit, 2);
+
+    // 将控件保存到列表
+    windowControls.append(qMakePair(checkbox, fileNameEdit));
+
+    // 连接复选框变更信号到文件名输入框启用状态
+    connect(checkbox, &QCheckBox::toggled, fileNameEdit,
+            &QLineEdit::setEnabled);
+
+    // 添加到主布局
+    mainLayout->addWidget(rowWidget);
+  }
+
+  // 添加全选/取消全选复选框
+  QCheckBox *selectAllCheckbox = new QCheckBox(tr("全选"), container);
+  connect(selectAllCheckbox, &QCheckBox::toggled,
+          [windowControls](bool checked) {
+            for (const auto &pair : windowControls) {
+              pair.first->setChecked(checked);
+            }
+          });
+  mainLayout->addWidget(selectAllCheckbox);
+
+  // 添加保存选项
+  QCheckBox *saveToDatabase = new QCheckBox(tr("同时保存到数据库"), container);
+  mainLayout->addWidget(saveToDatabase);
+
+  dialog->setCentralWidget(container);
+  dialog->setLeftButtonText(tr("取消"));
+  dialog->setRightButtonText(tr("保存"));
+
+  // 处理保存操作
+  connect(dialog, &Ui::TtContentDialog::rightButtonClicked, dialog, [=]() {
+    // int selectedId = buttonGroup->checkedId();
+    // if (selectedId >= 0 && selectedId < serialWindows.size()) {
+    //   auto selectedWindow = serialWindows[selectedId].second;
+    //   bool success = selectedWindow->saveWaveFormData();
+
+    //   if (success) {
+    //     // 如勾选了保存到数据库，则执行数据库保存
+    //     if (saveToDatabase->isChecked()) {
+    //       // bool dbSuccess = selectedWindow->saveWaveFormToDatabase();
+    //       bool dbSuccess = true;
+    //       if (dbSuccess) {
+    //         Ui::TtMessageBar::success(TtMessageBarType::Top, tr("保存成功"),
+    //                                   tr("波形数据已保存为CSV文件和数据库"),
+    //                                   2000, this);
+    //       } else {
+    //         Ui::TtMessageBar::warning(
+    //             TtMessageBarType::Top, tr("部分保存成功"),
+    //             tr("波形数据已保存为CSV文件，但保存到数据库失败"), 2000,
+    //             this);
+    //       }
+    //     } else {
+    //       Ui::TtMessageBar::success(TtMessageBarType::Top, tr("保存成功"),
+    //                                 tr("波形数据已保存为CSV文件"), 2000,
+    //                                 this);
+    //     }
+    //   } else {
+    //     Ui::TtMessageBar::error(TtMessageBarType::Top, tr("保存失败"),
+    //                             tr("保存波形数据时出现错误"), 2000, this);
+    //   }
+    // }
+    int successCount = 0;
+    int failCount = 0;
+    int selectedCount = 0;
+
+    // 遍历所有选择的窗口
+    for (int i = 0; i < windowControls.size(); ++i) {
+      auto checkbox = windowControls[i].first;
+      auto filenameEdit = windowControls[i].second;
+
+      // 如果该窗口被选中
+      if (checkbox->isChecked()) {
+        selectedCount++;
+        auto selectedWindow = serialWindows[i].second;
+        QString filename = filenameEdit->text().trimmed();
+
+        // 如果文件名为空，使用默认名称
+        if (filename.isEmpty()) {
+          filename = tr("数据_%1").arg(
+              QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss"));
+          filenameEdit->setText(filename);
+        }
+
+        // 保存CSV文件
+        bool success = selectedWindow->saveWaveFormData(filename);
+
+        // 如果选择了保存到数据库
+        if (success && saveToDatabase->isChecked()) {
+          // bool dbSuccess = selectedWindow->saveWaveFormToDatabase(filename);
+          bool dbSuccess = true; // 这里应实际调用数据库保存方法
+          if (!dbSuccess) {
+            Ui::TtMessageBar::warning(
+                TtMessageBarType::Top, tr("部分保存成功"),
+                tr("窗口 %1 已保存为CSV文件，但保存到数据库失败")
+                    .arg(serialWindows[i].first),
+                2000, this);
+          }
+        }
+
+        // 更新成功/失败计数
+        if (success) {
+          successCount++;
+        } else {
+          failCount++;
+        }
+      }
+    }
+
+    // 显示结果消息
+    if (selectedCount == 0) {
+      Ui::TtMessageBar::warning(TtMessageBarType::Top, tr("未选择窗口"),
+                                tr("请选择至少一个窗口进行保存"), 2000, this);
+    } else if (failCount == 0) {
+      Ui::TtMessageBar::success(
+          TtMessageBarType::Top, tr("保存成功"),
+          tr("已成功保存%1个窗口的数据").arg(successCount), 2000, this);
+    } else if (successCount == 0) {
+      Ui::TtMessageBar::error(TtMessageBarType::Top, tr("保存失败"),
+                              tr("所有%1个窗口的数据保存均失败").arg(failCount),
+                              2000, this);
+    } else {
+      Ui::TtMessageBar::warning(
+          TtMessageBarType::Top, tr("部分保存成功"),
+          tr("成功保存%1个窗口，失败%2个窗口").arg(successCount).arg(failCount),
+          2000, this);
+    }
+    dialog->accept();
+  });
+
+  // 没有显示
+  // 显示对话框并在完成后删除它
+  dialog->exec();
+
+  dialog->deleteLater();
+
+  // // 弹出一个串口, 选择你要保存的 csv 文件.
+  // // 当前的界面的 csv
+  // // 获取的是当前的 窗口, 当如果是跨越窗口呢 ?
+  // // 弹出一个 dialog, 里面有多个选择, 你要保存哪一个窗口的 csv
+  // Ui::TtContentDialog choseDialog(this);
+  // // choseDialog;
+  // // 非模态的
+  // // 此处内存泄漏
+  // QWidget* selectSaveCsvData = new QWidget;
+
+  // auto widget =
+  //     qobject_cast<Window::SerialWindow*>(tabWidget_->currentWidget());
+  // if (widget) {
+  //   qDebug() << "保存窗口 csv";
+  //   // qDebug() << widget->getTitle();
+  //   widget->saveWaveFormData();
+  // }
 }
 
 void MainWindow::switchToOtherTabPage(const QString &uuid, const int &type) {
-  // if (tabWidget_->isCurrentDisplayedPage(uuid)) {
-  //   // 处于 widgetInstance 中的窗口
-  //   tabWidget_->switchByPage(uuid);
-  // } else if (tabWidget_->isStoredInMem(uuid)) {
-  //   // 被移出了 widgetInstance 中, 但是没有被关闭
-  //   // BUG 每个 TabWindow 都有自己的 closed_tabs, 这里有问题
-  //   tabWidget_->switchByReadingMem(uuid,
-  //                                  static_cast<TtProtocolRole::Role>(type));
-  // } else {
-  //   tabWidget_->switchByReadingDisk(
-  //       uuid, static_cast<TtProtocolRole::Role>(type),
-  //       getSpecificConfiguration(uuid,
-  //                                static_cast<TtProtocolRole::Role>(type)));
-  // }
   if (tabWidget_->isCurrentDisplayedPage(uuid)) {
     tabWidget_->switchByPage(uuid);
   } else {

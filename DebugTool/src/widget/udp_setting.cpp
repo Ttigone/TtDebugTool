@@ -1,16 +1,15 @@
 #include "widget/udp_setting.h"
+#include "core/udp_client.h"
+#include "core/udp_server.h"
 
 #include <ui/control/TtComboBox.h>
+#include <ui/control/TtDrawer.h>
 #include <ui/control/TtLineEdit.h>
 #include <ui/layout/vertical_layout.h>
 #include <ui/widgets/collapsible_panel.h>
 
-#include "core/udp_client.h"
-#include "core/udp_server.h"
-
 namespace Widget {
 
-// UdpServerSetting::UdpServerSetting(QWidget *parent) : QWidget(parent) {
 UdpServerSetting::UdpServerSetting(QWidget *parent) : FrameSetting(parent) {
   main_layout_ = new QVBoxLayout(this);
 
@@ -28,7 +27,9 @@ UdpServerSetting::UdpServerSetting(QWidget *parent) : FrameSetting(parent) {
 
   linkConfigLayout->addWidget(self_ip_);
   linkConfigLayout->addWidget(self_port_);
-  Ui::Drawer *drawer1 = new Ui::Drawer(tr("UDP 连接"), linkConfig);
+  Ui::TtDrawer *drawerLinkSetting = new Ui::TtDrawer(
+      tr("连接设置"), ":/sys/chevron-double-up.svg",
+      ":/sys/chevron-double-down.svg", linkConfig, false, this);
 
   QWidget *framingWidget = new QWidget;
   Ui::TtVerticalLayout *framingWidgetLayout =
@@ -37,17 +38,18 @@ UdpServerSetting::UdpServerSetting(QWidget *parent) : FrameSetting(parent) {
   framing_model_->addItem(tr("无"));
   framing_model_->addItem(tr("超时时间"));
   framing_model_->addItem(tr("固定长度"));
-  // framing_timeout_ = new Ui::TtLabelComboBox(tr("时间: "));
-  // framing_fixed_length_ = new Ui::TtLabelComboBox(tr("长度: "));
   framing_timeout_ = new Ui::TtLabelLineEdit(tr("时间(ms):"));
   framing_fixed_length_ = new Ui::TtLabelLineEdit(tr("长度:"));
 
   framingWidgetLayout->addWidget(framing_model_);
   framingWidgetLayout->addWidget(framing_timeout_);
   framingWidgetLayout->addWidget(framing_fixed_length_);
-  Ui::Drawer *drawer2 = new Ui::Drawer(tr("分帧"), framingWidget);
+
+  Ui::TtDrawer *drawerFraming = new Ui::TtDrawer(
+      tr("分帧[收数据包](暂未提供使用)"), ":/sys/chevron-double-up.svg",
+      ":/sys/chevron-double-down.svg", framingWidget, false, this);
   connect(framing_model_, &Ui::TtLabelComboBox::currentIndexChanged,
-          [this, drawer2](int index) {
+          [this, drawerFraming](int index) {
             switch (index) {
             case 0: {
               framing_timeout_->setVisible(false);
@@ -66,8 +68,8 @@ UdpServerSetting::UdpServerSetting(QWidget *parent) : FrameSetting(parent) {
             }
             }
             const auto event =
-                new QResizeEvent(drawer2->size(), drawer2->size());
-            QCoreApplication::postEvent(drawer2, event);
+                new QResizeEvent(drawerFraming->size(), drawerFraming->size());
+            QCoreApplication::postEvent(drawerFraming, event);
           });
   framing_model_->setCurrentItem(0);
   framing_timeout_->setVisible(false);
@@ -75,7 +77,9 @@ UdpServerSetting::UdpServerSetting(QWidget *parent) : FrameSetting(parent) {
 
   retransmission_ = new Ui::TtLabelBtnComboBox(tr("目标: "));
   retransmission_->addItem(tr("无"));
-  Ui::Drawer *drawer3 = new Ui::Drawer(tr("转发"), retransmission_);
+  Ui::TtDrawer *drawerRetransmission = new Ui::TtDrawer(
+      tr("转发"), ":/sys/chevron-double-up.svg",
+      ":/sys/chevron-double-down.svg", retransmission_, false, this);
 
   QScrollArea *scroll = new QScrollArea(this);
   scroll->setFrameStyle(QFrame::NoFrame);
@@ -84,17 +88,27 @@ UdpServerSetting::UdpServerSetting(QWidget *parent) : FrameSetting(parent) {
 
   Ui::TtVerticalLayout *scrollContentLayout =
       new Ui::TtVerticalLayout(scrollContent);
-  scrollContentLayout->addWidget(drawer1, 0, Qt::AlignTop);
-  scrollContentLayout->addWidget(drawer2);
-  scrollContentLayout->addWidget(drawer3);
+  scrollContentLayout->addWidget(drawerLinkSetting, 0, Qt::AlignTop);
+  scrollContentLayout->addWidget(drawerFraming);
+  scrollContentLayout->addWidget(drawerRetransmission);
   scrollContentLayout->addStretch();
 
   scroll->setWidget(scrollContent);
 
   main_layout_->addWidget(scroll);
+
+  addLineEdit(self_ip_->body());
+  addLineEdit(self_port_->body());
+  addLineEdit(framing_timeout_->body());
+  addLineEdit(framing_fixed_length_->body());
+
+  addComboBox(framing_model_->body());
+  addComboBox(retransmission_->body());
+
+  link();
 }
 
-UdpServerSetting::~UdpServerSetting() {}
+UdpServerSetting::~UdpServerSetting() { qDebug() << "delete" << __FUNCTION__; }
 
 Core::UdpServerConfiguration UdpServerSetting::getUdpServerConfiguration() {
   Core::UdpServerConfiguration config(self_ip_->body()->text(),
@@ -182,7 +196,9 @@ UdpClientSetting::UdpClientSetting(QWidget *parent) : FrameSetting(parent) {
   target_port_ = new Ui::TtLabelLineEdit(tr("目标端口: "), linkConfig);
   self_ip_ = new Ui::TtLabelLineEdit(tr("本地地址: "), linkConfig);
   self_port_ = new Ui::TtLabelLineEdit(tr("本地端口: "), linkConfig);
-  send_packet_interval_ =
+  send_package_max_size_ =
+      new Ui::TtLabelLineEdit(tr("发送包最大尺寸:"), linkConfig);
+  send_package_interval_ =
       new Ui::TtLabelLineEdit(tr("发送端间隔: "), linkConfig);
 
   setLinkMode();
@@ -191,10 +207,14 @@ UdpClientSetting::UdpClientSetting(QWidget *parent) : FrameSetting(parent) {
   linkConfigLayout->addWidget(target_port_);
   linkConfigLayout->addWidget(self_ip_);
   linkConfigLayout->addWidget(self_port_);
-  linkConfigLayout->addWidget(send_packet_interval_);
-  Ui::Drawer *drawer1 = new Ui::Drawer(tr("连接设置"), linkConfig);
+  linkConfigLayout->addWidget(send_package_interval_);
+  linkConfigLayout->addWidget(send_package_max_size_);
+  Ui::TtDrawer *drawerLinkSetting = new Ui::TtDrawer(
+      tr("连接设置"), ":/sys/chevron-double-up.svg",
+      ":/sys/chevron-double-down.svg", linkConfig, false, this);
+
   connect(mode_, &Ui::TtLabelComboBox::currentIndexChanged,
-          [this, drawer1](int index) {
+          [this, drawerLinkSetting](int index) {
             switch (index) {
             case 0:
               target_ip_->setVisible(true);
@@ -216,9 +236,9 @@ UdpClientSetting::UdpClientSetting(QWidget *parent) : FrameSetting(parent) {
               break;
             }
 
-            const auto event =
-                new QResizeEvent(drawer1->size(), drawer1->size());
-            QCoreApplication::postEvent(drawer1, event);
+            const auto event = new QResizeEvent(drawerLinkSetting->size(),
+                                                drawerLinkSetting->size());
+            QCoreApplication::postEvent(drawerLinkSetting, event);
           });
   mode_->setCurrentItem(0);
 
@@ -229,16 +249,16 @@ UdpClientSetting::UdpClientSetting(QWidget *parent) : FrameSetting(parent) {
   framing_model_->addItem(tr("无"));
   framing_model_->addItem(tr("超时时间"));
   framing_model_->addItem(tr("固定长度"));
-  // framing_timeout_ = new Ui::TtLabelComboBox(tr("时间: "));
-  // framing_fixed_length_ = new Ui::TtLabelComboBox(tr("长度: "));
   framing_timeout_ = new Ui::TtLabelLineEdit(tr("时间(ms):"));
   framing_fixed_length_ = new Ui::TtLabelLineEdit(tr("长度:"));
   framingWidgetLayout->addWidget(framing_model_);
   framingWidgetLayout->addWidget(framing_timeout_);
   framingWidgetLayout->addWidget(framing_fixed_length_);
-  Ui::Drawer *drawer2 = new Ui::Drawer(tr("分帧"), framingWidget);
+  Ui::TtDrawer *drawerFraming = new Ui::TtDrawer(
+      tr("分帧[收数据包](暂未提供使用)"), ":/sys/chevron-double-up.svg",
+      ":/sys/chevron-double-down.svg", framingWidget, false, this);
   connect(framing_model_, &Ui::TtLabelComboBox::currentIndexChanged,
-          [this, drawer2](int index) {
+          [this, drawerFraming](int index) {
             switch (index) {
             case 0: {
               framing_timeout_->setVisible(false);
@@ -257,8 +277,8 @@ UdpClientSetting::UdpClientSetting(QWidget *parent) : FrameSetting(parent) {
             }
             }
             const auto event =
-                new QResizeEvent(drawer2->size(), drawer2->size());
-            QCoreApplication::postEvent(drawer2, event);
+                new QResizeEvent(drawerFraming->size(), drawerFraming->size());
+            QCoreApplication::postEvent(drawerFraming, event);
           });
   framing_model_->setCurrentItem(0);
   framing_timeout_->setVisible(false);
@@ -266,7 +286,57 @@ UdpClientSetting::UdpClientSetting(QWidget *parent) : FrameSetting(parent) {
 
   retransmission_ = new Ui::TtLabelBtnComboBox(tr("目标: "));
   retransmission_->addItem(tr("无"));
-  Ui::Drawer *drawer3 = new Ui::Drawer(tr("转发"), retransmission_);
+  Ui::TtDrawer *drawerRetransmission = new Ui::TtDrawer(
+      tr("转发"), ":/sys/chevron-double-up.svg",
+      ":/sys/chevron-double-down.svg", retransmission_, false, this);
+
+  // 心跳界面
+  QWidget *heartbeatWidget = new QWidget;
+  Ui::TtVerticalLayout *heartbeatWidgetLayout =
+      new Ui::TtVerticalLayout(heartbeatWidget);
+  heartbeatWidget->adjustSize(); // 确保大小正确
+  heartbeat_send_type_ = new Ui::TtLabelComboBox(tr("类型: "));
+  heartbeat_send_type_->addItem(tr("无"), TtTextFormat::None);
+  heartbeat_send_type_->addItem(tr("文本"), TtTextFormat::TEXT);
+  heartbeat_send_type_->addItem(tr("HEX"), TtTextFormat::HEX);
+  heartbeat_interval_ = new Ui::TtLabelLineEdit(tr("间隔: "));
+  heartbeat_content_ = new Ui::TtLabelLineEdit(tr("内容: "));
+  heartbeatWidgetLayout->addWidget(heartbeat_send_type_);
+  heartbeatWidgetLayout->addWidget(heartbeat_interval_);
+  heartbeatWidgetLayout->addWidget(heartbeat_content_);
+
+  Ui::TtDrawer *drawerHeartBeat = new Ui::TtDrawer(
+      tr("心跳"), ":/sys/chevron-double-up.svg",
+      ":/sys/chevron-double-down.svg", heartbeatWidget, false, this);
+
+  connect(heartbeat_send_type_, &Ui::TtLabelComboBox::currentIndexChanged, this,
+          [this, heartbeatWidget, drawerHeartBeat](int index) {
+            switch (index) {
+            case 0: {
+              heartbeat_interval_->setVisible(false);
+              heartbeat_content_->setVisible(false);
+              break;
+            }
+            case 1: {
+              heartbeat_interval_->setVisible(true);
+              heartbeat_content_->setVisible(true);
+              break;
+            }
+            case 2: {
+              heartbeat_interval_->setVisible(true);
+              heartbeat_content_->setVisible(true);
+              break;
+            }
+            }
+            qDebug() << "switch index" << index;
+            emit heartbeatType(index);
+            const auto event = new QResizeEvent(drawerHeartBeat->size(),
+                                                drawerHeartBeat->size());
+            QCoreApplication::postEvent(drawerHeartBeat, event);
+          });
+  heartbeat_send_type_->setCurrentItem(0);
+  heartbeat_interval_->setVisible(false);
+  heartbeat_content_->setVisible(false);
 
   QScrollArea *scroll = new QScrollArea(this);
   scroll->setFrameStyle(QFrame::NoFrame);
@@ -275,17 +345,42 @@ UdpClientSetting::UdpClientSetting(QWidget *parent) : FrameSetting(parent) {
 
   Ui::TtVerticalLayout *scrollContentLayout =
       new Ui::TtVerticalLayout(scrollContent);
-  scrollContentLayout->addWidget(drawer1, 0, Qt::AlignTop);
-  scrollContentLayout->addWidget(drawer2);
-  scrollContentLayout->addWidget(drawer3);
+  scrollContentLayout->addWidget(drawerLinkSetting, 0, Qt::AlignTop);
+  scrollContentLayout->addWidget(drawerFraming);
+  scrollContentLayout->addWidget(drawerHeartBeat);
+  scrollContentLayout->addWidget(drawerRetransmission);
   scrollContentLayout->addStretch();
 
   scroll->setWidget(scrollContent);
-
   main_layout_->addWidget(scroll);
+
+  addLineEdit(target_port_->body());
+  addLineEdit(self_port_->body());
+  addLineEdit(send_package_max_size_->body());
+  addLineEdit(send_package_interval_->body());
+  addLineEdit(framing_timeout_->body());
+  addLineEdit(framing_fixed_length_->body());
+  addLineEdit(heartbeat_interval_->body());
+  addLineEdit(heartbeat_content_->body());
+
+  addComboBox(framing_model_->body());
+  addComboBox(retransmission_->body());
+  addComboBox(heartbeat_send_type_->body());
+
+  link();
+
+  connect(heartbeat_content_, &Ui::TtLabelLineEdit::currentTextChanged, this,
+          [this](const QString &text) { emit heartbeatContentChanged(text); });
+  connect(heartbeat_interval_, &Ui::TtLabelLineEdit::currentTextToUInt32, this,
+          &FrameSetting::heartbeatInterval);
+
+  connect(send_package_interval_, &Ui::TtLabelLineEdit::currentTextToUInt32,
+          this, &FrameSetting::sendPackageIntervalChanged);
+  connect(send_package_max_size_, &Ui::TtLabelLineEdit::currentTextToUInt32,
+          this, &FrameSetting::sendPackageMaxSizeChanged);
 }
 
-UdpClientSetting::~UdpClientSetting() {}
+UdpClientSetting::~UdpClientSetting() { qDebug() << "delete" << __FUNCTION__; }
 
 Core::UdpClientConfiguration UdpClientSetting::getUdpClientConfiguration() {
   Core::UdpClientConfiguration config(
@@ -304,7 +399,9 @@ const QJsonObject &UdpClientSetting::getUdpClientSetting() {
   linkSetting.insert("SelfHost", QJsonValue(config.self_ip));
   linkSetting.insert("SelfPort", QJsonValue(config.self_port));
   linkSetting.insert("SendPacketInterval",
-                     QJsonValue(send_packet_interval_->currentText()));
+                     QJsonValue(send_package_interval_->currentText()));
+  linkSetting.insert("SendPackageMaxSize",
+                     QJsonValue(send_package_max_size_->currentText()));
   udp_client_save_config_.insert("LinkSetting", QJsonValue(linkSetting));
   QJsonObject framing;
   framing.insert("Model", QJsonValue(framing_model_->body()->currentText()));
@@ -332,8 +429,8 @@ void UdpClientSetting::setOldSettings(const QJsonObject &config) {
   QString targetPort = linkSetting.value("TargetPort").toString();
   QString selfHost = linkSetting.value("SelfHost").toString();
   QString selfPort = linkSetting.value("SelfPort").toString();
-  QString sendPacketInterval =
-      linkSetting.value("SendPacketInterval").toString();
+  QString packetInterval = linkSetting.value("SendPacketInterval").toString();
+  QString packageMaxSize = linkSetting.value("SendPackageMaxSize").toString();
 
   QJsonObject framing = config.value("Framing").toObject();
   QString model = framing.value("Model").toString();
@@ -352,7 +449,8 @@ void UdpClientSetting::setOldSettings(const QJsonObject &config) {
   target_port_->setText(targetPort);
   self_ip_->setText(selfHost);
   self_port_->setText(selfPort);
-  send_packet_interval_->setText(sendPacketInterval);
+  send_package_interval_->setText(packetInterval);
+  send_package_max_size_->setText(packageMaxSize);
 
   for (int i = 0; i < framing_model_->body()->count(); ++i) {
     if (framing_model_->body()->itemData(i).toString() == model) {
@@ -375,7 +473,8 @@ void UdpClientSetting::setControlState(bool state) {
   target_port_->setEnabled(state);
   self_ip_->setEnabled(state);
   self_port_->setEnabled(state);
-  send_packet_interval_->setEnabled(state);
+  send_package_interval_->setEnabled(state);
+  send_package_max_size_->setEnabled(state);
   framing_model_->setEnabled(state);
   framing_timeout_->setEnabled(state);
   framing_fixed_length_->setEnabled(state);

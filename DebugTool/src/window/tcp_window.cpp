@@ -305,6 +305,7 @@ void TcpWindow::connectSignals() {
         tcp_server_setting_->setControlState(false);
       }
       opened_ = true;
+      on_off_btn_->setChecked(true);
 
       send_package_timer_->start();
       // 心跳需要间隔
@@ -325,7 +326,7 @@ void TcpWindow::connectSignals() {
 
   if (role_ == TtProtocolType::Client) {
     connect(tcp_client_setting_,
-            &Widget::TcpClientSetting::sendPackageMaxSizeChanged, this,
+            &Widget::FrameSetting::sendPackageMaxSizeChanged, this,
             [this](const uint16_t size) {
               if (package_size_ != size) {
                 package_size_ = size;
@@ -345,10 +346,35 @@ void TcpWindow::connectSignals() {
               send_package_timer_->setInterval(interval);
             });
 
+    connect(tcp_client_setting_, &Widget::FrameSetting::heartbeatType, this,
+            [this](TtTextFormat::Type type) {
+              qDebug() << "heart_bear_type_" << heart_beat_type_;
+              heart_beat_type_ = type;
+            });
+
+    connect(tcp_client_setting_, &Widget::FrameSetting::heartbeatContentChanged,
+            this, [this](const QString &content) {
+              qDebug() << content;
+              if (heartbeat_ != content) {
+                heartbeat_ = content;
+                heartbeat_utf8_ = heartbeat_.toUtf8().toHex(' ');
+              }
+            });
+
+    connect(tcp_client_setting_, &Widget::FrameSetting::heartbeatInterval, this,
+            [this](const uint32_t times) {
+              qDebug() << times;
+              if (heartbeat_interval_ != times) {
+                heartbeat_interval_ = times;
+                qDebug() << heartbeat_interval_;
+                heartbeat_timer_->setInterval(times);
+              }
+            });
+
   } else if (role_ == TtProtocolType::Server) {
     // 链接不同的信号槽
-    connect(tcp_server_setting_, &Widget::FrameSetting::settingChanged, this,
-            [this]() {
+    connect(tcp_server_setting_, &Widget::TcpServerSetting::settingChanged,
+            this, [this]() {
               // qDebug() << "saved Changed false";
               // saved_ = false;
               setSaveStatus(false);

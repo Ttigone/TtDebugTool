@@ -171,20 +171,12 @@ void TtTableWidget::setupTable(const QJsonObject &record) {
     // 添加新行
     int newRow = rowCount(); // 首行为 1, 插入的位置是该处
     insertRow(newRow);       // 插入新行到最后的位置
-    // setup 需要全包 可视状态
-    // qDebug() << "table setup Row";
     setupRow(newRow);
     if (rowsData_.isEmpty()) {
-      // BUG 进入了这里, 之前创建为空
-      // qDebug() << "行数据未正确创建，跳过行" << rowIndex;
-      // 还是进入了
-      // 强制创建控件，确保行显示
       if (!isRowVisible(newRow)) {
         scrollToItem(item(newRow, 0));
         setupRow(newRow); // 再次尝试创建
       }
-
-      // 如果仍然无法创建，跳过此行
       if (rowsData_.isEmpty()) {
         continue;
       }
@@ -571,8 +563,7 @@ void TtTableWidget::setupRow(int row) {
 }
 
 void TtTableWidget::recycleRow(TableRow &row) {
-  // BUG 没有回收控件
-  qDebug() << "recycleRow";
+  // qDebug() << "recycleRow";
   // 回收复选框
   if (row.checkBtn) {
     row.checkBtn->setChecked(false); // 重置状态
@@ -818,7 +809,6 @@ QWidget *TtTableWidget::createSendButton() {
 }
 
 QWidget *TtTableWidget::createDeleteButton() {
-  // BUG 回收控件失败
   auto *btn = new QPushButton(QIcon(":/sys/trash.svg"), "");
   btn->setFlat(true);
   connect(btn, &QPushButton::clicked, this, [this] {

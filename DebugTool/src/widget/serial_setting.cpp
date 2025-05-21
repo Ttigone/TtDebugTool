@@ -1,5 +1,4 @@
 #include "widget/serial_setting.h"
-
 #include "core/serial_port.h"
 
 #include <ui/control/TtComboBox.h>
@@ -12,8 +11,6 @@
 #include <ui/widgets/collapsible_panel.h>
 
 namespace Widget {
-
-using Ui::TtDrawer;
 
 Core::SerialPortConfiguration DefaultSetting = {
     // 默认的端口配置, 可以在从配置文件中读取上一次留存的记录
@@ -527,7 +524,6 @@ void SerialSetting::init() {
 
   // 滚动区域
   QScrollArea *scroll = new QScrollArea(this);
-  // scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   scroll->setFrameStyle(QFrame::NoFrame);
   scroll->setWidgetResizable(true);
   QWidget *scrollContent = new QWidget(scroll);

@@ -34,10 +34,12 @@ signals:
 protected:
   void addComboBox(QComboBox *);
   void addLineEdit(QLineEdit *);
+  void addCheckBox(QCheckBox *);
 
 private:
   QList<QComboBox *> comboBoxes_;
   QList<QLineEdit *> lineEdits_;
+  QList<QCheckBox *> checkBox_;
 };
 
 } // namespace Widget

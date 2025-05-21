@@ -74,8 +74,8 @@ signals:
   void requestSaveConfig();
 
 private slots:
-  void switchToEditMode();
-  void switchToDisplayMode();
+  void switchToEditMode() override;
+  void switchToDisplayMode() override;
   // void sloveDataReceived(const QVector<quint16>& data);
   // void sloveDataReceived(const int& addr, const QVector<quint16>& data);
   void sloveDataReceived(const QModbusDataUnit &dataUnit);
@@ -90,6 +90,12 @@ private slots:
 private:
   void init();
   void connectSignals();
+  ///
+  /// @brief setControlState
+  /// @param state
+  /// 设置主界面控件状态
+  void setControlState(bool state);
+
   void updatePlot(TtModbusRegisterType::Type type, const int &addr,
                   const double &value1);
 

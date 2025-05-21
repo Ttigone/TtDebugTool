@@ -196,6 +196,7 @@ private:
   int getTabIndexFromButton(QWidget *button) const;
   QWidget *createDefaultWidget(int tabIndex); // 初始化默认的 widget1
   QString findWidget(QWidget *widget);
+  void handleTabCloseByUuid(const QString &index);
   void handleTabClose(int index);
 
   void saveWorkingTabPageToMem(int index); // 保存正在工作的 page 到 Mem 中

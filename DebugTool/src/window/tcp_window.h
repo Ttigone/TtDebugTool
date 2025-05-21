@@ -63,6 +63,8 @@ public:
   Q_INVOKABLE void saveSetting() override;
   Q_INVOKABLE void setSetting(const QJsonObject &config) override;
 
+  // void setSaveStatus(bool state) { FrameWindow::setSaveStatus(state); }
+
 signals:
   void requestSaveConfig();
   void requestSendMessage(const QByteArray &data);

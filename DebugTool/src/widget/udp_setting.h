@@ -81,13 +81,18 @@ private:
   Ui::TtLabelLineEdit *self_ip_;
   Ui::TtLabelLineEdit *self_port_;
 
-  Ui::TtLabelLineEdit *send_packet_interval_;
+  Ui::TtLabelLineEdit *send_package_max_size_;
+  Ui::TtLabelLineEdit *send_package_interval_;
 
   Ui::TtLabelComboBox *framing_model_;
   Ui::TtLabelLineEdit *framing_timeout_;
   Ui::TtLabelLineEdit *framing_fixed_length_;
 
   Ui::TtLabelBtnComboBox *retransmission_;
+
+  Ui::TtLabelComboBox *heartbeat_send_type_;
+  Ui::TtLabelLineEdit *heartbeat_interval_;
+  Ui::TtLabelLineEdit *heartbeat_content_;
 
   QJsonObject udp_client_save_config_;
 };

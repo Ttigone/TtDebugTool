@@ -31,12 +31,12 @@ UdpWindow::UdpWindow(TtProtocolType::ProtocolRole role, QWidget *parent)
   init();
 
   if (role_ == TtProtocolType::Client) {
+    // connect(udp_client_, &Core::UdpClient::data)
 
   } else if (role_ == TtProtocolType::Server) {
     connect(udp_server_, &Core::UdpServer::datagramReceived,
             [this](const QString &peerInfo, const quint16 &peerPort,
                    const QByteArray &message) { dataReceived(message); });
-
     QObject::connect(udp_server_, &Core::UdpServer::errorOccurred,
                      [this](const QString &error) {
                        Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""),
@@ -104,7 +104,7 @@ void UdpWindow::setSetting(const QJsonObject &config) {
     display_hex_btn_->setChecked(true);
   }
 
-  // 读取配置
+  // 设置完配置之后, 会最终调用一次, 但是直接的调用, 是否会直接影响未保存的状态
   setSaveStatus(true);
   Ui::TtMessageBar::success(TtMessageBarType::Top, tr(""), tr("读取配置成功"),
                             1500);
@@ -183,7 +183,7 @@ void UdpWindow::init() {
     udp_server_ = new Core::UdpServer;
     title_->setText(tr("未命名的 UDP 模拟服务"));
     udp_server_setting_ = new Widget::UdpServerSetting(this);
-    serRightWidget(udp_client_setting_);
+    serRightWidget(udp_server_setting_);
   }
 }
 
@@ -207,7 +207,8 @@ void UdpWindow::connectSignals() {
     } else {
       if (role_ == TtProtocolType::Client) {
         // 客户端
-        udp_client_->connect(udp_client_setting_->getUdpClientConfiguration());
+        udp_client_->connectToOther(
+            udp_client_setting_->getUdpClientConfiguration());
       } else if (role_ == TtProtocolType::Server) {
         // 服务端
         if (udp_server_->listen(

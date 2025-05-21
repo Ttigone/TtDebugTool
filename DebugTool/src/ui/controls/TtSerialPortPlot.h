@@ -28,7 +28,9 @@ public:
   void setAutoScaleY(bool autoScale) { m_autoScaleY = autoScale; }
   void clearData();
 
-  void saveWaveFormData();
+  // void saveWaveFormData();
+  // void saveWaveFormData(const QString &text);
+  bool saveWaveFormData(const QString &text);
 
 public slots:
   void addGraphs(int channel, const QColor &color = Qt::red);

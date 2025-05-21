@@ -86,12 +86,11 @@ public:
   void saveSetting() override;
   void setSetting(const QJsonObject &config) override;
 
+  void switchToDisplayMode();
+  void switchToEditMode();
+
 signals:
   void requestSaveConfig();
-
-private slots:
-  void switchToEditMode();
-  void switchToDisplayMode();
 
 private:
   void init();

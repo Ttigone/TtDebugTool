@@ -8,10 +8,32 @@
 // #include <QtMqtt/QMqttPublishProperties>
 // #include "qtmqtt_mingw64/include/qmqttclient.h"
 // #include "qmqttclient.h"
-// BUG 找不到 Qt6Mqtt 模块
-// BUG 区分 MSVC 与 MINGW
+
+#if defined(__MINGW64__)
+// MinGW编译器
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QtMqtt/6_6_3_mingw_64/include/qmqttclient.h>
-// #include "qmqttclient.h"
+#else
+// Qt 5.x with MinGW
+#include <QtMqtt/5_15_mingw_64/include/qmqttclient.h>
+#define MQTT_COMPILER_TYPE "Qt5 MinGW"
+#endif
+#elif defined(_MSC_VER)
+// MSVC编译器
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+// Qt 6.x with MSVC
+#include <QtMqtt/6_6_3_msvc2019_64/include/qmqttclient.h>
+#define MQTT_COMPILER_TYPE "Qt6 MSVC"
+#else
+// Qt 5.x with MSVC
+#include <QtMqtt/QMqttClient>
+#define MQTT_COMPILER_TYPE "Qt5 MSVC"
+#endif
+#else
+// 其他编译器，尝试标准路径
+#include <QtMqtt/QMqttClient>
+#define MQTT_COMPILER_TYPE "Standard"
+#endif
 
 #include "Def.h"
 

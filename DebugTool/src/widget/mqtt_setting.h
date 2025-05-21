@@ -20,7 +20,8 @@ class MqttClientConfiguration;
 
 namespace Widget {
 
-class MqttClientSetting : public QWidget {
+// class MqttClientSetting : public QWidget {
+class MqttClientSetting : public FrameSetting {
   Q_OBJECT
 public:
   explicit MqttClientSetting(QWidget *parent = nullptr);

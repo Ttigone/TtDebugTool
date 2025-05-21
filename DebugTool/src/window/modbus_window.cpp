@@ -70,7 +70,8 @@ void ModbusWindow::saveSetting() {
     config_.insert("InstructionTable+" + TYPE_NAMES.value(it.key()),
                    widget->getTableRecord());
   }
-  saved_ = true;
+  // saved_ = true;
+  setSaveStatus(true);
   emit requestSaveConfig();
 }
 
@@ -449,16 +450,16 @@ void ModbusWindow::connectSignals() {
   // 设定刷新的时间间隔
   if (modbus_client_setting_) {
     connect(modbus_client_setting_,
-            &Widget::ModbusClientSetting::refreshIntervalChanged,
+            &Widget::ModbusClientSetting::refreshIntervalChanged, this,
             [this](uint32_t interval) {
-              // ms
+              setSaveStatus(false);
               refresh_timer_.setInterval(interval);
             });
 
     connect(modbus_client_setting_,
-            &Widget::ModbusClientSetting::autoRefreshStateChanged,
+            &Widget::ModbusClientSetting::autoRefreshStateChanged, this,
             [this](bool enable) {
-              saved_ = false;
+              setSaveStatus(false);
               if (enable) {
                 refresh_timer_.start();
               } else {
@@ -466,16 +467,17 @@ void ModbusWindow::connectSignals() {
               }
             });
     connect(modbus_client_setting_,
-            &Widget::ModbusClientSetting::graphNumsChanged,
+            &Widget::ModbusClientSetting::graphNumsChanged, this,
             [this](quint16 nums) {
               // 设置图标数量
+              setSaveStatus(false);
               modbus_plot_->setGraphsPointCapacity(nums);
             });
   } else {
     qDebug() << "modbus_client_setting_ is nullptr";
   }
 
-  connect(refresh_btn_, &Ui::TtSvgButton::clicked, [this]() {
+  connect(refresh_btn_, &Ui::TtSvgButton::clicked, this, [this]() {
     // 根据当前的页面，调用对应的 寄存器读取函数
     // 都是通过信号获取, 如何拆分
     auto objName = function_selection_->currentWidget()->objectName();
@@ -493,6 +495,7 @@ void ModbusWindow::connectSignals() {
           [this](const QString &error) {
             Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""), error, 1500,
                                     this);
+            setSaveStatus(false);
           });
   QObject::connect(modbus_master_.data(), &Core::ModbusMaster::dataReceived,
                    this, &Window::ModbusWindow::sloveDataReceived);
@@ -571,7 +574,6 @@ QWidget *ModbusWindow::createCoilWidget() {
       [this](TtModbusRegisterType::Type type, const int &addr, bool enable) {
         // qDebug() << "show grah";
         if (!enable) {
-          // BUG 清空后, 仍然有残留 plot
           modbus_plot_->removeGraphs(type, addr);
         } else {
           modbus_plot_->addGraphs(type, addr);
@@ -684,7 +686,7 @@ QWidget *ModbusWindow::createHoldingRegisterWidget() {
 
   // 写入
   connect(holding_registers_table_, &Ui::TtModbusTableWidget::valueConfirmed,
-          [this](const int &address, const int &value) {
+          this, [this](const int &address, const int &value) {
             modbus_master_->writeHoldingData(
                 address, QVector<quint16>(1, value),
                 modbus_client_setting_->getModbusDeviceId());
@@ -692,6 +694,7 @@ QWidget *ModbusWindow::createHoldingRegisterWidget() {
 
   connect(
       holding_registers_table_, &Ui::TtModbusTableWidget::requestShowGraph,
+      this,
       [this](TtModbusRegisterType::Type type, const int &addr, bool enable) {
         if (!enable) {
           modbus_plot_->removeGraphs(type, addr);
@@ -736,14 +739,14 @@ QWidget *ModbusWindow::createInputRegisterWidget() {
   coilsWidgetLayout->addWidget(bottomWidget, 0, Qt::AlignBottom);
 
   connect(input_registers_table_, &Ui::TtModbusTableWidget::valueConfirmed,
-          [this](const int &address, const int &value) {
+          this, [this](const int &address, const int &value) {
             modbus_master_->writeInputRegistersData(
                 address, QVector<quint16>(1, value),
                 modbus_client_setting_->getModbusDeviceId());
           });
 
   connect(
-      input_registers_table_, &Ui::TtModbusTableWidget::requestShowGraph,
+      input_registers_table_, &Ui::TtModbusTableWidget::requestShowGraph, this,
       [this](TtModbusRegisterType::Type type, const int &addr, bool enable) {
         if (!enable) {
           modbus_plot_->removeGraphs(type, addr);

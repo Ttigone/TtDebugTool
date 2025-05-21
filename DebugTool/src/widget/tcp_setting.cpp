@@ -223,7 +223,6 @@ TcpClientSetting::TcpClientSetting(QWidget *parent) : FrameSetting(parent) {
   linkConfigLayout->addWidget(self_port_);
   linkConfigLayout->addWidget(send_package_interval_);
   linkConfigLayout->addWidget(send_package_max_size_);
-  // Ui::Drawer *drawer1 = new Ui::Drawer(tr("连接设置"), linkConfig);
   Ui::TtDrawer *drawerLinkSetting = new Ui::TtDrawer(
       tr("连接设置"), ":/sys/chevron-double-up.svg",
       ":/sys/chevron-double-down.svg", linkConfig, false, this);
@@ -245,7 +244,6 @@ TcpClientSetting::TcpClientSetting(QWidget *parent) : FrameSetting(parent) {
   Ui::TtDrawer *drawerFraming = new Ui::TtDrawer(
       tr("分帧[收数据包](暂未提供使用)"), ":/sys/chevron-double-up.svg",
       ":/sys/chevron-double-down.svg", framingWidget, false, this);
-  // Ui::Drawer* drawer2 = new Ui::Drawer(tr("分帧"), framingWidget);
   QObject::connect(framing_model_, &Ui::TtLabelComboBox::currentIndexChanged,
                    this, [this, drawerFraming](int index) {
                      switch (index) {
@@ -296,13 +294,38 @@ TcpClientSetting::TcpClientSetting(QWidget *parent) : FrameSetting(parent) {
   heartbeatWidgetLayout->addWidget(heartbeat_interval_);
   heartbeatWidgetLayout->addWidget(heartbeat_content_);
 
-  // Ui::TtDrawer *drawerHeartBeat = new Ui::TtDrawer(
-  //     tr("心跳"), ":/sys/chevron-double-up.svg",
-  //     ":/sys/chevron-double-down.svg", heartbeatWidget, false, this);
-  // Ui::Drawer* drawerHeartBeat = new Ui::Drawer(tr("心跳"), heartbeatWidget);
   Ui::TtDrawer *drawerHeartBeat = new Ui::TtDrawer(
       tr("心跳"), ":/sys/chevron-double-up.svg",
       ":/sys/chevron-double-down.svg", heartbeatWidget, false, this);
+
+  connect(heartbeat_send_type_, &Ui::TtLabelComboBox::currentIndexChanged, this,
+          [this, heartbeatWidget, drawerHeartBeat](int index) {
+            switch (index) {
+            case 0: {
+              heartbeat_interval_->setVisible(false);
+              heartbeat_content_->setVisible(false);
+              break;
+            }
+            case 1: {
+              heartbeat_interval_->setVisible(true);
+              heartbeat_content_->setVisible(true);
+              break;
+            }
+            case 2: {
+              heartbeat_interval_->setVisible(true);
+              heartbeat_content_->setVisible(true);
+              break;
+            }
+            }
+            qDebug() << "switch index" << index;
+            emit heartbeatType(index);
+            const auto event = new QResizeEvent(drawerHeartBeat->size(),
+                                                drawerHeartBeat->size());
+            QCoreApplication::postEvent(drawerHeartBeat, event);
+          });
+  heartbeat_send_type_->setCurrentItem(0);
+  heartbeat_interval_->setVisible(false);
+  heartbeat_content_->setVisible(false);
 
   QScrollArea *scroll = new QScrollArea(this);
   scroll->setFrameStyle(QFrame::NoFrame);
@@ -311,10 +334,6 @@ TcpClientSetting::TcpClientSetting(QWidget *parent) : FrameSetting(parent) {
 
   Ui::TtVerticalLayout *scrollContentLayout =
       new Ui::TtVerticalLayout(scrollContent);
-  // scrollContentLayout->addWidget(drawer1, 0, Qt::AlignTop);
-  // scrollContentLayout->addWidget(drawer2);
-  // scrollContentLayout->addWidget(drawer3);
-  // scrollContentLayout->addWidget(drawerHeartBeat);
   scrollContentLayout->addWidget(drawerLinkSetting, 0, Qt::AlignTop);
   scrollContentLayout->addWidget(drawerFraming);
   scrollContentLayout->addWidget(drawerRetransmission);
@@ -344,6 +363,21 @@ TcpClientSetting::TcpClientSetting(QWidget *parent) : FrameSetting(parent) {
   link();
 
   setHostAddress();
+
+  connect(heartbeat_content_, &Ui::TtLabelLineEdit::currentTextChanged, this,
+          [this](const QString &text) {
+            // 不需要区分索引, 直接传递原有的内容, 不足补齐 0
+            emit heartbeatContentChanged(text);
+          });
+  // 继承父类
+  connect(heartbeat_interval_, &Ui::TtLabelLineEdit::currentTextToUInt32, this,
+          &TcpClientSetting::heartbeatInterval);
+  // 转换成 int32 类型
+  // 发送包间隔
+  connect(send_package_interval_, &Ui::TtLabelLineEdit::currentTextToUInt32,
+          this, &TcpClientSetting::sendPackageIntervalChanged);
+  connect(send_package_max_size_, &Ui::TtLabelLineEdit::currentTextToUInt32,
+          this, &TcpClientSetting::sendPackageMaxSizeChanged);
 }
 TcpClientSetting::~TcpClientSetting() {}
 

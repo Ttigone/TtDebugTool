@@ -15,44 +15,76 @@ struct UdpClientConfiguration {
   QString self_ip;
   QString self_port;
 
-  UdpClientConfiguration(TtUdpMode::Mode mode, const QString& t_ip,
-                         const QString& t_port, const QString& m_ip = "",
-                         const QString& m_port = 0)
-      : mode(mode),
-        target_ip(t_ip),
-        target_port(t_port),
-        self_ip(m_ip),
+  UdpClientConfiguration(TtUdpMode::Mode mode, const QString &t_ip,
+                         const QString &t_port, const QString &m_ip = "",
+                         const QString &m_port = 0)
+      : mode(mode), target_ip(t_ip), target_port(t_port), self_ip(m_ip),
         self_port(m_port) {}
 };
 
 class UdpClient : public QObject {
   Q_OBJECT
- public:
-  explicit UdpClient(QObject* parent = nullptr);
+public:
+  explicit UdpClient(QObject *parent = nullptr);
   ~UdpClient();
 
+  ///
+  /// @brief close
+  /// 关闭链接
   void close();
-  void sendMessage(const QByteArray& message);
 
- signals:
-  void disconnect();
+  ///
+  /// @brief sendMessage
+  /// @param message
+  /// 发送消息
+  void sendMessage(const QByteArray &message);
 
- public slots:
-  void connect(TtUdpMode::Mode mode, const QString& targetIp,
-               const QString& targetPort, const QString& selfIp,
-               const QString& selfPort);
-  void connect(const UdpClientConfiguration& config);
+  ///
+  /// @brief isConnected
+  /// @return
+  /// 判断是否处于链接状态
+  bool isConnected() const;
 
+signals:
+  void connected();
+  void disconnected();
+  void dataReceived(const QByteArray &data, const QHostAddress &sender,
+                    quint16 senderPort);
+  void errorOccurred(const QString &error);
+
+public slots:
+  ///
+  /// @brief connectToOther
+  /// @param mode
+  /// @param targetIp
+  /// @param targetPort
+  /// @param selfIp
+  /// @param selfPort
+  /// 链接其他 udp 客户端
+  void connectToOther(TtUdpMode::Mode mode, const QString &targetIp,
+                      const QString &targetPort, const QString &selfIp,
+                      const QString &selfPort);
+  void connectToOther(const UdpClientConfiguration &config);
+
+private:
+  ///
+  /// @brief readPendingDatagrams
+  /// 读取数据报
   void readPendingDatagrams();
-  void writePendingDatagrams(const QByteArray& message);
 
- private:
+  ///
+  /// @brief writePendingDatagrams
+  /// @param message
+  /// @return
+  /// 写数据报
+  bool writePendingDatagrams(const QByteArray &message);
+
   TtUdpMode::Mode mode_;
   QString target_ip_;
   quint16 target_port_;
-  QUdpSocket* socket_;
+  QUdpSocket *socket_;
 };
 
-}  // namespace Core
+} // namespace Core
 
-#endif  // CORE_UDP_CLIENT_H
+#endif // CORE_UDP_CLIENT_H

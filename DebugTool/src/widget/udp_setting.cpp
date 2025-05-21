@@ -329,7 +329,8 @@ UdpClientSetting::UdpClientSetting(QWidget *parent) : FrameSetting(parent) {
             }
             }
             qDebug() << "switch index" << index;
-            emit heartbeatType(index);
+            emit heartbeatType(static_cast<TtTextFormat::Type>(index));
+            // emit heartbeatType(index);
             const auto event = new QResizeEvent(drawerHeartBeat->size(),
                                                 drawerHeartBeat->size());
             QCoreApplication::postEvent(drawerHeartBeat, event);

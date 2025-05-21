@@ -14,8 +14,10 @@ file(GLOB LUA_HEADERS CONFIGURE_DEPENDS
     "${third_party}/lua-5.4.7/src/*.h"
 )
 
+# TODO 动态编译, 没有 lib
 # Setting up the target
-add_library(${LIBRARY_NAME} SHARED
+# add_library(${LIBRARY_NAME} SHARED
+add_library(${LIBRARY_NAME} STATIC
     ${LUA_SOURCES}
     ${LUA_HEADERS}
 )

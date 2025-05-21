@@ -80,7 +80,7 @@ private slots:
   /// @param data
   /// @param times
   /// 在 times 时间后发送 data
-  void sendMessageToPort(const QString &data, const int &times);
+  void sendMessageToPort(const QString &data, int time);
 
 private:
   void init();

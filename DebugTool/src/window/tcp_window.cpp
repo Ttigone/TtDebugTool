@@ -273,7 +273,6 @@ void TcpWindow::init() {
 void TcpWindow::connectSignals() {
   initSignalsConnection();
 
-  // BUG 为什么需要首次点击保存后, 才会保存
   connect(save_btn_, &Ui::TtSvgButton::clicked, this, &TcpWindow::saveSetting);
 
   connect(on_off_btn_, &Ui::TtSvgButton::clicked, this, [this] {

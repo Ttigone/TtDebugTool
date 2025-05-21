@@ -1,4 +1,5 @@
 #include "ui/widgets/message_bar.h"
+#include "ui/control/TtIconButton.h"
 #include "ui/widgets/message_bar_p.h"
 
 #include <QApplication>
@@ -251,16 +252,16 @@ TtMessageBar::TtMessageBar(TtMessageBarType::PositionPolicy policy,
   // setFont(QFont("微软雅黑"));
   parent->installEventFilter(this); // 安装监听器
   // 关闭按钮
-  // d->_closeButton =
-  //     new TtIconButton(TtIconType::Xmark, 17, d->_closeButtonWidth, 30,
-  //     this);
-  d->_closeButton = new TtIconButton(QPixmap(), this);
+  // BUG 修复添加对应的方法
+  d->_closeButton =
+      // new TtIconButton(QChar(0xe61a), 17, d->_closeButtonWidth, 30, this);
+      d->_closeButton = new TtIconButton(QPixmap(), this);
   // d->_closeButton = new QPushButton(this);
   switch (d->_messageMode) {
   case TtMessageBarType::Success: {
-    // d->_closeButton->setLightHoverColor(QColor(0xE6, 0xFC, 0xE3));
-    // d->_closeButton->setDarkHoverColor(QColor(0xE6, 0xFC, 0xE3));
-    // d->_closeButton->setDarkIconColor(Qt::black);
+    d->_closeButton->setLightHoverColor(QColor(0xE6, 0xFC, 0xE3));
+    d->_closeButton->setDarkHoverColor(QColor(0xE6, 0xFC, 0xE3));
+    d->_closeButton->setDarkIconColor(Qt::black);
     break;
   }
   case TtMessageBarType::Warning: {

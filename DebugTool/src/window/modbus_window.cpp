@@ -473,6 +473,10 @@ void ModbusWindow::connectSignals() {
               setSaveStatus(false);
               modbus_plot_->setGraphsPointCapacity(nums);
             });
+    connect(modbus_client_setting_,
+            &Widget::ModbusClientSetting::settingChanged, this,
+            [this] { setSaveStatus(false); });
+
   } else {
     qDebug() << "modbus_client_setting_ is nullptr";
   }

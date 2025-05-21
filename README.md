@@ -10,7 +10,7 @@
 ## 开发环境
 * windows 11
 * IDE: Qt Creator 16.0.01
-* Qt Version: Qt 6.6.3
+* Qt Version: Qt 6.6.3 MSVC/MINGW64
 
 
 

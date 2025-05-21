@@ -4,11 +4,15 @@
 #ifndef QMQTTSUBSCRIPTION_H
 #define QMQTTSUBSCRIPTION_H
 
-#include <QtMqtt/qmqttglobal.h>
-#include <QtMqtt/qmqttmessage.h>
-#include <QtMqtt/qmqtttopicfilter.h>
+// #include <QtMqtt/qmqttglobal.h>
+// #include <QtMqtt/qmqttmessage.h>
+// #include <QtMqtt/qmqtttopicfilter.h>
+#include "qmqttglobal.h"
+#include "qmqttmessage.h"
+#include <QMqttTopicFilter>
 
 #include <QtCore/QObject>
+
 
 QT_BEGIN_NAMESPACE
 

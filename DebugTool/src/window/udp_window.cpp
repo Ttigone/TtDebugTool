@@ -154,8 +154,8 @@ void UdpWindow::sendMessageToPort(const QString &data) {
   sendMessage(data);
 }
 
-void UdpWindow::sendMessageToPort(const QString &data, const int &times) {
-  QTimer::singleShot(times, this, [this, data]() {
+void UdpWindow::sendMessageToPort(const QString &data, int time) {
+  QTimer::singleShot(time, Qt::TimerType::PreciseTimer, this, [this, data] {
     if (!opened_) {
       Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""), tr("串口未打开"),
                               1500, this);
@@ -456,7 +456,7 @@ void UdpWindow::setHeartbeartContent() {
 
 void UdpWindow::sendInstructionTableContent(const QString &text,
                                             TtTextFormat::Type type,
-                                            uint32_t times) {
+                                            uint32_t time) {
   QByteArray dataUtf8;
   if (type == TtTextFormat::TEXT) {
     dataUtf8 = text.toUtf8();

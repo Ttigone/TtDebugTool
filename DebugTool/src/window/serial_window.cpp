@@ -408,7 +408,7 @@ void SerialWindow::setControlState(bool state) {
 }
 
 void SerialWindow::addChannel(const QByteArray &blob, const QColor &color,
-                              const QString &uuid) {
+                              QString &uuid) {
 
   QDataStream in(blob);
   in.setVersion(QDataStream::Qt_6_4);
@@ -1117,95 +1117,99 @@ void SerialWindow::init() {
   serialDataList = new QListWidget(graphSpiltter);
   serialDataList->setContextMenuPolicy(
       Qt::CustomContextMenu); // 启用自定义右键菜单
-  connect(
-      serialDataList, &QListWidget::customContextMenuRequested, this,
-      [=](const QPoint &pos) {
-        // 获取当前右键点击的项
-        QListWidgetItem *item = serialDataList->itemAt(pos);
+  connect(serialDataList, &QListWidget::customContextMenuRequested, this,
+          [=](const QPoint &pos) {
+            // 获取当前右键点击的项
+            QListWidgetItem *item = serialDataList->itemAt(pos);
 
-        // 创建菜单
-        QMenu menu;
-        QAction *addAction = menu.addAction(tr("添加"));
+            // 创建菜单
+            QMenu menu;
+            QAction *addAction = menu.addAction(tr("添加"));
 
-        QAction *editAction = nullptr;
-        QAction *deleteAction = nullptr;
-        QAction *renameAction = nullptr;
+            QAction *editAction = nullptr;
+            QAction *deleteAction = nullptr;
+            QAction *renameAction = nullptr;
 
-        if (item) {
-          editAction = menu.addAction(tr("编辑"));
-          deleteAction = menu.addAction(tr("删除"));
-          renameAction = menu.addAction(tr("重命名"));
-        }
-
-        // 处理菜单点击
-        QAction *selectedAction =
-            menu.exec(serialDataList->viewport()->mapToGlobal(pos));
-        if (!selectedAction) {
-          // 点击 menu 的其他区域
-          return;
-        }
-        if (selectedAction == addAction) {
-          // 此处可以更改颜色
-          TtChannelButtonEditorDialog editorDialog(this);
-          if (editorDialog.exec() == QDialog::Accepted) {
-            // saved_ = false;
-            setSaveStatus(false);
-            addChannel(editorDialog.metaInfo(), editorDialog.checkBlockColor());
-          }
-        } else if (item) {
-          if (selectedAction == renameAction) {
-            if (auto *btn = qobject_cast<TtChannelButton *>(
-                    serialDataList->itemWidget(item))) {
-              // saved_ = false;
-              setSaveStatus(false);
-              btn->modifyText();
+            if (item) {
+              editAction = menu.addAction(tr("编辑"));
+              deleteAction = menu.addAction(tr("删除"));
+              renameAction = menu.addAction(tr("重命名"));
             }
-          } else if (selectedAction == deleteAction) {
-            auto *btn = qobject_cast<TtChannelButton *>(
-                serialDataList->itemWidget(item));
-            if (btn) {
-              // 删除
-              // saved_ = false;
-              setSaveStatus(false);
-              quint16 channel =
-                  channel_info_.value(btn->getUuid()).channel_num_;
-              qDebug() << channel;
-              serial_plot_->removeGraphs(channel);
-              lua_script_codes_.remove(channel);
-              // 移出规则
-              channel_info_.remove(btn->getUuid());
-              rules_.remove(btn->getUuid());
-            }
-            auto *deleteItem =
-                serialDataList->takeItem(serialDataList->row(item)); //
-            // 删除项
-            // qDebug() << "delete";
-            delete deleteItem;
 
-          } else if (selectedAction == editAction) {
-            if (auto *btn = qobject_cast<TtChannelButton *>(
-                    serialDataList->itemWidget(item))) {
-              // saved_ = false;
-              setSaveStatus(false);
-              TtChannelButtonEditorDialog editorDialog(btn, this);
-              // 设置编辑的数据
-              editorDialog.setMetaInfo(
-                  channel_info_.value(btn->getUuid()).data);
+            // 处理菜单点击
+            QAction *selectedAction =
+                menu.exec(serialDataList->viewport()->mapToGlobal(pos));
+            if (!selectedAction) {
+              // 点击 menu 的其他区域
+              return;
+            }
+            if (selectedAction == addAction) {
+              // 此处可以更改颜色
+              TtChannelButtonEditorDialog editorDialog(this);
               if (editorDialog.exec() == QDialog::Accepted) {
-                qDebug() << editorDialog.checkBlockColor();
-                // qDebug() << "编辑时的(关乎于 button 的特定值) channel uuid: "
-                // << btn->getUuid()
-                // << channel_info_.value(btn->getUuid()).channel_num_;
+                // 编辑
+                // saved_ = false;
+                QString uuid;
+                setSaveStatus(false);
+                addChannel(editorDialog.metaInfo(),
+                           editorDialog.checkBlockColor(), uuid);
+              }
+            } else if (item) {
+              if (selectedAction == renameAction) {
+                if (auto *btn = qobject_cast<TtChannelButton *>(
+                        serialDataList->itemWidget(item))) {
+                  // saved_ = false;
+                  setSaveStatus(false);
+                  btn->modifyText();
+                }
+              } else if (selectedAction == deleteAction) {
+                auto *btn = qobject_cast<TtChannelButton *>(
+                    serialDataList->itemWidget(item));
+                if (btn) {
+                  // 删除
+                  // saved_ = false;
+                  setSaveStatus(false);
+                  quint16 channel =
+                      channel_info_.value(btn->getUuid()).channel_num_;
+                  qDebug() << channel;
+                  serial_plot_->removeGraphs(channel);
+                  lua_script_codes_.remove(channel);
+                  // 移出规则
+                  channel_info_.remove(btn->getUuid());
+                  rules_.remove(btn->getUuid());
+                }
+                auto *deleteItem =
+                    serialDataList->takeItem(serialDataList->row(item)); //
+                // 删除项
+                // qDebug() << "delete";
+                delete deleteItem;
 
-                handleDialogData(
-                    btn->getUuid(),
-                    channel_info_.value(btn->getUuid()).channel_num_,
-                    editorDialog.metaInfo(), editorDialog.checkBlockColor());
+              } else if (selectedAction == editAction) {
+                if (auto *btn = qobject_cast<TtChannelButton *>(
+                        serialDataList->itemWidget(item))) {
+                  // saved_ = false;
+                  setSaveStatus(false);
+                  TtChannelButtonEditorDialog editorDialog(btn, this);
+                  // 设置编辑的数据
+                  editorDialog.setMetaInfo(
+                      channel_info_.value(btn->getUuid()).data);
+                  if (editorDialog.exec() == QDialog::Accepted) {
+                    qDebug() << editorDialog.checkBlockColor();
+                    // qDebug() << "编辑时的(关乎于 button 的特定值) channel
+                    // uuid: "
+                    // << btn->getUuid()
+                    // << channel_info_.value(btn->getUuid()).channel_num_;
+
+                    handleDialogData(
+                        btn->getUuid(),
+                        channel_info_.value(btn->getUuid()).channel_num_,
+                        editorDialog.metaInfo(),
+                        editorDialog.checkBlockColor());
+                  }
+                }
               }
             }
-          }
-        }
-      });
+          });
 
   serialDataList->setContentsMargins(QMargins());
   serialDataList->setSpacing(0);

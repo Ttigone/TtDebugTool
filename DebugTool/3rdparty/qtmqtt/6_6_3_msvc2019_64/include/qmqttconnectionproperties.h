@@ -4,8 +4,10 @@
 #ifndef QMQTTCONNECTIONPROPERTIES_H
 #define QMQTTCONNECTIONPROPERTIES_H
 
-#include <QtMqtt/qmqttglobal.h>
-#include <QtMqtt/qmqtttype.h>
+// #include <QtMqtt/qmqttglobal.h>
+// #include <QtMqtt/qmqtttype.h>
+#include "qmqttglobal.h"
+#include "qmqtttype.h"
 
 #include <QtCore/QObject>
 #include <QtCore/QSharedDataPointer>

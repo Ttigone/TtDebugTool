@@ -24,6 +24,7 @@ namespace Widget {
 class ModbusClientSetting : public QWidget {
   Q_OBJECT
 public:
+  // BUG 重载
   explicit ModbusClientSetting(QWidget *parent = nullptr);
   ~ModbusClientSetting();
 

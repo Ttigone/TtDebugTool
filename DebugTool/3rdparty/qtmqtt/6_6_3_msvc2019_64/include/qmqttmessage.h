@@ -4,9 +4,12 @@
 #ifndef QMQTTMESSAGE_H
 #define QMQTTMESSAGE_H
 
-#include <QtMqtt/qmqttglobal.h>
-#include <QtMqtt/qmqttpublishproperties.h>
-#include <QtMqtt/qmqtttopicname.h>
+// #include <QtMqtt/qmqttglobal.h>
+// #include <QtMqtt/qmqttpublishproperties.h>
+// #include <QtMqtt/qmqtttopicname.h>
+#include "qmqttglobal.h"
+#include "qmqttpublishproperties.h"
+#include "qmqtttopicname.h"
 
 #include <QtCore/QObject>
 #include <QtCore/QSharedDataPointer>

@@ -318,7 +318,8 @@ TcpClientSetting::TcpClientSetting(QWidget *parent) : FrameSetting(parent) {
             }
             }
             qDebug() << "switch index" << index;
-            emit heartbeatType(index);
+            // emit heartbeatType(index);
+            emit heartbeatType(static_cast<TtTextFormat::Type>(index));
             const auto event = new QResizeEvent(drawerHeartBeat->size(),
                                                 drawerHeartBeat->size());
             QCoreApplication::postEvent(drawerHeartBeat, event);

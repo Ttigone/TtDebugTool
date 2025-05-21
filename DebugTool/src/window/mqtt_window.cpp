@@ -431,6 +431,7 @@ void MqttWindow::connectSignals() {
       subscripition_widget_->setSizePolicy(QSizePolicy::Expanding,
                                            QSizePolicy::Expanding);
     }
+    mask_widget_->show(subscripition_widget_);
     // Ui::TtContentDialog *dialog = new Ui::TtContentDialog(
     //     false, Ui::TtContentDialog::LayoutSelection::TWO_OPTIONS, this);
 
@@ -478,43 +479,6 @@ void MqttWindow::connectSignals() {
     //     Qt::ApplicationModal, true,
 
     //     Ui::TtContentDialog::LayoutSelection::THREE_OPTIONS, this);
-    Ui::TtContentDialog *dialog = new Ui::TtContentDialog(
-        false, Ui::TtContentDialog::LayoutSelection::TWO_OPTIONS, this);
-
-    QWidget *oldParent = subscripition_widget_->parentWidget();
-    dialog->setCentralWidget(subscripition_widget_);
-
-    dialog->setStyleSheet("Ui--TtContentDialog { background-color: white; }");
-    // dialog->setCenterText(tr("确定要退出程序吗"));
-    dialog->setAttribute(Qt::WA_DeleteOnClose); // 二次删除的情况
-    dialog->setCentralWidget(subscripition_widget_);
-    QSize dialogSize(this->width() * 0.7, this->height() * 0.5);
-    dialog->resize(dialogSize);
-    dialog->setLeftButtonText(tr("取消"));
-    dialog->setRightButtonText(tr("保存"));
-
-    connect(dialog, &Ui::TtContentDialog::leftButtonClicked, dialog,
-            &QDialog::reject);
-    connect(dialog, &Ui::TtContentDialog::rightButtonClicked, dialog,
-            &QDialog::accept); // 右侧按钮 -> accept()
-    const int result = dialog->exec();
-    // if (result == QDialog::Accepted) {
-    //   // 获取最后点击的按钮类型
-    // } else {
-    //   // qDebug() << "用户取消操作";
-    // }
-    connect(dialog, &QDialog::finished, [this, oldParent, &result]() {
-      if (result == QDialog::Accepted) {
-        // 确实没有调用析构函数
-        qDebug() << "点击保存";
-        subscripition_widget_->setParent(oldParent);
-        subscripition_widget_->hide(); // 隐藏但不删除
-        if (subscripition_widget_ && oldParent) {
-
-          qDebug() << "点击取消";
-        }
-      }
-    });
   });
   // connect(subscripition_widget,
   //         &Widget::SubscripitionWidget::saveConfigToManager,

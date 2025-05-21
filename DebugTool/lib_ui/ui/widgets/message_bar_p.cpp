@@ -1,4 +1,5 @@
 #include "ui/widgets/message_bar_p.h"
+#include "ui/control/TtIconButton.h"
 #include "ui/widgets/message_bar.h"
 
 #include <QDateTime>
@@ -13,14 +14,14 @@ namespace Ui {
 Q_SINGLETON_CREATE_CPP(TtMessageBarManager)
 
 // 策略 | 该策略的在暂存显示消息栏
-QMap<TtMessageBarType::PositionPolicy, QList<TtMessageBar*>*>
+QMap<TtMessageBarType::PositionPolicy, QList<TtMessageBar *> *>
     _messageBarActiveMap;
 
-TtMessageBarManager::TtMessageBarManager(QObject* parent) {}
+TtMessageBarManager::TtMessageBarManager(QObject *parent) {}
 
 TtMessageBarManager::~TtMessageBarManager() {}
 
-void TtMessageBarManager::requestMessageBarEvent(TtMessageBar* messageBar) {
+void TtMessageBarManager::requestMessageBarEvent(TtMessageBar *messageBar) {
   if (!messageBar) {
     return;
   }
@@ -33,7 +34,7 @@ void TtMessageBarManager::requestMessageBarEvent(TtMessageBar* messageBar) {
     } else {
       messagebar_event_map_[messageBar] = eventList;
     }
-    //触发事件
+    // 触发事件
     QString functionName = eventData.value("EventFunctionName").toString();
     QVariantMap functionData = eventData.value("EventFunctionData").toMap();
     QMetaObject::invokeMethod(
@@ -42,11 +43,11 @@ void TtMessageBarManager::requestMessageBarEvent(TtMessageBar* messageBar) {
   }
 }
 
-void TtMessageBarManager::postMessageBarCreateEvent(TtMessageBar* messageBar) {
+void TtMessageBarManager::postMessageBarCreateEvent(TtMessageBar *messageBar) {
   if (!messageBar) {
     return;
   }
-  updateActiveMap(messageBar, true);  // 计算坐标前增加
+  updateActiveMap(messageBar, true); // 计算坐标前增加
   if (!messagebar_event_map_.contains(messageBar)) {
     QList<QVariantMap> eventList;
     QVariantMap eventData;
@@ -56,24 +57,24 @@ void TtMessageBarManager::postMessageBarCreateEvent(TtMessageBar* messageBar) {
   }
 }
 
-void TtMessageBarManager::postMessageBarEndEvent(TtMessageBar* messageBar) {
+void TtMessageBarManager::postMessageBarEndEvent(TtMessageBar *messageBar) {
   if (!messageBar) {
     return;
   }
   updateActiveMap(messageBar, false);
-  //Other MessageBar事件入栈 记录同一策略事件
+  // Other MessageBar事件入栈 记录同一策略事件
   TtMessageBarType::PositionPolicy policy = messageBar->d_ptr->_policy;
   foreach (auto otherMessageBar, *_messageBarActiveMap.value(policy)) {
     if (otherMessageBar->d_ptr->_judgeCreateOrder(messageBar)) {
       QList<QVariantMap> eventList = messagebar_event_map_[otherMessageBar];
-      //优先执行先触发的事件 End事件保持首位
+      // 优先执行先触发的事件 End事件保持首位
       QVariantMap eventData;
       eventData.insert("EventFunctionName", "onOtherMessageBarEnd");
       QVariantMap functionData;
       functionData.insert("TargetPosY",
                           otherMessageBar->d_ptr->_calculateTargetPosY());
       eventData.insert("EventFunctionData", functionData);
-      //若处于创建动画阶段  则合并事件动画
+      // 若处于创建动画阶段  则合并事件动画
       if (otherMessageBar->d_ptr->getWorkMode() ==
           WorkStatus::CreateAnimation) {
         while (eventList.count() > 1) {
@@ -88,17 +89,17 @@ void TtMessageBarManager::postMessageBarEndEvent(TtMessageBar* messageBar) {
 }
 
 void TtMessageBarManager::forcePostMessageBarEndEvent(
-    TtMessageBar* messageBar) {
+    TtMessageBar *messageBar) {
   if (!messageBar) {
     return;
   }
-  //清除事件堆栈记录
+  // 清除事件堆栈记录
   messagebar_event_map_.remove(messageBar);
-  //发布终止事件
+  // 发布终止事件
   postMessageBarEndEvent(messageBar);
 }
 
-int TtMessageBarManager::getMessageBarEventCount(TtMessageBar* messageBar) {
+int TtMessageBarManager::getMessageBarEventCount(TtMessageBar *messageBar) {
   if (!messageBar) {
     return -1;
   }
@@ -109,7 +110,7 @@ int TtMessageBarManager::getMessageBarEventCount(TtMessageBar* messageBar) {
   return eventList.count();
 }
 
-void TtMessageBarManager::updateActiveMap(TtMessageBar* messageBar,
+void TtMessageBarManager::updateActiveMap(TtMessageBar *messageBar,
                                           bool isActive) {
   if (!messageBar) {
     return;
@@ -119,7 +120,7 @@ void TtMessageBarManager::updateActiveMap(TtMessageBar* messageBar,
     if (_messageBarActiveMap.contains(policy)) {
       _messageBarActiveMap[policy]->append(messageBar);
     } else {
-      QList<TtMessageBar*>* messageBarList = new QList<TtMessageBar*>();
+      QList<TtMessageBar *> *messageBarList = new QList<TtMessageBar *>();
       messageBarList->append(messageBar);
       _messageBarActiveMap.insert(policy, messageBarList);
     }
@@ -132,7 +133,7 @@ void TtMessageBarManager::updateActiveMap(TtMessageBar* messageBar,
   }
 }
 
-TtMessageBarPrivate::TtMessageBarPrivate(QObject* parent) : QObject(parent) {
+TtMessageBarPrivate::TtMessageBarPrivate(QObject *parent) : QObject(parent) {
   setProperty("MessageBarClosedY", 0);
   setProperty("MessageBarFinishY", 0);
   create_time_ = QDateTime::currentMSecsSinceEpoch();
@@ -163,11 +164,11 @@ void TtMessageBarPrivate::onOtherMessageBarEnd(QVariantMap eventData) {
   Q_Q(TtMessageBar);
   _isMessageBarEventAnimationStart = true;
   qreal targetPosY = eventData.value("TargetPosY").toReal();
-  QPropertyAnimation* closePosAnimation =
+  QPropertyAnimation *closePosAnimation =
       new QPropertyAnimation(this, "MessageBarClosedY");
   connect(
       closePosAnimation, &QPropertyAnimation::valueChanged, this,
-      [=](const QVariant& value) { q->move(q->pos().x(), value.toUInt()); });
+      [=](const QVariant &value) { q->move(q->pos().x(), value.toUInt()); });
   connect(closePosAnimation, &QPropertyAnimation::finished, this, [=]() {
     _isMessageBarEventAnimationStart = false;
     if (TtMessageBarManager::getInstance()->getMessageBarEventCount(q) > 1) {
@@ -187,7 +188,7 @@ void TtMessageBarPrivate::onOtherMessageBarEnd(QVariantMap eventData) {
 void TtMessageBarPrivate::messageBarEnd(QVariantMap eventData) {
   Q_Q(TtMessageBar);
   TtMessageBarManager::getInstance()->postMessageBarEndEvent(q);
-  QPropertyAnimation* barFinishedOpacityAnimation =
+  QPropertyAnimation *barFinishedOpacityAnimation =
       new QPropertyAnimation(this, "pOpacity");
   connect(barFinishedOpacityAnimation, &QPropertyAnimation::valueChanged, this,
           [=]() {
@@ -211,7 +212,7 @@ void TtMessageBarPrivate::onCloseButtonClicked() {
   _isReadyToEnd = true;
   _isNormalDisplay = false;
   TtMessageBarManager::getInstance()->forcePostMessageBarEndEvent(q);
-  QPropertyAnimation* opacityAnimation =
+  QPropertyAnimation *opacityAnimation =
       new QPropertyAnimation(this, "pOpacity");
   connect(opacityAnimation, &QPropertyAnimation::valueChanged, this, [=]() {
     // _closeButton->setOpacity(_pOpacity);
@@ -219,7 +220,7 @@ void TtMessageBarPrivate::onCloseButtonClicked() {
   });
   connect(opacityAnimation, &QPropertyAnimation::finished, q,
           [=]() { q->deleteLater(); });
-  opacityAnimation->setStartValue(pOpacity_);  // 属性值, 使用宏创建
+  opacityAnimation->setStartValue(pOpacity_); // 属性值, 使用宏创建
   opacityAnimation->setEndValue(0);
   opacityAnimation->setDuration(220);
   opacityAnimation->setEasingCurve(QEasingCurve::InOutSine);
@@ -249,7 +250,7 @@ void TtMessageBarPrivate::_messageBarCreate(int displayMsec) {
   int endY = 0;
   _calculateInitialPos(startX, startY, endX, endY);
   // 滑入动画
-  QPropertyAnimation* barPosAnimation = new QPropertyAnimation(q, "pos");
+  QPropertyAnimation *barPosAnimation = new QPropertyAnimation(q, "pos");
   connect(barPosAnimation, &QPropertyAnimation::finished, q, [=]() {
     _isNormalDisplay = true;
     _isMessageBarCreateAnimationFinished = true;
@@ -262,15 +263,15 @@ void TtMessageBarPrivate::_messageBarCreate(int displayMsec) {
     });
   });
   switch (_policy) {
-    case TtMessageBarType::Top:
-    case TtMessageBarType::Bottom: {
-      barPosAnimation->setDuration(250);
-      break;
-    }
-    default: {
-      barPosAnimation->setDuration(450);
-      break;
-    }
+  case TtMessageBarType::Top:
+  case TtMessageBarType::Bottom: {
+    barPosAnimation->setDuration(250);
+    break;
+  }
+  default: {
+    barPosAnimation->setDuration(450);
+    break;
+  }
   }
   barPosAnimation->setStartValue(QPoint(startX, startY));
   barPosAnimation->setEndValue(QPoint(endX, endY));
@@ -278,87 +279,87 @@ void TtMessageBarPrivate::_messageBarCreate(int displayMsec) {
   barPosAnimation->start(QAbstractAnimation::DeleteWhenStopped);
 }
 
-void TtMessageBarPrivate::_calculateInitialPos(int& startX, int& startY,
-                                               int& endX, int& endY) {
+void TtMessageBarPrivate::_calculateInitialPos(int &startX, int &startY,
+                                               int &endX, int &endY) {
   Q_Q(TtMessageBar);
   QList<int> resultList = _getOtherMessageBarTotalData();
   int minimumHeightTotal = resultList[0];
   int indexLessCount = resultList[1];
   switch (_policy) {
-    case TtMessageBarType::Top: {
-      // 25动画距离
-      startX = q->parentWidget()->width() / 2 - q->minimumWidth() / 2;
-      startY = minimumHeightTotal + _messageBarSpacing * indexLessCount +
-               _messageBarVerticalTopMargin - 25;
-      endX = startX;
-      endY = minimumHeightTotal + _messageBarSpacing * indexLessCount +
+  case TtMessageBarType::Top: {
+    // 25动画距离
+    startX = q->parentWidget()->width() / 2 - q->minimumWidth() / 2;
+    startY = minimumHeightTotal + _messageBarSpacing * indexLessCount +
+             _messageBarVerticalTopMargin - 25;
+    endX = startX;
+    endY = minimumHeightTotal + _messageBarSpacing * indexLessCount +
+           _messageBarVerticalTopMargin;
+    break;
+  }
+  case TtMessageBarType::Left: {
+    startX = -q->minimumWidth();
+    startY = minimumHeightTotal + _messageBarSpacing * indexLessCount +
+             q->parentWidget()->height() / 2;
+    endX = _messageBarHorizontalMargin;
+    endY = startY;
+    break;
+  }
+  case TtMessageBarType::Bottom: {
+    startX = q->parentWidget()->width() / 2 - q->minimumWidth() / 2;
+    startY = q->parentWidget()->height() - q->minimumHeight() -
+             minimumHeightTotal - _messageBarSpacing * indexLessCount -
+             _messageBarVerticalBottomMargin - 25;
+    endX = startX;
+    endY = q->parentWidget()->height() - q->minimumHeight() -
+           minimumHeightTotal - _messageBarSpacing * indexLessCount -
+           _messageBarVerticalBottomMargin;
+    break;
+  }
+  case TtMessageBarType::Right: {
+    startX = q->parentWidget()->width();
+    startY = minimumHeightTotal + _messageBarSpacing * indexLessCount +
+             q->parentWidget()->height() / 2;
+    endX = q->parentWidget()->width() - q->minimumWidth() -
+           _messageBarHorizontalMargin;
+    endY = startY;
+    break;
+  }
+  case TtMessageBarType::TopRight: {
+    startX = q->parentWidget()->width();
+    startY = minimumHeightTotal + _messageBarSpacing * indexLessCount +
              _messageBarVerticalTopMargin;
-      break;
-    }
-    case TtMessageBarType::Left: {
-      startX = -q->minimumWidth();
-      startY = minimumHeightTotal + _messageBarSpacing * indexLessCount +
-               q->parentWidget()->height() / 2;
-      endX = _messageBarHorizontalMargin;
-      endY = startY;
-      break;
-    }
-    case TtMessageBarType::Bottom: {
-      startX = q->parentWidget()->width() / 2 - q->minimumWidth() / 2;
-      startY = q->parentWidget()->height() - q->minimumHeight() -
-               minimumHeightTotal - _messageBarSpacing * indexLessCount -
-               _messageBarVerticalBottomMargin - 25;
-      endX = startX;
-      endY = q->parentWidget()->height() - q->minimumHeight() -
+    endX = q->parentWidget()->width() - q->minimumWidth() -
+           _messageBarHorizontalMargin;
+    endY = startY;
+    break;
+  }
+  case TtMessageBarType::TopLeft: {
+    startX = -q->minimumWidth();
+    startY = minimumHeightTotal + _messageBarSpacing * indexLessCount +
+             _messageBarVerticalTopMargin;
+    endX = _messageBarHorizontalMargin;
+    endY = startY;
+    break;
+  }
+  case TtMessageBarType::BottomRight: {
+    startX = q->parentWidget()->width();
+    startY = q->parentWidget()->height() - q->minimumHeight() -
              minimumHeightTotal - _messageBarSpacing * indexLessCount -
              _messageBarVerticalBottomMargin;
-      break;
-    }
-    case TtMessageBarType::Right: {
-      startX = q->parentWidget()->width();
-      startY = minimumHeightTotal + _messageBarSpacing * indexLessCount +
-               q->parentWidget()->height() / 2;
-      endX = q->parentWidget()->width() - q->minimumWidth() -
-             _messageBarHorizontalMargin;
-      endY = startY;
-      break;
-    }
-    case TtMessageBarType::TopRight: {
-      startX = q->parentWidget()->width();
-      startY = minimumHeightTotal + _messageBarSpacing * indexLessCount +
-               _messageBarVerticalTopMargin;
-      endX = q->parentWidget()->width() - q->minimumWidth() -
-             _messageBarHorizontalMargin;
-      endY = startY;
-      break;
-    }
-    case TtMessageBarType::TopLeft: {
-      startX = -q->minimumWidth();
-      startY = minimumHeightTotal + _messageBarSpacing * indexLessCount +
-               _messageBarVerticalTopMargin;
-      endX = _messageBarHorizontalMargin;
-      endY = startY;
-      break;
-    }
-    case TtMessageBarType::BottomRight: {
-      startX = q->parentWidget()->width();
-      startY = q->parentWidget()->height() - q->minimumHeight() -
-               minimumHeightTotal - _messageBarSpacing * indexLessCount -
-               _messageBarVerticalBottomMargin;
-      endX = q->parentWidget()->width() - q->minimumWidth() -
-             _messageBarHorizontalMargin;
-      endY = startY;
-      break;
-    }
-    case TtMessageBarType::BottomLeft: {
-      startX = -q->minimumWidth();
-      startY = q->parentWidget()->height() - q->minimumHeight() -
-               minimumHeightTotal - _messageBarSpacing * indexLessCount -
-               _messageBarVerticalBottomMargin;
-      endX = _messageBarHorizontalMargin;
-      endY = startY;
-      break;
-    }
+    endX = q->parentWidget()->width() - q->minimumWidth() -
+           _messageBarHorizontalMargin;
+    endY = startY;
+    break;
+  }
+  case TtMessageBarType::BottomLeft: {
+    startX = -q->minimumWidth();
+    startY = q->parentWidget()->height() - q->minimumHeight() -
+             minimumHeightTotal - _messageBarSpacing * indexLessCount -
+             _messageBarVerticalBottomMargin;
+    endX = _messageBarHorizontalMargin;
+    endY = startY;
+    break;
+  }
   }
   if (endY < _messageBarVerticalTopMargin ||
       endY > q->parentWidget()->height() - _messageBarVerticalBottomMargin -
@@ -368,14 +369,14 @@ void TtMessageBarPrivate::_calculateInitialPos(int& startX, int& startY,
   }
 }
 
-QList<int> TtMessageBarPrivate::_getOtherMessageBarTotalData(
-    bool isJudgeCreateOrder) {
+QList<int>
+TtMessageBarPrivate::_getOtherMessageBarTotalData(bool isJudgeCreateOrder) {
   Q_Q(TtMessageBar);
   QList<int> resultList;
   int minimumHeightTotal = 0;
   int indexLessCount = 0;
   // 弹出的消息栏列表
-  QList<TtMessageBar*>* messageBarList = _messageBarActiveMap[_policy];
+  QList<TtMessageBar *> *messageBarList = _messageBarActiveMap[_policy];
   for (auto messageBar : *messageBarList) {
     if (messageBar == q) {
       continue;
@@ -397,38 +398,38 @@ qreal TtMessageBarPrivate::_calculateTargetPosY() {
   int minimumHeightTotal = resultList[0];
   int indexLessCount = resultList[1];
   switch (_policy) {
-    case TtMessageBarType::Top:
-    case TtMessageBarType::TopRight:
-    case TtMessageBarType::TopLeft: {
-      return minimumHeightTotal + _messageBarSpacing * indexLessCount +
-             _messageBarVerticalTopMargin;
-    }
-    case TtMessageBarType::Left:
-    case TtMessageBarType::Right: {
-      return minimumHeightTotal + _messageBarSpacing * indexLessCount +
-             q->parentWidget()->height() / 2;
-    }
-    case TtMessageBarType::Bottom:
-    case TtMessageBarType::BottomRight:
-    case TtMessageBarType::BottomLeft: {
-      return q->parentWidget()->height() - q->minimumHeight() -
-             minimumHeightTotal - _messageBarSpacing * indexLessCount -
-             _messageBarVerticalBottomMargin;
-    }
+  case TtMessageBarType::Top:
+  case TtMessageBarType::TopRight:
+  case TtMessageBarType::TopLeft: {
+    return minimumHeightTotal + _messageBarSpacing * indexLessCount +
+           _messageBarVerticalTopMargin;
+  }
+  case TtMessageBarType::Left:
+  case TtMessageBarType::Right: {
+    return minimumHeightTotal + _messageBarSpacing * indexLessCount +
+           q->parentWidget()->height() / 2;
+  }
+  case TtMessageBarType::Bottom:
+  case TtMessageBarType::BottomRight:
+  case TtMessageBarType::BottomLeft: {
+    return q->parentWidget()->height() - q->minimumHeight() -
+           minimumHeightTotal - _messageBarSpacing * indexLessCount -
+           _messageBarVerticalBottomMargin;
+  }
   }
   return 0;
 }
 
-bool TtMessageBarPrivate::_judgeCreateOrder(TtMessageBar* otherMessageBar) {
+bool TtMessageBarPrivate::_judgeCreateOrder(TtMessageBar *otherMessageBar) {
   if (otherMessageBar->d_ptr->create_time_ < create_time_) {
-    //otherMessageBar先创建
+    // otherMessageBar先创建
     return true;
   } else {
     return false;
   }
 }
 
-void TtMessageBarPrivate::_drawSuccess(QPainter* painter) {
+void TtMessageBarPrivate::_drawSuccess(QPainter *painter) {
   Q_Q(TtMessageBar);
   painter->setBrush(QColor(0xE0, 0xF6, 0xDD));
   QRect foregroundRect(_shadowBorderWidth, _shadowBorderWidth,
@@ -445,14 +446,15 @@ void TtMessageBarPrivate::_drawSuccess(QPainter* painter) {
   QFont iconFont = QFont("ElaAwesome");
   iconFont.setPixelSize(12);
   painter->setFont(iconFont);
-  // painter->drawText(_leftPadding, 0, q->width(), q->height(), Qt::AlignVCenter,
+  // painter->drawText(_leftPadding, 0, q->width(), q->height(),
+  // Qt::AlignVCenter,
   //                   QChar((unsigned short)TtIconType::Check));
   painter->restore();
   // 文字颜色
   painter->setPen(QPen(Qt::black));
 }
 
-void TtMessageBarPrivate::_drawWarning(QPainter* painter) {
+void TtMessageBarPrivate::_drawWarning(QPainter *painter) {
   Q_Q(TtMessageBar);
   painter->setBrush(QColor(0x6B, 0x56, 0x27));
   QRect foregroundRect(_shadowBorderWidth, _shadowBorderWidth,
@@ -474,7 +476,7 @@ void TtMessageBarPrivate::_drawWarning(QPainter* painter) {
   painter->setPen(QColor(0xFA, 0xFA, 0xFA));
 }
 
-void TtMessageBarPrivate::_drawInformation(QPainter* painter) {
+void TtMessageBarPrivate::_drawInformation(QPainter *painter) {
   Q_Q(TtMessageBar);
   painter->setBrush(QColor(0xF4, 0xF4, 0xF4));
   QRect foregroundRect(_shadowBorderWidth, _shadowBorderWidth,
@@ -495,7 +497,7 @@ void TtMessageBarPrivate::_drawInformation(QPainter* painter) {
   painter->setPen(Qt::black);
 }
 
-void TtMessageBarPrivate::_drawError(QPainter* painter) {
+void TtMessageBarPrivate::_drawError(QPainter *painter) {
   Q_Q(TtMessageBar);
   painter->setBrush(QColor(0xFE, 0xE7, 0xEA));
   QRect foregroundRect(_shadowBorderWidth, _shadowBorderWidth,
@@ -520,4 +522,4 @@ void TtMessageBarPrivate::_drawError(QPainter* painter) {
   painter->setPen(Qt::black);
 }
 
-}  // namespace Ui
+} // namespace Ui

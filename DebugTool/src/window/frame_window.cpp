@@ -442,7 +442,9 @@ bool FrameWindow::isValidHexString(const QString &hexString,
 QString FrameWindow::getValidHexString(const QString &input,
                                        QString *errorMsg) {
   // 移除所有非十六进制字符
-  QString hexStr = input.remove(QRegularExpression("[^0-9A-Fa-f]"));
+  // QString hexStr = input.remove(QRegularExpression("[^0-9A-Fa-f]"));
+  QString tmp = QString(input);
+  QString hexStr = tmp.remove(QRegularExpression("[^0-9A-Fa-f]"));
 
   // 检查处理后的字符串是否为空
   if (hexStr.isEmpty()) {

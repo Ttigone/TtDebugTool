@@ -4,8 +4,10 @@
 #ifndef QMQTTAUTHENTICATIONPROPERTIES_H
 #define QMQTTAUTHENTICATIONPROPERTIES_H
 
-#include <QtMqtt/qmqttglobal.h>
-#include <QtMqtt/qmqtttype.h>
+// #include <QtMqtt/qmqttglobal.h>
+// #include <QtMqtt/qmqtttype.h>
+#include "qmqttglobal.h"
+#include "qmqtttype.h"
 
 #include <QtCore/QHash>
 #include <QtCore/QObject>

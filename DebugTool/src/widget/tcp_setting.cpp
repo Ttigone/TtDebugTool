@@ -2,6 +2,7 @@
 
 #include <QNetworkInterface>
 #include <ui/control/TtComboBox.h>
+#include <ui/control/TtDrawer.h>
 #include <ui/control/TtLineEdit.h>
 #include <ui/layout/vertical_layout.h>
 #include <ui/widgets/collapsible_panel.h>
@@ -222,7 +223,11 @@ TcpClientSetting::TcpClientSetting(QWidget *parent) : FrameSetting(parent) {
   linkConfigLayout->addWidget(self_port_);
   linkConfigLayout->addWidget(send_package_interval_);
   linkConfigLayout->addWidget(send_package_max_size_);
-  Ui::Drawer *drawer1 = new Ui::Drawer(tr("连接设置"), linkConfig);
+  // Ui::Drawer *drawer1 = new Ui::Drawer(tr("连接设置"), linkConfig);
+  Ui::TtDrawer *drawerLinkSetting = new Ui::TtDrawer(
+      tr("连接设置"), ":/sys/chevron-double-up.svg",
+      ":/sys/chevron-double-down.svg", linkConfig, false, this);
+  // drawers << drawerLinkSetting;
 
   QWidget *framingWidget = new QWidget;
   Ui::TtVerticalLayout *framingWidgetLayout =
@@ -237,9 +242,12 @@ TcpClientSetting::TcpClientSetting(QWidget *parent) : FrameSetting(parent) {
   framingWidgetLayout->addWidget(framing_timeout_);
   framingWidgetLayout->addWidget(framing_fixed_length_);
 
-  Ui::Drawer *drawer2 = new Ui::Drawer(tr("分帧"), framingWidget);
+  Ui::TtDrawer *drawerFraming = new Ui::TtDrawer(
+      tr("分帧[收数据包](暂未提供使用)"), ":/sys/chevron-double-up.svg",
+      ":/sys/chevron-double-down.svg", framingWidget, false, this);
+  // Ui::Drawer* drawer2 = new Ui::Drawer(tr("分帧"), framingWidget);
   QObject::connect(framing_model_, &Ui::TtLabelComboBox::currentIndexChanged,
-                   this, [this, drawer2](int index) {
+                   this, [this, drawerFraming](int index) {
                      switch (index) {
                      case 0: {
                        framing_timeout_->setVisible(false);
@@ -257,9 +265,9 @@ TcpClientSetting::TcpClientSetting(QWidget *parent) : FrameSetting(parent) {
                        break;
                      }
                      }
-                     const auto event =
-                         new QResizeEvent(drawer2->size(), drawer2->size());
-                     QCoreApplication::postEvent(drawer2, event);
+                     const auto event = new QResizeEvent(drawerFraming->size(),
+                                                         drawerFraming->size());
+                     QCoreApplication::postEvent(drawerFraming, event);
                    });
   framing_model_->setCurrentItem(0);
   framing_timeout_->setVisible(false);
@@ -267,7 +275,11 @@ TcpClientSetting::TcpClientSetting(QWidget *parent) : FrameSetting(parent) {
 
   retransmission_ = new Ui::TtLabelBtnComboBox(tr("目标: "));
   retransmission_->addItem(tr("无"));
-  Ui::Drawer *drawer3 = new Ui::Drawer(tr("转发"), retransmission_);
+  // Ui::Drawer* drawer3 = new Ui::Drawer(tr("转发"), retransmission_);
+  // Ui::Drawer* drawer3 = new Ui::Drawer(tr("转发"), retransmission_);
+  Ui::TtDrawer *drawerRetransmission = new Ui::TtDrawer(
+      tr("转发"), ":/sys/chevron-double-up.svg",
+      ":/sys/chevron-double-down.svg", retransmission_, false, this);
 
   // 心跳界面
   QWidget *heartbeatWidget = new QWidget;
@@ -287,7 +299,10 @@ TcpClientSetting::TcpClientSetting(QWidget *parent) : FrameSetting(parent) {
   // Ui::TtDrawer *drawerHeartBeat = new Ui::TtDrawer(
   //     tr("心跳"), ":/sys/chevron-double-up.svg",
   //     ":/sys/chevron-double-down.svg", heartbeatWidget, false, this);
-  Ui::Drawer *drawerHeartBeat = new Ui::Drawer(tr("心跳"), heartbeatWidget);
+  // Ui::Drawer* drawerHeartBeat = new Ui::Drawer(tr("心跳"), heartbeatWidget);
+  Ui::TtDrawer *drawerHeartBeat = new Ui::TtDrawer(
+      tr("心跳"), ":/sys/chevron-double-up.svg",
+      ":/sys/chevron-double-down.svg", heartbeatWidget, false, this);
 
   QScrollArea *scroll = new QScrollArea(this);
   scroll->setFrameStyle(QFrame::NoFrame);
@@ -296,9 +311,13 @@ TcpClientSetting::TcpClientSetting(QWidget *parent) : FrameSetting(parent) {
 
   Ui::TtVerticalLayout *scrollContentLayout =
       new Ui::TtVerticalLayout(scrollContent);
-  scrollContentLayout->addWidget(drawer1, 0, Qt::AlignTop);
-  scrollContentLayout->addWidget(drawer2);
-  scrollContentLayout->addWidget(drawer3);
+  // scrollContentLayout->addWidget(drawer1, 0, Qt::AlignTop);
+  // scrollContentLayout->addWidget(drawer2);
+  // scrollContentLayout->addWidget(drawer3);
+  // scrollContentLayout->addWidget(drawerHeartBeat);
+  scrollContentLayout->addWidget(drawerLinkSetting, 0, Qt::AlignTop);
+  scrollContentLayout->addWidget(drawerFraming);
+  scrollContentLayout->addWidget(drawerRetransmission);
   scrollContentLayout->addWidget(drawerHeartBeat);
   scrollContentLayout->addStretch();
 

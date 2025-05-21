@@ -331,32 +331,32 @@
 <context>
     <name>Ui::TabWindow</name>
     <message>
-        <location filename="../../src/ui/widgets/tabwindow.cpp" line="474"/>
+        <location filename="../../src/ui/widgets/tabwindow.cpp" line="647"/>
         <source>新增连接</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/widgets/tabwindow.cpp" line="949"/>
+        <location filename="../../src/ui/widgets/tabwindow.cpp" line="1124"/>
         <source>取消</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/widgets/tabwindow.cpp" line="950"/>
+        <location filename="../../src/ui/widgets/tabwindow.cpp" line="1125"/>
         <source>确定</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/widgets/tabwindow.cpp" line="951"/>
+        <location filename="../../src/ui/widgets/tabwindow.cpp" line="1126"/>
         <source>通讯链接配置已修改, 是否保存</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/widgets/tabwindow.cpp" line="1031"/>
+        <location filename="../../src/ui/widgets/tabwindow.cpp" line="1206"/>
         <source>新建立</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/ui/widgets/tabwindow.cpp" line="882"/>
+        <location filename="../../src/ui/widgets/tabwindow.cpp" line="1057"/>
         <source>New Tab</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1036,114 +1036,114 @@
 <context>
     <name>Widget::TcpClientSetting</name>
     <message>
-        <location filename="../../src/widget/tcp_setting.cpp" line="210"/>
+        <location filename="../../src/widget/tcp_setting.cpp" line="211"/>
         <source>地址:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/tcp_setting.cpp" line="211"/>
+        <location filename="../../src/widget/tcp_setting.cpp" line="212"/>
         <source>端口:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/tcp_setting.cpp" line="212"/>
+        <location filename="../../src/widget/tcp_setting.cpp" line="213"/>
         <source>本地地址:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/tcp_setting.cpp" line="213"/>
+        <location filename="../../src/widget/tcp_setting.cpp" line="214"/>
         <source>本地端口:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/tcp_setting.cpp" line="216"/>
+        <location filename="../../src/widget/tcp_setting.cpp" line="217"/>
         <source>发送包最大尺寸:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/tcp_setting.cpp" line="218"/>
+        <location filename="../../src/widget/tcp_setting.cpp" line="219"/>
         <source>发送端间隔(ms):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/tcp_setting.cpp" line="225"/>
+        <location filename="../../src/widget/tcp_setting.cpp" line="228"/>
         <source>连接设置</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/tcp_setting.cpp" line="230"/>
+        <location filename="../../src/widget/tcp_setting.cpp" line="235"/>
         <source>模式: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/tcp_setting.cpp" line="231"/>
-        <location filename="../../src/widget/tcp_setting.cpp" line="269"/>
-        <location filename="../../src/widget/tcp_setting.cpp" line="278"/>
+        <location filename="../../src/widget/tcp_setting.cpp" line="236"/>
+        <location filename="../../src/widget/tcp_setting.cpp" line="277"/>
+        <location filename="../../src/widget/tcp_setting.cpp" line="290"/>
         <source>无</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/tcp_setting.cpp" line="232"/>
+        <location filename="../../src/widget/tcp_setting.cpp" line="237"/>
         <source>超时时间</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/tcp_setting.cpp" line="233"/>
+        <location filename="../../src/widget/tcp_setting.cpp" line="238"/>
         <source>固定长度</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/tcp_setting.cpp" line="234"/>
+        <location filename="../../src/widget/tcp_setting.cpp" line="239"/>
         <source>时间:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/tcp_setting.cpp" line="235"/>
+        <location filename="../../src/widget/tcp_setting.cpp" line="240"/>
         <source>长度:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/tcp_setting.cpp" line="240"/>
-        <source>分帧</source>
+        <location filename="../../src/widget/tcp_setting.cpp" line="246"/>
+        <source>分帧[收数据包](暂未提供使用)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/tcp_setting.cpp" line="268"/>
+        <location filename="../../src/widget/tcp_setting.cpp" line="276"/>
         <source>目标: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/tcp_setting.cpp" line="270"/>
+        <location filename="../../src/widget/tcp_setting.cpp" line="281"/>
         <source>转发</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/tcp_setting.cpp" line="277"/>
+        <location filename="../../src/widget/tcp_setting.cpp" line="289"/>
         <source>类型: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/tcp_setting.cpp" line="279"/>
+        <location filename="../../src/widget/tcp_setting.cpp" line="291"/>
         <source>文本</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/tcp_setting.cpp" line="280"/>
+        <location filename="../../src/widget/tcp_setting.cpp" line="292"/>
         <source>HEX</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/tcp_setting.cpp" line="281"/>
+        <location filename="../../src/widget/tcp_setting.cpp" line="293"/>
         <source>间隔: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/tcp_setting.cpp" line="282"/>
+        <location filename="../../src/widget/tcp_setting.cpp" line="294"/>
         <source>内容: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/tcp_setting.cpp" line="290"/>
+        <location filename="../../src/widget/tcp_setting.cpp" line="304"/>
         <source>心跳</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1151,63 +1151,63 @@
 <context>
     <name>Widget::TcpServerSetting</name>
     <message>
-        <location filename="../../src/widget/tcp_setting.cpp" line="20"/>
+        <location filename="../../src/widget/tcp_setting.cpp" line="21"/>
         <source>主机: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/tcp_setting.cpp" line="21"/>
+        <location filename="../../src/widget/tcp_setting.cpp" line="22"/>
         <source>端口: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/tcp_setting.cpp" line="24"/>
+        <location filename="../../src/widget/tcp_setting.cpp" line="25"/>
         <source>TCP 连接</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/tcp_setting.cpp" line="29"/>
+        <location filename="../../src/widget/tcp_setting.cpp" line="30"/>
         <source>模式: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/tcp_setting.cpp" line="30"/>
-        <location filename="../../src/widget/tcp_setting.cpp" line="69"/>
+        <location filename="../../src/widget/tcp_setting.cpp" line="31"/>
+        <location filename="../../src/widget/tcp_setting.cpp" line="70"/>
         <source>无</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/tcp_setting.cpp" line="31"/>
+        <location filename="../../src/widget/tcp_setting.cpp" line="32"/>
         <source>超时时间</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/tcp_setting.cpp" line="32"/>
+        <location filename="../../src/widget/tcp_setting.cpp" line="33"/>
         <source>固定长度</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/tcp_setting.cpp" line="35"/>
+        <location filename="../../src/widget/tcp_setting.cpp" line="36"/>
         <source>时间(ms):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/tcp_setting.cpp" line="36"/>
+        <location filename="../../src/widget/tcp_setting.cpp" line="37"/>
         <source>长度:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/tcp_setting.cpp" line="40"/>
+        <location filename="../../src/widget/tcp_setting.cpp" line="41"/>
         <source>分帧</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/tcp_setting.cpp" line="68"/>
+        <location filename="../../src/widget/tcp_setting.cpp" line="69"/>
         <source>目标: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../src/widget/tcp_setting.cpp" line="70"/>
+        <location filename="../../src/widget/tcp_setting.cpp" line="71"/>
         <source>转发</source>
         <translation type="unfinished"></translation>
     </message>

@@ -124,10 +124,10 @@ void TtTableWidget::setupHeaderRow() {
 void TtTableWidget::setupTable(const QJsonObject &record) {
   record_ = record;
   if (record_.isEmpty()) {
-    qDebug() << "表格数据空";
+    // qDebug() << "表格数据空";
     return;
   }
-  qDebug() << "还原表格数据: ";
+  // qDebug() << "还原表格数据: ";
   while (rowCount() > 1) {
     removeRow(1);
   }
@@ -138,7 +138,7 @@ void TtTableWidget::setupTable(const QJsonObject &record) {
   QJsonObject metadata = record_.value("__metadata").toObject();
   int totalRows = metadata.value("totalRows").toInt(0);
 
-  qDebug() << "准备还原" << totalRows << "行数据";
+  // qDebug() << "准备还原" << totalRows << "行数据";
   // 创建临时存储，按行号排序
   QMap<int, QJsonArray> sortedRows;
 
@@ -151,13 +151,13 @@ void TtTableWidget::setupTable(const QJsonObject &record) {
     bool ok;
     int rowIndex = key.toInt(&ok);
     if (!ok) {
-      qWarning() << "无效的行索引:" << key;
+      // qWarning() << "无效的行索引:" << key;
       continue;
     }
 
     QJsonArray rowData = it.value().toArray();
     if (rowData.isEmpty()) {
-      qWarning() << "行" << rowIndex << "数据为空";
+      // qWarning() << "行" << rowIndex << "数据为空";
       continue;
     }
     // 将行数据添加到排序映射
@@ -172,11 +172,11 @@ void TtTableWidget::setupTable(const QJsonObject &record) {
     int newRow = rowCount(); // 首行为 1, 插入的位置是该处
     insertRow(newRow);       // 插入新行到最后的位置
     // setup 需要全包 可视状态
-    qDebug() << "table setup Row";
+    // qDebug() << "table setup Row";
     setupRow(newRow);
     if (rowsData_.isEmpty()) {
       // BUG 进入了这里, 之前创建为空
-      qDebug() << "行数据未正确创建，跳过行" << rowIndex;
+      // qDebug() << "行数据未正确创建，跳过行" << rowIndex;
       // 还是进入了
       // 强制创建控件，确保行显示
       if (!isRowVisible(newRow)) {

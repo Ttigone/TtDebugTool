@@ -61,7 +61,6 @@ public:
   TabWindow *findTabWindowWithClosedTab(const QString &uuid);
 
 signals:
-  // BUG 这个信号没有使用
   void tabCloseRequested(QWidget *widget, TabWindow *window);
   void tabCreateRequested(TabWindow *sourceWindow); // Window 创建新的 tab
 

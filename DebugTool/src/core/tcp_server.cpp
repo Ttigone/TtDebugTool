@@ -4,14 +4,14 @@
 
 namespace Core {
 
-TcpServer::TcpServer(QObject* parent) : QTcpServer(parent) {
+TcpServer::TcpServer(QObject *parent) : QTcpServer(parent) {
   // 默认启动了多客户端模式
-  // 关闭服务端监听套接字时, 与客户端的通讯的套接字不会关闭, 只有服务端进程关闭时, 才会全部关闭
-  // 配置线程池
+  // 关闭服务端监听套接字时, 与客户端的通讯的套接字不会关闭,
+  // 只有服务端进程关闭时, 才会全部关闭 配置线程池
   thread_pool_.setMaxThreadCount(QThread::idealThreadCount() * 2);
 }
 
-bool TcpServer::startServer(const Core::TcpServerConfiguration& config) {
+bool TcpServer::startServer(const Core::TcpServerConfiguration &config) {
   if (isListening()) {
     return true;
   }
@@ -32,13 +32,11 @@ void TcpServer::stopServer() {
   }
 }
 
-bool TcpServer::isRunning() const {
-  return isListening();
-}
+bool TcpServer::isRunning() const { return isListening(); }
 
-void TcpServer::sendMessageToClients(const QByteArray& message) {
+void TcpServer::sendMessageToClients(const QByteArray &message) {
   QMutexLocker locker(&client_mutex_);
-  for (QTcpSocket* client : client_sockets_) {
+  for (QTcpSocket *client : client_sockets_) {
     if (client && client->state() == QAbstractSocket::ConnectedState) {
       // 是否跨线程调用
       // client->write(message);
@@ -53,7 +51,7 @@ void TcpServer::sendMessageToClients(const QByteArray& message) {
 void TcpServer::incomingConnection(qintptr handle) {
   // 增加一个套接字用于处理与客户端的连接通讯
   auto task = new SocketTask(handle);
-  connect(task, &SocketTask::socketCreate, this, [this](QTcpSocket* socket) {
+  connect(task, &SocketTask::socketCreate, this, [this](QTcpSocket *socket) {
     QMutexLocker locker(&client_mutex_);
     client_sockets_.append(socket);
   });
@@ -98,7 +96,7 @@ void SocketTask::run() {
 #endif
 
   // 监听客户端输入
-  QObject::connect(socket_, &QTcpSocket::readyRead, [this]() {
+  QObject::connect(socket_, &QTcpSocket::readyRead, this, [this]() {
     QByteArray data = socket_->readAll();
     // qDebug() << "收到客户端消息:" << data;
     // 处理客户端请求，例如回复响应
@@ -106,7 +104,7 @@ void SocketTask::run() {
   });
 
   // 监听断开信号
-  QObject::connect(socket_, &QTcpSocket::disconnected,
+  QObject::connect(socket_, &QTcpSocket::disconnected, this,
                    [this]() { socket_->deleteLater(); });
 
   // 进入事件循环
@@ -116,4 +114,4 @@ void SocketTask::run() {
   loop.exec();
 }
 
-}  // namespace Core
+} // namespace Core

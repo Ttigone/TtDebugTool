@@ -88,7 +88,6 @@ void TtMaskWidget::show(QWidget* childWidget) {
   mask_widget_->raise();
   processChildWidget(childWidget);
   // mask_widget_->stackUnder(parent_widget_);
-
   updateMaskGeometry();
   updateChildPosition();
 
@@ -98,21 +97,6 @@ void TtMaskWidget::show(QWidget* childWidget) {
     child_widget_->raise();
   }
   startFadeAnimation(true);
-
-  // processChildWidget(childWidget);
-  // // 立即执行布局计算
-  // QMetaObject::invokeMethod(
-  //     this,
-  //     [this]() {
-  //       updateMaskGeometry();
-  //       updateChildPosition();
-  //       mask_widget_->show();
-  //       if (child_widget_) {
-  //         child_widget_->show();
-  //       }
-  //       startFadeAnimation(true);
-  //     },
-  //     Qt::QueuedConnection);
 }
 
 void TtMaskWidget::resetChildWidget() {
@@ -124,9 +108,14 @@ void TtMaskWidget::resetChildWidget() {
 }
 
 void TtMaskWidget::hide() {
+  // if (!mask_widget_ || !mask_widget_->isVisible()) {
+  //   return;
+  // }
+  // startFadeAnimation(false);
   if (!mask_widget_ || !mask_widget_->isVisible()) {
     return;
   }
+  qDebug() << "Starting hide anmiation";
   startFadeAnimation(false);
 }
 
@@ -143,6 +132,7 @@ bool TtMaskWidget::eventFilter(QObject* obj, QEvent* event) {
 
 void TtMaskWidget::handleChildDestroyed(QObject* obj) {
   if (obj == child_widget_) {
+    qDebug() << "Child widget destroyed externally";
     child_widget_ = nullptr;
   }
 }
@@ -186,19 +176,36 @@ void TtMaskWidget::startFadeAnimation(bool isShow) {
     mask_widget_->show();
     fade_animation_->setStartValue(0.0);
     fade_animation_->setEndValue(1.0);
-    // fade_animation_->setEndValue(0.7);
   } else {
-    // 有bug
-    fade_animation_->setStartValue(1.0);
-    // fade_animation_->setStartValue(0.7);
+    fade_animation_->setStartValue(effect_->opacity());
     fade_animation_->setEndValue(0.0);
 
     connect(fade_animation_, &QPropertyAnimation::finished, this, [this] {
       mask_widget_->hide();
       emit aboutToClose();
-      if (child_widget_ && !reusable_) {
-        child_widget_->deleteLater();
-        child_widget_ = nullptr;
+      if (child_widget_) {
+        // 当前存在之前设置的显示子控件
+        QWidget* originalParent =
+            child_widget_->property("originalParent").value<QWidget*>();
+        if (originalParent) {
+          if (reusable_) {
+            // 重用模式：恢复原始父窗口
+            qDebug() << "Reusing child widget, restoring parent";
+            if (originalParent) {
+              disconnect(child_widget_, &QObject::destroyed, this,
+                         &TtMaskWidget::handleChildDestroyed);
+              child_widget_->setParent(originalParent);
+              child_widget_->hide();
+            }
+          } else {
+            // 非重用模式：安全删除子窗口
+            qDebug() << "Non-reusable mode, deleting child widget";
+            disconnect(child_widget_, &QObject::destroyed, this,
+                       &TtMaskWidget::handleChildDestroyed);
+            child_widget_->deleteLater();
+            child_widget_ = nullptr;
+          }
+        }
       }
     });
   }
@@ -206,29 +213,80 @@ void TtMaskWidget::startFadeAnimation(bool isShow) {
   fade_animation_->start();
 }
 
+// void TtMaskWidget::processChildWidget(QWidget* childWidget) {
+//   if (!childWidget) {
+//     qWarning() << "Attempted to show a null child widget!";
+//     return;
+//   }
+//   if (childWidget == child_widget_) {
+//     qDebug() << "Child widget is already set!";
+//     return;
+//   }
+//   if (child_widget_) {
+//     if (reusable_) {
+//       child_widget_->hide();
+//     } else {
+//       // 非重用模式
+//       // 断开连接以避免触发handleChildDestroyed
+//       disconnect(child_widget_, &QObject::destroyed, this,
+//                  &TtMaskWidget::handleChildDestroyed);
+//       child_widget_->hide();
+//       child_widget_->deleteLater();
+//       // child_widget_->deleteLater();  // 删除
+//     }
+//     child_widget_ = nullptr;
+//   }
+//   child_widget_ = childWidget;
+//   if (child_widget_) {
+//     child_widget_->setParent(mask_widget_);
+//     child_widget_->show();
+//     connect(child_widget_, &QObject::destroyed, this,
+//             &TtMaskWidget::handleChildDestroyed);
+//   }
+// }
+
 void TtMaskWidget::processChildWidget(QWidget* childWidget) {
-  if (childWidget == child_widget_) {
+  // 处理显示的窗口
+  if (!childWidget) {
+    qWarning() << "Attempted to show a null child widget!";
     return;
   }
-  if (child_widget_) {
+
+  // 保存子窗口的原始父窗口
+  QWidget* originalParent = childWidget->parentWidget();
+
+  // 如果当前已有显示的子窗口，处理它
+  if (child_widget_ && child_widget_ != childWidget) {
+    // 断开之前的信号连接
+    disconnect(child_widget_, &QObject::destroyed, this,
+               &TtMaskWidget::handleChildDestroyed);
+
     if (reusable_) {
+      // 重用模式：将子窗口还原到原始父窗口并隐藏
       child_widget_->hide();
+      // 保持原有的父窗口，不删除
     } else {
-      child_widget_->deleteLater();  // 删除
+      // 非重用模式：隐藏子窗口并标记为稍后删除
+      child_widget_->hide();
+      // 不立即删除，避免在动画过程中访问已删除的窗口
+      // 将删除操作延迟到动画结束
     }
   }
+
+  // 设置新的子窗口
   child_widget_ = childWidget;
-  if (child_widget_) {
-    child_widget_->setParent(mask_widget_);
-    child_widget_->show();
-    connect(child_widget_, &QObject::destroyed, this,
-            &TtMaskWidget::handleChildDestroyed);
-    // if (auto* closable = qobject_cast<QWidget*>(child_widget_)) {
-    //   disconnect(closable, SIGNAL(closed()), this,
-    //              SLOT(hide()));  // 确保断开旧连接
-    //   connect(closable, SIGNAL(closed()), this, SLOT(hide()));
-    // }
-  }
+
+  // 保存原始父窗口信息，用于恢复
+  childWidget->setProperty("originalParent",
+                           QVariant::fromValue(originalParent));
+
+  // 设置到mask_widget_
+  childWidget->setParent(mask_widget_);
+
+  // 连接销毁信号，以便跟踪窗口是否被外部删除
+  connect(childWidget, &QObject::destroyed, this,
+          &TtMaskWidget::handleChildDestroyed,
+          Qt::UniqueConnection);  // 确保连接唯一
 }
 
 QSize TtMaskWidget::calculateChildSize(const QSize& maskSize) const {

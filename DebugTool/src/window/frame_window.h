@@ -100,7 +100,16 @@ public:
   void setSaveStatus(bool state);
 
 signals:
-  void savedChanged(bool saved); // 保存状态改变信号
+  ///
+  /// @brief savedChanged
+  /// @param saved
+  /// 保存状态改变
+  void savedChanged(bool saved);
+  ///
+  /// @brief workStateChanged
+  /// @param saved
+  /// 运行状态改变
+  void workStateChanged(bool saved);
 
 protected:
   virtual void switchToEditMode();

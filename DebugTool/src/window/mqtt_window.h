@@ -29,34 +29,34 @@ class TtRadioButton;
 class TtTextButton;
 
 class SubscripitionManager;
-} // namespace Ui
+}  // namespace Ui
 
 namespace Widget {
 class MqttServerSetting;
 class MqttClientSetting;
 class SubscripitionWidget;
 class MqttMetaSettingWidget;
-} // namespace Widget
+}  // namespace Widget
 
 namespace Core {
 class MqttServer;
 class MqttClient;
-} // namespace Core
+}  // namespace Core
 
 class QtMaterialFlatButton;
 
 namespace Window {
 
-void updateButtonPosition(QsciScintilla *scrollArea, QPushButton *sendButton);
+void updateButtonPosition(QsciScintilla* scrollArea, QPushButton* sendButton);
 
 class ScrollAreaEventFilter : public QObject {
-public:
-  ScrollAreaEventFilter(QsciScintilla *scrollArea, QPushButton *button,
-                        QObject *parent = nullptr)
+ public:
+  ScrollAreaEventFilter(QsciScintilla* scrollArea, QPushButton* button,
+                        QObject* parent = nullptr)
       : QObject(parent), m_scrollArea(scrollArea), m_button(button) {}
 
-protected:
-  bool eventFilter(QObject *watched, QEvent *event) override {
+ protected:
+  bool eventFilter(QObject* watched, QEvent* event) override {
     // 响应视口的尺寸变化或滚动事件
     if (event->type() == QEvent::Resize || event->type() == QEvent::Scroll) {
       updateButtonPosition(m_scrollArea, m_button);
@@ -64,16 +64,16 @@ protected:
     return QObject::eventFilter(watched, event);
   }
 
-private:
-  QsciScintilla *m_scrollArea;
-  QPushButton *m_button;
+ private:
+  QsciScintilla* m_scrollArea;
+  QPushButton* m_button;
 };
 
 class MqttWindow : public FrameWindow {
   Q_OBJECT
-public:
+ public:
   explicit MqttWindow(TtProtocolType::ProtocolRole role,
-                      QWidget *parent = nullptr);
+                      QWidget* parent = nullptr);
   ~MqttWindow();
 
   QString getTitle() const;
@@ -84,67 +84,68 @@ public:
   void setSaveState(bool state) override;
 
   void saveSetting() override;
-  void setSetting(const QJsonObject &config) override;
+  void setSetting(const QJsonObject& config) override;
 
   void switchToDisplayMode();
   void switchToEditMode();
 
-signals:
+ signals:
   void requestSaveConfig();
 
-private:
+ private:
   void init();
   void connectSignals();
 
-  Ui::TtVerticalLayout *main_layout_;
+  Ui::TtVerticalLayout* main_layout_;
 
-  Ui::TtNormalLabel *title_;          // 名称
-  Ui::TtSvgButton *modify_title_btn_; // 修改连接名称
-  Ui::TtSvgButton *save_btn_;         // 保存连接记录
-  Ui::TtSvgButton *on_off_btn_;       // 开启 or 关闭
+  Ui::TtNormalLabel* title_;           // 名称
+  Ui::TtSvgButton* modify_title_btn_;  // 修改连接名称
+  Ui::TtSvgButton* save_btn_;          // 保存连接记录
+  Ui::TtSvgButton* on_off_btn_;        // 开启 or 关闭
 
-  Ui::TtComboBox *fomat_;
-  Ui::TtComboBox *qos_;
-  Ui::TtRadioButton *retain_;
-  Ui::TtLineEdit *send_topic_;
+  Ui::TtComboBox* fomat_;
+  Ui::TtComboBox* qos_;
+  Ui::TtRadioButton* retain_;
+  Ui::TtLineEdit* send_topic_;
 
-  QsciScintilla *editor;
+  QsciScintilla* editor;
 
-  Ui::TtMaskWidget *m_overlay = nullptr;
+  Ui::TtMaskWidget* m_overlay = nullptr;
   // 消息展示框
-  Ui::TtChatView *message_view_;
+  Ui::TtChatView* message_view_;
   // 数据
-  Ui::TtChatMessageModel *message_model_;
+  Ui::TtChatMessageModel* message_model_;
 
-  Widget::MqttClientSetting *mqtt_client_setting_;
+  Widget::MqttClientSetting* mqtt_client_setting_;
 
-  QWidget *original_widget_ = nullptr;
-  QWidget *edit_widget_ = nullptr;
-  Ui::TtLineEdit *title_edit_ = nullptr;
-  QStackedWidget *stack_ = nullptr;
+  QWidget* original_widget_ = nullptr;
+  QWidget* edit_widget_ = nullptr;
+  Ui::TtLineEdit* title_edit_ = nullptr;
+  QStackedWidget* stack_ = nullptr;
 
-  Ui::TtSvgButton *subscriptionBtn;
+  // Ui::TtSvgButton *subscriptionBtn;
+  Ui::TtTextButton* subscriptionBtn;
 
-  QtMaterialFlatButton *send_btn_;
+  QtMaterialFlatButton* send_btn_;
 
-  Core::MqttClient *mqtt_client_;
+  Core::MqttClient* mqtt_client_;
 
-  QStandardItemModel *model;
-  Ui::SubscripitionManager *subscripition_list_;
+  QStandardItemModel* model;
+  Ui::SubscripitionManager* subscripition_list_;
 
-  Widget::SubscripitionWidget *subscripition_widget_ = nullptr;
-  Widget::MqttMetaSettingWidget *meta_widget_ = nullptr;
+  Widget::SubscripitionWidget* subscripition_widget_ = nullptr;
+  Widget::MqttMetaSettingWidget* meta_widget_ = nullptr;
 
-  Ui::TtTextButton *meta_btn_;
+  Ui::TtTextButton* meta_btn_;
 
   bool opened_;
 
   TtProtocolType::ProtocolRole role_;
 
-  Ui::TtMaskWidget *mask_widget_ = nullptr; // 遮罩层
+  Ui::TtMaskWidget* mask_widget_ = nullptr;  // 遮罩层
   QJsonObject config_;
 };
 
-} // namespace Window
+}  // namespace Window
 
-#endif // WINDOW_MQTT_WINDOW_H
+#endif  // WINDOW_MQTT_WINDOW_H

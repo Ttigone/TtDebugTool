@@ -238,6 +238,24 @@ void MqttMetaSettingWidget::init() {
   // main_layout_->addWidget(scroll);
   main_layout_->addWidget(setMetaInfoWidget);
 
+  // main_layout_->, 5));
+  QHBoxLayout *btnLayout = new QHBoxLayout();
+  btnLayout->setContentsMargins(0, 0, 0, 0);
+  cancle_btn_ = new Ui::TtTextButton(tr("Cancle"), this);
+  confirm_btn_ = new Ui::TtTextButton(tr("Confirm"), this);
+  btnLayout->addWidget(cancle_btn_);
+  btnLayout->addWidget(confirm_btn_);
+  main_layout_->addLayout(btnLayout, 0);
+
+  connect(cancle_btn_, &Ui::TtTextButton::clicked, this, [this]() {
+    emit closed();
+    qDebug() << "cancle";
+  });
+  connect(confirm_btn_, &Ui::TtTextButton::clicked, this, [this]() {
+    emit closed();
+    qDebug() << "save";
+  });
+
   connect(plusButton, &Ui::TtSvgButton::clicked, this,
           [this]() { addProperty(); });
 

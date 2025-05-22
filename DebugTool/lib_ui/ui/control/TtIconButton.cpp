@@ -20,7 +20,7 @@ Q_PROPERTY_CREATE_Q_CPP(TtIconButton, QColor, LightHoverIconColor);
 Q_PROPERTY_CREATE_Q_CPP(TtIconButton, QColor, DarkHoverIconColor);
 Q_PROPERTY_CREATE_Q_CPP(TtIconButton, bool, IsSelected);
 
-TtIconButton::TtIconButton(QPixmap pix, QWidget* parent)
+TtIconButton::TtIconButton(QPixmap pix, QWidget *parent)
     : QPushButton(parent), d_ptr(new TtIconButtonPrivate()) {
   Q_D(TtIconButton);
   d->q_ptr = this;
@@ -43,13 +43,75 @@ TtIconButton::TtIconButton(QPixmap pix, QWidget* parent)
       [=](TtThemeType::ThemeMode themeMode) { d->theme_mode_ = themeMode; });
 }
 
-TtIconButton::TtIconButton(TtIconType::IconName awesome, QWidget* parent) {}
+TtIconButton::TtIconButton(TtIconType::IconName awesome, QWidget *parent)
+    : QPushButton(parent), d_ptr(new TtIconButtonPrivate) {
+  Q_D(TtIconButton);
+  d->q_ptr = this;
+  d->pLightHoverColor_ = QColor(0xEA, 0xE9, 0xF0);
+  d->pDarkHoverColor_ = QColor(0x2F, 0x2E, 0x2C);
+  d->pLightIconColor_ = Qt::black;
+  d->pDarkIconColor_ = Qt::white;
+  d->pIsSelected_ = false;
+  d->pBorderRadius_ = 0;
+  d->theme_mode_ = TtTheme::getInstance()->getThemeMode();
+  QFont iconFont = QFont("iconfont");
+  iconFont.setPixelSize(15);
+  this->setFont(iconFont);
+  d->pAwesome_ = awesome;
+  this->setText(QChar((unsigned short)awesome));
+  connect(this, &TtIconButton::pIsSelectedChanged, this, [=]() { update(); });
+  connect(
+      TtTheme::getInstance(), &TtTheme::themeModeChanged, this,
+      [=](TtThemeType::ThemeMode themeMode) { d->theme_mode_ = themeMode; });
+}
 
 TtIconButton::TtIconButton(TtIconType::IconName awesome, int pixelSize,
-                           QWidget* parent) {}
+                           QWidget *parent)
+    : QPushButton(parent), d_ptr(new TtIconButtonPrivate) {
+  Q_D(TtIconButton);
+  d->q_ptr = this;
+  d->pLightHoverColor_ = QColor(0xEA, 0xE9, 0xF0);
+  d->pDarkHoverColor_ = QColor(0x2F, 0x2E, 0x2C);
+  d->pLightIconColor_ = Qt::black;
+  d->pDarkIconColor_ = Qt::white;
+  d->pIsSelected_ = false;
+  d->pBorderRadius_ = 0;
+  d->theme_mode_ = TtTheme::getInstance()->getThemeMode();
+  QFont iconFont = QFont("iconfont");
+  iconFont.setPixelSize(pixelSize);
+  this->setFont(iconFont);
+  d->pAwesome_ = awesome;
+  this->setText(QChar((unsigned short)awesome));
+  connect(this, &TtIconButton::pIsSelectedChanged, this, [=]() { update(); });
+  connect(
+      TtTheme::getInstance(), &TtTheme::themeModeChanged, this,
+      [=](TtThemeType::ThemeMode themeMode) { d->theme_mode_ = themeMode; });
+}
 
 TtIconButton::TtIconButton(TtIconType::IconName awesome, int pixelSize,
-                           int fixedWidth, int fixedHeight, QWidget* parent) {}
+                           int fixedWidth, int fixedHeight, QWidget *parent)
+    : QPushButton(parent), d_ptr(new TtIconButtonPrivate) {
+  Q_D(TtIconButton);
+  // 这里有 bug
+  d->q_ptr = this;
+  d->pLightHoverColor_ = QColor(0xEA, 0xE9, 0xF0);
+  d->pDarkHoverColor_ = QColor(0x2F, 0x2E, 0x2C);
+  d->pLightIconColor_ = Qt::black;
+  d->pDarkIconColor_ = Qt::white;
+  d->pIsSelected_ = false;
+  d->pBorderRadius_ = 0;
+  d->theme_mode_ = TtTheme::getInstance()->getThemeMode();
+  QFont iconFont = QFont("iconfont");
+  iconFont.setPixelSize(pixelSize);
+  this->setFont(iconFont);
+  d->pAwesome_ = awesome;
+  this->setText(QChar((unsigned short)awesome));
+  this->setFixedSize(fixedWidth, fixedHeight);
+  connect(this, &TtIconButton::pIsSelectedChanged, this, [=]() { update(); });
+  connect(
+      TtTheme::getInstance(), &TtTheme::themeModeChanged, this,
+      [=](TtThemeType::ThemeMode themeMode) { d->theme_mode_ = themeMode; });
+}
 
 TtIconButton::~TtIconButton() {}
 
@@ -68,51 +130,51 @@ void TtIconButton::setPixmap(QPixmap pix) {
   d->icon_pix_ = pix.copy();
 }
 
-bool TtIconButton::event(QEvent* event) {
+bool TtIconButton::event(QEvent *event) {
   Q_D(TtIconButton);
   switch (event->type()) {
-    case QEvent::Enter: {
-      if (isEnabled() && !d->pIsSelected_) {
-        d->is_alpha_animation_finished_ = false;
-        QPropertyAnimation* alphaAnimation =
-            new QPropertyAnimation(d, "pHoverAlpha");
-        connect(alphaAnimation, &QPropertyAnimation::valueChanged, this,
-                [=](const QVariant& value) { update(); });
-        connect(alphaAnimation, &QPropertyAnimation::finished, this,
-                [=]() { d->is_alpha_animation_finished_ = true; });
-        alphaAnimation->setDuration(175);
-        alphaAnimation->setStartValue(d->pHoverAlpha_);
-        alphaAnimation->setEndValue(d->theme_mode_ == TtThemeType::Light
-                                        ? d->pLightHoverColor_.alpha()
-                                        : d->pDarkHoverColor_.alpha());
-        alphaAnimation->start(QAbstractAnimation::DeleteWhenStopped);
-      }
-      break;
+  case QEvent::Enter: {
+    if (isEnabled() && !d->pIsSelected_) {
+      d->is_alpha_animation_finished_ = false;
+      QPropertyAnimation *alphaAnimation =
+          new QPropertyAnimation(d, "pHoverAlpha");
+      connect(alphaAnimation, &QPropertyAnimation::valueChanged, this,
+              [=](const QVariant &value) { update(); });
+      connect(alphaAnimation, &QPropertyAnimation::finished, this,
+              [=]() { d->is_alpha_animation_finished_ = true; });
+      alphaAnimation->setDuration(175);
+      alphaAnimation->setStartValue(d->pHoverAlpha_);
+      alphaAnimation->setEndValue(d->theme_mode_ == TtThemeType::Light
+                                      ? d->pLightHoverColor_.alpha()
+                                      : d->pDarkHoverColor_.alpha());
+      alphaAnimation->start(QAbstractAnimation::DeleteWhenStopped);
     }
-    case QEvent::Leave: {
-      if (isEnabled() && !d->pIsSelected_) {
-        d->is_alpha_animation_finished_ = false;
-        QPropertyAnimation* alphaAnimation =
-            new QPropertyAnimation(d, "pHoverAlpha");
-        connect(alphaAnimation, &QPropertyAnimation::valueChanged, this,
-                [=](const QVariant& value) { update(); });
-        connect(alphaAnimation, &QPropertyAnimation::finished, this,
-                [=]() { d->is_alpha_animation_finished_ = true; });
-        alphaAnimation->setDuration(175);
-        alphaAnimation->setStartValue(d->pHoverAlpha_);
-        alphaAnimation->setEndValue(0);
-        alphaAnimation->start(QAbstractAnimation::DeleteWhenStopped);
-      }
-      break;
+    break;
+  }
+  case QEvent::Leave: {
+    if (isEnabled() && !d->pIsSelected_) {
+      d->is_alpha_animation_finished_ = false;
+      QPropertyAnimation *alphaAnimation =
+          new QPropertyAnimation(d, "pHoverAlpha");
+      connect(alphaAnimation, &QPropertyAnimation::valueChanged, this,
+              [=](const QVariant &value) { update(); });
+      connect(alphaAnimation, &QPropertyAnimation::finished, this,
+              [=]() { d->is_alpha_animation_finished_ = true; });
+      alphaAnimation->setDuration(175);
+      alphaAnimation->setStartValue(d->pHoverAlpha_);
+      alphaAnimation->setEndValue(0);
+      alphaAnimation->start(QAbstractAnimation::DeleteWhenStopped);
     }
-    default: {
-      break;
-    }
+    break;
+  }
+  default: {
+    break;
+  }
   }
   return QPushButton::event(event);
 }
 
-void TtIconButton::paintEvent(QPaintEvent* event) {
+void TtIconButton::paintEvent(QPaintEvent *event) {
   Q_D(TtIconButton);
   QPainter painter(this);
   painter.save();
@@ -160,14 +222,14 @@ void TtIconButton::paintEvent(QPaintEvent* event) {
                                         : d->pDarkIconColor_
                        : TtThemeColor(d->theme_mode_, BasicTextDisable));
     painter.drawText(rect(), Qt::AlignCenter,
-                     // QChar((unsigned short)d->pAwesome_));
-                     QChar(0xf00d));
+                     QChar((unsigned short)d->pAwesome_));
+    //  QChar(0xf00d));
   }
   painter.restore();
 }
 
-TtIconButtonPrivate::TtIconButtonPrivate(QObject* parent) : QObject(parent) {}
+TtIconButtonPrivate::TtIconButtonPrivate(QObject *parent) : QObject(parent) {}
 
 TtIconButtonPrivate::~TtIconButtonPrivate() {}
 
-}  // namespace Ui
+} // namespace Ui

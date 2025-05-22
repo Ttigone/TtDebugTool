@@ -19,7 +19,7 @@ void StyleInitFontsResource() {
 
 namespace style {
 
-QString SystemFontTag() { return QString(); }
+QString SystemFontTag(){ return QString(); }
 
 void SetCustomFont(const QString &font) {}
 

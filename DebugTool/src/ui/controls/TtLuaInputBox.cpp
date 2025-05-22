@@ -13,7 +13,7 @@
 
 namespace Ui {
 
-TtLuaInputBox::TtLuaInputBox(bool enableSaveSetting, QWidget* parent)
+TtLuaInputBox::TtLuaInputBox(bool enableSaveSetting, QWidget *parent)
     : QDialog(parent), save_setting_(enableSaveSetting) {
   init();
 }
@@ -21,17 +21,20 @@ TtLuaInputBox::TtLuaInputBox(bool enableSaveSetting, QWidget* parent)
 TtLuaInputBox::~TtLuaInputBox() {
   // 每次关闭后, 栈模态都会关闭
   qDebug() << "delete inpubot";
+  // edit_lua_code_->clear();
 }
 
-void TtLuaInputBox::setLuaCode(const QString& code) {
-  edit_lua_code_->append(code);
+void TtLuaInputBox::setLuaCode(const QString &code) {
+  if (code.isEmpty()) {
+    edit_lua_code_->setText(functionTemplate);
+  } else {
+    edit_lua_code_->append(code);
+  }
   // edit_lua_code_->setCursorPosition();
   edit_lua_code_->SendScintilla(QsciScintilla::SCI_DOCUMENTEND);
 }
 
-QString TtLuaInputBox::getLuaCode() const {
-  return edit_lua_code_->text();
-}
+QString TtLuaInputBox::getLuaCode() const { return edit_lua_code_->text(); }
 
 // void TtLuaInputBox::setEnableSaveSetting(bool enable) {
 //   save_setting_ = enable;
@@ -42,7 +45,8 @@ void TtLuaInputBox::applyChanges() {
 
   qDebug() << "apply";
   // [this, script_listview, buttonGroup] {
-  //           Ui::TtSpecialDeleteButton* button = new Ui::TtSpecialDeleteButton(
+  //           Ui::TtSpecialDeleteButton* button = new
+  //           Ui::TtSpecialDeleteButton(
   //               "TEST", ":/sys/displayport.svg", ":/sys/delete.svg", this);
   //           auto uuid = QUuid::createUuid().toString();
 
@@ -66,7 +70,11 @@ void TtLuaInputBox::init() {
   edit_lua_code_ = new QsciScintilla;
   edit_lua_code_->setMarginType(0, QsciScintilla::NumberMargin);
 
-  QsciLexerLua* luaLexer = new QsciLexerLua(edit_lua_code_);
+  // if (edit_lua_code_->text().isEmpty()) {
+  //   edit_lua_code_->setText(functionTemplate);
+  // }
+
+  QsciLexerLua *luaLexer = new QsciLexerLua(edit_lua_code_);
   // 设置关键字颜色等
   luaLexer->setColor(QColor("#0000ff"), QsciLexerLua::Keyword);
   luaLexer->setColor(QColor("#008800"), QsciLexerLua::Comment);
@@ -77,69 +85,69 @@ void TtLuaInputBox::init() {
   // 应用词法分析器到编辑器
   edit_lua_code_->setLexer(luaLexer);
   // 创建 API 对象用于代码提示
-  QsciAPIs* apis = new QsciAPIs(luaLexer);
+  QsciAPIs *apis = new QsciAPIs(luaLexer);
   addLuaApis(apis);
   enhanceCompletion(edit_lua_code_);
 
   // 主布局
   // QGridLayout* layout = new QGridLayout(this);
-  Ui::TtHorizontalLayout* layout = new Ui::TtHorizontalLayout(this);
+  Ui::TtHorizontalLayout *layout = new Ui::TtHorizontalLayout(this);
   layout->setContentsMargins(QMargins());
   layout->setSpacing(0);
 
-  QListWidget* addFunctionList = new QListWidget;
+  QListWidget *addFunctionList = new QListWidget;
   addFunctionList->setContentsMargins(QMargins());
   addFunctionList->setSpacing(0);
   addFunctionList->setStyleSheet(
       // 设置列表整体背景色
       "QListWidget {"
       "   background-color: white;"
-      "   outline: none;"  // 移除焦点虚线框（关键）
+      "   outline: none;" // 移除焦点虚线框（关键）
       "}"
       // 项选中状态样式
       "QListWidget::item:selected {"
-      "   background: transparent;"  // 强制透明背景
+      "   background: transparent;" // 强制透明背景
       "}"
       // 项悬停状态样式
       "QListWidget::item:hover {"
-      "   background: transparent;"  // 防止悬停变色
+      "   background: transparent;" // 防止悬停变色
       "}"
       // 项按下状态样式
       "QListWidget::item:pressed {"
-      "   background: transparent;"  // 防止按压变色
+      "   background: transparent;" // 防止按压变色
       "}");
 
   // addFunctionList->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   // addFunctionList->setFixedWidth(200);
 
-  QListWidgetItem* item = new QListWidgetItem(addFunctionList);
+  QListWidgetItem *item = new QListWidgetItem(addFunctionList);
   item->setSizeHint(QSize(128, 30));
 
-  QHBoxLayout* buttonLayout = new QHBoxLayout();
+  QHBoxLayout *buttonLayout = new QHBoxLayout();
 
-  TtCodeButton* codeButton = new TtCodeButton(
+  TtCodeButton *codeButton = new TtCodeButton(
       tr("写入数据之后"), ":/sys/code-square.svg", addFunctionList);
   // codeButton->setText(tr("写入数据之后"));
   addFunctionList->setItemWidget(item, codeButton);
-  connect(codeButton, &TtCodeButton::clicked, this, [this] {
-    // 获取函数文本
-    QString functionTemplate =
-        "function getValue(value)\n"
-        "    return value + 1\n"
-        "end\n";
+  // connect(codeButton, &TtCodeButton::clicked, this, [this] {
+  //   // 获取函数文本
+  //   QString functionTemplate = "function getValue(value)\n"
+  //                              " -- value 是解析后的整数值\n"
+  //                              "    return value + 1\n"
+  //                              "end\n";
 
-    appendCodeToEnd(edit_lua_code_, functionTemplate);
-  });
+  //   appendCodeToEnd(edit_lua_code_, functionTemplate);
+  // });
 
   layout->addWidget(edit_lua_code_, 3);
 
-  Ui::TtVerticalLayout* vl = new Ui::TtVerticalLayout();
+  Ui::TtVerticalLayout *vl = new Ui::TtVerticalLayout();
   vl->addWidget(addFunctionList);
 
   if (save_setting_) {
-    Ui::TtTextButton* canclebutton = new Ui::TtTextButton(tr("取消"), this);
+    Ui::TtTextButton *canclebutton = new Ui::TtTextButton(tr("取消"), this);
     canclebutton->setCheckedColor(Qt::cyan);
-    Ui::TtTextButton* savebutton = new Ui::TtTextButton(tr("保存"), this);
+    Ui::TtTextButton *savebutton = new Ui::TtTextButton(tr("保存"), this);
     savebutton->setCheckedColor(Qt::cyan);
 
     buttonLayout->addWidget(canclebutton);
@@ -158,7 +166,8 @@ void TtLuaInputBox::init() {
 
   // connect(savebutton, &Ui::TtTextButton::clicked, this,
   //         [this, script_listview, buttonGroup] {
-  //           Ui::TtSpecialDeleteButton* button = new Ui::TtSpecialDeleteButton(
+  //           Ui::TtSpecialDeleteButton* button = new
+  //           Ui::TtSpecialDeleteButton(
   //               "TEST", ":/sys/displayport.svg", ":/sys/delete.svg", this);
   //           auto uuid = QUuid::createUuid().toString();
 
@@ -173,7 +182,7 @@ void TtLuaInputBox::init() {
   //         &TtLuaInputBox::updateLineNumberWidth);
 }
 
-void TtLuaInputBox::addLuaApis(QsciAPIs* apis) {
+void TtLuaInputBox::addLuaApis(QsciAPIs *apis) {
   // 基本函数
   apis->add("print(value1, value2, ...) -- 打印变量");
   apis->add("tonumber(e [, base]) -- 将e转换为数字");
@@ -253,27 +262,27 @@ void TtLuaInputBox::addLuaApis(QsciAPIs* apis) {
   apis->prepare();
 }
 
-void TtLuaInputBox::enhanceCompletion(QsciScintilla* edit_lua_code_) {
+void TtLuaInputBox::enhanceCompletion(QsciScintilla *edit_lua_code_) {
   // 设置更低的触发阈值
-  edit_lua_code_->setAutoCompletionThreshold(1);  // 输入1个字符就触发
+  edit_lua_code_->setAutoCompletionThreshold(1); // 输入1个字符就触发
 
   // 启用所有来源的自动完成
   edit_lua_code_->setAutoCompletionSource(QsciScintilla::AcsAll);
 
   // 设置自动完成选项
-  edit_lua_code_->setAutoCompletionCaseSensitivity(false);  // 不区分大小写
-  edit_lua_code_->setAutoCompletionReplaceWord(true);  // 替换当前单词
-  edit_lua_code_->setAutoCompletionShowSingle(true);  // 只有一个选项时也显示
+  edit_lua_code_->setAutoCompletionCaseSensitivity(false); // 不区分大小写
+  edit_lua_code_->setAutoCompletionReplaceWord(true);      // 替换当前单词
+  edit_lua_code_->setAutoCompletionShowSingle(true); // 只有一个选项时也显示
 
   // 设置自动完成区域的视觉样式
-  edit_lua_code_->setAutoCompletionFillupsEnabled(false);  // 禁用自动填充
+  edit_lua_code_->setAutoCompletionFillupsEnabled(false); // 禁用自动填充
 
   // 设置函数提示
   edit_lua_code_->setCallTipsStyle(QsciScintilla::CallTipsNoContext);
-  edit_lua_code_->setCallTipsVisible(-1);  // 永久显示，直到用户关闭
+  edit_lua_code_->setCallTipsVisible(-1); // 永久显示，直到用户关闭
   edit_lua_code_->setCallTipsPosition(QsciScintilla::CallTipsBelowText);
-  edit_lua_code_->setCallTipsBackgroundColor(QColor("#FFF8DC"));  // 米色背景
-  edit_lua_code_->setCallTipsForegroundColor(QColor("#000000"));  // 黑色文本
+  edit_lua_code_->setCallTipsBackgroundColor(QColor("#FFF8DC")); // 米色背景
+  edit_lua_code_->setCallTipsForegroundColor(QColor("#000000")); // 黑色文本
   edit_lua_code_->setCallTipsHighlightColor(QColor("#0000FF"));  // 蓝色高亮
 }
 
@@ -291,14 +300,14 @@ void TtLuaInputBox::updateLineNumberWidth() {
 
   // 计算像素宽度
   QFontMetrics metrics(edit_lua_code_->font());
-  int digitWidth = metrics.horizontalAdvance("9");  // 通常9是最宽的数字
-  int pixelWidth = digitWidth * (digits + 1) + 10;  // 额外加一些空间
+  int digitWidth = metrics.horizontalAdvance("9"); // 通常9是最宽的数字
+  int pixelWidth = digitWidth * (digits + 1) + 10; // 额外加一些空间
 
   edit_lua_code_->setMarginWidth(0, pixelWidth);
 }
 
-void TtLuaInputBox::appendCodeToEnd(QsciScintilla* editor,
-                                    const QString& code) {
+void TtLuaInputBox::appendCodeToEnd(QsciScintilla *editor,
+                                    const QString &code) {
   // 获取当前文档的最后一行
   int lastLine = editor->lines() - 1;
 
@@ -320,4 +329,4 @@ void TtLuaInputBox::appendCodeToEnd(QsciScintilla* editor,
   editor->ensureCursorVisible();
 }
 
-}  // namespace Ui
+} // namespace Ui

@@ -1,11 +1,5 @@
 /** QModbus 只能读取小于 10(DEX) 地址的保持寄存器
  *
- *
- *
- *
- *
- *
- *
  */
 
 #ifndef CORE_MODBUS_CLIENT_H
@@ -28,95 +22,101 @@ struct ModbusMasterConfiguration {
   QSerialPort::BaudRate baud_rate;
   QSerialPort::DataBits data_bits;
   QSerialPort::Parity parity;
-  QSerialPort::StopBits stop_bits; // 停止位
-  QString device_id;               // 设备 id
+  QSerialPort::StopBits stop_bits;  // 停止位
+  QString device_id;                // 设备 id
 
   QString address;
   int port;
 
-  ModbusMasterConfiguration(TtModbusProcotol::Type type, const QString &com,
+  ModbusMasterConfiguration(TtModbusProcotol::Type type, const QString& com,
                             QSerialPort::BaudRate baudRate,
                             QSerialPort::DataBits dataBits,
                             QSerialPort::Parity parity,
                             QSerialPort::StopBits stopBits,
-                            const QString &deviceId, const QString &address,
-                            const int &port)
-      : type(type), com(com), baud_rate(baudRate), data_bits(dataBits),
-        parity(parity), stop_bits(stopBits), device_id(deviceId),
-        address(address), port(port) {}
+                            const QString& deviceId, const QString& address,
+                            const int& port)
+      : type(type),
+        com(com),
+        baud_rate(baudRate),
+        data_bits(dataBits),
+        parity(parity),
+        stop_bits(stopBits),
+        device_id(deviceId),
+        address(address),
+        port(port) {}
 };
 
 class ModbusMaster : public QObject {
   Q_OBJECT
-public:
-  ModbusMaster(QObject *parent = nullptr);
+ public:
+  ModbusMaster(QObject* parent = nullptr);
   ~ModbusMaster();
 
-  void setupConfiguration(const ModbusMasterConfiguration &config);
+  void setupConfiguration(const ModbusMasterConfiguration& config);
   bool connectModbusDevice(bool reconnect);
 
   bool isConnected();
   void toDisconnect();
 
-  void readModbusData(const QModbusDataUnit::RegisterType &dataType,
-                      const int &startAddr, const quint16 &size,
-                      const int &serverAddr);
-  bool writeModbusData(const QModbusDataUnit::RegisterType &dataType,
-                       const int &startAddr, const QVector<quint16> &values,
-                       const int &serverAddr);
+  void readModbusData(const QModbusDataUnit::RegisterType& dataType,
+                      const int& startAddr, const quint16& size,
+                      const int& serverAddr);
+  bool writeModbusData(const QModbusDataUnit::RegisterType& dataType,
+                       const int& startAddr, const QVector<quint16>& values,
+                       const int& serverAddr);
 
   ///
   /// @brief readCoilsData
   /// @param addrs
   /// @param serverAddr
   /// 读取地址对应的值
-  void readCoilsData(const QVector<int> &addrs, const int &serverAddr);
+  void readCoilsData(const QVector<int>& addrs, const int& serverAddr);
 
-  void readCoilsData(const int &startAddr, const quint16 &size,
-                     const int &serverAddr);
+  void readCoilsData(const int& startAddr, const quint16& size,
+                     const int& serverAddr);
 
-  void readDiscreteInputsData(const QVector<int> &addrs, const int &serverAddr);
+  void readDiscreteInputsData(const QVector<int>& addrs, const int& serverAddr);
 
-  void readHoldingData(const QVector<int> &addrs, const int &serverAddr);
+  void readHoldingData(const QVector<int>& addrs, const int& serverAddr);
 
-  void readHoldingData(const int &startAddr, const quint16 &size,
-                       const int &serverAddr);
+  void readHoldingData(const int& startAddr, const quint16& size,
+                       const int& serverAddr);
 
-  void readInputRegistersData(const QVector<int> &addrs, const int &serverAddr);
+  void readInputRegistersData(const QVector<int>& addrs, const int& serverAddr);
 
-  void writeCoilsData(const int &startAddr, const QVector<quint16> &values,
-                      const int &serverAddr);
+  void writeCoilsData(const int& startAddr, const QVector<quint16>& values,
+                      const int& serverAddr);
 
-  void writeDiscreteInputsData(const int &startAddr,
-                               const QVector<quint16> &values,
-                               const int &serverAddr);
+  void writeDiscreteInputsData(const int& startAddr,
+                               const QVector<quint16>& values,
+                               const int& serverAddr);
 
-  void writeHoldingData(const int &startAddr, const QVector<quint16> &values,
-                        const int &serverAddr);
+  void writeHoldingData(const int& startAddr, const QVector<quint16>& values,
+                        const int& serverAddr);
 
-  void writeInputRegistersData(const int &startAddr,
-                               const QVector<quint16> &values,
-                               const int &serverAddr);
+  void writeInputRegistersData(const int& startAddr,
+                               const QVector<quint16>& values,
+                               const int& serverAddr);
 
-signals:
+ signals:
   // void dataReceived(const int& startAddr, const QVector<quint16>& data);
-  void dataReceived(const QModbusDataUnit &dataUnit);
-  void errorOccurred(const QString &error);
+  void dataReceived(const QModbusDataUnit& dataUnit);
+  void errorOccurred(const QString& error);
 
-private slots:
+ private slots:
   void stateChanged(QModbusDevice::State state);
 
-private:
+ private:
   void init();
   void configRtuParam();
   void configTcpParam(QString addr = "127.0.0.1", int port = 502);
   void configUdpParam();
   void processNextRequest();
 
-  QModbusClient *modbusDevice = nullptr;
+  QModbusClient* modbusDevice = nullptr;
 
   QQueue<QModbusDataUnit> request_queue_;
-  QSet<QModbusReply *> active_replies_; // 追踪活跃请求
+  QSet<QModbusReply*> active_replies_;  // 追踪活跃请求
 
   bool is_processing_ = false;
 
@@ -125,7 +125,25 @@ private:
       recentWrites_;
 };
 
-} // namespace Core
+class ModbusWorker : public QObject {
+  Q_OBJECT
+ public:
+  explicit ModbusWorker(QObject* parent = nullptr);
+  void setModbusMaster(ModbusMaster* master);
+
+ public slots:
+  void disconnectModbus();
+
+ signals:
+  void disconnectStarted();
+  void disconnectFinished();
+  void disconnectProgress(int percent);
+
+ private:
+  ModbusMaster* modbus_master_ = nullptr;
+};
+
+}  // namespace Core
 
 #elif
 
@@ -133,8 +151,8 @@ private:
 
 class TtModbusRtuClient : public QObject {
   Q_OBJECT
-public:
-  explicit TtModbusRtuClient(QObject *parent = nullptr);
+ public:
+  explicit TtModbusRtuClient(QObject* parent = nullptr);
   ~TtModbusRtuClient();
 
   ///
@@ -146,7 +164,7 @@ public:
   /// @param stopBit
   /// @return
   /// 链接 Rtu 设备
-  bool connect(const QString &port, int baud, char parity, int dataBit,
+  bool connect(const QString& port, int baud, char parity, int dataBit,
                int stopBit);
 
   ///
@@ -219,7 +237,7 @@ public:
   /// @param values
   /// @return
   /// 写多个线圈
-  bool writeCoils(int addr, const QVector<bool> &values);
+  bool writeCoils(int addr, const QVector<bool>& values);
 
   ///
   /// @brief writeRegister
@@ -235,7 +253,7 @@ public:
   /// @param values
   /// @return
   /// 写多个寄存器
-  bool writeRegisters(int addr, const QVector<uint16_t> &values);
+  bool writeRegisters(int addr, const QVector<uint16_t>& values);
 
   ///
   /// @brief lastError
@@ -243,7 +261,7 @@ public:
   /// 获取最后的错误信息
   QString lastError() const;
 
-signals:
+ signals:
   ///
   /// @brief connectionChanged
   /// @param connected
@@ -254,15 +272,15 @@ signals:
   /// @brief communicationError
   /// @param errorMessage
   /// 通信错误信号
-  void communicationError(const QStrin &errorMessage);
+  void communicationError(const QStrin& errorMessage);
 
-private:
-  modbus_t *ctx_;         // modbus 上下文
-  bool connected_;        // 链接状态
-  int slave_address_;     // 从站地址
-  QString error_message_; // 错误信息
+ private:
+  modbus_t* ctx_;          // modbus 上下文
+  bool connected_;         // 链接状态
+  int slave_address_;      // 从站地址
+  QString error_message_;  // 错误信息
 };
 
 #endif
 
-#endif // CORE_MODBUS_CLIENT_H
+#endif  // CORE_MODBUS_CLIENT_H

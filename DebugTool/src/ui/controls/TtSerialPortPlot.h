@@ -30,7 +30,7 @@ public:
 
   // void saveWaveFormData();
   // void saveWaveFormData(const QString &text);
-  bool saveWaveFormData(const QString &text);
+  bool saveWaveFormData(const QString &filePath);
 
 public slots:
   void addGraphs(int channel, const QColor &color = Qt::red);

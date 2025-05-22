@@ -2,6 +2,7 @@
 #define WINDOW_MODBUS_WINDOW_H
 
 #include <QModbusDataUnit>
+#include <QProgressDialog>
 #include <QTimer>
 #include <QWidget>
 
@@ -24,6 +25,7 @@ class TtLineEdit;
 class TtChatView;
 class TtChatMessageModel;
 class TtMaskWidget;
+class TtLabelLineEdit;
 
 class TtModbusPlot;
 } // namespace Ui
@@ -34,6 +36,7 @@ class ModbusClientSetting;
 
 namespace Core {
 class ModbusMaster;
+class ModbusWorker;
 } // namespace Core
 
 namespace Window {
@@ -45,8 +48,6 @@ const QMap<TtModbusRegisterType::Type, QString> TYPE_NAMES = {
     {TtModbusRegisterType::HoldingRegisters, "HoldingRegisters"},
     {TtModbusRegisterType::InputRegisters, "InputRegisters"}};
 
-// class ModbusWindow : public FrameWindow, public Ui::TabWindow::ISerializable
-// {
 class ModbusWindow : public FrameWindow {
   Q_OBJECT
 public:
@@ -87,6 +88,13 @@ private slots:
   void getDiscreteInputsValue();
   void getInputRegistersValue();
 
+  // 在 ModbusWindow 类中添加以下方法
+  void onDisconnectStarted();
+
+  void updateDisconnectProgress(int percent);
+
+  void onDisconnectFinished();
+
 private:
   void init();
   void connectSignals();
@@ -110,7 +118,6 @@ private:
   QWidget *createHoldingRegisterWidget();
   QWidget *createInputRegisterWidget();
 
-  // Ui::TtModbusPlot *customPlot;
   QScopedPointer<Ui::TtModbusPlot> modbus_plot_;
 
   QVector<double> xData, yData;
@@ -120,11 +127,11 @@ private:
 
   Ui::TtVerticalLayout *main_layout_;
 
-  Ui::TtNormalLabel *title_;          // 名称
-  Ui::TtSvgButton *modify_title_btn_; // 修改连接名称
-  Ui::TtSvgButton *save_btn_;         // 保存连接记录
-  Ui::TtSvgButton *on_off_btn_;       // 开启 or 关闭
-  Ui::TtSvgButton *refresh_btn_;
+  Ui::TtNormalLabel *title_{nullptr};          // 名称
+  Ui::TtSvgButton *modify_title_btn_{nullptr}; // 修改连接名称
+  Ui::TtSvgButton *save_btn_{nullptr};         // 保存连接记录
+  Ui::TtSvgButton *on_off_btn_{nullptr};       // 开启 or 关闭
+  Ui::TtSvgButton *refresh_btn_{nullptr};
 
   Widget::ModbusClientSetting *modbus_client_setting_{nullptr};
 
@@ -146,13 +153,20 @@ private:
   Ui::TtModbusTableWidget *input_registers_table_{nullptr};
 
   // 一共只有 4 张表格
-  // QList<Ui::TtModbusTableWidget*> function_table_;
   QHash<TtModbusRegisterType::Type, Ui::TtModbusTableWidget *> function_table_;
+  QList<Ui::TtLabelLineEdit *> origin_address_;
+  QList<Ui::TtLabelLineEdit *> quantity_;
+  QList<QPushButton *> plus_btn_;
 
   QJsonObject config_;
   QTimer refresh_timer_;
 
-  bool opened_;
+  bool opened_{false};
+
+private:
+  QThread worker_thread_;
+  Core::ModbusWorker *modbus_worker_ = nullptr;
+  QProgressDialog *disconnect_progress_ = nullptr;
 };
 
 } // namespace Window

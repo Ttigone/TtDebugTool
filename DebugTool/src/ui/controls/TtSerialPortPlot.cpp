@@ -360,8 +360,10 @@ void TtSerialPortPlot::clearData() {
 // void TtSerialPortPlot::saveWaveFormData(const QString &fileName) {
 bool TtSerialPortPlot::saveWaveFormData(const QString &filePath) {
   if (curves_.isEmpty()) {
+    qDebug() << "没有图像";
     return false;
   }
+  // 以及存在文件了, 就会直接存储
   QFile file(filePath);
   if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
     return false;

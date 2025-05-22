@@ -340,6 +340,8 @@ private:
 
 class Tt_EXPORT TtSpecialDeleteButton : public QWidget {
   Q_OBJECT
+  Q_PROPERTY(int workStateColorAlpha READ workStateColorAlpha WRITE
+                 setWorkStateColorAlpha)
 public:
   explicit TtSpecialDeleteButton(QWidget *parent = nullptr);
   explicit TtSpecialDeleteButton(const QString &name, const QString &icon_path,
@@ -349,12 +351,24 @@ public:
 
   // 在实现文件中添加
   void setChecked(bool checked);
-
   void setTitle(const QString &title) { name_->setText(title); }
+
+  bool workState() const;
+  void setWorkState(bool state);
+
+  // 添加工作状态颜色Alpha属性访问器
+  int workStateColorAlpha() const { return work_state_color_alpha_; }
+  void setWorkStateColorAlpha(int alpha) {
+    if (work_state_color_alpha_ != alpha) {
+      work_state_color_alpha_ = alpha;
+      update();
+    }
+  }
 
 signals:
   void clicked();
   void deleteRequest();
+  void workStateChanged(bool state);
 
 protected:
   void paintEvent(QPaintEvent *event) override;
@@ -372,6 +386,15 @@ private:
   TtElidedLabel *name_;
   TtSvgButton *delete_button_;
   bool old_state_;
+  bool work_state_;
+
+  // 工作状态的视觉属性
+  QColor work_state_color_ = QColor(76, 175, 80); // 工作状态为真时的绿色
+  QColor normal_color_ = Qt::white;               // 正常背景色
+  int pulse_animation_opacity_ = 0;               // 脉冲动画透明度
+  QTimer *pulse_timer_ = nullptr;                 // 脉冲动画定时器
+  QPropertyAnimation *color_animation_ = nullptr; // 颜色过渡动画
+  int work_state_color_alpha_ = 0;
 };
 
 class Tt_EXPORT TtCodeButton : public QWidget {

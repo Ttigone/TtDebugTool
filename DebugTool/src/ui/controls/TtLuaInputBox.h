@@ -8,6 +8,11 @@
 
 namespace Ui {
 
+const QString functionTemplate = "function getValue(value)\n"
+                                 " -- value 是解析后的整数值\n"
+                                 "    return value + 1\n"
+                                 "end\n";
+
 class TtLuaInputBox : public QDialog {
   Q_OBJECT
 public:

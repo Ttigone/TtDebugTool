@@ -39,6 +39,8 @@
 
 #include <QTime>
 
+const QRegularExpression Window::SerialWindow::hexFilterRegex("[^0-9A-Fa-f]");
+
 namespace Window {
 
 SerialWindow::SerialWindow(QWidget *parent)
@@ -66,6 +68,7 @@ SerialWindow::SerialWindow(QWidget *parent)
   worker_thread_->start();
 
   // 初始化完成
+  // 下面有执行到这里, 没有问题
   qDebug() << "SerialWindow 初始化完成: " << this;
 }
 
@@ -117,18 +120,25 @@ QString SerialWindow::getTitle() { return title_->text(); }
 QJsonObject SerialWindow::getConfiguration() const { return config_; }
 
 bool SerialWindow::saveWaveFormData(const QString &fileName) {
-  // if (serial_plot_) {
-  //   qDebug() << "csv";
-  //   serial_plot_->saveWaveFormData();
-  //   return true;
-  // }
   if (!serial_plot_) {
     Ui::TtMessageBar::warning(TtMessageBarType::Top, tr("保存失败"),
                               tr("没有可用的波形数据"), 1500, this);
     return false;
   }
+  qDebug() << "test";
   QString actualFileName;
-
+  // 获取实例, 是否会造成
+  // 获取保存目录
+  QString saveDir = Storage::SettingsManager::instance()
+                        .getSetting("SaveDirectory")
+                        .toString();
+  qDebug() << "saveDir" << saveDir;
+  if (saveDir.isEmpty()) {
+    // 默认使用程序安装目录下的 Data 文件夹
+    saveDir = QCoreApplication::applicationDirPath() + "/Data";
+    // 创建路径目录
+    QDir().mkpath(saveDir);
+  }
   if (fileName.isEmpty()) {
     // 如果没有提供文件名，弹出保存对话框让用户选择
     QString defaultName =
@@ -145,31 +155,37 @@ bool SerialWindow::saveWaveFormData(const QString &fileName) {
       return false;
     }
   } else {
-    // 使用提供的文件名，确保有正确的扩展名
-    actualFileName = fileName;
-    if (!actualFileName.contains("/") && !actualFileName.contains("\\")) {
-      // 如果只有文件名没有路径，添加默认路径
-      actualFileName = QDir::homePath() + "/" + actualFileName;
-    }
-
-    // 确保有.csv扩展名
-    if (!actualFileName.endsWith(".csv", Qt::CaseInsensitive)) {
-      actualFileName += ".csv";
+    if (QFileInfo(fileName).isRelative() && !fileName.contains("/") &&
+        !fileName.contains("\\")) {
+      // 相对路径，使用配置目录
+      actualFileName = saveDir + "/" + fileName;
+      // 确保有.csv扩展名
+      if (!actualFileName.endsWith(".csv", Qt::CaseInsensitive)) {
+        actualFileName += ".csv";
+      }
+    } else {
+      // 绝对路径或包含路径分隔符，使用原路径
+      actualFileName = fileName;
+      if (!actualFileName.endsWith(".csv", Qt::CaseInsensitive)) {
+        actualFileName += ".csv";
+      }
     }
   }
 
   // 调用绘图组件的保存函数
   bool success = serial_plot_->saveWaveFormData(actualFileName);
 
+  // 不需要了
   if (success) {
-    Ui::TtMessageBar::success(
-        TtMessageBarType::Top, tr("保存成功"),
-        tr("波形数据已保存到: %1").arg(QFileInfo(actualFileName).fileName()),
-        1500, this);
+    // Ui::TtMessageBar::success(
+    //     TtMessageBarType::Top, tr("保存成功"),
+    //     tr("波形数据已保存到: %1").arg(QFileInfo(actualFileName).fileName()),
+    //     1500, this);
   } else {
-    Ui::TtMessageBar::error(TtMessageBarType::Top, tr("保存失败"),
-                            tr("无法保存波形数据，请检查文件权限或磁盘空间"),
-                            1500, this);
+    // // BUG 这里又出现一次
+    // Ui::TtMessageBar::error(TtMessageBarType::Top, tr("保存失败"),
+    //                         tr("无法保存波形数据，请检查文件权限或磁盘空间"),
+    //                         1500, this);
   }
   return success;
   // return false;
@@ -303,7 +319,7 @@ void SerialWindow::setSaveStatus(bool state) {
 }
 
 bool SerialWindow::eventFilter(QObject *watched, QEvent *event) {
-  return SerialWindow::eventFilter(watched, event);
+  return FrameWindow::eventFilter(watched, event);
 }
 
 void SerialWindow::setHeartbeartContent() {
@@ -312,8 +328,8 @@ void SerialWindow::setHeartbeartContent() {
     if (heart_beat_type_ == TtTextFormat::TEXT) {
       dataUtf8 = heartbeat_.toUtf8();
     } else if (heart_beat_type_ == TtTextFormat::HEX) {
-      QString hexStr = heartbeat_.remove(QRegularExpression("[^0-9A-Fa-f]"));
-
+      // QString hexStr = heartbeat_.remove(QRegularExpression("[^0-9A-Fa-f]"));
+      QString hexStr = heartbeat_.remove(hexFilterRegex);
       if (hexStr.isEmpty()) {
         qDebug() << "存在无效的十六进制字符";
         return;
@@ -346,7 +362,8 @@ void SerialWindow::sendInstructionTableContent(const QString &text,
     dataUtf8 = text.toUtf8();
   } else if (type == TtTextFormat::HEX) {
     QString hexStr = QString(text);
-    hexStr.remove(QRegularExpression("[^0-9A-Fa-f]"));
+    // hexStr.remove(QRegularExpression("[^0-9A-Fa-f]"));
+    hexStr.remove(hexFilterRegex);
 
     if (hexStr.isEmpty()) {
       qDebug() << "存在无效的十六进制字符";
@@ -597,95 +614,6 @@ void SerialWindow::handleDialogData(const QString &uuid, quint16 channel,
   }
 }
 
-// void SerialWindow::showMessage(const QByteArray &data, bool out) {
-//   QDateTime now = QDateTime::currentDateTime();
-//   QString timestamp = now.toString("[yyyy-MM-dd hh:mm:ss.zzz]");
-//   QString formattedMessage;
-
-//   if (out) {
-//     formattedMessage += "[Tx]";
-//   } else {
-//     formattedMessage += "[Rx]";
-//   }
-
-//   formattedMessage += ' ';
-//   formattedMessage.append(timestamp);
-//   formattedMessage += ' ';
-
-//   if (display_type_ == TtTextFormat::TEXT) {
-//     formattedMessage.append(data);
-//   } else if (display_type_ == TtTextFormat::HEX) {
-//     formattedMessage.append(data.toHex(' ').toUpper().trimmed());
-//   }
-//   terminal_->appendPlainText(formattedMessage);
-
-//   auto *msg = new Ui::TtChatMessage();
-//   msg->setContent(data);
-//   msg->setRawData(data);
-//   msg->setTimestamp(now);
-//   if (out) {
-//     msg->setOutgoing(true);
-//     send_byte_count_ += data.size();
-//     send_byte_->setText(QString(tr("发送字节数:%1
-//     B")).arg(send_byte_count_));
-//   } else {
-//     msg->setOutgoing(false);
-//     recv_byte_count_ += data.size();
-//     recv_byte_->setText(QString(tr("接收字节数:%1
-//     B")).arg(recv_byte_count_));
-//   }
-//   msg->setBubbleColor(QColor("#DCF8C6"));
-//   QList<Ui::TtChatMessage *> list;
-//   list.append(msg);
-//   message_model_->appendMessages(list);
-//   message_view_->scrollToBottom();
-// }
-
-// void SerialWindow::showMessage(const QString &data, bool out) {
-//   QByteArray dataUtf8 = data.toUtf8();
-//   QDateTime now = QDateTime::currentDateTime();
-//   QString timestamp = now.toString("[yyyy-MM-dd hh:mm:ss.zzz]");
-//   QString formattedMessage;
-//   if (out) {
-//     formattedMessage += "[Tx]";
-//   } else {
-//     formattedMessage += "[Rx]";
-//   }
-//   formattedMessage += ' ';
-//   formattedMessage.append(timestamp);
-//   formattedMessage += ' ';
-
-//   if (display_type_ == TtTextFormat::TEXT) {
-//     // TEXT 格式, data 保持, 有问题
-//     formattedMessage.append(data);
-//   } else if (display_type_ == TtTextFormat::HEX) {
-//     qDebug() << "hear" << dataUtf8.toHex(' ').toUpper().trimmed();
-//     formattedMessage.append(dataUtf8.toHex(' ').toUpper().trimmed());
-//   }
-//   terminal_->appendPlainText(formattedMessage);
-
-//   auto *msg = new Ui::TtChatMessage();
-//   msg->setContent(data);
-//   msg->setRawData(data.toUtf8());
-//   msg->setTimestamp(now);
-//   if (out) {
-//     msg->setOutgoing(true);
-//     send_byte_count_ += data.size();
-//     send_byte_->setText(QString(tr("发送字节数:%1
-//     B")).arg(send_byte_count_));
-//   } else {
-//     msg->setOutgoing(false);
-//     recv_byte_count_ += data.size();
-//     recv_byte_->setText(QString(tr("接收字节数:%1
-//     B")).arg(recv_byte_count_));
-//   }
-//   msg->setBubbleColor(QColor("#DCF8C6"));
-//   QList<Ui::TtChatMessage *> list;
-//   list.append(msg);
-//   message_model_->appendMessages(list);
-//   message_view_->scrollToBottom();
-// }
-
 void SerialWindow::sendMessage(const QString &data, TtTextFormat::Type type) {
   QByteArray dataUtf8;
   // 预处理的数据
@@ -694,7 +622,8 @@ void SerialWindow::sendMessage(const QString &data, TtTextFormat::Type type) {
   if (type == TtTextFormat::HEX) {
     QString hexStr = data;
     // 移除所有非十六进制字符
-    hexStr = hexStr.remove(QRegularExpression("[^0-9A-Fa-f]"));
+    // hexStr = hexStr.remove(QRegularExpression("[^0-9A-Fa-f]"));
+    hexStr = hexStr.remove(hexFilterRegex);
     if (hexStr.length() % 2 != 0) {
       for (int i = 0; i < hexStr.length(); i += 2) {
         if (i + 1 >= hexStr.length()) {
@@ -1037,11 +966,11 @@ void SerialWindow::showErrorMessage(const QString &text) {
   Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""), text, 1500, this);
   on_off_btn_->setChecked(false);
   opened_ = false;
-  // serial_setting_->setControlState(true);
   setControlState(!opened_);
   send_package_timer_->stop();
   heartbeat_timer_->stop();
   msg_queue_.clear();
+  emit workStateChanged(false);
 }
 
 void SerialWindow::dataReceived(const QByteArray &data) {
@@ -1057,13 +986,9 @@ void SerialWindow::dataReceived(const QByteArray &data) {
   // auto str = QString::fromUtf8(data);
   // auto hexstr = QByteArray::fromHex(str.toUtf8());
   // qDebug() << "hex: " << hexstr;
-
   showMessage(data, false);
-
   // 上面只对 receive_buffer_ 处理
-
   // serial_plot_->saveWaveFormData();
-
   // 导出 csv 格式. 在 menu 中实现
 }
 
@@ -1246,6 +1171,8 @@ void SerialWindow::init() {
   graphBtn->setSvgSize(18, 18);
   graphBtn->setColors(Qt::black, Qt::blue);
   addDisplayWidget(graphBtn, graphSpiltter);
+
+  setControlState(true);
 }
 
 void SerialWindow::setSerialSetting() {
@@ -1255,7 +1182,6 @@ void SerialWindow::setSerialSetting() {
   serial_setting_->setSerialPortsParityBit();
   serial_setting_->setSerialPortsStopBit();
   serial_setting_->setSerialPortsFluidControl();
-
   serial_setting_->displayDefaultSetting();
 }
 
@@ -1265,22 +1191,22 @@ void SerialWindow::connectSignals() {
   connect(save_btn_, &Ui::TtSvgButton::clicked, this,
           &SerialWindow::saveSetting);
 
-  connect(on_off_btn_, &Ui::TtSvgButton::clicked, [this]() {
+  connect(on_off_btn_, &Ui::TtSvgButton::clicked, this, [this]() {
     // // 检查是否处于打开状态
     // serial_port 已经移动到了 工作线程中
     // 将openSerialPort的调用通过Qt的信号槽机制排队到worker_thread_中执行，而不是直接在主线程调用
+    // BUG 当前点击开启后, 没办法继续点击了
     if (opened_) {
       qDebug() << "close";
-      // 关闭串口时也需跨线程调用
       QMetaObject::invokeMethod(serial_port_, "closeSerialPort",
                                 Qt::QueuedConnection);
-      // serial_port_->closeSerialPort();
       opened_ = false;
       on_off_btn_->setChecked(false);
       send_package_timer_->stop();
       heartbeat_timer_->stop();
       // 清空待发送数组
       msg_queue_.clear();
+      emit workStateChanged(false);
     } else {
       // 获取配置后通过 invokeMethod 调用
       Core::SerialPortConfiguration cfg =
@@ -1291,22 +1217,22 @@ void SerialWindow::connectSignals() {
       qDebug() << "serialopen";
       opened_ = true;
       on_off_btn_->setChecked(true);
-      // 发送包可以不需要间隔
       send_package_timer_->start();
 
-      // 心跳需要间隔
       if (heartbeat_timer_->interval() != 0) {
         heartbeat_timer_->start();
       } else {
         heartbeat_timer_->stop();
       }
+      // 处于工作信号
+      emit workStateChanged(true);
     }
     setControlState(!opened_);
   });
 
   connect(send_btn_, &QtMaterialFlatButton::clicked, this,
           qOverload<>(&SerialWindow::sendMessageToPort));
-  connect(serial_setting_, &Widget::SerialSetting::showScriptSetting,
+  connect(serial_setting_, &Widget::SerialSetting::showScriptSetting, this,
           [this]() { lua_code_->show(); });
 
   connect(serial_setting_, &Widget::SerialSetting::sendPackageMaxSizeChanged,
@@ -1379,7 +1305,8 @@ void SerialWindow::connectSignals() {
           (heart_beat_type_ == TtTextFormat::HEX && isEnableHeartbeart());
       if (isHexMode) {
         // qDebug() << "this HEX MODE";
-        QString hexStr = package.remove(QRegularExpression("[^0-9A-Fa-f]"));
+        // QString hexStr = package.remove(QRegularExpression("[^0-9A-Fa-f]"));
+        QString hexStr = package.remove(hexFilterRegex);
         for (int i = 0; i < hexStr.length(); i += 2) {
           if (i + 1 >= hexStr.length()) {
             // 在未成对的位置前插入0

@@ -3,6 +3,7 @@
 
 #include "Def.h"
 #include "core/serial_port.h"
+#include "widget/frame_setting.h"
 
 namespace Ui {
 
@@ -19,7 +20,8 @@ struct SerialPortConfiguration;
 namespace Widget {
 
 // 添加一个打开 drawer 的信号, 检测 当前的 widget 宽度, 外部使用改变
-class SerialSetting : public QWidget {
+// class SerialSetting : public QWidget {
+class SerialSetting : public FrameSetting {
   Q_OBJECT
 public:
   SerialSetting(QWidget *parent = nullptr);
@@ -36,14 +38,14 @@ public:
 signals:
   void drawerStateChanged(bool state);
 
-signals:
-  void settingChanged();
-  void showScriptSetting();
-  void sendPackageMaxSizeChanged(uint16_t size);
-  void sendPackageIntervalChanged(uint16_t interval);
-  void heartbeatInterval(uint32_t interval);
-  void heartbeatContentChanged(QString content);
-  void heartbeatType(TtTextFormat::Type type);
+  // signals:
+  // void settingChanged();
+  // void showScriptSetting();
+  // void sendPackageMaxSizeChanged(uint16_t size);
+  // void sendPackageIntervalChanged(uint16_t interval);
+  // void heartbeatInterval(uint32_t interval);
+  // void heartbeatContentChanged(QString content);
+  // void heartbeatType(TtTextFormat::Type type);
 
 public slots:
   void setSerialPortsName();

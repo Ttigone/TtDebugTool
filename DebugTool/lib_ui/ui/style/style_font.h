@@ -8,7 +8,7 @@
 
 namespace style {
 
-[[nodiscard]] const QString& SystemFontTag();
+QString SystemFontTag();
 void SetCustomFont(const QString& font);
 
 enum class FontFlag : uchar {

@@ -532,10 +532,9 @@ void MainWindow::compileTsFilesFinished() {
     qWarning() << "Language directory not exists!";
     return;
   }
-
+  // 当前的语言
   QString currentLoadedFile =
       Lang::TtTranslationManager::instance().currentLanguage();
-  qDebug() << currentLoadedFile;
   // 搜索 .qm
   QStringList qmFiles = languageDir.entryList(QStringList("*.qm"), QDir::Files);
   // 动态生成语言菜单
@@ -557,10 +556,23 @@ void MainWindow::compileTsFilesFinished() {
 }
 
 void MainWindow::saveCsvFile() {
+  // 路径
+  // 缺少设置路径的地方, 不然默认设置到 C 盘的用户目录下面,
+  // 获取保存路径，优先使用用户配置的路径，如果没有则使用默认路径
+  QString saveDirectory = Storage::SettingsManager::instance()
+                              .getSetting("SaveDirectory")
+                              .toString();
+  if (saveDirectory.isEmpty()) {
+    qDebug() << "no setitngs";
+    // 默认使用程序安装目录下的 Data 文件夹
+    saveDirectory = QCoreApplication::applicationDirPath() + "/Data";
+    // 创建路径目录
+    QDir().mkpath(saveDirectory);
+  }
+
   // 收集所有打开的 SerialWindow
   QList<QPair<QString, Window::SerialWindow *>> serialWindows;
 
-  // 1. 先检查当前活动窗口
   auto currentWidget =
       qobject_cast<Window::SerialWindow *>(tabWidget_->currentWidget());
   if (currentWidget) {
@@ -606,6 +618,7 @@ void MainWindow::saveCsvFile() {
   // 保存所有创建的复选框和文件名输入框
   QList<QPair<QCheckBox *, QLineEdit *>> windowControls;
 
+  // 对话框中 文件名输入框
   // 为每个窗口添加选择框和文件名输入
   for (int i = 0; i < serialWindows.size(); ++i) {
     // 创建一个水平布局容器
@@ -615,7 +628,7 @@ void MainWindow::saveCsvFile() {
 
     // 创建复选框
     QCheckBox *checkbox = new QCheckBox(serialWindows[i].first, rowWidget);
-    checkbox->setChecked(i == 0); // 默认选中第一个
+    checkbox->setChecked(i == 0);
     rowLayout->addWidget(checkbox, 1);
 
     // 创建文件名输入框
@@ -627,6 +640,12 @@ void MainWindow::saveCsvFile() {
     // 占位文本
     fileNameEdit->setPlaceholderText(tr("输入保存文件名"));
     rowLayout->addWidget(fileNameEdit, 2);
+
+    // 保存路径的存放位置
+    // 显示当前保存路径
+    QLabel *pathLabel =
+        new QLabel(tr("保存到: %1").arg(saveDirectory), rowWidget);
+    rowLayout->addWidget(pathLabel);
 
     // 将控件保存到列表
     // 水平的 选择框以及输入框
@@ -655,43 +674,33 @@ void MainWindow::saveCsvFile() {
   QCheckBox *saveToDatabase = new QCheckBox(tr("同时保存到数据库"), container);
   mainLayout->addWidget(saveToDatabase);
 
+  // 总选框之上添加一个路径按钮
+  // 添加更改保存路径的按钮
+  QPushButton *changePathBtn = new QPushButton(tr("更改保存路径"), container);
+  connect(changePathBtn, &QPushButton::clicked, [this, &saveDirectory]() {
+    QString newPath = QFileDialog::getExistingDirectory(
+        this, tr("选择保存目录"), saveDirectory,
+        QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+
+    if (!newPath.isEmpty()) {
+      saveDirectory = newPath;
+      // 保存到设置
+      Storage::SettingsManager::instance().setSetting("SaveDirectory",
+                                                      saveDirectory);
+
+      // 更新UI中显示的路径
+      // 更新路径标签
+      // pathLabel->setText(tr("保存到: %1").arg(saveDirectory));
+    }
+  });
+  mainLayout->addWidget(changePathBtn);
+
   // 上方 container 作为主显示窗口
   dialog->setCentralWidget(container);
   dialog->setLeftButtonText(tr("取消"));
   dialog->setRightButtonText(tr("保存"));
 
   connect(dialog, &Ui::TtContentDialog::rightButtonClicked, dialog, [=]() {
-    // 点击保存
-    // int selectedId = buttonGroup->checkedId();
-    // if (selectedId >= 0 && selectedId < serialWindows.size()) {
-    //   auto selectedWindow = serialWindows[selectedId].second;
-    //   bool success = selectedWindow->saveWaveFormData();
-
-    //   if (success) {
-    //     // 如勾选了保存到数据库，则执行数据库保存
-    //     if (saveToDatabase->isChecked()) {
-    //       // bool dbSuccess = selectedWindow->saveWaveFormToDatabase();
-    //       bool dbSuccess = true;
-    //       if (dbSuccess) {
-    //         Ui::TtMessageBar::success(TtMessageBarType::Top, tr("保存成功"),
-    //                                   tr("波形数据已保存为CSV文件和数据库"),
-    //                                   2000, this);
-    //       } else {
-    //         Ui::TtMessageBar::warning(
-    //             TtMessageBarType::Top, tr("部分保存成功"),
-    //             tr("波形数据已保存为CSV文件，但保存到数据库失败"), 2000,
-    //             this);
-    //       }
-    //     } else {
-    //       Ui::TtMessageBar::success(TtMessageBarType::Top, tr("保存成功"),
-    //                                 tr("波形数据已保存为CSV文件"), 2000,
-    //                                 this);
-    //     }
-    //   } else {
-    //     Ui::TtMessageBar::error(TtMessageBarType::Top, tr("保存失败"),
-    //                             tr("保存波形数据时出现错误"), 2000, this);
-    //   }
-    // }
     int successCount = 0;  // 成功
     int failCount = 0;     // 失败
     int selectedCount = 0; // 选择的个数
@@ -720,12 +729,17 @@ void MainWindow::saveCsvFile() {
 
         // 调用 SerialWindow 的保存函数, 文件名传入 filename
         // 保存CSV文件
-        bool success = selectedWindow->saveWaveFormData(filename);
+        // bool success = selectedWindow->saveWaveFormData(filename);
+        // 构建完整文件路径
+        QString fullPath = QDir(saveDirectory).filePath(filename + ".csv");
+        qDebug() << "保存的路径: " << fullPath;
+        bool success = selectedWindow->saveWaveFormData(fullPath);
 
         // // 如果选择了保存到数据库
         // if (success && saveToDatabase->isChecked()) {
         //   // bool dbSuccess =
-        //   selectedWindow->saveWaveFormToDatabase(filename); bool dbSuccess =
+        //   selectedWindow->saveWaveFormToDatabase(filename); bool dbSuccess
+        // =
         //   true; // 这里应实际调用数据库保存方法 if (!dbSuccess) {
         //     Ui::TtMessageBar::warning(
         //         TtMessageBarType::Top, tr("部分保存成功"),
@@ -1447,7 +1461,6 @@ void MainWindow::registerTabWidget() {
         // return widget;
 
         Window::SerialWindow *serial = new Window::SerialWindow();
-        // qDebug() << "Create SerialWindow: " << runtime.elapseMilliseconds();
         connect(serial, &Window::SerialWindow::requestSaveConfig, this,
                 [this, serial]() {
                   // qDebug() << "request save";
@@ -1462,8 +1475,13 @@ void MainWindow::registerTabWidget() {
                       "Serial+" + uuid, serial->getConfiguration());
                   Ui::TtMessageBar::success(TtMessageBarType::Top, "",
                                             tr("保存成功"), 1000, this);
-                  // qDebug() << "save sucess";
                 });
+        connect(serial, &Window::SerialWindow::workStateChanged, this,
+                [this, serial](bool state) {
+                  const auto &uuid = tabWidget_->getCurrentWidgetUUid(serial);
+                  buttonGroup->setSpecificOptionStatus(uuid, state);
+                });
+
         return serial;
       },
       tr("未命名的串口连接"));
@@ -1486,6 +1504,12 @@ void MainWindow::registerTabWidget() {
                   Ui::TtMessageBar::success(TtMessageBarType::Top, "",
                                             tr("保存成功"), 1000);
                 });
+        connect(tcpClient, &Window::TcpWindow::workStateChanged, this,
+                [this, tcpClient](bool state) {
+                  const auto &uuid =
+                      tabWidget_->getCurrentWidgetUUid(tcpClient);
+                  buttonGroup->setSpecificOptionStatus(uuid, state);
+                });
         return tcpClient;
       },
       tr("未命 TCP 客户端连接"));
@@ -1506,6 +1530,12 @@ void MainWindow::registerTabWidget() {
                       "UdpClient+" + uuid, udpClient->getConfiguration());
                   Ui::TtMessageBar::success(TtMessageBarType::Top, "",
                                             tr("保存成功"), 1000);
+                });
+        connect(udpClient, &Window::UdpWindow::workStateChanged, this,
+                [this, udpClient](bool state) {
+                  const auto &uuid =
+                      tabWidget_->getCurrentWidgetUUid(udpClient);
+                  buttonGroup->setSpecificOptionStatus(uuid, state);
                 });
         return udpClient;
       },
@@ -1529,6 +1559,12 @@ void MainWindow::registerTabWidget() {
                   Ui::TtMessageBar::success(TtMessageBarType::Top, "",
                                             tr("保存成功"), 1000, this);
                 });
+        connect(mqttClient, &Window::MqttWindow::workStateChanged, this,
+                [this, mqttClient](bool state) {
+                  const auto &uuid =
+                      tabWidget_->getCurrentWidgetUUid(mqttClient);
+                  buttonGroup->setSpecificOptionStatus(uuid, state);
+                });
         return mqttClient;
       },
       tr("未命名的 MQTT 客户端"));
@@ -1550,6 +1586,12 @@ void MainWindow::registerTabWidget() {
                   Ui::TtMessageBar::success(TtMessageBarType::Top, "",
                                             tr("保存成功"), 1000);
                 });
+        connect(modbusClient, &Window::ModbusWindow::workStateChanged, this,
+                [this, modbusClient](bool state) {
+                  const auto &uuid =
+                      tabWidget_->getCurrentWidgetUUid(modbusClient);
+                  buttonGroup->setSpecificOptionStatus(uuid, state);
+                });
         return modbusClient;
       },
       tr("未命名的 Modbus 主机"));
@@ -1570,6 +1612,12 @@ void MainWindow::registerTabWidget() {
                       "TcpServer+" + uuid, tcpServer->getConfiguration());
                   Ui::TtMessageBar::success(TtMessageBarType::Top, "",
                                             tr("保存成功"), 1000);
+                });
+        connect(tcpServer, &Window::TcpWindow::workStateChanged, this,
+                [this, tcpServer](bool state) {
+                  const auto &uuid =
+                      tabWidget_->getCurrentWidgetUUid(tcpServer);
+                  buttonGroup->setSpecificOptionStatus(uuid, state);
                 });
         return tcpServer;
       },
@@ -1594,6 +1642,12 @@ void MainWindow::registerTabWidget() {
 
                   Ui::TtMessageBar::success(TtMessageBarType::Top, "",
                                             tr("保存成功"), 1000, this);
+                });
+        connect(udpServer, &Window::UdpWindow::workStateChanged, this,
+                [this, udpServer](bool state) {
+                  const auto &uuid =
+                      tabWidget_->getCurrentWidgetUUid(udpServer);
+                  buttonGroup->setSpecificOptionStatus(uuid, state);
                 });
         return udpServer;
       },
@@ -1646,6 +1700,7 @@ void MainWindow::addDifferentConfiguration(TtFunctionalCategory::Category type,
   default:
     break;
   }
+  // 这里去创建按钮, 按钮的状态在这里去改变
   buttonGroup->addButton(uuid, static_cast<int>(role), button);
 }
 
@@ -1683,42 +1738,23 @@ void MainWindow::changeLanguage(const QString &qmFile) {
 
   // dialog->show();
 
-  Ui::TtContentDialog *dialog = new Ui::TtContentDialog(this);
-  dialog->setLeftButtonText(tr("立马重启"));
-  dialog->setRightButtonText(tr("稍后重启"));
+  // Ui::TtContentDialog *dialog = new Ui::TtContentDialog(this);
+  Ui::TtContentDialog *dialog = new Ui::TtContentDialog(
+      Qt::ApplicationModal, true,
+      Ui::TtContentDialog::LayoutSelection::TWO_OPTIONS, this);
+  dialog->setAttribute(Qt::WA_DeleteOnClose); // 二次删除的情况
+  dialog->setLeftButtonText(tr("稍后重启"));
+  dialog->setRightButtonText(tr("立马重启"));
   dialog->setCenterText(tr("已切换语言, 是否立马重启"));
-
-  QPointer<Ui::TtContentDialog> dialogPtr(dialog);
-
-  connect(dialog, &Ui::TtContentDialog::leftButtonClicked, this,
-          [dialogPtr, this]() {
-            if (dialogPtr) {
-              dialogPtr->accept();
-            }
-            // 2. 重启应用
-            restartApplication();
-          });
-  connect(dialog, &Ui::TtContentDialog::rightButtonClicked, this,
-          [dialogPtr, this]() {
-            if (dialogPtr) {
-              dialogPtr->reject();
-            }
-          });
-
-  dialog->exec();
-  // 需要手动释放
-  delete dialog;
-
-  // if (translator_) {
-  //   qApp->removeTranslator(translator_);
-  //   delete translator_;
-  // }
-  // translator_ = new QTranslator(this);
-  // // 安装的时候, 这些会放在哪里 ?
-  // if (translator_->load("F:/MyProject/DebugTool/DebugTool/res/language/" +
-  //                       qmFile)) {
-  //   qApp->installTranslator(translator_);
-  // }
+  connect(dialog, &Ui::TtContentDialog::leftButtonClicked, dialog,
+          &QDialog::reject);
+  connect(dialog, &Ui::TtContentDialog::rightButtonClicked, dialog,
+          &QDialog::accept); // 右侧按钮 -> accept()
+  const int result = dialog->exec();
+  if (result == QDialog::Accepted) {
+    restartApplication();
+  } else {
+  }
 }
 
 void MainWindow::saveLanguageSetting(const QString &language) {
@@ -1863,7 +1899,6 @@ void MainWindow::processConfigsByType(
   // 不同类型的配置项
   // uuid, config
   for (auto it = configs.constBegin(); it != configs.constEnd(); ++it) {
-    qDebug() << "uuid";
     const QString &uuid = it.key();      // uuid
     const QJsonObject &obj = it.value(); // obj
 

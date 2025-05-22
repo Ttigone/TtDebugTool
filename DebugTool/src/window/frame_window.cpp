@@ -25,7 +25,6 @@
 
 #include <QTableView>
 #include <Qsci/qsciscintilla.h>
-// #include <Qscintilla/include/Qsci/qsciscintilla.h>
 
 namespace Window {
 
@@ -361,32 +360,23 @@ void FrameWindow::initSignalsConnection() {
   connect(tabs_, &QtMaterialTabs::currentChanged, this,
           [this](int index) { display_widget_->setCurrentIndex(index); });
 
-  connect(clear_history_, &Ui::TtSvgButton::clicked, [this]() {
+  connect(clear_history_, &Ui::TtSvgButton::clicked, this, [this]() {
     message_model_->clearModelData();
     terminal_->clear();
   });
 
   connect(this, &FrameWindow::savedChanged, this, [this](bool saved) {
-    // BUG 会进入两次的信号
-    // 有对应的信号, 但是 btn 的颜色没有改变
-    // 槽函数没有执行
-    qDebug() << "保存状态已改变";
     if (saved) {
-      // 已保存状态 - 使用正常颜色
-      qDebug() << "Saving";
       // 为什么显示的是第二个颜色
-      save_btn_->setColors(QColor("#2196F3"), QColor("#2196F3")); // 黑色/蓝色
+      save_btn_->setColors(QColor(33, 150, 243), QColor(33, 150, 243));
       save_btn_->setToolTip(tr("配置已保存"));
       // 进入了并成功保存
     } else {
-      // 为什么会进入两次
-      qDebug() << "no Saving";
       // 未保存状态 - 使用提示颜色
-      save_btn_->setColors(QColor("#F44336"), QColor("#FF5252")); // 红色系
+      save_btn_->setColors(QColor(244, 64, 54), QColor(244, 64, 54)); // 红色系
       save_btn_->setToolTip(tr("有未保存的更改，点击保存"));
     }
   });
-  // emit savedChanged(saved_); // 初始化时发出信号
 }
 
 bool FrameWindow::isValidHexString(const QString &hexString,

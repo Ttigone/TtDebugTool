@@ -5,6 +5,8 @@
 #include <QStyledItemDelegate>
 #include <QWidget>
 
+#include "widget/frame_setting.h"
+
 namespace Ui {
 class TtLabelComboBox;
 class TtLabelBtnComboBox;
@@ -21,10 +23,10 @@ struct ModbusMasterConfiguration;
 
 namespace Widget {
 
-class ModbusClientSetting : public QWidget {
+// class ModbusClientSetting : public QWidget {
+class ModbusClientSetting : public FrameSetting {
   Q_OBJECT
 public:
-  // BUG 重载
   explicit ModbusClientSetting(QWidget *parent = nullptr);
   ~ModbusClientSetting();
 
@@ -50,7 +52,6 @@ signals:
   void drawerStateChanged(bool state);
 
 signals:
-  void settingChanged();
   void autoRefreshStateChanged(bool enable);
   void refreshIntervalChanged(uint32_t interval);
   void graphNumsChanged(quint16 nums);
@@ -62,7 +63,6 @@ public slots:
   void setSerialPortsDataBit();
   void setSerialPortsParityBit();
   void setSerialPortsStopBit();
-
   void setControlState(bool state);
   quint32 getRefreshInterval();
 

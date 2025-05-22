@@ -134,10 +134,12 @@ void TtChannelButtonEditorDialog::init() {
     // 重新设置回原有的代码, 方便下次编辑, 主控在 SerialWindow 中
     Ui::TtLuaInputBox lua_codec(false, this);
     // 显示副本
+    // 这里会设置之前的文本
     lua_codec.setLuaCode(lua_code_copy_);
 
     lua_codec.exec();
     // 先保存到副本中
+    // BUG 为什么会递增
     lua_code_copy_ = lua_codec.getLuaCode();
 
     qDebug() << "copy: " << lua_code_copy_;

@@ -65,13 +65,14 @@ set(RES_QRC
 if (${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(${PROJECT_NAME}
             MANUAL_FINALIZATION
+            WIN32
             ${PROJECT_SOURCES}
             ${RES_QRC}
             ${PROJECT_HEADER_FILES}
             ${PROJECT_SOURCE_FILES}
     )
 else()
-  add_executable(${PROJECT_NAME})
+    add_executable(${PROJECT_NAME} WIN32)
     target_sources(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCES} ${RES_QRC})
 endif ()
 

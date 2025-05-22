@@ -34,7 +34,9 @@ TtSwitchButton::TtSwitchButton(const QString& text, QWidget* parent)
   animation->setEasingCurve(QEasingCurve::OutBounce);
 }
 
-TtSwitchButton::~TtSwitchButton() {}
+TtSwitchButton::~TtSwitchButton() {
+  qDebug() << "delete TtSwitchButton";
+}
 
 bool TtSwitchButton::isChecked() const {
   return checked;

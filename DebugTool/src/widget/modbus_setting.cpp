@@ -14,7 +14,8 @@
 
 namespace Widget {
 
-ModbusClientSetting::ModbusClientSetting(QWidget* parent) : QWidget(parent) {
+ModbusClientSetting::ModbusClientSetting(QWidget *parent)
+    : FrameSetting(parent) {
   init();
 }
 
@@ -33,7 +34,7 @@ ModbusClientSetting::getModbusClientConfiguration() {
       port_->currentText().toInt());
 }
 
-void ModbusClientSetting::setOldSettings(const QJsonObject& config) {
+void ModbusClientSetting::setOldSettings(const QJsonObject &config) {
   if (config.isEmpty()) {
     return;
   }
@@ -91,12 +92,12 @@ void ModbusClientSetting::setOldSettings(const QJsonObject& config) {
   graph_capacity_->setText(graphCapacity);
 }
 
-void ModbusClientSetting::setModbusClientSetting(const QJsonObject& obj) {
+void ModbusClientSetting::setModbusClientSetting(const QJsonObject &obj) {
   host_->setText("127.0.0.1");
   port_->setText("502");
 }
 
-const QJsonObject& ModbusClientSetting::getModbusClientSetting() {
+const QJsonObject &ModbusClientSetting::getModbusClientSetting() {
   auto config = getModbusClientConfiguration();
   QJsonObject linkSetting;
   linkSetting.insert("LinkType", QJsonValue(config.type));
@@ -140,7 +141,7 @@ void ModbusClientSetting::setSerialPortsName() {
   const auto serialPortInfos = QSerialPortInfo::availablePorts();
   path_->body()->clear();
 
-  for (const QSerialPortInfo& portInfo : serialPortInfos) {
+  for (const QSerialPortInfo &portInfo : serialPortInfos) {
     QString portName = (portInfo.portName() + "-" + portInfo.description());
     path_->addItem(portName, portInfo.portName());
   }
@@ -204,12 +205,8 @@ quint32 ModbusClientSetting::getRefreshInterval() {
 void ModbusClientSetting::init() {
   main_layout_ = new Ui::TtVerticalLayout(this);
 
-  QList<QComboBox*> comboBoxes;
-  QList<QLineEdit*> lineEdits;
-  QList<Ui::TtDrawer*> drawers;
-
-  QWidget* linkSettingWidget = new QWidget(this);
-  Ui::TtVerticalLayout* linkSettingWidgetLayout =
+  QWidget *linkSettingWidget = new QWidget(this);
+  Ui::TtVerticalLayout *linkSettingWidgetLayout =
       new Ui::TtVerticalLayout(linkSettingWidget);
   link_type_ = new Ui::TtLabelComboBox(tr("连接类型:"), linkSettingWidget);
 
@@ -229,16 +226,15 @@ void ModbusClientSetting::init() {
   refresh_interval_ =
       new Ui::TtLabelLineEdit(tr("刷新间隔(ms)"), linkSettingWidget);
 
-  comboBoxes << link_type_->body();
-  comboBoxes << path_->body();
-  comboBoxes << baud_->body();
-  comboBoxes << parity_bit_->body();
-  comboBoxes << stop_bit_->body();
-  lineEdits << host_->body();
-  lineEdits << port_->body();
-  lineEdits << device_id_->body();
-  lineEdits << timeout_->body();
-  lineEdits << refresh_interval_->body();
+  addLineEdit(host_->body());
+  addLineEdit(port_->body());
+  addLineEdit(device_id_->body());
+  addLineEdit(timeout_->body());
+  addLineEdit(refresh_interval_->body());
+  addComboBox(link_type_->body());
+  addComboBox(path_->body());
+  addComboBox(baud_->body());
+  addComboBox(parity_bit_->body());
 
   linkSettingWidgetLayout->addWidget(link_type_);
 
@@ -255,11 +251,13 @@ void ModbusClientSetting::init() {
   linkSettingWidgetLayout->addWidget(timeout_);
   linkSettingWidgetLayout->addWidget(auto_refresh_);
   linkSettingWidgetLayout->addWidget(refresh_interval_);
-  Ui::Drawer* drawer1 = new Ui::Drawer(tr("连接设置"), linkSettingWidget);
+  Ui::TtDrawer *drawerLinkSetting = new Ui::TtDrawer(
+      tr("连接设置"), ":/sys/chevron-double-up.svg",
+      ":/sys/chevron-double-down.svg", linkSettingWidget, false, this);
 
   // 界面切换
-  connect(link_type_, &Ui::TtLabelComboBox::currentIndexChanged,
-          [this, drawer1](int index) {
+  connect(link_type_, &Ui::TtLabelComboBox::currentIndexChanged, this,
+          [this, drawerLinkSetting](int index) {
             if (index == 0 || index == 1) {
               path_->setVisible(true);
               baud_->setVisible(true);
@@ -279,26 +277,30 @@ void ModbusClientSetting::init() {
               host_->setVisible(true);
               port_->setVisible(true);
             }
-            const auto event =
-                new QResizeEvent(drawer1->size(), drawer1->size());
-            QCoreApplication::postEvent(drawer1, event);
+            const auto event = new QResizeEvent(drawerLinkSetting->size(),
+                                                drawerLinkSetting->size());
+            QCoreApplication::postEvent(drawerLinkSetting, event);
           });
   link_type_->setCurrentItem(0);
 
-  QWidget* graphSettingWidget = new QWidget(this);
-  Ui::TtVerticalLayout* graphSettingWidgetLayout =
+  QWidget *graphSettingWidget = new QWidget(this);
+  Ui::TtVerticalLayout *graphSettingWidgetLayout =
       new Ui::TtVerticalLayout(graphSettingWidget);
   graph_capacity_ = new Ui::TtLabelLineEdit(tr("容量:"), graphSettingWidget);
 
-  lineEdits << graph_capacity_->body();
+  // lineEdits << graph_capacity_->body();
+  addLineEdit(graph_capacity_->body());
 
   connect(graph_capacity_, &Ui::TtLabelLineEdit::currentTextChanged, this,
-          [this](const QString& text) {
+          [this](const QString &text) {
             qDebug() << "nums: " << text.toUShort();
             emit graphNumsChanged(text.toUShort());
           });
   graphSettingWidgetLayout->addWidget(graph_capacity_);
-  Ui::Drawer* drawer2 = new Ui::Drawer(tr("图表"), graphSettingWidget);
+  // Ui::Drawer* drawer2 = new Ui::Drawer(tr("图表"), graphSettingWidget);
+  Ui::TtDrawer *drawerGraph = new Ui::TtDrawer(
+      tr("图表"), ":/sys/chevron-double-up.svg",
+      ":/sys/chevron-double-down.svg", graphSettingWidget, false, this);
 
   setLinkType();
   setSerialPortsName();
@@ -307,15 +309,17 @@ void ModbusClientSetting::init() {
   setSerialPortsParityBit();
   setSerialPortsStopBit();
 
-  QScrollArea* scroll = new QScrollArea(this);
+  QScrollArea *scroll = new QScrollArea(this);
   scroll->setFrameStyle(QFrame::NoFrame);
   scroll->setWidgetResizable(true);
-  QWidget* scrollContent = new QWidget(scroll);
+  QWidget *scrollContent = new QWidget(scroll);
 
-  Ui::TtVerticalLayout* scrollContentLayout =
+  Ui::TtVerticalLayout *scrollContentLayout =
       new Ui::TtVerticalLayout(scrollContent);
-  scrollContentLayout->addWidget(drawer1, 0, Qt::AlignTop);
-  scrollContentLayout->addWidget(drawer2, 0);
+  // scrollContentLayout->addWidget(drawer1, 0, Qt::AlignTop);
+  // scrollContentLayout->addWidget(drawer2, 0);
+  scrollContentLayout->addWidget(drawerLinkSetting, 0, Qt::AlignTop);
+  scrollContentLayout->addWidget(drawerGraph, 0);
   scrollContentLayout->addStretch();
 
   scroll->setWidget(scrollContent);
@@ -332,35 +336,10 @@ void ModbusClientSetting::init() {
             emit autoRefreshStateChanged(state);
           });
 
-  // connect(
-  //     refresh_interval_->body(), &Ui::TtLineEdit::editingFinished, [this]() {
-  //       emit
-  //       refreshIntervalChanged(refresh_interval_->currentText().toULong());
-  //     });
   connect(refresh_interval_, &Ui::TtLabelLineEdit::currentTextToUInt32, this,
           [this](uint32_t num) { emit refreshIntervalChanged(num); });
 
-  for (const auto* comboBox : comboBoxes) {
-    if (comboBox) {
-      connect(comboBox,
-              QOverload<int>::of(&Ui::TtComboBox::currentIndexChanged), this,
-              &ModbusClientSetting::settingChanged);
-    }
-  }
-
-  for (const auto* lineEdit : lineEdits) {
-    if (lineEdit) {  // 确保指针有效
-      connect(lineEdit, &QLineEdit::textChanged, this,
-              &ModbusClientSetting::settingChanged);
-    }
-  }
-
-  for (const auto* drawer : drawers) {
-    if (drawer) {
-      connect(drawer, &Ui::TtDrawer::drawerStateChanged, this,
-              &ModbusClientSetting::drawerStateChanged);
-    }
-  }
+  link();
 }
 
-}  // namespace Widget
+} // namespace Widget

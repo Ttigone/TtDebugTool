@@ -12,7 +12,7 @@
 namespace Widget {
 
 // MqttClientSetting::MqttClientSetting(QWidget *parent) : QWidget(parent) {
-MqttClientSetting::MqttClientSetting(QWidget *parent) : FrameSetting(parent) {
+MqttClientSetting::MqttClientSetting(QWidget* parent) : FrameSetting(parent) {
   init();
 }
 
@@ -27,7 +27,7 @@ Core::MqttClientConfiguration MqttClientSetting::getMqttClientConfiguration() {
       reconnection_period_->currentText(), clear_conversation_->isChecked());
 }
 
-const QJsonObject &MqttClientSetting::getMqttClientSetting() {
+const QJsonObject& MqttClientSetting::getMqttClientSetting() {
   auto config = getMqttClientConfiguration();
   QJsonObject linkSetting;
   linkSetting.insert("Link", QJsonValue(config.link));
@@ -52,7 +52,7 @@ const QJsonObject &MqttClientSetting::getMqttClientSetting() {
   return mqtt_client_save_config_;
 }
 
-void MqttClientSetting::setOldSettings(const QJsonObject &config) {
+void MqttClientSetting::setOldSettings(const QJsonObject& config) {
   if (config.isEmpty()) {
     return;
   }
@@ -99,11 +99,28 @@ void MqttClientSetting::setOldSettings(const QJsonObject &config) {
   retain_->setChecked(retain);
 }
 
+void MqttClientSetting::setControlState(bool state) {
+  link_->setEnabled(state);
+  port_->setEnabled(state);
+  client_id_->setEnabled(state);
+  protocol_version_->setEnabled(state);
+  user_->setEnabled(state);
+  password_->setEnabled(state);
+  link_timeout_->setEnabled(state);
+  hold_timeout_->setEnabled(state);
+  reconnection_period_->setEnabled(state);
+  clear_conversation_->setEnabled(state);
+  topic_->setEnabled(state);
+  load_->setEnabled(state);
+  qos_->setEnabled(state);
+  retain_->setEnabled(state);
+}
+
 void MqttClientSetting::init() {
   main_layout_ = new Ui::TtVerticalLayout(this);
 
-  QWidget *linkConfig = new QWidget(this);
-  Ui::TtVerticalLayout *linkConfigLayout = new Ui::TtVerticalLayout(linkConfig);
+  QWidget* linkConfig = new QWidget(this);
+  Ui::TtVerticalLayout* linkConfigLayout = new Ui::TtVerticalLayout(linkConfig);
   link_ = new Ui::TtLabelLineEdit(tr("链接:"), linkConfig);
   port_ = new Ui::TtLabelLineEdit(tr("端口:"), linkConfig);
   client_id_ = new Ui::TtLabelLineEdit(tr("客户端 ID:"), linkConfig);
@@ -147,12 +164,12 @@ void MqttClientSetting::init() {
   linkConfigLayout->addWidget(reconnection_period_);
   linkConfigLayout->addWidget(clear_conversation_);
   setProtocolVersion();
-  Ui::TtDrawer *drawerLinkSetting = new Ui::TtDrawer(
+  Ui::TtDrawer* drawerLinkSetting = new Ui::TtDrawer(
       tr("连接设置"), ":/sys/chevron-double-up.svg",
       ":/sys/chevron-double-down.svg", linkConfig, false, this);
 
-  QWidget *testamentWidget = new QWidget(this);
-  Ui::TtVerticalLayout *testamentWidgetLayout =
+  QWidget* testamentWidget = new QWidget(this);
+  Ui::TtVerticalLayout* testamentWidgetLayout =
       new Ui::TtVerticalLayout(testamentWidget);
   topic_ = new Ui::TtLabelLineEdit(tr("主题:"), testamentWidget);
   load_ = new Ui::TtLabelLineEdit(tr("负载:"), testamentWidget);
@@ -173,17 +190,17 @@ void MqttClientSetting::init() {
   testamentWidgetLayout->addWidget(qos_);
   testamentWidgetLayout->addWidget(retain_);
   setQoS();
-  Ui::TtDrawer *drawerTestament = new Ui::TtDrawer(
+  Ui::TtDrawer* drawerTestament = new Ui::TtDrawer(
       tr("遗嘱"), ":/sys/chevron-double-up.svg",
       ":/sys/chevron-double-down.svg", testamentWidget, false, this);
 
   // 滚动区域
-  QScrollArea *scroll = new QScrollArea(this);
+  QScrollArea* scroll = new QScrollArea(this);
   scroll->setFrameStyle(QFrame::NoFrame);
   scroll->setWidgetResizable(true);
-  QWidget *scrollContent = new QWidget(scroll);
+  QWidget* scrollContent = new QWidget(scroll);
 
-  Ui::TtVerticalLayout *scrollContentLayout =
+  Ui::TtVerticalLayout* scrollContentLayout =
       new Ui::TtVerticalLayout(scrollContent);
 
   // lascr->addWidget(drawer1, 0, Qt::AlignTop);
@@ -246,4 +263,4 @@ void MqttClientSetting::setQoS() {
   qos_->addItem("2", 2);
 }
 
-} // namespace Widget
+}  // namespace Widget

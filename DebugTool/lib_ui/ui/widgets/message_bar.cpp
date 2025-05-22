@@ -245,18 +245,14 @@ TtMessageBar::TtMessageBar(TtMessageBarType::PositionPolicy policy,
   d->_policy = policy;
   d->_messageMode = messageMode;
   // 获取并设置主题
-  // d->_themeMode = eTheme->getThemeMode();
+  // d->t= tTheme->getThemeMode();
   setFixedHeight(60);
   setMouseTracking(true);
   d->pOpacity_ = 1; // 宏创建
-  // setFont(QFont("微软雅黑"));
+  setFont(QFont("iconfont"));
   parent->installEventFilter(this); // 安装监听器
-  // 关闭按钮
-  // BUG 修复添加对应的方法
   d->_closeButton =
-      // new TtIconButton(QChar(0xe61a), 17, d->_closeButtonWidth, 30, this);
-      d->_closeButton = new TtIconButton(QPixmap(), this);
-  // d->_closeButton = new QPushButton(this);
+      new TtIconButton(TtIconType::Delete, 17, d->_closeButtonWidth, 30, this);
   switch (d->_messageMode) {
   case TtMessageBarType::Success: {
     d->_closeButton->setLightHoverColor(QColor(0xE6, 0xFC, 0xE3));
@@ -265,29 +261,26 @@ TtMessageBar::TtMessageBar(TtMessageBarType::PositionPolicy policy,
     break;
   }
   case TtMessageBarType::Warning: {
-    // d->_closeButton->setLightHoverColor(QColor(0x5E, 0x4C, 0x22));
-    // d->_closeButton->setDarkHoverColor(QColor(0x5E, 0x4C, 0x22));
-    // d->_closeButton->setLightIconColor(Qt::white);
-    // d->_closeButton->setDarkIconColor(Qt::white);
+    d->_closeButton->setLightHoverColor(QColor(0x5E, 0x4C, 0x22));
+    d->_closeButton->setDarkHoverColor(QColor(0x5E, 0x4C, 0x22));
+    d->_closeButton->setLightIconColor(Qt::white);
+    d->_closeButton->setDarkIconColor(Qt::white);
     break;
   }
   case TtMessageBarType::Information: {
-    // d->_closeButton->setLightHoverColor(QColor(0xEB, 0xEB, 0xEB));
-    // d->_closeButton->setDarkHoverColor(QColor(0xEB, 0xEB, 0xEB));
-    // d->_closeButton->setDarkIconColor(Qt::black);
+    d->_closeButton->setLightHoverColor(QColor(0xEB, 0xEB, 0xEB));
+    d->_closeButton->setDarkHoverColor(QColor(0xEB, 0xEB, 0xEB));
+    d->_closeButton->setDarkIconColor(Qt::black);
     break;
   }
   case TtMessageBarType::Error: {
-    // d->_closeButton->setLightHoverColor(QColor(0xF7, 0xE1, 0xE4));
-    // d->_closeButton->setDarkHoverColor(QColor(0xF7, 0xE1, 0xE4));
-    // d->_closeButton->setDarkIconColor(Qt::black);
+    d->_closeButton->setLightHoverColor(QColor(0xF7, 0xE1, 0xE4));
+    d->_closeButton->setDarkHoverColor(QColor(0xF7, 0xE1, 0xE4));
+    d->_closeButton->setDarkIconColor(Qt::black);
     break;
   }
   }
-  // d->_closeButton->setBorderRadius(5);
-  // connect(d->_closeButton, &TtIconButton::clicked, d,
-  //         &TtMessageBarPrivate::onCloseButtonClicked);
-  // 处理按钮点击
+  d->_closeButton->setBorderRadius(5);
   connect(d->_closeButton, &QPushButton::clicked, d,
           &TtMessageBarPrivate::onCloseButtonClicked);
 

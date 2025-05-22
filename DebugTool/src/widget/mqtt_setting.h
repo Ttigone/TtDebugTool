@@ -20,7 +20,6 @@ class MqttClientConfiguration;
 
 namespace Widget {
 
-// class MqttClientSetting : public QWidget {
 class MqttClientSetting : public FrameSetting {
   Q_OBJECT
 public:
@@ -34,6 +33,9 @@ public:
 
 signals:
   void mqttVersionChanged(TtMqttProcotol::Version version);
+
+public slots:
+  void setControlState(bool state);
 
 private:
   void init();

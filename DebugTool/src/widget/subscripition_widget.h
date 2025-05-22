@@ -34,6 +34,7 @@ signals:
   void saveConfigToManager(const QByteArray &config);
 
 private slots:
+  // 提交配置
   void confirmSub(); // 提供 config 配置
   void onCloseButtonClicked();
   void validateTopicInput();

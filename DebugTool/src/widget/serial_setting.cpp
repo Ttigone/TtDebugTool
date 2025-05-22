@@ -17,7 +17,8 @@ Core::SerialPortConfiguration DefaultSetting = {
     QString(""),           QSerialPort::Baud9600, QSerialPort::Data8,
     QSerialPort::NoParity, QSerialPort::OneStop,  QSerialPort::NoFlowControl};
 
-SerialSetting::SerialSetting(QWidget *parent) : QWidget(parent) {
+// SerialSetting::SerialSetting(QWidget *parent) : QWidget(parent) {
+SerialSetting::SerialSetting(QWidget *parent) : FrameSetting(parent) {
   init();
   connnectSignals();
 }
@@ -331,9 +332,9 @@ quint32 SerialSetting::getRefreshInterval() { return 0; }
 void SerialSetting::init() {
   main_layout_ = new Ui::TtVerticalLayout(this);
 
-  QList<QComboBox *> comboBoxes;
-  QList<QLineEdit *> lineEdits;
-  QList<Ui::TtDrawer *> drawers;
+  // QList<QComboBox *> comboBoxes;
+  // QList<QLineEdit *> lineEdits;
+  // QList<Ui::TtDrawer *> drawers;
 
   QWidget *serialConfigWidget = new QWidget(this);
   serial_port_ = new Ui::TtLabelBtnComboBox(tr("串口:"), serialConfigWidget);
@@ -351,15 +352,23 @@ void SerialSetting::init() {
 
   Ui::TtVerticalLayout *layout = new Ui::TtVerticalLayout(serialConfigWidget);
 
-  comboBoxes << serial_port_->body();
-  comboBoxes << baud_rate_->body();
-  comboBoxes << data_bit_->body();
-  comboBoxes << parity_bit_->body();
-  comboBoxes << stop_bit_->body();
-  comboBoxes << flow_control_->body();
+  // comboBoxes << serial_port_->body();
+  // comboBoxes << baud_rate_->body();
+  // comboBoxes << data_bit_->body();
+  // comboBoxes << parity_bit_->body();
+  // comboBoxes << stop_bit_->body();
+  // comboBoxes << flow_control_->body();
+  addComboBox(serial_port_->body());
+  addComboBox(baud_rate_->body());
+  addComboBox(data_bit_->body());
+  addComboBox(parity_bit_->body());
+  addComboBox(stop_bit_->body());
+  addComboBox(flow_control_->body());
 
-  lineEdits << send_package_interval_->body();
-  lineEdits << send_package_max_size_->body();
+  // lineEdits << send_package_interval_->body();
+  // lineEdits << send_package_max_size_->body();
+  addLineEdit(send_package_interval_->body());
+  addLineEdit(send_package_max_size_->body());
 
   layout->addWidget(serial_port_);
   layout->addWidget(baud_rate_);
@@ -391,7 +400,7 @@ void SerialSetting::init() {
   Ui::TtDrawer *drawerLinkSetting = new Ui::TtDrawer(
       tr("连接设置"), ":/sys/chevron-double-up.svg",
       ":/sys/chevron-double-down.svg", linkSettingWidget, false, this);
-  drawers << drawerLinkSetting;
+  // drawers << drawerLinkSetting;
 
   QWidget *scriptWidget = new QWidget;
   Ui::TtVerticalLayout *scriptWidgetLayout =
@@ -400,7 +409,10 @@ void SerialSetting::init() {
   Ui::TtTextButton *script_ = new Ui::TtTextButton("脚本", scriptWidget);
   script_->setCheckedColor(Qt::cyan);
   scriptWidgetLayout->addWidget(script_);
-  Ui::Drawer *drawerScript = new Ui::Drawer(tr("脚本设置"), scriptWidget);
+  // Ui::Drawer *drawerScript = new Ui::Drawer(tr("脚本设置"), scriptWidget);
+  Ui::TtDrawer *drawerScript = new Ui::TtDrawer(
+      tr("脚本设置"), ":/sys/chevron-double-up.svg",
+      ":/sys/chevron-double-down.svg", scriptWidget, false, this);
 
   connect(script_, &Ui::TtTextButton::clicked, this,
           &SerialSetting::showScriptSetting);
@@ -416,9 +428,12 @@ void SerialSetting::init() {
   framing_timeout_ = new Ui::TtLabelLineEdit(tr("时间:"));
   framing_fixed_length_ = new Ui::TtLabelLineEdit(tr("长度:"));
 
-  comboBoxes << framing_model_->body();
-  lineEdits << framing_timeout_->body();
-  lineEdits << framing_fixed_length_->body();
+  // comboBoxes << framing_model_->body();
+  // lineEdits << framing_timeout_->body();
+  // lineEdits << framing_fixed_length_->body();
+  addComboBox(framing_model_->body());
+  addLineEdit(framing_timeout_->body());
+  addLineEdit(framing_fixed_length_->body());
 
   framingWidgetLayout->addWidget(framing_model_);
   framingWidgetLayout->addWidget(framing_timeout_);
@@ -428,9 +443,9 @@ void SerialSetting::init() {
       tr("分帧[收数据包](暂未提供使用)"), ":/sys/chevron-double-up.svg",
       ":/sys/chevron-double-down.svg", framingWidget, false, this);
 
-  drawers << drawerFraming;
+  // drawers << drawerFraming;
 
-  connect(framing_model_, &Ui::TtLabelComboBox::currentIndexChanged,
+  connect(framing_model_, &Ui::TtLabelComboBox::currentIndexChanged, this,
           [this, drawerFraming](int index) {
             switch (index) {
             case 0: {
@@ -465,7 +480,7 @@ void SerialSetting::init() {
       tr("换行[收数据包](暂未提供使用)"), ":/sys/chevron-double-up.svg",
       ":/sys/chevron-double-down.svg", line_break_, false, this);
 
-  drawers << drawerLineBreak;
+  // drawers << drawerLineBreak;
 
   QWidget *heartbeatWidget = new QWidget;
   Ui::TtVerticalLayout *heartbeatWidgetLayout =
@@ -478,10 +493,14 @@ void SerialSetting::init() {
   heartbeat_interval_ = new Ui::TtLabelLineEdit(tr("间隔: "));
   heartbeat_content_ = new Ui::TtLabelLineEdit(tr("内容: "));
 
-  comboBoxes << line_break_->body();
-  comboBoxes << heartbeat_send_type_->body();
-  lineEdits << heartbeat_interval_->body();
-  lineEdits << heartbeat_content_->body();
+  // comboBoxes << line_break_->body();
+  // comboBoxes << heartbeat_send_type_->body();
+  // lineEdits << heartbeat_interval_->body();
+  // lineEdits << heartbeat_content_->body();
+  addComboBox(line_break_->body());
+  addComboBox(heartbeat_send_type_->body());
+  addLineEdit(heartbeat_interval_->body());
+  addLineEdit(heartbeat_content_->body());
 
   heartbeatWidgetLayout->addWidget(heartbeat_send_type_);
   heartbeatWidgetLayout->addWidget(heartbeat_interval_);
@@ -491,7 +510,7 @@ void SerialSetting::init() {
       tr("心跳"), ":/sys/chevron-double-up.svg",
       ":/sys/chevron-double-down.svg", heartbeatWidget, false, this);
 
-  drawers << drawerHeartBeat;
+  // drawers << drawerHeartBeat;
 
   connect(heartbeat_send_type_, &Ui::TtLabelComboBox::currentIndexChanged, this,
           [this, heartbeatWidget, drawerHeartBeat](int index) {
@@ -545,28 +564,7 @@ void SerialSetting::init() {
 
   main_layout_->addWidget(scroll);
 
-  // 链接改变的信号
-  for (auto *comboBox : comboBoxes) {
-    if (comboBox) {
-      connect(comboBox,
-              QOverload<int>::of(&Ui::TtComboBox::currentIndexChanged), this,
-              &SerialSetting::settingChanged);
-    }
-  }
-
-  for (auto *lineEdit : lineEdits) {
-    if (lineEdit) { // 确保指针有效
-      connect(lineEdit, &QLineEdit::textChanged, this,
-              &SerialSetting::settingChanged);
-    }
-  }
-
-  for (auto *drawer : drawers) {
-    if (drawer) {
-      connect(drawer, &Ui::TtDrawer::drawerStateChanged, this,
-              &SerialSetting::drawerStateChanged);
-    }
-  }
+  link();
 
   connect(heartbeat_content_, &Ui::TtLabelLineEdit::currentTextChanged, this,
           [this](const QString &text) {
@@ -575,6 +573,11 @@ void SerialSetting::init() {
           });
   connect(heartbeat_interval_, &Ui::TtLabelLineEdit::currentTextToUInt32, this,
           &SerialSetting::heartbeatInterval);
+
+  Ui::TtSvgButton *test = new Ui::TtSvgButton(this);
+  connect(test, &Ui::TtSvgButton::clicked, this,
+          [this] { qDebug() << "fuck"; });
+  main_layout_->addWidget(test);
 }
 
 void SerialSetting::connnectSignals() {

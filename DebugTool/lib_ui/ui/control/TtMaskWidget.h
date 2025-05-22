@@ -40,8 +40,14 @@ class Tt_EXPORT TtMaskWidget : public QObject {
 
   void resetChildWidget();
 
+  bool isVisible() const { return mask_widget_ && mask_widget_->isVisible(); }
+  // void closeMask() { hide(); }
+
  signals:
   void aboutToClose();
+
+ public slots:
+  void handleCloseRequest() { hide(); }
 
  protected:
   bool eventFilter(QObject* obj, QEvent* event) override;

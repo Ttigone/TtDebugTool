@@ -1,6 +1,7 @@
 #include "core/udp_server.h"
 
 #include <QHostAddress>
+#include <QJsonDocument>
 #include <QNetworkDatagram>
 
 namespace Core {
@@ -45,6 +46,103 @@ void UdpServer::close() {
   server_socket_->close();
 }
 
+void UdpServer::sendBroadcast(const QByteArray &message, quint16 targetPort) {
+  QHostAddress broadcastAddress = QHostAddress::Broadcast;
+  qint64 bytesWritten =
+      server_socket_->writeDatagram(message, broadcastAddress, targetPort);
+  if (bytesWritten == -1) {
+    emit errorOccurred("Broadcast failed: " + server_socket_->errorString());
+  }
+}
+
+void UdpServer::sendMulticast(const QByteArray &message,
+                              const QString &multicastGroup,
+                              quint16 targetPort) {
+  QHostAddress multicastAddress(multicastGroup);
+  if (!multicastAddress.isMulticast()) {
+    emit errorOccurred("Invalid multicast address: " + multicastGroup);
+    return;
+  }
+  qint64 bytesWritten =
+      server_socket_->writeDatagram(message, multicastAddress, targetPort);
+  if (bytesWritten == -1) {
+    qDebug() << "Multicast failed:" << server_socket_->errorString();
+    emit errorOccurred("Multicast failed: " + server_socket_->errorString());
+  } else {
+    qDebug() << "Multicast sent:" << bytesWritten << "bytes to"
+             << multicastGroup << ":" << targetPort;
+  }
+}
+
+void UdpServer::sendToSubnet(const QByteArray &message, const QString &subnet,
+                             quint16 targetPort) {
+  // 发送到子网中的所有地址 (例如: 192.168.1.0/24)
+  QStringList parts = subnet.split('/');
+  if (parts.size() != 2) {
+    emit errorOccurred("Invalid subnet format. Use: 192.168.1.0/24");
+    return;
+  }
+
+  QHostAddress networkAddr(parts[0]);
+  int prefixLength = parts[1].toInt();
+
+  if (prefixLength < 24 || prefixLength > 30) {
+    emit errorOccurred("Prefix length should be between 24-30 for safety");
+    return;
+  }
+
+  // 计算子网中的所有主机地址
+  quint32 network = networkAddr.toIPv4Address();
+  quint32 hostMask = (1 << (32 - prefixLength)) - 1;
+
+  int successCount = 0;
+  for (quint32 host = 1; host < hostMask; ++host) {
+    QHostAddress hostAddr(network | host);
+    qint64 bytesWritten =
+        server_socket_->writeDatagram(message, hostAddr, targetPort);
+    if (bytesWritten > 0) {
+      successCount++;
+    }
+  }
+
+  qDebug() << "Subnet broadcast completed. Sent to" << successCount
+           << "addresses";
+}
+
+void Core::UdpServer::UdpServer::startServiceDiscovery(quint16 discoveryPort) {
+  // 监听服务发现请求
+  QUdpSocket *discoverySocket = new QUdpSocket(this);
+  if (discoverySocket->bind(QHostAddress::Any, discoveryPort)) {
+    connect(discoverySocket, &QUdpSocket::readyRead, this,
+            [this, discoverySocket]() {
+              while (discoverySocket->hasPendingDatagrams()) {
+                QNetworkDatagram datagram = discoverySocket->receiveDatagram();
+                QByteArray data = datagram.data();
+
+                // 检查是否为服务发现请求
+                if (data == "DISCOVER_SERVICE") {
+                  // 回复服务信息
+                  QJsonObject serviceInfo;
+                  serviceInfo["service"] = "UDP_DEBUG_TOOL";
+                  serviceInfo["port"] = server_socket_->localPort();
+                  serviceInfo["version"] = "1.0";
+
+                  QJsonDocument doc(serviceInfo);
+                  QByteArray response = doc.toJson(QJsonDocument::Compact);
+
+                  discoverySocket->writeDatagram(response,
+                                                 datagram.senderAddress(),
+                                                 datagram.senderPort());
+                  qDebug() << "Service discovery "
+                              "response sent to"
+                           << datagram.senderAddress().toString();
+                }
+              }
+            });
+    qDebug() << "Service discovery started on port" << discoveryPort;
+  }
+}
+
 void UdpServer::readPendingDatagrams() {
   /*
   while (server_socket_->hasPendingDatagrams()) {
@@ -78,25 +176,54 @@ void UdpServer::readPendingDatagrams() {
     // 发送方端口
     quint16 sendPort = datagram.senderPort();
 
+    // 确保地址格式正确
+    if (sender.protocol() == QAbstractSocket::IPv4Protocol) {
+      // 对于IPv4地址，确保使用正确的格式
+      sender = QHostAddress(sender.toIPv4Address());
+    }
     // 扩展消息
     // QHostAddress destinationAddress = datagram.destinationAddress();
     // int hopLimit = datagram.hopLimit();  // 跳数限制 TTL
-
-    // // 存储已经建立连接的客户端
-    known_clients_.insert(qMakePair(sender, sendPort));
-    // 告知 ui
+    auto clientPair = qMakePair(sender, sendPort);
+    if (!known_clients_.contains(clientPair)) {
+      known_clients_.insert(clientPair);
+      // 如果是新客户端, 记录
+      qDebug() << "New client connected:" << sender.toString() << sendPort;
+    } else {
+      // 已经存在的客户端
+      // 新的客户端
+      qDebug() << "Known client reconnected:" << sender.toString() << sendPort;
+    }
     emit datagramReceived(sender.toString(), sendPort, data);
   }
 }
 
 void UdpServer::writePendingDatagrams(const QByteArray &message) {
-  qDebug() << "server send message: " << message;
-  // for (const auto &client : known_clients_) {
-  for (auto &client : known_clients_) {
+  if (known_clients_.isEmpty()) {
+    emit errorOccurred(tr("没有客户端链接"));
+    return;
+  }
+  int successCount = 0;
+  for (const auto &client : known_clients_) {
     const QHostAddress &addr = client.first;
     quint16 port = client.second;
-    // 遍历所有的客户端, 发布消息
-    server_socket_->writeDatagram(message, addr, port);
+
+    qint64 bytesWritten = server_socket_->writeDatagram(message, addr, port);
+    if (bytesWritten == -1) {
+      qDebug() << "Failed to send to" << addr.toString() << ":" << port
+               << "Error:" << server_socket_->errorString();
+    } else if (bytesWritten != message.size()) {
+      qDebug() << "Partial send to" << addr.toString() << ":" << port
+               << "Sent:" << bytesWritten << "Expected:" << message.size();
+    } else {
+      qDebug() << "Successfully sent" << bytesWritten << "bytes to"
+               << addr.toString() << ":" << port;
+      successCount++;
+    }
+  }
+
+  if (successCount == 0) {
+    emit errorOccurred("Failed to send message to any client");
   }
 }
 

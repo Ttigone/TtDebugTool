@@ -14,39 +14,50 @@ struct UdpServerConfiguration {
   QString self_host;
   QString self_port;
 
-  UdpServerConfiguration(const QString& host = "", const QString& port = 0)
+  UdpServerConfiguration(const QString &host = "", const QString &port = 0)
       : self_host(host), self_port(port) {}
 };
 
 class UdpServer : public QObject {
   Q_OBJECT
- public:
-  explicit UdpServer(QObject* parent = nullptr);
+public:
+  explicit UdpServer(QObject *parent = nullptr);
   ~UdpServer();
 
-  bool listen(const QHostAddress& address, quint16 port);
-  bool listen(const UdpServerConfiguration& config);
+  bool listen(const QHostAddress &address, quint16 port);
+  bool listen(const UdpServerConfiguration &config);
   bool isListening() const;
-  void sendMessage(const QByteArray& message);
-  void sendTo(const QByteArray& message, const QHostAddress& address,
+  void sendMessage(const QByteArray &message);
+  void sendTo(const QByteArray &message, const QHostAddress &address,
               quint16 port);
   void close();
 
- signals:
-  void datagramReceived(const QString& peerInfo, const quint16& peerPort,
-                        const QByteArray& message);
-  void errorOccurred(const QString& error);
+  // 广播
+  void sendBroadcast(const QByteArray &message, quint16 targetPort);
+  // 组播
+  void sendMulticast(const QByteArray &message, const QString &multicastGroup,
+                     quint16 targetPort);
+  void sendToSubnet(const QByteArray &message, const QString &subnet,
+                    quint16 targetPort);
 
- private slots:
+  // 实现服务发现协议
+  void startServiceDiscovery(quint16 discoveryPort);
+
+signals:
+  void datagramReceived(const QString &peerInfo, const quint16 &peerPort,
+                        const QByteArray &message);
+  void errorOccurred(const QString &error);
+
+private slots:
   void readPendingDatagrams();
-  void writePendingDatagrams(const QByteArray& message);
+  void writePendingDatagrams(const QByteArray &message);
 
- private:
+private:
   void shutdown();
 
- private:
+private:
   bool listening_ = false;
-  QUdpSocket* server_socket_;
+  QUdpSocket *server_socket_;
 
   QSet<QPair<QHostAddress, quint16>> known_clients_;
 };
@@ -79,7 +90,8 @@ class UdpServer : public QObject {
 //   void warningMessage(const QString &message);
 //   void infoMessage(const QString &message);
 
-//   void datagramReceived(const QString &peer_info, const QByteArray &peer_port, const QByteArray &client_hello);
+//   void datagramReceived(const QString &peer_info, const QByteArray
+//   &peer_port, const QByteArray &client_hello);
 
 //  private slots:
 //   ///
@@ -100,7 +112,8 @@ class UdpServer : public QObject {
 //   /// @param peer_port
 //   /// @param client_hello
 //   ///
-//   void handleNewConnection(const QHostAddress &peerAddress, quint16 peer_port, const QByteArray &client_hello);
+//   void handleNewConnection(const QHostAddress &peerAddress, quint16
+//   peer_port, const QByteArray &client_hello);
 
 //   ///
 //   /// @brief doHandShake 握手操作
@@ -133,5 +146,4 @@ class UdpServer : public QObject {
 
 } // namespace Core
 
-
-#endif  // CORE_UDP_SERVER_H
+#endif // CORE_UDP_SERVER_H

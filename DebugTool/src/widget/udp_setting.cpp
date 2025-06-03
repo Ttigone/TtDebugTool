@@ -417,6 +417,14 @@ const QJsonObject &UdpClientSetting::getUdpClientSetting() {
   QJsonObject retransmission;
   retransmission.insert("Target", QJsonValue(retransmission_->currentText()));
   udp_client_save_config_.insert("Retransmission", QJsonValue(retransmission));
+
+  QJsonObject heartbeat;
+  heartbeat.insert(
+      "Type", QJsonValue(heartbeat_send_type_->body()->currentData().toInt()));
+  heartbeat.insert("Interval", QJsonValue(heartbeat_interval_->body()->text()));
+  heartbeat.insert("Content", QJsonValue(heartbeat_content_->body()->text()));
+  udp_client_save_config_.insert("Heartbeat", QJsonValue(heartbeat));
+
   return udp_client_save_config_;
 }
 
@@ -440,6 +448,11 @@ void UdpClientSetting::setOldSettings(const QJsonObject &config) {
 
   QJsonObject retransmission = config.value("Retransmission").toObject();
   QString target = retransmission.value("Target").toString();
+
+  QJsonObject heartBeat = config.value("Heartbeat").toObject();
+  int type = heartBeat.value("Type").toInt();
+  QString content = heartBeat.value("Content").toString();
+  QString interval = heartBeat.value("Interval").toString();
 
   for (int i = 0; i < mode_->body()->count(); ++i) {
     if (mode_->body()->itemData(i).toInt() == mode) {
@@ -467,6 +480,16 @@ void UdpClientSetting::setOldSettings(const QJsonObject &config) {
       break;
     }
   }
+
+  for (int i = 0; i < heartbeat_send_type_->body()->count(); ++i) {
+    if (heartbeat_send_type_->body()->itemData(i).toInt() == type) {
+      heartbeat_send_type_->body()->setCurrentIndex(i);
+      break;
+    }
+  }
+
+  heartbeat_interval_->setText(interval);
+  heartbeat_content_->setText(content);
 }
 
 void UdpClientSetting::setControlState(bool state) {
@@ -480,6 +503,9 @@ void UdpClientSetting::setControlState(bool state) {
   framing_timeout_->setEnabled(state);
   framing_fixed_length_->setEnabled(state);
   retransmission_->setEnabled(state);
+  heartbeat_content_->setEnabled(state);
+  heartbeat_interval_->setEnabled(state);
+  heartbeat_send_type_->setEnabled(state);
 }
 
 quint32 UdpClientSetting::getRefreshInterval() { return 1000; }

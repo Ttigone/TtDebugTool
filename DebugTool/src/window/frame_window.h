@@ -157,9 +157,9 @@ protected:
   // 不同类型展示数据栈窗口
   QStackedWidget *message_stacked_view_;
 
-  Ui::TtSvgButton *clear_history_{nullptr};        // 清楚历史记录按钮
-  Ui::TtChatView *message_view_{nullptr};          // 聊天显示
-  Ui::TtChatMessageModel *message_model_{nullptr}; // 聊先显示数据模型
+  Ui::TtSvgButton *clear_history_{nullptr}; // 清楚历史记录按钮
+  // Ui::TtChatView *message_view_{nullptr};          // 聊天显示
+  // Ui::TtChatMessageModel *message_model_{nullptr}; // 聊先显示数据模型
 
   QSplitter *main_splitter_{nullptr};
   QPlainTextEdit *terminal_{nullptr};                // 终端显示
@@ -196,6 +196,7 @@ protected:
   TtTextFormat::Type heart_beat_type_; // 心跳格式
 
   QJsonObject config_; // 窗口配置
+  static const QRegularExpression hexFilterRegex;
 
 private:
 };

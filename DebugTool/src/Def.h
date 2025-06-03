@@ -56,6 +56,11 @@ enum ProtocolRole { Client, Server };
 Q_ENUM_CREATE(ProtocolRole)
 Q_END_ENUM_CREATE(TtProtocolType)
 
+Q_BEGIN_ENUM_CREATE_SRC(TtProtocolSetting)
+enum Protocol { RawData, JustFloat, FireWater };
+Q_ENUM_CREATE(Protocol)
+Q_END_ENUM_CREATE(TtProtocolSetting)
+
 Q_BEGIN_ENUM_CREATE_SRC(TtFunctionalCategory)
 enum Category { Communication, Instruction, Simulate, None };
 Q_ENUM_CREATE(Category)

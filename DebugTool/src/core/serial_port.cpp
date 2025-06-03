@@ -15,17 +15,6 @@ SerialPortWorker::SerialPortWorker(QObject* parent)
   // 延迟初始化定时器
   QTimer::singleShot(0, this, [this]() {
     receive_timer_ = new QTimer(this);  // 在工作线程创建定时器
-    // receive_timer_->setInterval(50);    // 50ms 结束一次数据接收
-    // receive_timer_->setSingleShot(true);
-
-    // connect(receive_timer_, &QTimer::timeout, this, [this]() {
-    //   if (!receive_buffer_.isEmpty()) {
-    //     // 50ms 发送一次数据
-    //     qDebug() << "rece: " << receive_buffer_;
-    //     emit dataReceived(receive_buffer_);
-    //     receive_buffer_.clear();
-    //   }
-    // });
     connect(receive_timer_, &QTimer::timeout, this,
             &SerialPortWorker::handleTimeout);
   });

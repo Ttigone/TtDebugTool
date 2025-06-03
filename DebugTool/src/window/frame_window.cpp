@@ -26,6 +26,8 @@
 #include <QTableView>
 #include <Qsci/qsciscintilla.h>
 
+const QRegularExpression Window::FrameWindow::hexFilterRegex("[^0-9A-Fa-f]");
+
 namespace Window {
 
 FrameWindow::FrameWindow(QWidget *parent) : QWidget{parent} {}
@@ -125,9 +127,6 @@ void FrameWindow::initUi() {
   chose_function_layout->setSpacing(5);
   chose_function->setLayout(chose_function_layout);
 
-  // QWidget *twoBtnForGroup = new QWidget(chose_function);
-  // QWidget *pageBtnWidget = new QWidget(chose_function);
-  // QHBoxLayout *pageBtnLayout = new QHBoxLayout(pageBtnWidget);
   // 存在 2 层
   page_btn_widget_ = new QWidget(chose_function);
   page_btn_layout_ = new Ui::TtHorizontalLayout(page_btn_widget_);
@@ -136,22 +135,21 @@ void FrameWindow::initUi() {
   terminalButton->setSvgSize(18, 18);
   terminalButton->setColors(Qt::black, Qt::blue);
 
-  // leftBtn->setEnableHoldToCheck(true);
-  Ui::TtSvgButton *chatButton =
-      new Ui::TtSvgButton(":/sys/chat.svg", page_btn_widget_);
-  chatButton->setSvgSize(18, 18);
-  chatButton->setColors(Qt::black, Qt::blue);
-  // rightBtn->setEnableHoldToCheck(true);
-
+  // BUG 删去
+  // Ui::TtSvgButton *chatButton =
+  //     new Ui::TtSvgButton(":/sys/chat.svg", page_btn_widget_);
+  // chatButton->setSvgSize(18, 18);
+  // chatButton->setColors(Qt::black, Qt::blue);
+  // // rightBtn->setEnableHoldToCheck(true);
   page_btn_layout_->addWidget(terminalButton);
-  page_btn_layout_->addWidget(chatButton);
+  // page_btn_layout_->addWidget(chatButton);
 
   // 左侧切换逻辑
   page_btn_logical_ = new Ui::TtWidgetGroup(this);
   // showStyle->setHoldingChecked(true);
   page_btn_logical_->setHoldingChecked(true);
   page_btn_logical_->addWidget(terminalButton);
-  page_btn_logical_->addWidget(chatButton);
+  // page_btn_logical_->addWidget(chatButton);
   page_btn_logical_->setExclusive(true);
   page_btn_logical_->setCheckedIndex(0);
   chose_function_layout->addWidget(page_btn_widget_);
@@ -168,8 +166,6 @@ void FrameWindow::initUi() {
   display_hex_btn_ = new Ui::TtTextButton(QColor(Qt::blue), "HEX");
   display_hex_btn_->setCheckedColor(QColor(0, 102, 180));
 
-  // styleGroup->addWidget(display_text_btn_);
-  // styleGroup->addWidget(display_hex_btn_);
   displayLogic->addWidget(display_text_btn_);
   displayLogic->addWidget(display_hex_btn_);
 
@@ -190,7 +186,6 @@ void FrameWindow::initUi() {
   QSplitter *VSplitter = new QSplitter;
   VSplitter->setOrientation(Qt::Vertical);
   VSplitter->setContentsMargins(QMargins());
-  VSplitter->setSizes(QList<int>() << 500 << 200);
 
   // 上方选择功能以及信息框
   QWidget *contentWidget = new QWidget(this);
@@ -207,12 +202,12 @@ void FrameWindow::initUi() {
 
   message_stacked_view_->addWidget(terminal_);
 
-  message_view_ = new Ui::TtChatView(message_stacked_view_);
-  message_view_->setResizeMode(QListView::Adjust);
-  message_view_->setUniformItemSizes(false); // 允许每个项具有不同的大小
-  message_view_->setMouseTracking(true);
-  message_view_->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
-  message_stacked_view_->addWidget(message_view_);
+  // message_view_ = new Ui::TtChatView(message_stacked_view_);
+  // message_view_->setResizeMode(QListView::Adjust);
+  // message_view_->setUniformItemSizes(false); // 允许每个项具有不同的大小
+  // message_view_->setMouseTracking(true);
+  // message_view_->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+  // message_stacked_view_->addWidget(message_view_);
 
   contentWidgetLayout->addWidget(chose_function);
   contentWidgetLayout->addWidget(message_stacked_view_);
@@ -230,13 +225,11 @@ void FrameWindow::initUi() {
               display_text_btn_->setVisible(true);
             }
           });
-
   // base::DetectRunningTime runtime;
+  // message_model_ = new Ui::TtChatMessageModel;
 
-  message_model_ = new Ui::TtChatMessageModel;
-
-  message_view_->setModel(message_model_);
-  message_view_->scrollToBottom();
+  // message_view_->setModel(message_model_);
+  // message_view_->scrollToBottom();
 
   QWidget *bottomAll = new QWidget(this);
   Ui::TtVerticalLayout *bottomAllLayout = new Ui::TtVerticalLayout(bottomAll);
@@ -250,8 +243,6 @@ void FrameWindow::initUi() {
   tabs_ = new QtMaterialTabs(tabs_widget_);
   tabs_->addTab(tr("手动"));
   tabs_->addTab(tr("片段"));
-  // tabs_->setFixedHeight(30);
-  // tabs_->setMinimumWidth(80);
   tabs_->setBackgroundColor(QColor(192, 120, 196));
 
   tacLayout->addWidget(tabs_);
@@ -315,14 +306,15 @@ void FrameWindow::initUi() {
   // lua_code_ = new Ui::TtLuaInputBox(this);
   // lua_actuator_ = new Core::LuaKernel;
 
-  // bottomAllLayout->addWidget(tabs_and_count);
   bottomAllLayout->addWidget(tabs_widget_);
-  // bottomAllLayout->addWidget(displayWidget);
   bottomAllLayout->addWidget(display_widget_);
 
   VSplitter->addWidget(contentWidget);
   VSplitter->addWidget(bottomAll);
   VSplitter->setCollapsible(0, false);
+  VSplitter->setStretchFactor(0, 3);
+  VSplitter->setStretchFactor(0, 2);
+  VSplitter->setSizes(QList<int>() << 500 << 200);
 
   main_splitter_->addWidget(VSplitter);
 
@@ -361,7 +353,7 @@ void FrameWindow::initSignalsConnection() {
           [this](int index) { display_widget_->setCurrentIndex(index); });
 
   connect(clear_history_, &Ui::TtSvgButton::clicked, this, [this]() {
-    message_model_->clearModelData();
+    // message_model_->clearModelData();
     terminal_->clear();
   });
 
@@ -512,28 +504,31 @@ void FrameWindow::refreshTerminalDisplay() {
   terminal_->clear();
   terminal_->setUpdatesEnabled(false);
 
-  // 遍历模型生成内容
-  for (int i = 0; i < message_model_->rowCount(); ++i) {
-    QModelIndex idx = message_model_->index(i);
+  // 之前的内容都没有了 ???
 
-    Ui::TtChatMessage *msg = qobject_cast<Ui::TtChatMessage *>(
-        idx.data(Ui::TtChatMessageModel::MessageObjectRole).value<QObject *>());
+  // // 遍历模型生成内容
+  // for (int i = 0; i < message_model_->rowCount(); ++i) {
+  //   QModelIndex idx = message_model_->index(i);
 
-    QString header = msg->isOutgoing() ? "[Tx]" : "[Rx]";
-    header.append(' ');
-    header.append(msg->timestamp().toString("[yyyy-MM-dd hh:mm:ss.zzz]"));
-    header.append(' ');
-    //  text 发送, 点击 text 时，文本消失 content 为 0
-    QString content;
-    if (display_type_ == TtTextFormat::HEX) {
-      content = msg->contentAsHex().trimmed();
-    } else if (display_type_ == TtTextFormat::TEXT) {
-      content = msg->contentAsText();
-    }
-    header.append(content);
-    // qDebug() << header;
-    terminal_->appendPlainText(header);
-  }
+  //   Ui::TtChatMessage *msg = qobject_cast<Ui::TtChatMessage *>(
+  //       idx.data(Ui::TtChatMessageModel::MessageObjectRole).value<QObject
+  //       *>());
+
+  //   QString header = msg->isOutgoing() ? "[Tx]" : "[Rx]";
+  //   header.append(' ');
+  //   header.append(msg->timestamp().toString("[yyyy-MM-dd hh:mm:ss.zzz]"));
+  //   header.append(' ');
+  //   //  text 发送, 点击 text 时，文本消失 content 为 0
+  //   QString content;
+  //   if (display_type_ == TtTextFormat::HEX) {
+  //     content = msg->contentAsHex().trimmed();
+  //   } else if (display_type_ == TtTextFormat::TEXT) {
+  //     content = msg->contentAsText();
+  //   }
+  //   header.append(content);
+  //   // qDebug() << header;
+  //   terminal_->appendPlainText(header);
+  // }
 
   terminal_->setUpdatesEnabled(true);
 }
@@ -560,24 +555,24 @@ void FrameWindow::showMessage(const QByteArray &data, bool out) {
   }
   terminal_->appendPlainText(formattedMessage);
 
-  auto *msg = new Ui::TtChatMessage();
-  msg->setContent(data);
-  msg->setRawData(data);
-  msg->setTimestamp(now);
+  // auto *msg = new Ui::TtChatMessage();
+  // msg->setContent(data);
+  // msg->setRawData(data);
+  // msg->setTimestamp(now);
   if (out) {
-    msg->setOutgoing(true);
+    // msg->setOutgoing(true);
     send_byte_count_ += data.size();
     send_byte_->setText(QString(tr("发送字节数:%1 B")).arg(send_byte_count_));
   } else {
-    msg->setOutgoing(false);
+    // msg->setOutgoing(false);
     recv_byte_count_ += data.size();
     recv_byte_->setText(QString(tr("接收字节数:%1 B")).arg(recv_byte_count_));
   }
-  msg->setBubbleColor(QColor("#DCF8C6"));
-  QList<Ui::TtChatMessage *> list;
-  list.append(msg);
-  message_model_->appendMessages(list);
-  message_view_->scrollToBottom();
+  // msg->setBubbleColor(QColor("#DCF8C6"));
+  // QList<Ui::TtChatMessage *> list;
+  // list.append(msg);
+  // message_model_->appendMessages(list);
+  // message_view_->scrollToBottom();
 }
 
 void FrameWindow::showMessage(const QString &data, bool out) {
@@ -603,24 +598,24 @@ void FrameWindow::showMessage(const QString &data, bool out) {
   }
   terminal_->appendPlainText(formattedMessage);
 
-  auto *msg = new Ui::TtChatMessage();
-  msg->setContent(data);
-  msg->setRawData(data.toUtf8());
-  msg->setTimestamp(now);
+  // auto *msg = new Ui::TtChatMessage();
+  // msg->setContent(data);
+  // msg->setRawData(data.toUtf8());
+  // msg->setTimestamp(now);
   if (out) {
-    msg->setOutgoing(true);
+    // msg->setOutgoing(true);
     send_byte_count_ += data.size();
     send_byte_->setText(QString(tr("发送字节数:%1 B")).arg(send_byte_count_));
   } else {
-    msg->setOutgoing(false);
+    // msg->setOutgoing(false);
     recv_byte_count_ += data.size();
     recv_byte_->setText(QString(tr("接收字节数:%1 B")).arg(recv_byte_count_));
   }
-  msg->setBubbleColor(QColor("#DCF8C6"));
-  QList<Ui::TtChatMessage *> list;
-  list.append(msg);
-  message_model_->appendMessages(list);
-  message_view_->scrollToBottom();
+  // msg->setBubbleColor(QColor("#DCF8C6"));
+  // QList<Ui::TtChatMessage *> list;
+  // list.append(msg);
+  // message_model_->appendMessages(list);
+  // message_view_->scrollToBottom();
 }
 
 } // namespace Window

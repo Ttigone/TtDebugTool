@@ -42,14 +42,19 @@ void UdpClient::connectToOther(TtUdpMode::Mode mode, const QString &targetIp,
 
   switch (mode) {
   case TtUdpMode::Unicast: { // 单播
+    // 缺少 ip 和端口
     qDebug() << "UDP Unicast Mode";
-    qDebug() << "Binding to" << selfIp << ":" << selfPort;
+    // 获取失败
+    // 单播可以不需要自身的 ip 地址
+    // qDebug() << "Binding to" << selfIp << ":" << selfPort;
     bindSuccess = socket_->bind(selfIp.isEmpty() ? QHostAddress::Any
                                                  : QHostAddress(selfIp),
                                 selfPort.toInt());
     if (!bindSuccess) {
       emit errorOccurred(
           QString("Failed to bind socket: %1").arg(socket_->errorString()));
+    } else {
+      qDebug() << "success bind ip";
     }
     // socket_->bind(QHostAddress(selfIp), selfPort.toInt());
     break;
@@ -119,9 +124,8 @@ void UdpClient::connectToOther(TtUdpMode::Mode mode, const QString &targetIp,
 }
 
 void UdpClient::connectToOther(const UdpClientConfiguration &config) {
-  // UdpClient::connectToOther(config.mode, config.target_ip,
-  // config.target_port,
-  //                           config.self_ip, config.target_port);
+  qDebug() << config.target_ip << config.target_port;
+  // 这里没有问题
   UdpClient::connectToOther(config.mode, config.target_ip, config.target_port,
                             config.self_ip, config.self_port);
 }

@@ -17,7 +17,6 @@ Core::SerialPortConfiguration DefaultSetting = {
     QString(""),           QSerialPort::Baud9600, QSerialPort::Data8,
     QSerialPort::NoParity, QSerialPort::OneStop,  QSerialPort::NoFlowControl};
 
-// SerialSetting::SerialSetting(QWidget *parent) : QWidget(parent) {
 SerialSetting::SerialSetting(QWidget *parent) : FrameSetting(parent) {
   init();
   connnectSignals();
@@ -101,11 +100,21 @@ void SerialSetting::displayDefaultSetting() {
 }
 
 void SerialSetting::setOldSettings(const QJsonObject &config) {
-  // 保存之后, 如果在 2s 迅速打开, 从本地读取, 出现问题
   if (config.isEmpty()) {
     // 设置默认配置
     return;
   }
+  QJsonObject protocolSetting = config.value("ProtocolSetting").toObject();
+  int protocolType = protocolSetting.value("Protocol").toInt();
+
+  // 正确
+  for (int i = 0; i < protocol_engine_->body()->count(); ++i) {
+    if (protocol_engine_->body()->itemData(i).toInt() == protocolType) {
+      protocol_engine_->body()->setCurrentIndex(i);
+      break;
+    }
+  }
+
   QJsonObject linkSetting = config.value("LinkSetting").toObject();
   QString portName = linkSetting.value("PortName").toString();
   quint64 baud = linkSetting.value("BaudRate").toInteger();
@@ -115,8 +124,6 @@ void SerialSetting::setOldSettings(const QJsonObject &config) {
   int flowControl = linkSetting.value("FlowControl").toInt();
   QString packageInterval = linkSetting.value("SendPackageInterval").toString();
   QString packageMaxSize = linkSetting.value("SendPackageMaxSize").toString();
-  // 没有读取到数据
-  // qDebug() << packageInterval << packageMaxSize;
 
   QJsonObject framing = config.value("Framing").toObject();
   QString model = framing.value("Model").toString();
@@ -200,7 +207,6 @@ void SerialSetting::setOldSettings(const QJsonObject &config) {
     }
   }
 
-  // 正确
   for (int i = 0; i < heartbeat_send_type_->body()->count(); ++i) {
     if (heartbeat_send_type_->body()->itemData(i).toInt() == type) {
       heartbeat_send_type_->body()->setCurrentIndex(i);
@@ -214,6 +220,11 @@ void SerialSetting::setOldSettings(const QJsonObject &config) {
 
 const QJsonObject &SerialSetting::getSerialSetting() {
   auto cfg = getSerialPortConfiguration();
+  QJsonObject protocolSetting;
+  protocolSetting.insert("Protocol",
+                         QJsonValue(protocol_engine_->currentData().toInt()));
+  config_.insert("ProtocolSetting", QJsonValue(protocolSetting));
+
   QJsonObject linkSetting;
   linkSetting.insert("PortName", QJsonValue(cfg.com));
   linkSetting.insert("BaudRate", QJsonValue(cfg.baud_rate));
@@ -244,9 +255,7 @@ const QJsonObject &SerialSetting::getSerialSetting() {
 
   QJsonObject heartbeat;
   heartbeat.insert(
-      "Type",
-      // QJsonValue(heartbeat_send_type_->body()->itemData(0)));
-      QJsonValue(heartbeat_send_type_->body()->currentData().toInt()));
+      "Type", QJsonValue(heartbeat_send_type_->body()->currentData().toInt()));
   heartbeat.insert("Interval", QJsonValue(heartbeat_interval_->body()->text()));
   heartbeat.insert("Content", QJsonValue(heartbeat_content_->body()->text()));
   config_.insert("Heartbeat", QJsonValue(heartbeat));
@@ -332,9 +341,20 @@ quint32 SerialSetting::getRefreshInterval() { return 0; }
 void SerialSetting::init() {
   main_layout_ = new Ui::TtVerticalLayout(this);
 
-  // QList<QComboBox *> comboBoxes;
-  // QList<QLineEdit *> lineEdits;
-  // QList<Ui::TtDrawer *> drawers;
+  QWidget *protocolWidget = new QWidget(this);
+  Ui::TtVerticalLayout *protocolLayout =
+      new Ui::TtVerticalLayout(protocolWidget);
+  protocol_engine_ = new Ui::TtLabelComboBox(tr("协议引擎"), protocolWidget);
+  protocolLayout->addWidget(protocol_engine_);
+  Ui::TtDrawer *drawerProtocolSetting = new Ui::TtDrawer(
+      tr("协议"), ":/sys/chevron-double-up.svg",
+      ":/sys/chevron-double-down.svg", protocolWidget, false, this);
+
+  protocol_engine_->addItem("RawData", TtProtocolSetting::RawData);
+  protocol_engine_->addItem("JustFloat", TtProtocolSetting::JustFloat);
+  protocol_engine_->addItem("FireWater", TtProtocolSetting::FireWater);
+
+  addComboBox(protocol_engine_->body());
 
   QWidget *serialConfigWidget = new QWidget(this);
   serial_port_ = new Ui::TtLabelBtnComboBox(tr("串口:"), serialConfigWidget);
@@ -352,12 +372,6 @@ void SerialSetting::init() {
 
   Ui::TtVerticalLayout *layout = new Ui::TtVerticalLayout(serialConfigWidget);
 
-  // comboBoxes << serial_port_->body();
-  // comboBoxes << baud_rate_->body();
-  // comboBoxes << data_bit_->body();
-  // comboBoxes << parity_bit_->body();
-  // comboBoxes << stop_bit_->body();
-  // comboBoxes << flow_control_->body();
   addComboBox(serial_port_->body());
   addComboBox(baud_rate_->body());
   addComboBox(data_bit_->body());
@@ -365,8 +379,6 @@ void SerialSetting::init() {
   addComboBox(stop_bit_->body());
   addComboBox(flow_control_->body());
 
-  // lineEdits << send_package_interval_->body();
-  // lineEdits << send_package_max_size_->body();
   addLineEdit(send_package_interval_->body());
   addLineEdit(send_package_max_size_->body());
 
@@ -551,6 +563,8 @@ void SerialSetting::init() {
   Ui::TtVerticalLayout *scrollContentLayout =
       new Ui::TtVerticalLayout(scrollContent);
 
+  scrollContentLayout->addWidget(drawerProtocolSetting);
+
   scrollContentLayout->addWidget(drawerLinkSetting);
   scrollContentLayout->addWidget(drawerFraming);
   scrollContentLayout->addWidget(drawerLineBreak);
@@ -574,10 +588,8 @@ void SerialSetting::init() {
   connect(heartbeat_interval_, &Ui::TtLabelLineEdit::currentTextToUInt32, this,
           &SerialSetting::heartbeatInterval);
 
-  Ui::TtSvgButton *test = new Ui::TtSvgButton(this);
-  connect(test, &Ui::TtSvgButton::clicked, this,
-          [this] { qDebug() << "fuck"; });
-  main_layout_->addWidget(test);
+  connect(protocol_engine_, &Ui::TtLabelComboBox::currentIndexChanged, this,
+          &SerialSetting::protocolTypeChanged);
 }
 
 void SerialSetting::connnectSignals() {

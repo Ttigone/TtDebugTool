@@ -37,15 +37,7 @@ public:
 
 signals:
   void drawerStateChanged(bool state);
-
-  // signals:
-  // void settingChanged();
-  // void showScriptSetting();
-  // void sendPackageMaxSizeChanged(uint16_t size);
-  // void sendPackageIntervalChanged(uint16_t interval);
-  // void heartbeatInterval(uint32_t interval);
-  // void heartbeatContentChanged(QString content);
-  // void heartbeatType(TtTextFormat::Type type);
+  void protocolTypeChanged(int type);
 
 public slots:
   void setSerialPortsName();
@@ -65,6 +57,9 @@ private:
   QString matchingSerialCOMx(const QString &name);
 
   Ui::TtVerticalLayout *main_layout_;
+
+  // BUG 添加一个协议引擎
+  Ui::TtLabelComboBox *protocol_engine_;
 
   Ui::TtLabelBtnComboBox *serial_port_;
   Ui::TtLabelComboBox *baud_rate_;

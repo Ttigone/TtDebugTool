@@ -28,19 +28,42 @@ namespace Window {
 
 UdpWindow::UdpWindow(TtProtocolType::ProtocolRole role, QWidget *parent)
     : FrameWindow(parent), role_(role) {
+  qDebug() << "test1";
   init();
+  qDebug() << "test";
 
   if (role_ == TtProtocolType::Client) {
-    // connect(udp_client_, &Core::UdpClient::data)
+    connect(udp_client_, &Core::UdpClient::dataReceived, this,
+            [this](const QByteArray &data, const QHostAddress &sender,
+                   quint16 senderPort) { dataReceived(data); });
+
+    connect(udp_client_, &Core::UdpClient::errorOccurred, this,
+            [this](const QString &error) {
+              on_off_btn_->setChecked(false);
+              opened_ = false;
+              setControlState(!opened_);
+              send_package_timer_->stop();
+              heartbeat_timer_->stop();
+              msg_queue_.clear();
+              emit workStateChanged(false);
+            });
 
   } else if (role_ == TtProtocolType::Server) {
-    connect(udp_server_, &Core::UdpServer::datagramReceived,
+    // BUG 能够接收, 但不能发送 !!!
+    connect(udp_server_, &Core::UdpServer::datagramReceived, this,
             [this](const QString &peerInfo, const quint16 &peerPort,
                    const QByteArray &message) { dataReceived(message); });
-    QObject::connect(udp_server_, &Core::UdpServer::errorOccurred,
+    QObject::connect(udp_server_, &Core::UdpServer::errorOccurred, this,
                      [this](const QString &error) {
                        Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""),
                                                error, 1500, this);
+                       on_off_btn_->setChecked(false);
+                       opened_ = false;
+                       setControlState(!opened_);
+                       send_package_timer_->stop();
+                       heartbeat_timer_->stop();
+                       msg_queue_.clear();
+                       emit workStateChanged(false);
                      });
   }
   connectSignals();
@@ -68,6 +91,8 @@ void UdpWindow::saveSetting() {
     config_.insert("UdpServerSetting",
                    udp_server_setting_->getUdpServerSetting());
   }
+  config_.insert("SendType", static_cast<int>(send_type_));
+  config_.insert("DisplayType", static_cast<int>(display_type_));
   config_.insert("InstructionTable", instruction_table_->getTableRecord());
   setSaveStatus(true);
   emit requestSaveConfig();
@@ -85,24 +110,26 @@ void UdpWindow::setSetting(const QJsonObject &config) {
   QJsonObject instructionTableData =
       config.value("InstructionTable").toObject();
   instruction_table_->setupTable(instructionTableData);
-
   int sendType = config.value("SendType").toInt();
   send_type_ = static_cast<TtTextFormat::Type>(sendType);
-  if (sendType == 1) {
+  if (send_type_ == TtTextFormat::TEXT) {
     chose_text_btn_->setChecked(true);
-  } else if (sendType == 2) {
+    qDebug() << "设置 text";
+  } else if (send_type_ == TtTextFormat::HEX) {
     chose_hex_btn_->setChecked(true);
-  } else if (sendType == 3) {
+    qDebug() << "设置 hex";
   }
   int displayType = config.value("DisplayType").toInt();
   display_type_ = static_cast<TtTextFormat::Type>(displayType);
-  if (displayType == 1) {
+  if (display_type_ == TtTextFormat::TEXT) {
     display_text_btn_->setChecked(true);
-    display_hex_btn_->setChecked(false);
-  } else if (displayType == 2) {
-    display_text_btn_->setChecked(false);
+    // display_hex_btn_->setChecked(false);
+  } else if (display_type_ == TtTextFormat::HEX) {
+    // display_text_btn_->setChecked(false);
     display_hex_btn_->setChecked(true);
   }
+
+  // BUG 加载的时候, 缺少设置发送类型, 导致一开始时 none
 
   // 设置完配置之后, 会最终调用一次, 但是直接的调用, 是否会直接影响未保存的状态
   setSaveStatus(true);
@@ -120,28 +147,20 @@ void UdpWindow::updateServerStatus() {
 }
 
 void UdpWindow::dataReceived(const QByteArray &data) {
-  // recv_byte_count += data.size();
-  // recv_byte_count_ += data.size();
-  // auto tmp = new Ui::TtChatMessage();
-  // tmp->setContent(data);
-  // tmp->setOutgoing(false);
-  // tmp->setBubbleColor(QColor("#0ea5e9"));
-  // QList<Ui::TtChatMessage *> list;
-  // list.append(tmp);
-  // message_model_->appendMessages(list);
-  // recv_byte_->setText(QString("接收字节数: %1 B").arg(recv_byte_count_));
-  // message_view_->scrollToBottom();
   qDebug() << "data: " << data;
   showMessage(data, false);
 }
 
 void UdpWindow::sendMessageToPort() {
+  if (!opened_) {
+    Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""), tr("未打开链接"),
+                            1500, this);
+    return;
+  }
   QString editorText = editor_->text();
   if (editor_->text().isEmpty()) {
     return;
   }
-  // radio button 切换发送类型
-  // 适用于 分包机制
   sendMessage(editorText, send_type_);
 }
 
@@ -174,6 +193,7 @@ void UdpWindow::sendMessageToPort(const QString &data, int time) {
 
 void UdpWindow::init() {
   initUi();
+  qDebug() << "测试";
   if (role_ == TtProtocolType::Client) {
     udp_client_ = new Core::UdpClient;
     title_->setText(tr("未命名的 UDP 连接"));
@@ -204,6 +224,7 @@ void UdpWindow::connectSignals() {
       send_package_timer_->stop();
       heartbeat_timer_->stop();
       msg_queue_.clear();
+      emit workStateChanged(false);
     } else {
       if (role_ == TtProtocolType::Client) {
         // 客户端
@@ -219,7 +240,7 @@ void UdpWindow::connectSignals() {
         }
       }
       opened_ = true;
-
+      on_off_btn_->setChecked(true);
       send_package_timer_->start();
       // 心跳需要间隔
       if (heartbeat_timer_->interval() != 0) {
@@ -227,6 +248,7 @@ void UdpWindow::connectSignals() {
       } else {
         heartbeat_timer_->stop();
       }
+      emit workStateChanged(true);
     }
     setControlState(!opened_);
   });
@@ -255,6 +277,30 @@ void UdpWindow::connectSignals() {
               qDebug() << "interval: " << interval;
               send_package_timer_->setInterval(interval);
             });
+    connect(udp_client_setting_, &Widget::FrameSetting::heartbeatType, this,
+            [this](TtTextFormat::Type type) {
+              qDebug() << "heart_bear_type_" << heart_beat_type_;
+              heart_beat_type_ = type;
+            });
+
+    connect(udp_client_setting_, &Widget::FrameSetting::heartbeatContentChanged,
+            this, [this](const QString &content) {
+              qDebug() << content;
+              if (heartbeat_ != content) {
+                heartbeat_ = content;
+                heartbeat_utf8_ = heartbeat_.toUtf8().toHex(' ');
+              }
+            });
+
+    connect(udp_client_setting_, &Widget::FrameSetting::heartbeatInterval, this,
+            [this](const uint32_t times) {
+              qDebug() << times;
+              if (heartbeat_interval_ != times) {
+                heartbeat_interval_ = times;
+                qDebug() << heartbeat_interval_;
+                heartbeat_timer_->setInterval(times);
+              }
+            });
 
   } else if (role_ == TtProtocolType::Server) {
     connect(udp_server_setting_, &Widget::FrameSetting::settingChanged, this,
@@ -280,7 +326,8 @@ void UdpWindow::connectSignals() {
           (send_type_ == TtTextFormat::HEX) ||
           (heart_beat_type_ == TtTextFormat::HEX && isEnableHeartbeart());
       if (isHexMode) {
-        QString hexStr = package.remove(QRegularExpression("[^0-9A-Fa-f]"));
+        // QString hexStr = package.remove(QRegularExpression("[^0-9A-Fa-f]"));
+        QString hexStr = package.remove(hexFilterRegex);
         for (int i = 0; i < hexStr.length(); i += 2) {
           if (i + 1 >= hexStr.length()) {
             // 在未成对的位置前插入0
@@ -344,6 +391,8 @@ void UdpWindow::connectSignals() {
 }
 
 void UdpWindow::sendMessage(const QString &data, TtTextFormat::Type type) {
+  //  获取正确
+  qDebug() << "send-string: " << data;
   QByteArray dataUtf8;
   // 预处理的数据
   QString processedText = data;
@@ -351,12 +400,13 @@ void UdpWindow::sendMessage(const QString &data, TtTextFormat::Type type) {
   if (type == TtTextFormat::HEX) {
     QString hexStr = data;
     // 移除所有非十六进制字符
-    hexStr = hexStr.remove(QRegularExpression("[^0-9A-Fa-f]"));
+    // hexStr = hexStr.remove(QRegularExpression("[^0-9A-Fa-f]"));
+    hexStr = hexStr.remove(hexFilterRegex);
     if (hexStr.length() % 2 != 0) {
       for (int i = 0; i < hexStr.length(); i += 2) {
         if (i + 1 >= hexStr.length()) {
           hexStr.insert(i, '0');
-          qDebug() << "在位置" << i << "插入0，结果:" << hexStr;
+          // qDebug() << "在位置" << i << "插入0，结果:" << hexStr;
         }
       }
     }
@@ -366,6 +416,9 @@ void UdpWindow::sendMessage(const QString &data, TtTextFormat::Type type) {
   } else if (type == TtTextFormat::TEXT) {
     dataUtf8 = data.toUtf8();
   }
+  // 这里转换后 就是空的
+  qDebug() << "test dataUtf8" << dataUtf8;
+
   if (package_size_ > 0) {
     // 根据格式不同存储
     if (type == TtTextFormat::HEX) {
@@ -376,13 +429,13 @@ void UdpWindow::sendMessage(const QString &data, TtTextFormat::Type type) {
         // 截取固定字符数的十六进制字符串片段
         QString chunk = processedText.mid(i, charSize);
         msg_queue_.enqueue(chunk);
-        qDebug() << "分包HEX: " << chunk;
+        // qDebug() << "分包HEX: " << chunk;
       }
     } else {
       for (int i = 0; i < dataUtf8.size(); i += package_size_) {
         QByteArray chunk = dataUtf8.mid(i, package_size_);
         msg_queue_.enqueue(QString::fromUtf8(chunk));
-        qDebug() << "分包TEXT: " << QString::fromUtf8(chunk);
+        // qDebug() << "分包TEXT: " << QString::fromUtf8(chunk);
       }
     }
   } else {
@@ -393,10 +446,13 @@ void UdpWindow::sendMessage(const QString &data, TtTextFormat::Type type) {
     }
 
     if (role_ == TtProtocolType::Client) {
+      qDebug() << "客户端发送";
       udp_client_->sendMessage(dataUtf8);
     } else if (role_ == TtProtocolType::Server) {
+      qDebug() << "服务端发送";
       udp_server_->sendMessage(dataUtf8);
     }
+    // qDebug() << "发送内容: " << dataUtf8;
 
     showMessage(dataUtf8, true);
   }
@@ -423,12 +479,14 @@ void UdpWindow::setControlState(bool state) {
 }
 
 void UdpWindow::setHeartbeartContent() {
+  qDebug() << "定时" << heartbeat_ << heartbeat_interval_;
   if (!heartbeat_.isEmpty() && heartbeat_interval_ != 0) {
     QByteArray dataUtf8;
     if (heart_beat_type_ == TtTextFormat::TEXT) {
       dataUtf8 = heartbeat_.toUtf8();
     } else if (heart_beat_type_ == TtTextFormat::HEX) {
-      QString hexStr = heartbeat_.remove(QRegularExpression("[^0-9A-Fa-f]"));
+      // QString hexStr = heartbeat_.remove(QRegularExpression("[^0-9A-Fa-f]"));
+      QString hexStr = heartbeat_.remove(hexFilterRegex);
 
       if (hexStr.isEmpty()) {
         qDebug() << "存在无效的十六进制字符";
@@ -462,8 +520,8 @@ void UdpWindow::sendInstructionTableContent(const QString &text,
     dataUtf8 = text.toUtf8();
   } else if (type == TtTextFormat::HEX) {
     QString hexStr = QString(text);
-    hexStr.remove(QRegularExpression("[^0-9A-Fa-f]"));
-    // QString hexStr = text.remove(QRegularExpression("[^0-9A-Fa-f]"));
+    // hexStr.remove(QRegularExpression("[^0-9A-Fa-f]"));
+    hexStr.remove(hexFilterRegex);
 
     if (hexStr.isEmpty()) {
       qDebug() << "存在无效的十六进制字符";
@@ -495,7 +553,7 @@ void UdpWindow::sendInstructionTableContent(const Data::MsgInfo &msg) {
 void UdpWindow::sendPackagedData(const QByteArray &data, bool isHeartbeat) {
   if (!opened_) {
     if (!isHeartbeat) {
-      Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""), tr("串口未打开"),
+      Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""), tr("未打开链接"),
                               1500, this);
     }
     return;
@@ -505,10 +563,14 @@ void UdpWindow::sendPackagedData(const QByteArray &data, bool isHeartbeat) {
     // 分包发送
     for (int i = 0; i < data.size(); i += package_size_) {
       QByteArray chunk = data.mid(i, package_size_);
-
       // QMetaObject::invokeMethod(serial_port_, "sendData",
       // Qt::QueuedConnection,
       //                           Q_ARG(QByteArray, chunk));
+      if (role_ == TtProtocolType::Client) {
+        udp_client_->sendMessage(chunk);
+      } else {
+        udp_server_->sendMessage(chunk);
+      }
       // 更新统计
       send_byte_count_ += chunk.size();
       send_byte_->setText(QString("发送字节数: %1 B").arg(send_byte_count_));
@@ -520,6 +582,12 @@ void UdpWindow::sendPackagedData(const QByteArray &data, bool isHeartbeat) {
     // QMetaObject::invokeMethod(serial_port_, "sendData",
     // Qt::QueuedConnection,
     //                           Q_ARG(QByteArray, data));
+
+    if (role_ == TtProtocolType::Client) {
+      udp_client_->sendMessage(data);
+    } else {
+      udp_server_->sendMessage(data);
+    }
     // 更新统计
     send_byte_count_ += data.size();
     send_byte_->setText(QString("发送字节数: %1 B").arg(send_byte_count_));

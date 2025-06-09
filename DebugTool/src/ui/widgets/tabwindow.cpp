@@ -1066,7 +1066,7 @@ QString TabWindow::findWidget(QWidget *widget) {
   for (auto it = widgetInstances.cbegin(); it != widgetInstances.cend(); ++it) {
     if (it.value() == widget) {
       // error
-      qDebug() << "处于实例组中";
+      // qDebug() << "处于实例组中";
       return it.key();
     }
   }

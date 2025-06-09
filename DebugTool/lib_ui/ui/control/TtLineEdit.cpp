@@ -9,7 +9,7 @@ namespace Ui {
 
 Q_PROPERTY_CREATE_Q_CPP(TtLineEdit, int, BorderRadius)
 
-TtLineEdit::TtLineEdit(QWidget* parent)
+TtLineEdit::TtLineEdit(QWidget *parent)
     : QLineEdit(parent), d_ptr(new TtLineEditPrivate) {
   Q_D(TtLineEdit);
   d->q_ptr = this;
@@ -42,14 +42,12 @@ TtLineEdit::TtLineEdit(QWidget* parent)
           &TtLineEditPrivate::onThemeChanged);
 }
 
-TtLineEdit::TtLineEdit(const QString& text, QWidget* parent)
+TtLineEdit::TtLineEdit(const QString &text, QWidget *parent)
     : TtLineEdit(parent) {
   setText(text);
 }
 
-TtLineEdit::~TtLineEdit() {
-  qDebug() << "delete line edit";
-}
+TtLineEdit::~TtLineEdit() { qDebug() << "delete line edit"; }
 
 void TtLineEdit::setReadOnlyNoClearButton(bool enable) {
   Q_D(TtLineEdit);
@@ -76,7 +74,7 @@ bool TtLineEdit::getIsClearButtonEnable() const {
   return d->pIsClearButtonEnable_;
 }
 
-void TtLineEdit::focusInEvent(QFocusEvent* event) {
+void TtLineEdit::focusInEvent(QFocusEvent *event) {
   Q_D(TtLineEdit);
   // 发射获得焦点的信号，并传递当前文本
   Q_EMIT focusIn(this->text());
@@ -93,11 +91,11 @@ void TtLineEdit::focusInEvent(QFocusEvent* event) {
       }
     }
     // 创建一个属性动画，用于动画扩展标记的宽度
-    QPropertyAnimation* markAnimation =
+    QPropertyAnimation *markAnimation =
         new QPropertyAnimation(d, "pExpandMarkWidth");
     // 连接动画值改变信号到更新界面的槽函数
     connect(markAnimation, &QPropertyAnimation::valueChanged, this,
-            [=](const QVariant& value) { update(); });
+            [=](const QVariant &value) { update(); });
     // 设置动画持续时间为 300 毫秒
     markAnimation->setDuration(300);
     // 设置动画的缓动曲线为 InOutSine
@@ -114,7 +112,7 @@ void TtLineEdit::focusInEvent(QFocusEvent* event) {
   QLineEdit::focusInEvent(event);
 }
 
-void TtLineEdit::focusOutEvent(QFocusEvent* event) {
+void TtLineEdit::focusOutEvent(QFocusEvent *event) {
   Q_D(TtLineEdit);
   // 发射失去焦点的信号，并传递当前文本
   Q_EMIT focusOut(this->text());
@@ -124,11 +122,11 @@ void TtLineEdit::focusOutEvent(QFocusEvent* event) {
       setClearButtonEnabled(false);
     }
     // 创建一个属性动画，用于动画缩小扩展标记的宽度
-    QPropertyAnimation* markAnimation =
+    QPropertyAnimation *markAnimation =
         new QPropertyAnimation(d, "pExpandMarkWidth");
     // 连接动画值改变信号到更新界面的槽函数
     connect(markAnimation, &QPropertyAnimation::valueChanged, this,
-            [=](const QVariant& value) { update(); });
+            [=](const QVariant &value) { update(); });
     // 设置动画持续时间为 300 毫秒
     markAnimation->setDuration(300);
     // 设置动画的缓动曲线为 InOutSine
@@ -146,7 +144,7 @@ void TtLineEdit::focusOutEvent(QFocusEvent* event) {
   QLineEdit::focusOutEvent(event);
 }
 
-void TtLineEdit::paintEvent(QPaintEvent* event) {
+void TtLineEdit::paintEvent(QPaintEvent *event) {
   Q_D(TtLineEdit);
   // 调用基类的绘制事件处理函数
   QLineEdit::paintEvent(event);
@@ -167,9 +165,9 @@ void TtLineEdit::paintEvent(QPaintEvent* event) {
   painter.restore();
 }
 
-void TtLineEdit::contextMenuEvent(QContextMenuEvent* event) {}
+void TtLineEdit::contextMenuEvent(QContextMenuEvent *event) {}
 
-void TtLineEdit::resizeEvent(QResizeEvent* event) {
+void TtLineEdit::resizeEvent(QResizeEvent *event) {
   QLineEdit::resizeEvent(event);
   Q_D(TtLineEdit);
   if (hasFocus()) {
@@ -186,7 +184,7 @@ void TtLineEdit::resizeEvent(QResizeEvent* event) {
   }
 }
 
-TtLineEditPrivate::TtLineEditPrivate(QObject* parent) : QObject(parent) {}
+TtLineEditPrivate::TtLineEditPrivate(QObject *parent) : QObject(parent) {}
 
 TtLineEditPrivate::~TtLineEditPrivate() {
   // qDebug() << "ttlinedelete";
@@ -251,67 +249,74 @@ void TtLineEditPrivate::init() {
   // d->_focusEvent->registerAndInit();
 }
 
-TtLabelLineEdit::TtLabelLineEdit(Qt::AlignmentFlag flag, const QString& text,
-                                 QWidget* parent) {
+TtLabelLineEdit::TtLabelLineEdit(Qt::AlignmentFlag flag, const QString &text,
+                                 QWidget *parent) {
   line_edit_ = new TtLineEdit(this);
 
   label_ = new QLabel(text, this);
   // 设置 tip
   label_->setToolTip(text);
 
-  QHBoxLayout* layout = new QHBoxLayout(this);
+  QHBoxLayout *layout = new QHBoxLayout(this);
   layout->setContentsMargins(QMargins());
   layout->setSpacing(5);
 
   switch (flag) {
-    case Qt::AlignLeft:
-      layout->addWidget(label_, 1);
-      layout->addWidget(line_edit_, 2);
-      break;
-    case Qt::AlignRight:
-      layout->addStretch();
-      layout->addWidget(label_, 1);
-      layout->addWidget(line_edit_, 2);
-      break;
-    case Qt::AlignHCenter:
-      layout->addStretch();
-      layout->addWidget(label_, 1);
-      layout->addWidget(line_edit_, 2);
-      layout->addStretch();
-      break;
-    default:
-      layout->addWidget(label_, 1);
-      layout->addWidget(line_edit_, 2);
-      break;
+  case Qt::AlignLeft:
+    layout->addWidget(label_, 1);
+    layout->addWidget(line_edit_, 2);
+    break;
+  case Qt::AlignRight:
+    layout->addStretch();
+    layout->addWidget(label_, 1);
+    layout->addWidget(line_edit_, 2);
+    break;
+  case Qt::AlignHCenter:
+    layout->addStretch();
+    layout->addWidget(label_, 1);
+    layout->addWidget(line_edit_, 2);
+    layout->addStretch();
+    break;
+  default:
+    layout->addWidget(label_, 1);
+    layout->addWidget(line_edit_, 2);
+    break;
   }
   connect(line_edit_, &TtLineEdit::textChanged, this,
           &TtLabelLineEdit::currentTextChanged);
 
   connect(line_edit_, &TtLineEdit::textChanged, this,
-          [this](const QString& text) {
-            // qDebug() << text.toULongLong();
-            emit currentTextToUInt32(text.toULongLong());
+          [this](const QString &text) {
+            if (text.isEmpty()) {
+              emit currentTextToUInt32(text.toULongLong());
+            }
+            bool ok;
+            quint64 value = text.toULongLong(&ok);
+            if (ok) {
+              qDebug() << "转换成功";
+            } else {
+              value = 0;
+            }
+            emit currentTextToUInt32(value);
           });
 }
 
-TtLabelLineEdit::TtLabelLineEdit(const QString& text, QWidget* parent)
+TtLabelLineEdit::TtLabelLineEdit(const QString &text, QWidget *parent)
     : TtLabelLineEdit(Qt::AlignLeft, text, parent) {}
 
-TtLabelLineEdit::~TtLabelLineEdit() {
-  qDebug() << "delete" << __FUNCTION__;
-}
+TtLabelLineEdit::~TtLabelLineEdit() { qDebug() << "delete" << __FUNCTION__; }
 
 // 有问题
-TtLineEdit* TtLabelLineEdit::body() {
-  return line_edit_;
-}
+TtLineEdit *TtLabelLineEdit::body() { return line_edit_; }
 
-void TtLabelLineEdit::setText(const QString& text) {
+void TtLabelLineEdit::setText(const QString &text) {
   line_edit_->setText(text);
 }
 
-QString TtLabelLineEdit::currentText() {
-  return line_edit_->text();
+void TtLabelLineEdit::setPlaceholderText(const QString &text) {
+  line_edit_->setPlaceholderText(text);
 }
 
-}  // namespace Ui
+QString TtLabelLineEdit::currentText() { return line_edit_->text(); }
+
+} // namespace Ui

@@ -56,6 +56,7 @@ public:
 
   void setText(const QString &text);
   void setCurrentItem(qint8 index);
+  void setPlaceholderText(const QString &text);
   QString itemText(int index);
   QString currentText();
   int count();

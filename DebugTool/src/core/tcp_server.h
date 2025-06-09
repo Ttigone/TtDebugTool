@@ -11,9 +11,9 @@ namespace Core {
 
 struct TcpServerConfiguration {
   QString host;
-  quint16 port;
+  QString port;
 
-  TcpServerConfiguration(const QString &host, quint16 port)
+  TcpServerConfiguration(const QString &host, const QString &port)
       : host(host), port(port) {}
 };
 

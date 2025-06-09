@@ -213,7 +213,7 @@ UdpClientSetting::UdpClientSetting(QWidget *parent) : FrameSetting(parent) {
       tr("连接设置"), ":/sys/chevron-double-up.svg",
       ":/sys/chevron-double-down.svg", linkConfig, false, this);
 
-  connect(mode_, &Ui::TtLabelComboBox::currentIndexChanged,
+  connect(mode_, &Ui::TtLabelComboBox::currentIndexChanged, this,
           [this, drawerLinkSetting](int index) {
             switch (index) {
             case 0:
@@ -257,7 +257,7 @@ UdpClientSetting::UdpClientSetting(QWidget *parent) : FrameSetting(parent) {
   Ui::TtDrawer *drawerFraming = new Ui::TtDrawer(
       tr("分帧[收数据包](暂未提供使用)"), ":/sys/chevron-double-up.svg",
       ":/sys/chevron-double-down.svg", framingWidget, false, this);
-  connect(framing_model_, &Ui::TtLabelComboBox::currentIndexChanged,
+  connect(framing_model_, &Ui::TtLabelComboBox::currentIndexChanged, this,
           [this, drawerFraming](int index) {
             switch (index) {
             case 0: {
@@ -364,6 +364,7 @@ UdpClientSetting::UdpClientSetting(QWidget *parent) : FrameSetting(parent) {
   addLineEdit(heartbeat_interval_->body());
   addLineEdit(heartbeat_content_->body());
 
+  addComboBox(mode_->body());
   addComboBox(framing_model_->body());
   addComboBox(retransmission_->body());
   addComboBox(heartbeat_send_type_->body());
@@ -372,9 +373,16 @@ UdpClientSetting::UdpClientSetting(QWidget *parent) : FrameSetting(parent) {
 
   connect(heartbeat_content_, &Ui::TtLabelLineEdit::currentTextChanged, this,
           [this](const QString &text) { emit heartbeatContentChanged(text); });
+  // connect(heartbeat_interval_, &Ui::TtLabelLineEdit::currentTextToUInt32,
+  // this,
+  //         &FrameSetting::heartbeatInterval);
   connect(heartbeat_interval_, &Ui::TtLabelLineEdit::currentTextToUInt32, this,
-          &FrameSetting::heartbeatInterval);
+          [this](uint32_t num) {
+            qDebug() << "emit changed: " << num;
+            emit FrameSetting::heartbeatInterval(num);
+          });
 
+  // &FrameSetting::heartbeatInterval);
   connect(send_package_interval_, &Ui::TtLabelLineEdit::currentTextToUInt32,
           this, &FrameSetting::sendPackageIntervalChanged);
   connect(send_package_max_size_, &Ui::TtLabelLineEdit::currentTextToUInt32,
@@ -422,6 +430,7 @@ const QJsonObject &UdpClientSetting::getUdpClientSetting() {
   heartbeat.insert(
       "Type", QJsonValue(heartbeat_send_type_->body()->currentData().toInt()));
   heartbeat.insert("Interval", QJsonValue(heartbeat_interval_->body()->text()));
+  qDebug() << "Interval" << heartbeat_interval_->body()->text();
   heartbeat.insert("Content", QJsonValue(heartbeat_content_->body()->text()));
   udp_client_save_config_.insert("Heartbeat", QJsonValue(heartbeat));
 
@@ -453,6 +462,7 @@ void UdpClientSetting::setOldSettings(const QJsonObject &config) {
   int type = heartBeat.value("Type").toInt();
   QString content = heartBeat.value("Content").toString();
   QString interval = heartBeat.value("Interval").toString();
+  qDebug() << "setInterval" << interval;
 
   for (int i = 0; i < mode_->body()->count(); ++i) {
     if (mode_->body()->itemData(i).toInt() == mode) {
@@ -488,6 +498,7 @@ void UdpClientSetting::setOldSettings(const QJsonObject &config) {
     }
   }
 
+  // 设置为空
   heartbeat_interval_->setText(interval);
   heartbeat_content_->setText(content);
 }

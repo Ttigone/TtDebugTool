@@ -16,8 +16,9 @@ bool TcpServer::startServer(const Core::TcpServerConfiguration &config) {
     return true;
   }
 
+  // BUG 检测字符串是否符合要求
   // 特定地址与端口
-  if (!listen(QHostAddress(config.host), config.port)) {
+  if (!listen(QHostAddress(config.host), config.port.toInt())) {
     emit errorOccurred(tr("无法启动服务: ") + errorString());
     return false;
   }
@@ -28,6 +29,16 @@ bool TcpServer::startServer(const Core::TcpServerConfiguration &config) {
 void TcpServer::stopServer() {
   if (isListening()) {
     close();
+    // 清理客户端连接
+    QMutexLocker locker(&client_mutex_);
+    for (QTcpSocket *client : client_sockets_) {
+      if (client && client->state() == QAbstractSocket::ConnectedState) {
+        client->disconnectFromHost();
+        client->waitForDisconnected(1000); // 等待断开连接
+      }
+    }
+    client_sockets_.clear();
+
     emit serverStopped();
   }
 }

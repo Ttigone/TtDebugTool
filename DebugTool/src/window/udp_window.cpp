@@ -14,7 +14,6 @@
 #include <ui/widgets/message_bar.h>
 
 #include <lib/qtmaterialcheckable.h>
-#include <qtmaterialflatbutton.h>
 #include <qtmaterialradiobutton.h>
 #include <qtmaterialsnackbar.h>
 #include <qtmaterialtabs.h>
@@ -28,28 +27,47 @@ namespace Window {
 
 UdpWindow::UdpWindow(TtProtocolType::ProtocolRole role, QWidget *parent)
     : FrameWindow(parent), role_(role) {
-  qDebug() << "test1";
   init();
-  qDebug() << "test";
-
   if (role_ == TtProtocolType::Client) {
     connect(udp_client_, &Core::UdpClient::dataReceived, this,
             [this](const QByteArray &data, const QHostAddress &sender,
                    quint16 senderPort) { dataReceived(data); });
-
     connect(udp_client_, &Core::UdpClient::errorOccurred, this,
             [this](const QString &error) {
-              on_off_btn_->setChecked(false);
+              // 进入了, 但是按钮
+              qDebug() << "error: " << error;
+              Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""), error,
+                                      1500, this);
               opened_ = false;
+              on_off_btn_->setChecked(false);
               setControlState(!opened_);
               send_package_timer_->stop();
               heartbeat_timer_->stop();
               msg_queue_.clear();
               emit workStateChanged(false);
             });
+    connect(udp_client_, &Core::UdpClient::disconnected, this, [this] {
+      // 也是执行了
+      qDebug() << "this disconnected";
+      opened_ = false;
+      on_off_btn_->setChecked(false);
+      setControlState(false);
+      send_package_timer_->stop();
+      heartbeat_timer_->stop();
+      msg_queue_.clear();
+      emit workStateChanged(false);
+    });
+    connect(udp_client_, &Core::UdpClient::connected, this, [this] {
+      opened_ = true;
+      on_off_btn_->setChecked(true);
+      setControlState(true);
+      send_package_timer_->start();
+      heartbeat_timer_->start();
+      msg_queue_.clear();
+      emit workStateChanged(true);
+    });
 
   } else if (role_ == TtProtocolType::Server) {
-    // BUG 能够接收, 但不能发送 !!!
     connect(udp_server_, &Core::UdpServer::datagramReceived, this,
             [this](const QString &peerInfo, const quint16 &peerPort,
                    const QByteArray &message) { dataReceived(message); });
@@ -205,6 +223,7 @@ void UdpWindow::init() {
     udp_server_setting_ = new Widget::UdpServerSetting(this);
     serRightWidget(udp_server_setting_);
   }
+  instruction_table_->setEnabled(true);
 }
 
 void UdpWindow::connectSignals() {
@@ -214,6 +233,7 @@ void UdpWindow::connectSignals() {
 
   connect(on_off_btn_, &Ui::TtSvgButton::clicked, this, [this]() {
     if (opened_) {
+      qDebug() << "关闭";
       if (role_ == TtProtocolType::Client) {
         udp_client_->close();
       } else if (role_ == TtProtocolType::Server) {
@@ -224,8 +244,10 @@ void UdpWindow::connectSignals() {
       send_package_timer_->stop();
       heartbeat_timer_->stop();
       msg_queue_.clear();
+      setControlState(true);
       emit workStateChanged(false);
     } else {
+      qDebug() << "开启";
       if (role_ == TtProtocolType::Client) {
         // 客户端
         udp_client_->connectToOther(
@@ -239,18 +261,20 @@ void UdpWindow::connectSignals() {
           opened_ = false;
         }
       }
-      opened_ = true;
-      on_off_btn_->setChecked(true);
-      send_package_timer_->start();
-      // 心跳需要间隔
-      if (heartbeat_timer_->interval() != 0) {
-        heartbeat_timer_->start();
-      } else {
-        heartbeat_timer_->stop();
-      }
+      // 在 connect 之前就会出现问题 ???
+      // opened_ = true;
+      // on_off_btn_->setChecked(true);
+      // send_package_timer_->start();
+      // // 心跳需要间隔
+      // if (heartbeat_timer_->interval() != 0) {
+      //   heartbeat_timer_->start();
+      // } else {
+      //   heartbeat_timer_->stop();
+      // }
+      setControlState(false);
       emit workStateChanged(true);
     }
-    setControlState(!opened_);
+    // setControlState(!opened_);
   });
 
   connect(send_btn_, &QtMaterialFlatButton::clicked, this,
@@ -279,6 +303,7 @@ void UdpWindow::connectSignals() {
             });
     connect(udp_client_setting_, &Widget::FrameSetting::heartbeatType, this,
             [this](TtTextFormat::Type type) {
+              // 设置了一下语句, 但没有 interval
               qDebug() << "heart_bear_type_" << heart_beat_type_;
               heart_beat_type_ = type;
             });
@@ -294,6 +319,7 @@ void UdpWindow::connectSignals() {
 
     connect(udp_client_setting_, &Widget::FrameSetting::heartbeatInterval, this,
             [this](const uint32_t times) {
+              // 没有发出信号
               qDebug() << times;
               if (heartbeat_interval_ != times) {
                 heartbeat_interval_ = times;
@@ -391,22 +417,15 @@ void UdpWindow::connectSignals() {
 }
 
 void UdpWindow::sendMessage(const QString &data, TtTextFormat::Type type) {
-  //  获取正确
-  qDebug() << "send-string: " << data;
   QByteArray dataUtf8;
-  // 预处理的数据
   QString processedText = data;
-  // 判断发送的类型
   if (type == TtTextFormat::HEX) {
     QString hexStr = data;
-    // 移除所有非十六进制字符
-    // hexStr = hexStr.remove(QRegularExpression("[^0-9A-Fa-f]"));
     hexStr = hexStr.remove(hexFilterRegex);
     if (hexStr.length() % 2 != 0) {
       for (int i = 0; i < hexStr.length(); i += 2) {
         if (i + 1 >= hexStr.length()) {
           hexStr.insert(i, '0');
-          // qDebug() << "在位置" << i << "插入0，结果:" << hexStr;
         }
       }
     }
@@ -416,8 +435,6 @@ void UdpWindow::sendMessage(const QString &data, TtTextFormat::Type type) {
   } else if (type == TtTextFormat::TEXT) {
     dataUtf8 = data.toUtf8();
   }
-  // 这里转换后 就是空的
-  qDebug() << "test dataUtf8" << dataUtf8;
 
   if (package_size_ > 0) {
     // 根据格式不同存储
@@ -426,16 +443,13 @@ void UdpWindow::sendMessage(const QString &data, TtTextFormat::Type type) {
       int byteSize = package_size_;
       int charSize = byteSize * 2; // 每个字节转换为两个十六进制字符
       for (int i = 0; i < processedText.length(); i += charSize) {
-        // 截取固定字符数的十六进制字符串片段
         QString chunk = processedText.mid(i, charSize);
         msg_queue_.enqueue(chunk);
-        // qDebug() << "分包HEX: " << chunk;
       }
     } else {
       for (int i = 0; i < dataUtf8.size(); i += package_size_) {
         QByteArray chunk = dataUtf8.mid(i, package_size_);
         msg_queue_.enqueue(QString::fromUtf8(chunk));
-        // qDebug() << "分包TEXT: " << QString::fromUtf8(chunk);
       }
     }
   } else {
@@ -446,19 +460,18 @@ void UdpWindow::sendMessage(const QString &data, TtTextFormat::Type type) {
     }
 
     if (role_ == TtProtocolType::Client) {
-      qDebug() << "客户端发送";
       udp_client_->sendMessage(dataUtf8);
     } else if (role_ == TtProtocolType::Server) {
-      qDebug() << "服务端发送";
       udp_server_->sendMessage(dataUtf8);
     }
-    // qDebug() << "发送内容: " << dataUtf8;
 
     showMessage(dataUtf8, true);
   }
 }
 
 void UdpWindow::setControlState(bool state) {
+  // qDebug() << "设置使能: " << state;
+  // on_off_btn_->setChecked(!state);
   if (state) {
     if (role_ == TtProtocolType::Client) {
       udp_client_setting_->setControlState(true);
@@ -479,7 +492,8 @@ void UdpWindow::setControlState(bool state) {
 }
 
 void UdpWindow::setHeartbeartContent() {
-  qDebug() << "定时" << heartbeat_ << heartbeat_interval_;
+  // qDebug() << "定时" << heartbeat_ << heartbeat_interval_;
+  // 时间间隔有问题, 没有输出
   if (!heartbeat_.isEmpty() && heartbeat_interval_ != 0) {
     QByteArray dataUtf8;
     if (heart_beat_type_ == TtTextFormat::TEXT) {

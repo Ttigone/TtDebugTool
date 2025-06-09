@@ -90,7 +90,7 @@ void TcpWindow::setSetting(const QJsonObject &config) {
   } else if (role_ == TtProtocolType::Server) {
     config_.insert("Type", TtFunctionalCategory::Simulate);
     tcp_server_setting_->setOldSettings(
-        config.value("TcpClientSetting").toObject(QJsonObject()));
+        config.value("TcpServerSetting").toObject(QJsonObject()));
   }
 
   QJsonObject instructionTableData =
@@ -126,18 +126,10 @@ void TcpWindow::sendMessageToPort() {
   if (editor_->text().isEmpty()) {
     return;
   }
-  // radio button 切换发送类型
-  // 适用于 分包机制
   sendMessage(editorText, send_type_);
 }
 
-void TcpWindow::sendMessageToPort(const QString &data) {
-  // 原有的
-  // 心跳不需要添加
-  // 平均有 10ms 的延时
-  // 如果有分包, 需要应用分包, 否则直接发送
-  sendMessage(data);
-}
+void TcpWindow::sendMessageToPort(const QString &data) { sendMessage(data); }
 
 void TcpWindow::sendMessageToPort(const QString &data, const int &times) {
   QTimer::singleShot(times, this, [this, data]() {
@@ -161,7 +153,8 @@ void TcpWindow::setHeartbeartContent() {
     if (heart_beat_type_ == TtTextFormat::TEXT) {
       dataUtf8 = heartbeat_.toUtf8();
     } else if (heart_beat_type_ == TtTextFormat::HEX) {
-      QString hexStr = heartbeat_.remove(QRegularExpression("[^0-9A-Fa-f]"));
+      // QString hexStr = heartbeat_.remove(QRegularExpression("[^0-9A-Fa-f]"));
+      QString hexStr = heartbeat_.remove(hexFilterRegex);
 
       if (hexStr.isEmpty()) {
         qDebug() << "存在无效的十六进制字符";
@@ -196,7 +189,8 @@ void TcpWindow::sendInstructionTableContent(const QString &text,
   } else if (type == TtTextFormat::HEX) {
     // QString hexStr = text.remove(QRegularExpression("[^0-9A-Fa-f]"));
     QString hexStr = QString(text);
-    hexStr.remove(QRegularExpression("[^0-9A-Fa-f]"));
+    // hexStr.remove(QRegularExpression("[^0-9A-Fa-f]"));
+    hexStr.remove(hexFilterRegex);
 
     if (hexStr.isEmpty()) {
       qDebug() << "存在无效的十六进制字符";
@@ -246,9 +240,9 @@ QString TcpWindow::getTitle() const { return title_->text(); }
 
 void TcpWindow::updateServerStatus() {
   const bool running = tcp_server_->isRunning();
-  auto text =
-      (running ? tr("服务运行中 (端口: %1)").arg("111") : tr("服务已停止"));
-  qDebug() << text;
+  // auto text =
+  //     (running ? tr("服务运行中 (端口: %1)").arg("111") : tr("服务已停止"));
+  // qDebug() << text;
 }
 
 void TcpWindow::dataReceived(const QByteArray &data) {
@@ -282,17 +276,15 @@ void TcpWindow::connectSignals() {
         tcp_client_->disconnectFromServer();
         tcp_client_setting_->setControlState(true);
       } else if (role_ == TtProtocolType::Server) {
-        tcp_server_->close();
-        tcp_client_setting_->setControlState(true);
+        tcp_server_->stopServer();
+        tcp_server_setting_->setControlState(true);
       }
       opened_ = false;
       on_off_btn_->setChecked(false);
       send_package_timer_->stop();
       heartbeat_timer_->stop();
       msg_queue_.clear();
-
     } else {
-      // 转换成对应的实际子类
       if (role_ == TtProtocolType::Client) {
         qDebug() << "connectToServer";
         tcp_client_->connectToServer(
@@ -399,7 +391,8 @@ void TcpWindow::connectSignals() {
           (send_type_ == TtTextFormat::HEX) ||
           (heart_beat_type_ == TtTextFormat::HEX && isEnableHeartbeart());
       if (isHexMode) {
-        QString hexStr = package.remove(QRegularExpression("[^0-9A-Fa-f]"));
+        // QString hexStr = package.remove(QRegularExpression("[^0-9A-Fa-f]"));
+        QString hexStr = package.remove(hexFilterRegex);
         for (int i = 0; i < hexStr.length(); i += 2) {
           if (i + 1 >= hexStr.length()) {
             // 在未成对的位置前插入0
@@ -501,7 +494,8 @@ void TcpWindow::sendMessage(const QString &data, TtTextFormat::Type type) {
   if (type == TtTextFormat::HEX) {
     QString hexStr = data;
     // 移除所有非十六进制字符
-    hexStr = hexStr.remove(QRegularExpression("[^0-9A-Fa-f]"));
+    // hexStr = hexStr.remove(QRegularExpression("[^0-9A-Fa-f]"));
+    hexStr = hexStr.remove(hexFilterRegex);
     if (hexStr.length() % 2 != 0) {
       for (int i = 0; i < hexStr.length(); i += 2) {
         if (i + 1 >= hexStr.length()) {

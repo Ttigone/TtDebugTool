@@ -6,11 +6,11 @@
 
 namespace Ui {
 
-WidgetGroup::WidgetGroup(QObject* parent)
+WidgetGroup::WidgetGroup(QObject *parent)
     : QObject(parent), m_currentIndex(-1) {}
 
-void WidgetGroup::addButton(const QString& uuid, int specialType,
-                            TtSpecialDeleteButton* button) {
+void WidgetGroup::addButton(const QString &uuid, int specialType,
+                            TtSpecialDeleteButton *button) {
   // bool hadFlag = false;
   // for (const auto &key : buttons_.keys()) {
   //   if (key.first == uuid) {
@@ -44,12 +44,12 @@ void WidgetGroup::addButton(const QString& uuid, int specialType,
   }
 }
 
-void WidgetGroup::setCurrentIndex(const QString& index) {
+void WidgetGroup::setCurrentIndex(const QString &index) {
   if (index != current_uuid_) {
-    if (auto* btn = findButton(current_uuid_)) {
+    if (auto *btn = findButton(current_uuid_)) {
       btn->setChecked(false);
     }
-    if (auto* btn = findButton(index)) {
+    if (auto *btn = findButton(index)) {
       btn->setChecked(true);
     }
     current_uuid_ = index;
@@ -57,14 +57,12 @@ void WidgetGroup::setCurrentIndex(const QString& index) {
   }
 }
 
-int WidgetGroup::currentIndex() const {
-  return m_currentIndex;
-}
+int WidgetGroup::currentIndex() const { return m_currentIndex; }
 
-void WidgetGroup::setSpecificOptionStatus(const QString& uuid, bool state) {
+void WidgetGroup::setSpecificOptionStatus(const QString &uuid, bool state) {
   for (auto it = buttons_.begin(); it != buttons_.end(); ++it) {
     if (it.key().first == uuid) {
-      qDebug() << "find the button";
+      // qDebug() << "find the button";
       // 找到了对应的值
       it.value()->setWorkState(state);
       break;
@@ -72,8 +70,8 @@ void WidgetGroup::setSpecificOptionStatus(const QString& uuid, bool state) {
   }
 }
 
-void WidgetGroup::updateUuid(const QString& index) {
-  qDebug() << "remove" << index;
+void WidgetGroup::updateUuid(const QString &index) {
+  // qDebug() << "remove" << index;
   // QMap<QPair<QString, int>, TtSpecialDeleteButton*>::iterator it =
   //     buttons_.begin();
   // while (it != buttons_.end()) {
@@ -90,7 +88,7 @@ void WidgetGroup::updateUuid(const QString& index) {
   //     ++it;
   //   }
   // }
-  qDebug() << "remove" << index;
+  // qDebug() << "remove" << index;
   auto it = buttons_.begin();
   while (it != buttons_.end()) {
     if (it.key().first == index) {
@@ -106,8 +104,8 @@ void WidgetGroup::updateUuid(const QString& index) {
 
 void WidgetGroup::handleButtonClicked() {
   // 获取选中的按钮
-  TtSpecialDeleteButton* clickedButton =
-      qobject_cast<TtSpecialDeleteButton*>(sender());
+  TtSpecialDeleteButton *clickedButton =
+      qobject_cast<TtSpecialDeleteButton *>(sender());
 
   QString getUUid("");
   int type = -1;
@@ -120,7 +118,7 @@ void WidgetGroup::handleButtonClicked() {
   if (getUUid.isEmpty() || type == -1) {
     return;
   }
-  if (auto* btn = findButton(current_uuid_)) {
+  if (auto *btn = findButton(current_uuid_)) {
     btn->setChecked(false);
   }
 
@@ -132,7 +130,7 @@ void WidgetGroup::handleButtonClicked() {
   emit currentIndexChanged(getUUid, type);
 }
 
-TtSpecialDeleteButton* WidgetGroup::findButton(const QString& uuid) {
+TtSpecialDeleteButton *WidgetGroup::findButton(const QString &uuid) {
   // for (const auto& key : buttons_.keys()) {
   //   if (key.first == uuid) {
   //     return buttons_.value(key);
@@ -148,4 +146,4 @@ TtSpecialDeleteButton* WidgetGroup::findButton(const QString& uuid) {
   return nullptr;
 }
 
-}  // namespace Ui
+} // namespace Ui

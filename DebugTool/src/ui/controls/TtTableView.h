@@ -60,7 +60,8 @@ private:
     TtLineEdit *nameEdit{nullptr};
     TtComboBox *typeCombo{nullptr};
     TtLineEdit *contentEdit{nullptr};
-    QSpinBox *delaySpin{nullptr};
+    TtLineEdit *delayEdit{nullptr};
+    // QSpinBox *delaySpin{nullptr};
     bool fromPool{false};
   };
 
@@ -68,11 +69,11 @@ private:
   static const int MAX_POOL_SIZE = 100;
 
   // 对象池
-  QList<TtComboBox *> comboPool_;
-  QList<TtSwitchButton *> switchPool_;
-  QList<QSpinBox *> spinPool_;
-  QList<TtLineEdit *> lineEditPool_;
-  QList<QWidget *> widgetPool_;
+  // QList<TtComboBox *> comboPool_;
+  // QList<TtSwitchButton *> switchPool_;
+  // QList<QSpinBox *> spinPool_;
+  // QList<TtLineEdit *> lineEditPool_;
+  // QList<QWidget *> widgetPool_;
 
   QVector<TableRow> rowsData_;
 

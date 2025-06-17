@@ -40,13 +40,13 @@ file(GLOB_RECURSE PROJECT_SOURCES
 )
 
 
-FILE(GLOB PROJECT_HEADER_FILES
-    ${third_party}/qcustomplot/*.h
-)
+#FILE(GLOB PROJECT_HEADER_FILES
+#    ${third_party}/qcustomplot/*.h
+#)
 
-FILE(GLOB PROJECT_SOURCE_FILES
-    ${third_party}/qcustomplot/*.cpp
-)
+#FILE(GLOB PROJECT_SOURCE_FILES
+#    ${third_party}/qcustomplot/*.cpp
+#)
 
 set(RES_QRC
     res/shared.qrc
@@ -68,8 +68,8 @@ if (${QT_VERSION_MAJOR} GREATER_EQUAL 6)
             WIN32
             ${PROJECT_SOURCES}
             ${RES_QRC}
-            ${PROJECT_HEADER_FILES}
-            ${PROJECT_SOURCE_FILES}
+#            ${PROJECT_HEADER_FILES}
+#            ${PROJECT_SOURCE_FILES}
     )
 else()
     add_executable(${PROJECT_NAME} WIN32)

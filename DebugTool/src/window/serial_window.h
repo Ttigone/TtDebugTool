@@ -18,6 +18,9 @@
 #include <QToolBox>
 #include <QWidget>
 
+#include <realtimeplot/plotarea.h>
+#include <realtimeplot/pointstream.h>
+
 #include "data/communication_metadata.h"
 #include "window/frame_window.h"
 
@@ -268,6 +271,10 @@ private:
   TtProtocolSetting::Protocol protocol_;
   // 添加这个常量定义
   static constexpr int MAX_CHANNELS = 8; // 或者根据您的需求设置其他值
+
+
+  quint64 sampleNumber = 0;
+  QList<QSharedPointer<PointStream<point_t>>> dataPoints;
 };
 
 } // namespace Window

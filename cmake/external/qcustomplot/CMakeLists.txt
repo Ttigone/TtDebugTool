@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
-
-project(qcustomplot LANGUAGES CXX)
+project(qcustomplot VERSION 1.0 LANGUAGES CXX)
+set(TARGET_NAME external_qcustomplot)
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
@@ -9,24 +9,24 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(qcustomplot_loc ${third_party}/qcustomplot)
+
 # 设置输出路径
 set(qcustomplot_OUT_ROOT "${CMAKE_BINARY_DIR}")
 
-FILE(GLOB PROJECT_HEADER_FILES
-    ${third_party}/${PROJECT_NAME}/*.h
+set(PROJECT_INC
+    ${qcustomplot_loc}/qcustomplot.h
 )
 
-FILE(GLOB PROJECT_SOURCE_FILES
-    ${third_party}/${PROJECT_NAME}/*.cpp
+set(PROJECT_SRC
+    ${qcustomplot_loc}/qcustomplot.cpp
 )
 
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 
-
-
 add_library(${PROJECT_NAME} STATIC
-        ${PROJECT_HEADER_FILES}
-        ${PROJECT_SOURCE_FILES}
+        ${PROJECT_INC}
+        ${PROJECT_SRC}
 )
 
 # add_definitions(-DQCUSTOMPLOT_USE_OPENGL)
@@ -63,12 +63,3 @@ if(MINGW)
         -lopengl32 -lglu32
     )
 endif()
-
-# target_link_libraries(${PROJECT_NAME}
-# PUBLIC
-#     Qt${QT_VERSION_MAJOR}::Widgets
-#     Qt${QT_VERSION_MAJOR}::PrintSupport
-#     Qt${QT_VERSION_MAJOR}::OpenGL
-#     OpenGL::GL
-#     OpenGL::GLU
-# )

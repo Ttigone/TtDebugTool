@@ -1390,17 +1390,37 @@ SerialWindow::generateRandomTestData(TtProtocolSetting::Protocol protocol) {
 }
 
 void SerialWindow::startRandomDataTest(TtProtocolSetting::Protocol protocol) {
-  protocol_ = protocol;
-  // 创建定时器，定期发送随机数据
-  QTimer *testTimer = new QTimer(this);
-  connect(testTimer, &QTimer::timeout, this, [this, protocol]() {
-    QByteArray testData = generateRandomTestData(protocol);
-    // 模拟接收数据
-    dataReceived(testData);
-  });
+  //protocol_ = protocol;
+  //// 创建定时器，定期发送随机数据
+  //QTimer *testTimer = new QTimer(this);
+  //connect(testTimer, &QTimer::timeout, this, [this, protocol]() {
+  //  QByteArray testData = generateRandomTestData(protocol);
+  //  // 模拟接收数据
+  //  dataReceived(testData);
+  //});
 
-  // 每100ms发送一次数据
-  testTimer->start(50);
+  //// 每100ms发送一次数据
+  //testTimer->start(50);
+  // constexpr double freq = 1.0; // 2Hz
+  constexpr double freq = 1.0;  // 2Hz
+  const double samplePeriod =
+      static_cast<double>(SAMPLE_GENERATION_PERIOD) / 1000.0;
+  constexpr double twoPi = 2.0 * M_PI;
+
+  for (int i = 0; i < dataPoints.size(); i++) { 
+  double phase = (i * M_PI) / dataPoints.size();
+  double value = qSin(phase + twoPi * freq * sampleNumber * samplePeriod);
+  // qDebug() << sampleNumber << value;
+  QVector<point_t> data;
+  point_t point = {
+      .x = static_cast<double>(sampleNumber),
+      .y = value,
+  };
+
+  data << point;
+  // 点数组
+  dataPoints.at(i)->appendPoints(data);
+  }
 }
 
 void SerialWindow::showErrorMessage(const QString &text) {
@@ -2008,7 +2028,7 @@ void SerialWindow::connectSignals() {
       }
       // 处于工作信号
       emit workStateChanged(true);
-      // startRandomDataTest(TtProtocolSetting::FireWater);
+      startRandomDataTest(TtProtocolSetting::FireWater);
     }
     setControlState(!opened_);
   });

@@ -1,8 +1,3 @@
-[submodule "DebugTool/3rdparty/qt-easy-logger-main"]
-    path = DebugTool/3rdparty/qt-easy-logger-main
-    url = https://github.com/hanjianqiao/qt-easy-logger.git
-    branch = main
-
 [submodule "DebugTool/3rdparty/QScintilla_src-2.14.1"]
     path = DebugTool/3rdparty/QScintilla_src-2.14.1
     url = https://github.com/ScintillaOrg/lexilla.git
@@ -20,7 +15,7 @@
 
 [submodule "DebugTool/3rdparty/Qt-Advanced-Stylesheets"]
 	path = DebugTool/3rdparty/Qt-Advanced-Stylesheets
-	url = https://github.com/sometek/Qt-Advanced-Stylesheets.git
+	url = https://github.com/githubuser0xFFFF/Qt-Advanced-Stylesheets
     branch = main
 
 [submodule "DebugTool/3rdparty/qcustomplot"]

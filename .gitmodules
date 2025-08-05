@@ -1,0 +1,34 @@
+[submodule "DebugTool/3rdparty/qt-easy-logger-main"]
+    path = DebugTool/3rdparty/qt-easy-logger-main
+    url = https://github.com/hanjianqiao/qt-easy-logger.git
+    branch = main
+
+[submodule "DebugTool/3rdparty/QScintilla_src-2.14.1"]
+    path = DebugTool/3rdparty/QScintilla_src-2.14.1
+    url = https://github.com/ScintillaOrg/lexilla.git
+    branch = master
+
+[submodule "DebugTool/3rdparty/ringbuffer"]
+    path = DebugTool/3rdparty/ringbuffer
+    url = https://github.com/AndersKaloer/Ring-Buffer.git
+    branch = master
+
+[submodule "DebugTool/3rdparty/qwindowkit"]
+	path = DebugTool/3rdparty/qwindowkit
+	url = https://github.com/stdware/qwindowkit.git
+    branch = main
+
+[submodule "DebugTool/3rdparty/Qt-Advanced-Stylesheets"]
+	path = DebugTool/3rdparty/Qt-Advanced-Stylesheets
+	url = https://github.com/sometek/Qt-Advanced-Stylesheets.git
+    branch = main
+
+[submodule "DebugTool/3rdparty/qcustomplot"]
+    path = DebugTool/3rdparty/qcustomplot
+    url = https://gitlab.com/DerManu/QCustomPlot.git
+    branch = master
+
+[submodule "DebugTool/3rdparty/qtmaterial"]
+	path = DebugTool/3rdparty/qtmaterial
+	url = https://github.com/laserpants/qt-material-widgets.git
+    branch = master

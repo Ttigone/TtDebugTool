@@ -126,17 +126,24 @@ include_directories(${third_party})
 
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    target_include_directories(${PROJECT_NAME} PRIVATE "${third_party}/qtmqtt/6_6_3_msvc2019_64/include")
-    target_link_directories(${PROJECT_NAME} PRIVATE "${third_party}/qtmqtt/6_6_3_msvc2019_64/lib")
-    target_link_libraries(${PROJECT_NAME} PRIVATE Qt6Mqtt)
-    message("TEST MSVC")
+    # target_include_directories(${PROJECT_NAME} PRIVATE "${third_party}/qtmqtt/6_6_3_msvc2019_64/include")
+    # target_link_directories(${PROJECT_NAME} PRIVATE "${third_party}/qtmqtt/6_6_3_msvc2019_64/lib")
+    set(QT_MQTT_INCLUDE_DIR "${third_party}/qtmqtt/6_6_3_msvc2019_64/include")
+    set(QT_MQTT_LIB_DIR "${third_party}/qtmqtt/6_6_3_msvc2019_64/lib")
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    target_include_directories(${PROJECT_NAME} PRIVATE "${third_party}/qtmqtt/6_6_3_mingw_64/include")
-    target_link_directories(${PROJECT_NAME} PRIVATE "${third_party}/qtmqtt/6_6_3_mingw_64/lib")
-    target_link_libraries(${PROJECT_NAME} PRIVATE Qt6Mqtt)
-    message("TEST MINGW")
+    set(QT_MQTT_INCLUDE_DIR "${third_party}/qtmqtt/6_6_3_mingw_64/include")
+    set(QT_MQTT_LIB_DIR "${third_party}/qtmqtt/6_6_3_mingw_64/lib")
+    # target_include_directories(${PROJECT_NAME} PRIVATE "${third_party}/qtmqtt/6_6_3_mingw_64/include")
+    # target_link_directories(${PROJECT_NAME} PRIVATE "${third_party}/qtmqtt/6_6_3_mingw_64/lib")
 endif()
 
+set(QT_MQTT_INCLUDE_NESTED_DIR "${CMAKE_CURRENT_BINARY_DIR}/qt_mqtt_include")
+file(MAKE_DIRECTORY "${QT_MQTT_INCLUDE_NESTED_DIR}/QtMqtt")
+file(COPY "${QT_MQTT_INCLUDE_DIR}/" DESTINATION "${QT_MQTT_INCLUDE_NESTED_DIR}/QtMqtt")
+
+target_include_directories(${PROJECT_NAME} PRIVATE "${QT_MQTT_INCLUDE_NESTED_DIR}")
+target_link_directories(${PROJECT_NAME} PRIVATE "${QT_MQTT_LIB_DIR}")
+target_link_libraries(${PROJECT_NAME} PRIVATE Qt6Mqtt)
 
 find_package(Qt6 REQUIRED COMPONENTS OpenGL)
 find_package(OpenGL REQUIRED)
@@ -150,10 +157,8 @@ PRIVATE
   external_qtadvancedcss
   external_qt-material
   qscintilla2_qt
-  QsLog
-  qt-easy-logger
-  # qcustomplot
-#  ${third_party}/qtmqtt_mingw64/lib/libQt6Mqtt.a
+  qcustomplot
+  glog
   # 使用的是系统的 opengl函数
   # -lopengl32 -lglu32
   Qt6::OpenGL          # Qt OpenGL 模块

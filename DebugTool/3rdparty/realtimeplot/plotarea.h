@@ -7,7 +7,7 @@
 #include <QSharedPointer>
 #include <QTimer>
 
-#include <qcustomplot/qcustomplot.h>
+// #include <qcustomplot/qcustomplot.h>
 
 #include "pointstream.h"
 

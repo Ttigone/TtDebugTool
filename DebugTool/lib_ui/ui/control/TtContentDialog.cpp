@@ -6,6 +6,7 @@
 #include <QApplication>
 #include <QCloseEvent>
 #include <QScreen>
+#include <QPointer>
 #include <qdialog.h>
 #include <qnamespace.h>
 #include <ui/control/TtTextButton.h>

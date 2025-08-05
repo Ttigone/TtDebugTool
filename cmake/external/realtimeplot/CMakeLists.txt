@@ -1,4 +1,4 @@
-project(realtimeplot VERSION 1.0 LANGUAGE CXX)
+project(realtimeplot LANGUAGES CXX VERSION 1.0 )
 set(TARGET_NAME external_realtimeplot)
 
 set(realtimeplot_loc ${third_party}/realtimeplot)

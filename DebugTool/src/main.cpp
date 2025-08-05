@@ -1,4 +1,3 @@
-#include "qt-easy-logger-main/logger.h"
 #include <QApplication>
 #include <QTextCodec>
 
@@ -9,6 +8,7 @@
 #include "ui/widgets/tabwindow.h"
 #include "window/main_window.h"
 #include <ui/widgets/tabwindow.h>
+#include <QFontDatabase>
 
 // 编译器版本为 6.5.3 时, 调整宽度和高度时, 控件会改变布局, qwindowkit bug
 // 编译器 < 6.5.3 or 编译器 > 6.6.2
@@ -59,7 +59,6 @@
 int main(int argc, char *argv[]) {
   QApplication app(argc, argv);
 
-  qInstallMessageHandler(h::Logger::messageHandler); // 启用功能
 
   // 注册表使用
   QCoreApplication::setApplicationName(QStringLiteral("TtDebugTool")); // 程序名

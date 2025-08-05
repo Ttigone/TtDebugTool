@@ -1403,24 +1403,24 @@ void SerialWindow::startRandomDataTest(TtProtocolSetting::Protocol protocol) {
   //testTimer->start(50);
   // constexpr double freq = 1.0; // 2Hz
   constexpr double freq = 1.0;  // 2Hz
-  const double samplePeriod =
-      static_cast<double>(SAMPLE_GENERATION_PERIOD) / 1000.0;
-  constexpr double twoPi = 2.0 * M_PI;
+  // const double samplePeriod =
+  //     static_cast<double>(SAMPLE_GENERATION_PERIOD) / 1000.0;
+  // constexpr double twoPi = 2.0 * M_PI;
 
-  for (int i = 0; i < dataPoints.size(); i++) { 
-  double phase = (i * M_PI) / dataPoints.size();
-  double value = qSin(phase + twoPi * freq * sampleNumber * samplePeriod);
-  // qDebug() << sampleNumber << value;
-  QVector<point_t> data;
-  point_t point = {
-      .x = static_cast<double>(sampleNumber),
-      .y = value,
-  };
+  // for (int i = 0; i < dataPoints.size(); i++) {
+  // double phase = (i * M_PI) / dataPoints.size();
+  // double value = qSin(phase + twoPi * freq * sampleNumber * samplePeriod);
+  // // qDebug() << sampleNumber << value;
+  // QVector<point_t> data;
+  // point_t point = {
+  //     .x = static_cast<double>(sampleNumber),
+  //     .y = value,
+  // };
 
-  data << point;
+  // data << point;
   // 点数组
-  dataPoints.at(i)->appendPoints(data);
-  }
+  // dataPoints.at(i)->appendPoints(data);
+  // }
 }
 
 void SerialWindow::showErrorMessage(const QString &text) {

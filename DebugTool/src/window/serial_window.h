@@ -18,8 +18,8 @@
 #include <QToolBox>
 #include <QWidget>
 
-#include <realtimeplot/plotarea.h>
-#include <realtimeplot/pointstream.h>
+// #include <realtimeplot/plotarea.h>
+// #include <realtimeplot/pointstream.h>
 
 #include "data/communication_metadata.h"
 #include "window/frame_window.h"
@@ -274,7 +274,7 @@ private:
 
 
   quint64 sampleNumber = 0;
-  QList<QSharedPointer<PointStream<point_t>>> dataPoints;
+  // QList<QSharedPointer<PointStream<point_t>>> dataPoints;
 };
 
 } // namespace Window

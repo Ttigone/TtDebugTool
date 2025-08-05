@@ -10,15 +10,10 @@ add_checked_subdirectory(qwindowkit)
 add_checked_subdirectory(Qt-Advanced-Stylesheets)
 add_checked_subdirectory(qt-material)
 add_checked_subdirectory(qscintilla)
-add_checked_subdirectory(QsLog)
-add_checked_subdirectory(qt-easy-logger-main)
 add_checked_subdirectory(lua)
-<<<<<<< Updated upstream
+add_checked_subdirectory(glog)
 add_checked_subdirectory(qcustomplot)
-add_checked_subdirectory(realTimePlot)
-add_checked_subdirectory(ringbuffer)
-=======
-add_checked_subdirectory(realtimeplot)
->>>>>>> Stashed changes
+# add_checked_subdirectory(realTimePlot)
+# add_checked_subdirectory(ringbuffer)
 # add_checked_subdirectory(libmodbus-3.1.11)
 

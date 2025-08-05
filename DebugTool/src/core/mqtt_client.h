@@ -12,7 +12,8 @@
 #if defined(__MINGW64__)
 // MinGW编译器
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-#include <QtMqtt/6_6_3_mingw_64/include/qmqttclient.h>
+// #include <QtMqtt/6_6_3_mingw_64/include/qmqttclient.h>
+#include <QtMqtt/qmqttclient.h>
 #else
 // Qt 5.x with MinGW
 #include <QtMqtt/5_15_mingw_64/include/qmqttclient.h>

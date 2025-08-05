@@ -1,7 +1,7 @@
 #ifndef UI_CONTROLS_LUAINPUTBOX_H
 #define UI_CONTROLS_LUAINPUTBOX_H
 
-// #include <Qsci/qsciscintilla.h>
+#include <Qsci/qsciscintilla.h>
 #include "qsciscintilla.h"
 #include <QDialog>
 #include <QsciAPIs.h>

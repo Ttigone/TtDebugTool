@@ -58,6 +58,11 @@
 #include "lang/translation_manager.h"
 #include "ui/widgets/setting_widget.h"
 
+
+#ifdef Q_OS_WIN
+#include <windows.h>
+#endif
+
 namespace Window {
 
 QMap<TtProtocolRole::Role, QString> configMappingTable = {

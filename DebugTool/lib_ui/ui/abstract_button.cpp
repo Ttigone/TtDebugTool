@@ -1,7 +1,7 @@
 ﻿#include  "ui/abstract_button.h"
 // #include  "ui/style/style_core_types.h"
 
-
+#include <QPointer>
 #include <QMouseEvent>
 
 

@@ -76,13 +76,6 @@ else()
     target_sources(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCES} ${RES_QRC})
 endif ()
 
-# # 设置编译选项
-# if(MSVC)
-#     add_compile_options(/Zc:__cplusplus)  # MSVC 格式
-# elseif(MINGW)
-#     # MinGW 不需要此选项
-# endif()
-
 
 add_definitions(-DQCUSTOMPLOT_USE_OPENGL)
 
@@ -158,7 +151,7 @@ PRIVATE
   external_qt-material
   qscintilla2_qt
   qcustomplot
-  glog
+  # glog
   # 使用的是系统的 opengl函数
   # -lopengl32 -lglu32
   Qt6::OpenGL          # Qt OpenGL 模块

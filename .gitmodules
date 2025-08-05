@@ -5,7 +5,7 @@
 
 [submodule "DebugTool/3rdparty/ringbuffer"]
     path = DebugTool/3rdparty/ringbuffer
-    url = https://github.com/AndersKaloer/Ring-Buffer.git
+    url = https://github.com/filipecalasans/ringbuffer.git
     branch = master
 
 [submodule "DebugTool/3rdparty/qwindowkit"]

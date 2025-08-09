@@ -33,7 +33,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${QtMaterial_OUT_ROOT}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${QtMaterial_OUT_ROOT}/bin)
 
 # 设置 qt-material 源代码位置
-set(qt_material_loc ${third_party}/qt-material-widgets/components)
+set(qt_material_loc ${third_party}/qtmaterial/components)
 
 # 源文件
 file(GLOB_RECURSE PROJECT_SRC

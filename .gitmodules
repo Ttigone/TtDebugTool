@@ -15,7 +15,7 @@
 
 [submodule "DebugTool/3rdparty/Qt-Advanced-Stylesheets"]
 	path = DebugTool/3rdparty/Qt-Advanced-Stylesheets
-	url = https://github.com/githubuser0xFFFF/Qt-Advanced-Stylesheets
+        url = https://github.com/githubuser0xFFFF/Qt-Advanced-Stylesheets.git
     branch = main
 
 [submodule "DebugTool/3rdparty/qcustomplot"]
@@ -23,7 +23,12 @@
     url = https://gitlab.com/DerManu/QCustomPlot.git
     branch = master
 
-[submodule "DebugTool/3rdparty/qtmaterial"]
-	path = DebugTool/3rdparty/qtmaterial
-	url = https://github.com/laserpants/qt-material-widgets.git
+[submodule "DebugTool/3rdparty/glog"]
+    path = DebugTool/3rdparty/glog
+    url = https://github.com/google/glog.git
     branch = master
+
+;[submodule "DebugTool/3rdparty/qtmaterial"]
+;	path = DebugTool/3rdparty/qtmaterial
+;	url = https://github.com/laserpants/qt-material-widgets.git
+;    branch = master

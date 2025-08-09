@@ -1,0 +1,4 @@
+#ifndef WCHAR_LOGGING_H
+#define WCHAR_LOGGING_H
+
+#endif  // WCHAR_LOGGING_H

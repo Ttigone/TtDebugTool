@@ -25,6 +25,8 @@ PRIVATE
   base/time.h
   base/timer.h base/timer.cpp
   base/invoke_queued.h
+  base/glog_helper.h
+  base/wchar_logging.h
 )
 
 # 省略相对路径的麻烦

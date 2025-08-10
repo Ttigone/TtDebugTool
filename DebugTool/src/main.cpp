@@ -1,8 +1,8 @@
-#include <QApplication>
-#include <QTextCodec>
-#include <QFontDatabase>
+#include <base/glog_helper.h>
 
-#include <glog/logging.h>
+#include <QApplication>
+#include <QFontDatabase>
+#include <QTextCodec>
 
 #include "lang/translation_manager.h"
 #include "storage/configs_manager.h"
@@ -12,11 +12,14 @@
 // 编译器版本为 6.5.3 时, 调整宽度和高度时, 控件会改变布局, qwindowkit bug
 // 编译器 < 6.5.3 or 编译器 > 6.6.2
 
+using namespace std::chrono_literals;
+
 #if (!WIN32)
-#include <QSettings>
-#include <QTranslator>
 #include <Windows.h>
 #include <dbghelp.h>
+
+#include <QSettings>
+#include <QTranslator>
 // 异常捕获函数
 // LONG ApplicationCrashHandler(EXCEPTION_POINTERS* pException) {
 
@@ -58,11 +61,11 @@
 int main(int argc, char *argv[]) {
   QApplication app(argc, argv);
 
-
   // 注册表使用
-  QCoreApplication::setApplicationName(QStringLiteral("TtDebugTool")); // 程序名
+  QCoreApplication::setApplicationName(
+      QStringLiteral("TtDebugTool"));  // 程序名
   QCoreApplication::setOrganizationName(
-      QStringLiteral("C3H3_Ttigone")); // 组织名
+      QStringLiteral("C3H3_Ttigone"));  // 组织名
 
   // 主应用字体
   QFontDatabase::addApplicationFont(":/font/iconfont.ttf");
@@ -87,7 +90,7 @@ int main(int argc, char *argv[]) {
     Lang::TtTranslationManager::instance().setLanguage(fr, "TtDebugTool_en.qm");
   }
   // 设置全局字体
-  QFont font(":/font/roboto/Roboto-Black.ttf", 10); // 微软雅黑，10号字体
+  QFont font(":/font/roboto/Roboto-Black.ttf", 10);  // 微软雅黑，10号字体
   app.setFont(font);
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
@@ -127,7 +130,6 @@ int main(int argc, char *argv[]) {
 #endif
 
   QCoreApplication::setAttribute(Qt::AA_DontCreateNativeWidgetSiblings);
-
   QApplication::setQuitOnLastWindowClosed(true);
 
   QString filePath = "config.json";
@@ -137,14 +139,18 @@ int main(int argc, char *argv[]) {
   settingsManager.saveSettings();
   settingsManager.setSaveDelay(2000);
 
+  // 日志
+  QDir("log").mkpath(".");
+  glog_helper::InitGLog("TtDebugTool.exe", "log/", "log/TtDebugTool");
+  // 自动清理30天前的日志
+  google::EnableLogCleaner(24h * 30);
+
   // #if (WIN32)
   //   //注冊异常捕获函数
   //   // SetUnhandledExceptionFilter(
   //   // (LPTOP_LEVEL_EXCEPTION_FILTER)ApplicationCrashHandler);
   //   SetUnhandledExceptionFilter((LPTOP_LEVEL_EXCEPTION_FILTER)ExceptionHandler);
   // #endif
-
-
 
   Window::MainWindow AppWindow;
 

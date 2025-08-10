@@ -58,6 +58,7 @@
 #include "lang/translation_manager.h"
 #include "ui/widgets/setting_widget.h"
 
+#include <base/glog_helper.h>
 
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -114,10 +115,7 @@ static inline void emulateLeaveEvent(QWidget *widget) {
 }
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
-
   // BUG 状态栏可以保存当前正在运行的窗口的按钮
-
-  // // qDebug() << "MainWindow constructor thread:" <<
   // QThread::currentThread();
   // // statusBar()->addWidget(new Ui::TtSvgButton());
 
@@ -431,7 +429,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
   initLanguageMenu();
   readingProjectConfiguration();
 
-  qDebug() << "MainWindow Success";
+  LOG(INFO) << "MainWindow 窗口类构建完成";
 }
 
 MainWindow::~MainWindow() {

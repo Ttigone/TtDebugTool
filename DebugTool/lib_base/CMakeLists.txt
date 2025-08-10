@@ -1,4 +1,5 @@
-add_library(lib_base STATIC)
+add_library(lib_base STATIC
+)
 add_library(desktop-app::lib_base ALIAS lib_base)
 
 set(CMAKE_AUTOMOC ON)
@@ -27,13 +28,14 @@ PRIVATE
   base/invoke_queued.h
   base/glog_helper.h
   base/wchar_logging.h
+  base/encode_helper.h
 )
 
 # 省略相对路径的麻烦
 target_include_directories(lib_base
 PUBLIC
   ${src_loc}
-	# ${third_party}/QsLog
+  ${third_party}/glog
 )
 
 
@@ -48,6 +50,8 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core)
 target_link_libraries(lib_base
 PUBLIC
     Qt${QT_VERSION_MAJOR}::Core
+    glog
+    glog_internal
 )
 
 if(NOT CMAKE_BUILD_TYPE)

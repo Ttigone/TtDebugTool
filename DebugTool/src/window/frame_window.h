@@ -182,6 +182,7 @@ protected:
 
   QtMaterialFlatButton *send_btn_;       // 发送按钮
   Ui::TtTableWidget *instruction_table_; // 片段指令表格
+  Ui::TtTableWidget *auto_replay_table_; // 自动应答表格
 
   TtTextFormat::Type send_type_ = TtTextFormat::TEXT; // 底部选择发送类型
   TtTextFormat::Type display_type_ = TtTextFormat::TEXT; // 顶部显示接收类型

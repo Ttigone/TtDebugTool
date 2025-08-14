@@ -243,6 +243,7 @@ void FrameWindow::initUi() {
   tabs_ = new QtMaterialTabs(tabs_widget_);
   tabs_->addTab(tr("手动"));
   tabs_->addTab(tr("片段"));
+  tabs_->addTab(tr("自动应答"));
   tabs_->setBackgroundColor(QColor(192, 120, 196));
 
   tacLayout->addWidget(tabs_);
@@ -295,11 +296,12 @@ void FrameWindow::initUi() {
   messageEditLayout->addWidget(bottomBtnWidget);
 
   instruction_table_ = new Ui::TtTableWidget(display_widget_);
+  auto_replay_table_ = new Ui::TtTableWidget(display_widget_);
 
   // 栈显示窗口
   display_widget_->addWidget(messageEdit);
   display_widget_->addWidget(instruction_table_);
-
+  display_widget_->addWidget(auto_replay_table_);
   display_widget_->setCurrentIndex(0);
 
   // 显示, 并输入 lua 脚本

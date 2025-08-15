@@ -2,7 +2,6 @@
 
 #include <QApplication>
 #include <QFontDatabase>
-#include <QTextCodec>
 
 #include "lang/translation_manager.h"
 #include "storage/configs_manager.h"
@@ -107,26 +106,15 @@ int main(int argc, char *argv[]) {
 #endif
 
 #if defined(Q_OS_WIN) && (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
-  // setDarkBorderToWindow(); // 仅在 Windows 下调用
-  // const auto osName = QSysInfo::prettyProductName();
-  // if (osName.startsWith("Windows 10") || osName.startsWith("Windows 11")) {
-  //  // 风格
-  //  //QApplication::setStyle("fusion");
-  //}
-#endif
-  // Use Fusion style on Windows 10 & 11. This enables proper dark mode support.
-  // See https://www.qt.io/blog/dark-mode-on-windows-11-with-qt-6.5.
-  // TODO: Make style configurable, detect -style argument.
-#if defined(Q_OS_WIN) && (QT_VERSION >= QT_VERSION_CHECK(6, 5, 0))
-  // const auto osName = QSysInfo::prettyProductName();
-  // if (osName.startsWith("Windows 10") || osName.startsWith("Windows 11")) {
-  //   QApplication::setStyle("fusion");
-  // }
+  const auto osName = QSysInfo::prettyProductName();
+  if (osName.startsWith("Windows 10") || osName.startsWith("Windows 11")) {
+    QApplication::setStyle("fusion");
+  }
 #endif
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
-  // QGuiApplication::setHighDpiScaleFactorRoundingPolicy(
-  //     Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
+  QGuiApplication::setHighDpiScaleFactorRoundingPolicy(
+      Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
 #endif
 
   QCoreApplication::setAttribute(Qt::AA_DontCreateNativeWidgetSiblings);
@@ -152,9 +140,12 @@ int main(int argc, char *argv[]) {
   //   SetUnhandledExceptionFilter((LPTOP_LEVEL_EXCEPTION_FILTER)ExceptionHandler);
   // #endif
 
-  Window::MainWindow AppWindow;
+  qputenv("QT_STYLE_OVERRIDE", "");
+  app.setStyle("windows");  // 或 "fusion", "windowsvista"
 
-  AppWindow.show();
+  Window::MainWindow tt_debug_tool;
+
+  tt_debug_tool.show();
 
   return app.exec();
 }

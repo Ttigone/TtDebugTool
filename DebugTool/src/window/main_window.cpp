@@ -895,7 +895,6 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 void MainWindow::installWindowAgent() {
   window_agent_->setup(this);
 
-  // 2. Construct your title bar
   auto menuBar = [this]() {
     auto menuBar = new QMenuBar(this);
 
@@ -1165,7 +1164,6 @@ void MainWindow::installWindowAgent() {
           &QWidget::showMinimized);
   connect(windowBar, &Ui::WindowBar::maximizeRequested, this,
           [this, maxButton](bool max) {
-            qDebug() << "max:" << max;
             if (max) {
               showMaximized();
             } else {
@@ -1180,39 +1178,12 @@ void MainWindow::installWindowAgent() {
           });
   // connect(windowBar, &Ui::WindowBar::closeRequested, this, &QWidget::close);
 
-  // connect(windowBar, &Ui::WindowBar::closeRequested, this, [this]() {
-  //   // 模态窗口
-  //   Ui::TtContentDialog *dialog = new Ui::TtContentDialog(
-  //       true, Ui::TtContentDialog::LayoutSelection::THREE_OPTIONS, this);
-  //   QPointer<Ui::TtContentDialog> dialogPtr(dialog);
-  //   dialog->setCenterText(tr("确定要退出程序吗"));
-  //   // 样式表有时会失效
-  //   connect(dialog, &Ui::TtContentDialog::leftButtonClicked, this,
-  //           [this, dialogPtr] { dialogPtr->reject(); });
-  //   connect(dialog, &Ui::TtContentDialog::middleButtonClicked, this,
-  //           [this, dialogPtr] {
-  //             dialogPtr->accept();
-  //             MainWindow::showMinimized();
-  //           });
-  //   connect(dialog, &Ui::TtContentDialog::rightButtonClicked, this,
-  //           [this, dialogPtr] {
-  //             dialogPtr->accept();
-  //             MainWindow::closeWindow();
-  //           });
-  //   dialog->exec();
-  //   delete dialog;
-  //   qDebug() << "finale test";
-  // });
   connect(windowBar, &Ui::WindowBar::closeRequested, this, [this]() {
-    // QScopedPointer<Ui::TtContentDialog> dialog(new Ui::TtContentDialog(
-    //     Qt::ApplicationModal, true,
-    //     Ui::TtContentDialog::LayoutSelection::THREE_OPTIONS, this));
-
     Ui::TtContentDialog *dialog = new Ui::TtContentDialog(
         Qt::ApplicationModal, true,
         Ui::TtContentDialog::LayoutSelection::THREE_OPTIONS, this);
     dialog->setCenterText(tr("确定要退出程序吗"));
-    dialog->setAttribute(Qt::WA_DeleteOnClose);  // 二次删除的情况
+    dialog->setAttribute(Qt::WA_DeleteOnClose);
     connect(dialog, &Ui::TtContentDialog::leftButtonClicked, dialog,
             &QDialog::reject);
     connect(dialog, &Ui::TtContentDialog::middleButtonClicked, dialog,
@@ -1262,20 +1233,9 @@ void MainWindow::loadStyleSheet(Theme theme) {
   
   qApp->setStyleSheet(AdvancedStylesheet.styleSheet());
 #endif
-
-  // now you can set the generated stylesheet
-  // if (!styleSheet().isEmpty() && theme == currentTheme)
-  //   return;
-  // currentTheme = theme;
-
-  // if (QFile qss(theme == Dark ? QStringLiteral(":/dark-style.qss")
-  //                             : QStringLiteral(":/light-style.qss"));
   QFile qss(":/theme/dark-style.qss");
   qss.open(QIODevice::ReadOnly | QIODevice::Text);
-  // 应用与全局
   qApp->setStyleSheet(QString::fromUtf8(qss.readAll()));
-  // setStyleSheet(QString::fromUtf8(qss.readAll()));
-  // emit themeChanged();
 }
 
 void MainWindow::setLeftBar() {

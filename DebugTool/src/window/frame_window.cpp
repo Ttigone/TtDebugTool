@@ -1,5 +1,11 @@
 #include "window/frame_window.h"
 
+#include <Qsci/qsciscintilla.h>
+#include <lib/qtmaterialcheckable.h>
+#include <qtmaterialflatbutton.h>
+#include <qtmaterialradiobutton.h>
+#include <qtmaterialsnackbar.h>
+#include <qtmaterialtabs.h>
 #include <ui/control/ChatWidget/TtChatMessage.h>
 #include <ui/control/ChatWidget/TtChatMessageModel.h>
 #include <ui/control/ChatWidget/TtChatView.h>
@@ -14,17 +20,10 @@
 #include <ui/widgets/message_bar.h>
 #include <ui/widgets/widget_group.h>
 
-#include "ui/controls/TtTableView.h"
-
-#include "ui/controls/TtTerminalLexer.h"
-#include <lib/qtmaterialcheckable.h>
-#include <qtmaterialflatbutton.h>
-#include <qtmaterialradiobutton.h>
-#include <qtmaterialsnackbar.h>
-#include <qtmaterialtabs.h>
-
 #include <QTableView>
-#include <Qsci/qsciscintilla.h>
+
+#include "ui/controls/TtTableView.h"
+#include "ui/controls/TtTerminalLexer.h"
 
 const QRegularExpression Window::FrameWindow::hexFilterRegex("[^0-9A-Fa-f]");
 
@@ -170,7 +169,7 @@ void FrameWindow::initUi() {
   displayLogic->addWidget(display_hex_btn_);
 
   displayLogic->setCheckedIndex(0);
-  displayLogic->setExclusive(true); // 开启了互斥
+  displayLogic->setExclusive(true);  // 开启了互斥
 
   chose_function_layout->addWidget(display_text_btn_);
   chose_function_layout->addWidget(display_hex_btn_);
@@ -367,7 +366,7 @@ void FrameWindow::initSignalsConnection() {
       // 进入了并成功保存
     } else {
       // 未保存状态 - 使用提示颜色
-      save_btn_->setColors(QColor(244, 64, 54), QColor(244, 64, 54)); // 红色系
+      save_btn_->setColors(QColor(244, 64, 54), QColor(244, 64, 54));  // 红色系
       save_btn_->setToolTip(tr("有未保存的更改，点击保存"));
     }
   });
@@ -377,8 +376,7 @@ bool FrameWindow::isValidHexString(const QString &hexString,
                                    QString *errorMsg) {
   // 1. 检查空字符串
   if (hexString.isEmpty()) {
-    if (errorMsg)
-      *errorMsg = QObject::tr("十六进制字符串不能为空");
+    if (errorMsg) *errorMsg = QObject::tr("十六进制字符串不能为空");
     return false;
   }
 
@@ -415,8 +413,7 @@ bool FrameWindow::isValidHexString(const QString &hexString,
 
   // 4. 检查长度是否为偶数
   if (trimmed.length() % 2 != 0) {
-    if (errorMsg)
-      *errorMsg = QObject::tr("十六进制字符串长度必须为偶数");
+    if (errorMsg) *errorMsg = QObject::tr("十六进制字符串长度必须为偶数");
     return false;
   }
 
@@ -432,8 +429,7 @@ QString FrameWindow::getValidHexString(const QString &input,
 
   // 检查处理后的字符串是否为空
   if (hexStr.isEmpty()) {
-    if (errorMsg)
-      *errorMsg = QObject::tr("输入不包含有效的十六进制字符");
+    if (errorMsg) *errorMsg = QObject::tr("输入不包含有效的十六进制字符");
     return QString();
   }
 
@@ -475,7 +471,7 @@ void FrameWindow::switchToEditMode() {
   // 显示 edit 模式
   stack_->setCurrentWidget(edit_widget_);
   // 获取焦点
-  title_edit_->setFocus(); // 自动聚焦输入框
+  title_edit_->setFocus();  // 自动聚焦输入框
 }
 
 void FrameWindow::switchToDisplayMode() {
@@ -620,4 +616,4 @@ void FrameWindow::showMessage(const QString &data, bool out) {
   // message_view_->scrollToBottom();
 }
 
-} // namespace Window
+}  // namespace Window

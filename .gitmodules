@@ -28,7 +28,6 @@
     url = https://github.com/google/glog.git
     branch = master
 
-;[submodule "DebugTool/3rdparty/qtmaterial"]
-;	path = DebugTool/3rdparty/qtmaterial
-;	url = https://github.com/laserpants/qt-material-widgets.git
-;    branch = master
+[submodule "DebugTool/3rdparty/qtmaterial"]
+	path = DebugTool/3rdparty/qtmaterial
+	url = https://github.com/laserpants/qt-material-widgets

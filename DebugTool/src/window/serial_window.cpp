@@ -1,5 +1,10 @@
 #include "window/serial_window.h"
 
+#include <core/lua_kernel.h>
+#include <lib/qtmaterialcheckable.h>
+#include <qtmaterialradiobutton.h>
+#include <qtmaterialsnackbar.h>
+#include <qtmaterialtabs.h>
 #include <ui/control/ChatWidget/TtChatMessage.h>
 #include <ui/control/ChatWidget/TtChatMessageModel.h>
 #include <ui/control/ChatWidget/TtChatView.h>
@@ -8,6 +13,8 @@
 #include <ui/control/TtRadioButton.h>
 #include <ui/control/TtTextButton.h>
 #include <ui/controls/TtModbusPlot.h>
+#include <ui/controls/TtQCustomPlot.h>
+#include <ui/controls/TtTerminalLexer.h>
 #include <ui/layout/horizontal_layout.h>
 #include <ui/layout/vertical_layout.h>
 #include <ui/widgets/buttons.h>
@@ -16,13 +23,7 @@
 #include <ui/widgets/message_bar.h>
 #include <ui/widgets/widget_group.h>
 
-#include <core/lua_kernel.h>
-#include <lib/qtmaterialcheckable.h>
-#include <qtmaterialradiobutton.h>
-#include <qtmaterialsnackbar.h>
-#include <qtmaterialtabs.h>
-#include <ui/controls/TtQCustomPlot.h>
-#include <ui/controls/TtTerminalLexer.h>
+#include <QTime>
 
 #include "Def.h"
 #include "storage/setting_manager.h"
@@ -34,14 +35,12 @@
 #include "widget/serial_setting.h"
 #include "window/frame_window.h"
 
-#include <QTime>
-
 namespace Window {
 
 SerialWindow::SerialWindow(QWidget *parent)
-    : FrameWindow(parent), worker_thread_(new QThread(this)),
+    : FrameWindow(parent),
+      worker_thread_(new QThread(this)),
       serial_port_(new Core::SerialPortWorker) {
-
   init();
   connectSignals();
 
@@ -99,8 +98,8 @@ SerialWindow::~SerialWindow() {
     if (!worker_thread_->wait(200)) {
       qWarning()
           << "Worker thread did not exit gracefully, forcing termination";
-      worker_thread_->terminate(); // 强制终止(不推荐，但作为最后手段)
-      worker_thread_->wait();      // 等待强制终止完成
+      worker_thread_->terminate();  // 强制终止(不推荐，但作为最后手段)
+      worker_thread_->wait();  // 等待强制终止完成
     }
     // 无效
     // delete serial_port_;
@@ -139,7 +138,7 @@ bool SerialWindow::saveWaveFormData(const QString &fileName) {
     QString defaultName =
         getTitle().isEmpty() ? tr("未命名波形数据") : getTitle();
     defaultName.replace(QRegularExpression("[\\\\/:*?\"<>|]"),
-                        "_"); // 移除文件名中的非法字符
+                        "_");  // 移除文件名中的非法字符
 
     actualFileName = QFileDialog::getSaveFileName(
         this, tr("保存波形数据"), QDir::homePath() + "/" + defaultName + ".csv",
@@ -216,7 +215,7 @@ void SerialWindow::saveSetting() {
     // 遍历每一个 channel 信息
     QJsonObject channelData;
     // 保存通道号
-    channelData["channel"] = it.value().channel_num_; // 保存通道号
+    channelData["channel"] = it.value().channel_num_;  // 保存通道号
 
     // 将配置信息 QByteArray 转换为 Base64 字符串
     // QString base64Data = QString::fromLatin1(it.value().second.toBase64());
@@ -421,7 +420,6 @@ void SerialWindow::setControlState(bool state) {
 
 void SerialWindow::addChannel(const QByteArray &blob, const QColor &color,
                               QString &uuid) {
-
   QDataStream in(blob);
   in.setVersion(QDataStream::Qt_6_4);
 
@@ -542,13 +540,13 @@ void SerialWindow::addChannel(const QByteArray &blob, const QColor &color,
   //                    }};
 
   ParserRule rule = {false,
-                     channel_nums_,                        // 通道
-                     QByteArray::fromHex(header.toUtf8()), // 头部
-                     headerLength.toInt(),                 // 帧头长度
-                     typeOffset.toInt(),                   // 类型字段偏移
-                     lengthOffset.toInt(),                 // 长度字段偏移
-                     0,                                    // 帧尾长度
-                     false,                                // 无校验
+                     channel_nums_,                         // 通道
+                     QByteArray::fromHex(header.toUtf8()),  // 头部
+                     headerLength.toInt(),                  // 帧头长度
+                     typeOffset.toInt(),    // 类型字段偏移
+                     lengthOffset.toInt(),  // 长度字段偏移
+                     0,                     // 帧尾长度
+                     false,                 // 无校验
                      {},
                      [this, channel](uint8_t type, const QByteArray &payload,
                                      const QString &luaCode) {
@@ -742,7 +740,7 @@ void SerialWindow::addChannel(const QByteArray &blob, const QColor &color,
               it->enable = check;
             }
           });
-} // namespace Window
+}  // namespace Window
 
 void SerialWindow::handleDialogData(const QString &uuid, quint16 channel,
                                     const QByteArray &blob,
@@ -819,7 +817,7 @@ void SerialWindow::sendMessage(const QString &data, TtTextFormat::Type type) {
     if (type == TtTextFormat::HEX) {
       // 按照 16 进制分包
       int byteSize = package_size_;
-      int charSize = byteSize * 2; // 每个字节转换为两个十六进制字符
+      int charSize = byteSize * 2;  // 每个字节转换为两个十六进制字符
       for (int i = 0; i < processedText.length(); i += charSize) {
         // 截取固定字符数的十六进制字符串片段
         QString chunk = processedText.mid(i, charSize);
@@ -1005,7 +1003,7 @@ void SerialWindow::parseBuffer() {
   while (!receive_buffer_.isEmpty()) {
     // 遍历所有解析规则，寻找最早出现的有效帧头
     int bestPos = -1;
-    ParserRule const *bestRule = nullptr; // 解析规则
+    ParserRule const *bestRule = nullptr;  // 解析规则
     // 遍历当前存在的规则
     for (auto &rule : rules_) {
       if (rule.enable) {
@@ -1073,7 +1071,7 @@ void SerialWindow::parseBuffer() {
     // 帧头给了 2
     // 类型字段与长度字段相同, 都是 BB, 转换成十进制
 
-    const int maxAllowedPayloadLen = 1024; // 最大允许的负载长度
+    const int maxAllowedPayloadLen = 1024;  // 最大允许的负载长度
     if (payloadLen > maxAllowedPayloadLen) {
       qDebug() << "检测到异常长度字段值:" << payloadLen
                << "，可能是无效帧或协议错误";
@@ -1188,21 +1186,20 @@ void SerialWindow::sendPackagedData(const QByteArray &data, bool isHeartbeat) {
 
 void SerialWindow::parseVofaProtocol() {
   switch (protocol_) {
-  case TtProtocolSetting::RawData:
-    parseRawDataProtocol();
-    break;
-  case TtProtocolSetting::JustFloat:
-    parseJustFloatProtocol();
-    break;
-  case TtProtocolSetting::FireWater:
-    parseFireWaterProtocol();
-    break;
+    case TtProtocolSetting::RawData:
+      parseRawDataProtocol();
+      break;
+    case TtProtocolSetting::JustFloat:
+      parseJustFloatProtocol();
+      break;
+    case TtProtocolSetting::FireWater:
+      parseFireWaterProtocol();
+      break;
   }
 }
 
 void SerialWindow::parseRawDataProtocol() {
-  if (receive_buffer_.isEmpty())
-    return;
+  if (receive_buffer_.isEmpty()) return;
 
   // 直接显示原始数据
   showMessage(receive_buffer_, false);
@@ -1261,7 +1258,7 @@ void SerialWindow::parseFireWaterProtocol() {
   // FireWater协议: 查找"$"开头和"\r\n"结尾的数据包
   int startPos = receive_buffer_.indexOf('$');
   if (startPos < 0) {
-    return; // 没有找到开始标记
+    return;  // 没有找到开始标记
   }
 
   int endPos = receive_buffer_.indexOf("\r\n", startPos);
@@ -1340,68 +1337,69 @@ void SerialWindow::parseFireWaterProtocol() {
 
 //   return testData;
 // }
-QByteArray
-SerialWindow::generateRandomTestData(TtProtocolSetting::Protocol protocol) {
+QByteArray SerialWindow::generateRandomTestData(
+    TtProtocolSetting::Protocol protocol) {
   QByteArray testData;
   static QRandomGenerator random = QRandomGenerator::securelySeeded();
 
   switch (protocol) {
-  case TtProtocolSetting::RawData: {
-    // 生成5个随机浮点数，以空格分隔
-    QString dataStr;
-    for (int i = 0; i < 5; i++) {
-      // 使用generateDouble()替代bounded()，并手动调整范围
-      float value = static_cast<float>(random.generateDouble() * 200.0 - 100.0);
-      dataStr += QString::number(value, 'f', 2);
-      if (i < 4)
-        dataStr += " ";
+    case TtProtocolSetting::RawData: {
+      // 生成5个随机浮点数，以空格分隔
+      QString dataStr;
+      for (int i = 0; i < 5; i++) {
+        // 使用generateDouble()替代bounded()，并手动调整范围
+        float value =
+            static_cast<float>(random.generateDouble() * 200.0 - 100.0);
+        dataStr += QString::number(value, 'f', 2);
+        if (i < 4) dataStr += " ";
+      }
+      testData = dataStr.toUtf8();
+      break;
     }
-    testData = dataStr.toUtf8();
-    break;
-  }
 
-  case TtProtocolSetting::JustFloat: {
-    // 生成5个二进制浮点数
-    for (int i = 0; i < 5; i++) {
-      // 使用generateDouble()替代bounded()
-      float value = static_cast<float>(random.generateDouble() * 200.0 - 100.0);
-      testData.append(reinterpret_cast<const char *>(&value), sizeof(float));
+    case TtProtocolSetting::JustFloat: {
+      // 生成5个二进制浮点数
+      for (int i = 0; i < 5; i++) {
+        // 使用generateDouble()替代bounded()
+        float value =
+            static_cast<float>(random.generateDouble() * 200.0 - 100.0);
+        testData.append(reinterpret_cast<const char *>(&value), sizeof(float));
+      }
+      break;
     }
-    break;
-  }
 
-  case TtProtocolSetting::FireWater: {
-    // 生成CSV格式数据
-    QString dataStr = "$";
-    for (int i = 0; i < 5; i++) {
-      // 使用generateDouble()替代bounded()
-      float value = static_cast<float>(random.generateDouble() * 200.0 - 100.0);
-      dataStr += QString::number(value, 'f', 2);
-      if (i < 4)
-        dataStr += ",";
+    case TtProtocolSetting::FireWater: {
+      // 生成CSV格式数据
+      QString dataStr = "$";
+      for (int i = 0; i < 5; i++) {
+        // 使用generateDouble()替代bounded()
+        float value =
+            static_cast<float>(random.generateDouble() * 200.0 - 100.0);
+        dataStr += QString::number(value, 'f', 2);
+        if (i < 4) dataStr += ",";
+      }
+      dataStr += "\r\n";
+      testData = dataStr.toUtf8();
+      break;
     }
-    dataStr += "\r\n";
-    testData = dataStr.toUtf8();
-    break;
-  }
   }
 
   return testData;
 }
 
 void SerialWindow::startRandomDataTest(TtProtocolSetting::Protocol protocol) {
-  //protocol_ = protocol;
+  // protocol_ = protocol;
   //// 创建定时器，定期发送随机数据
-  //QTimer *testTimer = new QTimer(this);
-  //connect(testTimer, &QTimer::timeout, this, [this, protocol]() {
-  //  QByteArray testData = generateRandomTestData(protocol);
-  //  // 模拟接收数据
-  //  dataReceived(testData);
-  //});
+  // QTimer *testTimer = new QTimer(this);
+  // connect(testTimer, &QTimer::timeout, this, [this, protocol]() {
+  //   QByteArray testData = generateRandomTestData(protocol);
+  //   // 模拟接收数据
+  //   dataReceived(testData);
+  // });
 
   //// 每100ms发送一次数据
-  //testTimer->start(50);
-  // constexpr double freq = 1.0; // 2Hz
+  // testTimer->start(50);
+  //  constexpr double freq = 1.0; // 2Hz
   constexpr double freq = 1.0;  // 2Hz
   // const double samplePeriod =
   //     static_cast<double>(SAMPLE_GENERATION_PERIOD) / 1000.0;
@@ -1607,7 +1605,7 @@ void SerialWindow::init() {
   displayLogic->addWidget(display_hex_btn_);
 
   displayLogic->setCheckedIndex(0);
-  displayLogic->setExclusive(true); // 开启了互斥
+  displayLogic->setExclusive(true);  // 开启了互斥
 
   chose_function_layout->addWidget(display_text_btn_);
   chose_function_layout->addWidget(display_hex_btn_);
@@ -1664,9 +1662,7 @@ void SerialWindow::init() {
           });
 
   // base::DetectRunningTime runtime;
-
   // message_model_ = new Ui::TtChatMessageModel;
-
   // message_view_->setModel(message_model_);
   // message_view_->scrollToBottom();
 
@@ -1735,6 +1731,7 @@ void SerialWindow::init() {
   tabs_ = new QtMaterialTabs(tabs_widget_);
   tabs_->addTab(tr("手动"));
   tabs_->addTab(tr("片段"));
+  tabs_->addTab(tr("自动应答"));
   // tabs_->setFixedHeight(30);
   // tabs_->setMinimumWidth(80);
   tabs_->setBackgroundColor(QColor(192, 120, 196));
@@ -1789,10 +1786,11 @@ void SerialWindow::init() {
   messageEditLayout->addWidget(bottomBtnWidget);
 
   instruction_table_ = new Ui::TtTableWidget(display_widget_);
+  auto_replay_table_ = new Ui::TtTableWidget(display_widget_);
 
-  // 栈显示窗口
   display_widget_->addWidget(messageEdit);
   display_widget_->addWidget(instruction_table_);
+  display_widget_->addWidget(auto_replay_table_);
 
   display_widget_->setCurrentIndex(0);
 
@@ -1844,7 +1842,7 @@ void SerialWindow::init() {
 
   serialDataList = new QListWidget(graphSpiltter);
   serialDataList->setContextMenuPolicy(
-      Qt::CustomContextMenu); // 启用自定义右键菜单
+      Qt::CustomContextMenu);  // 启用自定义右键菜单
   connect(serialDataList, &QListWidget::customContextMenuRequested, this,
           [=](const QPoint &pos) {
             // 获取当前右键点击的项
@@ -1907,7 +1905,7 @@ void SerialWindow::init() {
                   rules_.remove(btn->getUuid());
                 }
                 auto *deleteItem =
-                    serialDataList->takeItem(serialDataList->row(item)); //
+                    serialDataList->takeItem(serialDataList->row(item));  //
                 // 删除项
                 // qDebug() << "delete";
                 delete deleteItem;
@@ -1945,19 +1943,19 @@ void SerialWindow::init() {
       // 设置列表整体背景色
       "QListWidget {"
       "   background-color: white;"
-      "   outline: none;" // 移除焦点虚线框（关键）
+      "   outline: none;"  // 移除焦点虚线框（关键）
       "}"
       // 项选中状态样式
       "QListWidget::item:selected {"
-      "   background: transparent;" // 强制透明背景
+      "   background: transparent;"  // 强制透明背景
       "}"
       // 项悬停状态样式
       "QListWidget::item:hover {"
-      "   background: transparent;" // 防止悬停变色
+      "   background: transparent;"  // 防止悬停变色
       "}"
       // 项按下状态样式
       "QListWidget::item:pressed {"
-      "   background: transparent;" // 防止按压变色
+      "   background: transparent;"  // 防止按压变色
       "}");
 
   // 启用该模式, 会导致有虚线框
@@ -2145,7 +2143,7 @@ void SerialWindow::connectSignals() {
   connect(heartbeat_timer_, &QTimer::timeout, this, [this] {
     // 心跳定时器定时发送
     // qDebug() << "心跳中断";
-    setHeartbeartContent(); // 适用于发送包间隔
+    setHeartbeartContent();  // 适用于发送包间隔
   });
 
   connect(chose_hex_btn_, &Ui::TtRadioButton::toggled, this,
@@ -2184,4 +2182,4 @@ void SerialWindow::connectSignals() {
           });
 }
 
-} // namespace Window
+}  // namespace Window

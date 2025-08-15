@@ -211,11 +211,8 @@ private:
   void sendPackagedData(const QByteArray &data, bool isHeartbeat = false);
 
   void parseVofaProtocol();
-
   void parseRawDataProtocol();
-
   void parseJustFloatProtocol();
-
   void parseFireWaterProtocol();
 
   // 生成随机测试数据的辅助函数
@@ -254,7 +251,6 @@ private:
     QByteArray data;
     QColor color;
   };
-
   // 存储了 plot 按钮的配置, first 是 uuid
   // uuid 通道
   quint16 channel_nums_ = 0;
@@ -269,10 +265,7 @@ private:
   // static const QRegularExpression hexFilterRegex;
 
   TtProtocolSetting::Protocol protocol_;
-  // 添加这个常量定义
   static constexpr int MAX_CHANNELS = 8; // 或者根据您的需求设置其他值
-
-
   quint64 sampleNumber = 0;
   // QList<QSharedPointer<PointStream<point_t>>> dataPoints;
 };

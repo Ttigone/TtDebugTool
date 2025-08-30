@@ -1,7 +1,9 @@
 #include "TtTextButton.h"
-#include "TtTextButton_p.h"
 
+#include <QApplication>
 #include <QPainterPath>
+
+#include "TtTextButton_p.h"
 
 namespace Ui {
 
@@ -21,15 +23,17 @@ TtTextButton::TtTextButton(QWidget* parent)
   d->q_ptr = this;
   d->pBorderRadius_ = 3;
   // d->_themeMode = ElaApplication::getInstance()->getThemeMode();
-  d->_themeMode = TtThemeType::Light;
-  d->onThemeChanged(d->_themeMode);
-  d->pLightDefaultColor_ = QColor(0xFE, 0xFE, 0xFE);
+  const QColor base = qApp->palette().color(QPalette::Window);
+  d->_themeMode =
+      (base.lightness() < 128) ? TtThemeType::Dark : TtThemeType::Light;
+  // d->_themeMode = TtThemeType::Light;
+  d->pLightDefaultColor_ = QColor(0x2A, 0x2A, 0x2A);
   d->pDarkDefaultColor_ = QColor(0x3E, 0x3E, 0x3E);
   d->pLightHoverColor_ = QColor(0xF6, 0xF6, 0xF6);
   d->pDarkHoverColor_ = QColor(0x4F, 0x4F, 0x4F);
   d->pLightPressColor_ = QColor(0xF2, 0xF2, 0xF2);
   d->pDarkPressColor_ = QColor(0x1C, 0x1C, 0x1C);
-  d->_lightTextColor = Qt::black;
+  d->_lightTextColor = Qt::white;
   d->_darkTextColor = Qt::white;
   setMouseTracking(true);
   setFixedSize(76, 32);
@@ -38,7 +42,9 @@ TtTextButton::TtTextButton(QWidget* parent)
   setFont(font);
   setObjectName("TtTextButton");
   setStyleSheet("#TtTextButton{background-color:transparent;}");
-  // connect(ElaApplication::getInstance(), &ElaApplication::themeModeChanged, d,
+  d->onThemeChanged(d->_themeMode);
+  // connect(ElaApplication::getInstance(), &ElaApplication::themeModeChanged,
+  // d,
   //         &ElaPushButtonPrivate::onThemeChanged);
 }
 
@@ -49,14 +55,15 @@ TtTextButton::TtTextButton(const QString& text, QWidget* parent)
 
 TtTextButton::TtTextButton(const QColor& color, const QString& text,
                            QWidget* parent)
-    : Ui::TtTextButton(text, parent) {}
+    : Ui::TtTextButton(text, parent) {
+  setCheckedColor(color);
+}
 
 TtTextButton::~TtTextButton() {}
 
 void TtTextButton::setChecked(bool checked) {
   if (is_checked_ != checked) {
     is_checked_ = checked;
-    // updateStyle();
     update();
     emit toggled(is_checked_);
   }
@@ -64,7 +71,6 @@ void TtTextButton::setChecked(bool checked) {
 
 void TtTextButton::setCheckedColor(const QColor& color) {
   checked_color_ = color;
-  // updateStyle();
 }
 
 void TtTextButton::setLightTextColor(const QColor& color) {
@@ -75,6 +81,7 @@ void TtTextButton::setLightTextColor(const QColor& color) {
     palette.setColor(QPalette::ButtonText, color);
     setPalette(palette);
   }
+  update();
 }
 
 QColor TtTextButton::getLightTextColor() const {
@@ -90,6 +97,7 @@ void TtTextButton::setDarkTextColor(const QColor& color) {
     palette.setColor(QPalette::ButtonText, color);
     setPalette(palette);
   }
+  update();
 }
 
 QColor TtTextButton::getDarkTextColor() const {
@@ -102,8 +110,6 @@ void TtTextButton::paintEvent(QPaintEvent* event) {
   QPainter painter(this);
   painter.setRenderHints(QPainter::SmoothPixmapTransform |
                          QPainter::Antialiasing | QPainter::TextAntialiasing);
-  // 高性能阴影
-
   painter.save();
   QPainterPath path;
   path.setFillRule(Qt::WindingFill);

@@ -106,7 +106,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
   // BUG 状态栏可以保存当前正在运行的窗口的按钮
   // QThread::currentThread();
   // // statusBar()->addWidget(new Ui::TtSvgButton());
-
   window_agent_ = new QWK::WidgetWindowAgent(this);
   installWindowAgent();
   setProperty("TtBaseClassName", "TtMainWindow");
@@ -122,7 +121,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
   central_widget_->setObjectName("CentralWidget");
   setCentralWidget(central_widget_);
 
-  // setAttribute(Qt::WA_DontCreateNativeAncestors);
+  setAttribute(Qt::WA_DontCreateNativeAncestors);
   loadStyleSheet(Theme::Dark);
 
   setLeftBar();
@@ -542,7 +541,6 @@ void MainWindow::compileTsFilesFinished() {
     connect(action, &QAction::triggered, this,
             [this, qmFile]() { changeLanguage(qmFile); });
   }
-  // qDebug() <<
 }
 
 void MainWindow::saveCsvFile() {
@@ -894,7 +892,6 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 
 void MainWindow::installWindowAgent() {
   window_agent_->setup(this);
-
   auto menuBar = [this]() {
     auto menuBar = new QMenuBar(this);
 
@@ -1233,7 +1230,8 @@ void MainWindow::loadStyleSheet(Theme theme) {
   
   qApp->setStyleSheet(AdvancedStylesheet.styleSheet());
 #endif
-  QFile qss(":/theme/dark-style.qss");
+  QFile qss(":/theme/dark-style-modern.qss");
+  // QFile qss(":/theme/dark-style.qss");
   qss.open(QIODevice::ReadOnly | QIODevice::Text);
   qApp->setStyleSheet(QString::fromUtf8(qss.readAll()));
 }
@@ -1725,12 +1723,9 @@ void MainWindow::restartApplication() {
     arguments.removeAll("--lang");
   }
   // 添加新的语言参数（例如 "--lang zh_CN"）
-  arguments << "--lang"
-            << savedLanguage_;  // savedLanguage_ 是成员变量，保存当前语言
-
+  arguments << "--lang" << saved_language_;
   // 启动新进程
   QProcess::startDetached(program, arguments);
-
   // 关闭当前应用
   QApplication::quit();
 }

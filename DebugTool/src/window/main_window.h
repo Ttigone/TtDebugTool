@@ -10,7 +10,7 @@
 
 namespace QWK {
 class WidgetWindowAgent;
-} // namespace QWK
+}  // namespace QWK
 
 namespace Ui {
 class TextWidget;
@@ -28,17 +28,17 @@ class TtVerticalLayout;
 class TabWindow;
 class WidgetGroup;
 
-} // namespace Ui
+}  // namespace Ui
 
 namespace Core {
 class SerialPortWorker;
-} // namespace Core
+}  // namespace Core
 
 class QtMaterialSnackbar;
 
 namespace Widget {
 // class SettingWidget;
-} // namespace Widget
+}  // namespace Widget
 
 namespace Window {
 
@@ -46,7 +46,7 @@ class FunctionSelectionWindow;
 
 class MainWindow : public QMainWindow {
   Q_OBJECT
-public:
+ public:
   explicit MainWindow(QWidget *parent = nullptr);
   ~MainWindow();
 
@@ -58,10 +58,10 @@ public:
 
   void initLanguageMenu();
 
-signals:
+ signals:
   void themeChanged();
 
-private slots:
+ private slots:
   void closeWindow();
   void compileTsFilesFinished();
   void saveCsvFile();
@@ -69,11 +69,11 @@ private slots:
   void addSelectToolPage();
   void addSelectAllToolPage();
 
-protected:
+ protected:
   bool event(QEvent *event) override;
   void closeEvent(QCloseEvent *event) override;
 
-private:
+ private:
   void installWindowAgent();
   void loadStyleSheet(Theme theme);
   void setLeftBar();
@@ -83,13 +83,13 @@ private:
                                  TtProtocolRole::Role role,
                                  const QString &title, const QString &uuid);
 
-  QString extractLanguageName(const QString &qmFile); // 解析语言后缀名
-  void changeLanguage(const QString &qmFile);         // 切换语言
+  QString extractLanguageName(const QString &qmFile);  // 解析语言后缀名
+  void changeLanguage(const QString &qmFile);          // 切换语言
 
-  void saveLanguageSetting(const QString &language); // 语言选项保存至配置文件
-  void restartApplication();                         // 重启应用
+  void saveLanguageSetting(const QString &language);  // 语言选项保存至配置文件
+  void restartApplication();                          // 重启应用
 
-  void readingProjectConfiguration(); // 读取全部配置
+  void readingProjectConfiguration();  // 读取全部配置
   ///
   /// @brief getSpecificConfiguration
   /// @param index
@@ -131,8 +131,6 @@ private:
   Ui::SettingWidget *setting_widget_ = nullptr;
 
   // tab 页面
-  // Ui::TabManager *tabWidget_;
-  // Ui::TabWindow *tabWidget_;
   Ui::TabWindow *tabWidget_;
 
   Window::FunctionSelectionWindow *function_select_;
@@ -141,14 +139,10 @@ private:
   // 要赋值父对象, 这个父对象也就是 canves
   // 弹出的 widget 的左侧应该在 left_bar_ 的右侧对齐
   Ui::PopWidget *communication_connection_widget;
-
   Ui::WidgetGroup *buttonGroup;
-
-  QTranslator *translator_ = nullptr;
-
-  QString savedLanguage_;
+  QString saved_language_;
 };
 
-} // namespace Window
+}  // namespace Window
 
-#endif // WINDOW_MAIN_WINDOW_H
+#endif  // WINDOW_MAIN_WINDOW_H

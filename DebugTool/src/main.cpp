@@ -58,6 +58,8 @@ using namespace std::chrono_literals;
 #endif
 
 int main(int argc, char *argv[]) {
+  // 屏蔽系统样式表
+  qputenv("QT_QPA_PLATFORM", "windows:darkmode=1");
   QApplication app(argc, argv);
 
   // 注册表使用
@@ -76,8 +78,6 @@ int main(int argc, char *argv[]) {
   // 语言也有问题
   QString curLang =
       configManager.getConfigVaule("Language", "TtDebugTool_zh.qm").toString();
-  bool suss = false;
-  // qDebug() << curLang;
 
   // 这个有 bug
   QString fr = QApplication::applicationDirPath() + "/translations/";
@@ -140,8 +140,8 @@ int main(int argc, char *argv[]) {
   //   SetUnhandledExceptionFilter((LPTOP_LEVEL_EXCEPTION_FILTER)ExceptionHandler);
   // #endif
 
-  qputenv("QT_STYLE_OVERRIDE", "");
-  app.setStyle("windows");  // 或 "fusion", "windowsvista"
+  // qputenv("QT_STYLE_OVERRIDE", "");
+  // app.setStyle("windows");  // 或 "fusion", "windowsvista"
 
   Window::MainWindow tt_debug_tool;
 

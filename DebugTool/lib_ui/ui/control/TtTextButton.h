@@ -2,6 +2,7 @@
 #define UI_CONTROL_TTTEXTBUTTON_H
 
 #include <QPushButton>
+
 #include "ui/Def.h"
 
 namespace Ui {
@@ -20,7 +21,10 @@ class Tt_EXPORT TtTextButton : public QPushButton {
   Q_PROPERTY_CREATE_Q_H(QColor, DarkPressColor)
 
   Q_PROPERTY(QColor checkedColor READ checkedColor WRITE setCheckedColor)
-  Q_PROPERTY(bool checked READ isChecked WRITE setChecked)  // 新增属性
+  Q_PROPERTY(bool checked READ isChecked WRITE setChecked)
+  Q_PROPERTY(
+      QColor lightTextColor READ getLightTextColor WRITE setLightTextColor)
+  Q_PROPERTY(QColor darkTextColor READ getDarkTextColor WRITE setDarkTextColor)
 
  public:
   explicit TtTextButton(QWidget* parent = nullptr);

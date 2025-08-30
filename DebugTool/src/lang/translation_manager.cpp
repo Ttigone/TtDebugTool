@@ -26,4 +26,4 @@ QString TtTranslationManager::currentLanguage() const {
 
 QString TtTranslationManager::currentQmFile() const { return current_qm_file_; }
 
-} // namespace Lang
+}  // namespace Lang

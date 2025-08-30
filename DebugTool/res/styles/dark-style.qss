@@ -269,16 +269,3 @@ QTabBar::tab {
     border-top-right-radius: 4px;
 }
 */
-
-/*
-QTabWidget::pane {
-    border-top: 1px solid #ccc;
-    border-left: 1px solid #ccc;
-    border-right: none;
-    border-bottom: none;
-}
-
-QTabWidget {
-    background: red;
-}
-*/

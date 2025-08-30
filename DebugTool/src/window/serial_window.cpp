@@ -99,7 +99,7 @@ SerialWindow::~SerialWindow() {
       qWarning()
           << "Worker thread did not exit gracefully, forcing termination";
       worker_thread_->terminate();  // 强制终止(不推荐，但作为最后手段)
-      worker_thread_->wait();  // 等待强制终止完成
+      worker_thread_->wait();       // 等待强制终止完成
     }
     // 无效
     // delete serial_port_;
@@ -203,7 +203,7 @@ void SerialWindow::saveSetting() {
   config_.insert("Type", TtFunctionalCategory::Communication);
   config_.insert("WindowTitle", title_->text());
   config_.insert("SerialSetting", serial_setting_->getSerialSetting());
-  config_.insert("InstructionTable", instruction_table_->getTableRecord());
+  config_.insert("InstructionTable", instruction_table_->GetTableRecord());
 
   // 还有 btn plot 的配置
   // config_.insert("PlotSetting", QJsonValue(channel_info_));
@@ -252,7 +252,7 @@ void SerialWindow::setSetting(const QJsonObject &config) {
 
   QJsonObject instructionTableData =
       config.value("InstructionTable").toObject();
-  instruction_table_->setupTable(instructionTableData);
+  instruction_table_->SetupTable(instructionTableData);
 
   // 读取 channel_info_
   if (config.contains("ChannelInfo")) {
@@ -543,10 +543,10 @@ void SerialWindow::addChannel(const QByteArray &blob, const QColor &color,
                      channel_nums_,                         // 通道
                      QByteArray::fromHex(header.toUtf8()),  // 头部
                      headerLength.toInt(),                  // 帧头长度
-                     typeOffset.toInt(),    // 类型字段偏移
-                     lengthOffset.toInt(),  // 长度字段偏移
-                     0,                     // 帧尾长度
-                     false,                 // 无校验
+                     typeOffset.toInt(),                    // 类型字段偏移
+                     lengthOffset.toInt(),                  // 长度字段偏移
+                     0,                                     // 帧尾长度
+                     false,                                 // 无校验
                      {},
                      [this, channel](uint8_t type, const QByteArray &payload,
                                      const QString &luaCode) {
@@ -1600,6 +1600,7 @@ void SerialWindow::init() {
   display_text_btn_->setCheckedColor(QColor(0, 102, 180));
   display_hex_btn_ = new Ui::TtTextButton(QColor(Qt::blue), "HEX");
   display_hex_btn_->setCheckedColor(QColor(0, 102, 180));
+  display_text_btn_->setLightTextColor(Qt::white);  // 临时白色文字
 
   displayLogic->addWidget(display_text_btn_);
   displayLogic->addWidget(display_hex_btn_);
@@ -1661,11 +1662,9 @@ void SerialWindow::init() {
             }
           });
 
-  // base::DetectRunningTime runtime;
   // message_model_ = new Ui::TtChatMessageModel;
   // message_view_->setModel(message_model_);
   // message_view_->scrollToBottom();
-
   QWidget *bottomAll = new QWidget(this);
   Ui::TtVerticalLayout *bottomAllLayout = new Ui::TtVerticalLayout(bottomAll);
   bottomAll->setLayout(bottomAllLayout);
@@ -1771,7 +1770,6 @@ void SerialWindow::init() {
   Ui::TtHorizontalLayout *bottomBtnWidgetLayout =
       new Ui::TtHorizontalLayout(bottomBtnWidget);
 
-  // 发送的格式
   chose_text_btn_ = new Ui::TtRadioButton("TEXT", bottomBtnWidget);
   chose_hex_btn_ = new Ui::TtRadioButton("HEX", bottomBtnWidget);
   chose_text_btn_->setChecked(true);
@@ -2166,20 +2164,20 @@ void SerialWindow::connectSignals() {
             }
           });
 
-  connect(instruction_table_, &Ui::TtTableWidget::sendRowMsg, this,
-          qOverload<const QString &, TtTextFormat::Type, uint32_t>(
-              &SerialWindow::sendInstructionTableContent));
-  connect(instruction_table_, &Ui::TtTableWidget::sendRowsMsg, this,
-          [this](const std::vector<Data::MsgInfo> &msgs) {
-            // 群发消息
-            // 没有延时的能够立马发送
-            if (msgs.size() == 0) {
-              return;
-            }
-            foreach (const auto &msg, msgs) {
-              sendInstructionTableContent(msg);
-            }
-          });
+  // connect(instruction_table_, &Ui::TtTableWidget::sendRowMsg, this,
+  //         qOverload<const QString &, TtTextFormat::Type, uint32_t>(
+  //             &SerialWindow::sendInstructionTableContent));
+  // connect(instruction_table_, &Ui::TtTableWidget::sendRowsMsg, this,
+  //         [this](const std::vector<Data::MsgInfo> &msgs) {
+  //           // 群发消息
+  //           // 没有延时的能够立马发送
+  //           if (msgs.size() == 0) {
+  //             return;
+  //           }
+  //           foreach (const auto &msg, msgs) {
+  //             sendInstructionTableContent(msg);
+  //           }
+  //         });
 }
 
 }  // namespace Window

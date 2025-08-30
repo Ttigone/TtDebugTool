@@ -1,5 +1,9 @@
 ﻿#include "window/tcp_window.h"
 
+#include <lib/qtmaterialcheckable.h>
+#include <qtmaterialradiobutton.h>
+#include <qtmaterialsnackbar.h>
+#include <qtmaterialtabs.h>
 #include <ui/control/ChatWidget/TtChatMessage.h>
 #include <ui/control/ChatWidget/TtChatMessageModel.h>
 #include <ui/control/ChatWidget/TtChatView.h>
@@ -14,24 +18,18 @@
 #include <ui/widgets/message_bar.h>
 #include <ui/widgets/widget_group.h>
 
-#include "widget/frame_setting.h"
-#include <lib/qtmaterialcheckable.h>
-#include <qtmaterialradiobutton.h>
-#include <qtmaterialsnackbar.h>
-#include <qtmaterialtabs.h>
-
 #include <QTableView>
 
 #include "core/tcp_client.h"
 #include "core/tcp_server.h"
 #include "ui/controls/TtTableView.h"
+#include "widget/frame_setting.h"
 #include "widget/tcp_setting.h"
 
 namespace Window {
 
 TcpWindow::TcpWindow(TtProtocolType::ProtocolRole role, QWidget *parent)
     : FrameWindow(parent), role_(role) {
-
   init();
 
   if (role_ == TtProtocolType::Client) {
@@ -95,7 +93,7 @@ void TcpWindow::setSetting(const QJsonObject &config) {
 
   QJsonObject instructionTableData =
       config.value("InstructionTable").toObject();
-  instruction_table_->setupTable(instructionTableData);
+  instruction_table_->SetupTable(instructionTableData);
 
   int sendType = config.value("SendType").toInt();
   send_type_ = static_cast<TtTextFormat::Type>(sendType);
@@ -228,7 +226,7 @@ void TcpWindow::saveSetting() {
     config_.insert("TcpServerSetting",
                    tcp_server_setting_->getTcpServerSetting());
   }
-  config_.insert("InstructionTable", instruction_table_->getTableRecord());
+  config_.insert("InstructionTable", instruction_table_->GetTableRecord());
   config_.insert("SendType", QJsonValue(int(send_type_)));
   config_.insert("DisplayType", QJsonValue(int(display_type_)));
 
@@ -421,7 +419,7 @@ void TcpWindow::connectSignals() {
   });
 
   connect(heartbeat_timer_, &QTimer::timeout, this, [this] {
-    setHeartbeartContent(); // 适用于发送包间隔
+    setHeartbeartContent();  // 适用于发送包间隔
   });
 
   connect(chose_hex_btn_, &Ui::TtRadioButton::toggled, this,
@@ -444,10 +442,10 @@ void TcpWindow::connectSignals() {
             }
           });
 
-  connect(instruction_table_, &Ui::TtTableWidget::sendRowMsg, this,
+  connect(instruction_table_, &Ui::TtTableWidget::SendRowMsg, this,
           qOverload<const QString &, TtTextFormat::Type, uint32_t>(
               &TcpWindow::sendInstructionTableContent));
-  connect(instruction_table_, &Ui::TtTableWidget::sendRowsMsg, this,
+  connect(instruction_table_, &Ui::TtTableWidget::SendRowsMsg, this,
           [this](const std::vector<Data::MsgInfo> &msgs) {
             // 群发进入了
             qDebug() << "群发消息";
@@ -517,7 +515,7 @@ void TcpWindow::sendMessage(const QString &data, TtTextFormat::Type type) {
     if (type == TtTextFormat::HEX) {
       // 按照 16 进制分包
       int byteSize = package_size_;
-      int charSize = byteSize * 2; // 每个字节转换为两个十六进制字符
+      int charSize = byteSize * 2;  // 每个字节转换为两个十六进制字符
       for (int i = 0; i < processedText.length(); i += charSize) {
         // 截取固定字符数的十六进制字符串片段
         QString chunk = processedText.mid(i, charSize);
@@ -590,4 +588,4 @@ void TcpWindow::sendPackagedData(const QByteArray &data, bool isHeartbeat) {
   }
 }
 
-} // namespace Window
+}  // namespace Window

@@ -1,5 +1,9 @@
 #include "udp_window.h"
 
+#include <lib/qtmaterialcheckable.h>
+#include <qtmaterialradiobutton.h>
+#include <qtmaterialsnackbar.h>
+#include <qtmaterialtabs.h>
 #include <ui/control/ChatWidget/TtChatMessage.h>
 #include <ui/control/ChatWidget/TtChatMessageModel.h>
 #include <ui/control/ChatWidget/TtChatView.h>
@@ -12,11 +16,6 @@
 #include <ui/widgets/collapsible_panel.h>
 #include <ui/widgets/labels.h>
 #include <ui/widgets/message_bar.h>
-
-#include <lib/qtmaterialcheckable.h>
-#include <qtmaterialradiobutton.h>
-#include <qtmaterialsnackbar.h>
-#include <qtmaterialtabs.h>
 
 #include "core/udp_client.h"
 #include "core/udp_server.h"
@@ -111,7 +110,7 @@ void UdpWindow::saveSetting() {
   }
   config_.insert("SendType", static_cast<int>(send_type_));
   config_.insert("DisplayType", static_cast<int>(display_type_));
-  config_.insert("InstructionTable", instruction_table_->getTableRecord());
+  config_.insert("InstructionTable", instruction_table_->GetTableRecord());
   setSaveStatus(true);
   emit requestSaveConfig();
 }
@@ -127,7 +126,7 @@ void UdpWindow::setSetting(const QJsonObject &config) {
   }
   QJsonObject instructionTableData =
       config.value("InstructionTable").toObject();
-  instruction_table_->setupTable(instructionTableData);
+  instruction_table_->SetupTable(instructionTableData);
   int sendType = config.value("SendType").toInt();
   send_type_ = static_cast<TtTextFormat::Type>(sendType);
   if (send_type_ == TtTextFormat::TEXT) {
@@ -379,7 +378,7 @@ void UdpWindow::connectSignals() {
   });
 
   connect(heartbeat_timer_, &QTimer::timeout, this, [this] {
-    setHeartbeartContent(); // 适用于发送包间隔
+    setHeartbeartContent();  // 适用于发送包间隔
   });
 
   connect(chose_hex_btn_, &Ui::TtRadioButton::toggled, this,
@@ -402,10 +401,10 @@ void UdpWindow::connectSignals() {
             }
           });
 
-  connect(instruction_table_, &Ui::TtTableWidget::sendRowMsg, this,
+  connect(instruction_table_, &Ui::TtTableWidget::SendRowMsg, this,
           qOverload<const QString &, TtTextFormat::Type, uint32_t>(
               &UdpWindow::sendInstructionTableContent));
-  connect(instruction_table_, &Ui::TtTableWidget::sendRowsMsg, this,
+  connect(instruction_table_, &Ui::TtTableWidget::SendRowsMsg, this,
           [this](const std::vector<Data::MsgInfo> &msgs) {
             if (msgs.size() == 0) {
               return;
@@ -441,7 +440,7 @@ void UdpWindow::sendMessage(const QString &data, TtTextFormat::Type type) {
     if (type == TtTextFormat::HEX) {
       // 按照 16 进制分包
       int byteSize = package_size_;
-      int charSize = byteSize * 2; // 每个字节转换为两个十六进制字符
+      int charSize = byteSize * 2;  // 每个字节转换为两个十六进制字符
       for (int i = 0; i < processedText.length(); i += charSize) {
         QString chunk = processedText.mid(i, charSize);
         msg_queue_.enqueue(chunk);
@@ -618,4 +617,4 @@ bool UdpWindow::isEnableHeartbeart() {
   return false;
 }
 
-} // namespace Window
+}  // namespace Window

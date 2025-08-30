@@ -1,13 +1,14 @@
 #ifndef UI_CONTROLS_TTTABLEVIEW_H
 #define UI_CONTROLS_TTTABLEVIEW_H
 
+#include <ui/control/TtLineEdit.h>
+
 #include <QHeaderView>
 #include <QScrollBar>
 #include <QTableWidget>
 
 #include "Def.h"
 #include "data/communication_metadata.h"
-#include <ui/control/TtLineEdit.h>
 
 class QSpinBox;
 
@@ -21,41 +22,52 @@ class TtSvgButton;
 
 class TtTableWidget : public QTableWidget {
   Q_OBJECT
-public:
+ public:
   explicit TtTableWidget(QWidget *parent = nullptr);
   ~TtTableWidget();
 
-  void setupHeaderRow();
-  void setupTable(const QJsonObject &record);
-  QJsonObject getTableRecord();
-  void setCellWidget(int row, int column, QWidget *widget);
-  void setEnabled(bool enable);
+  void SetupHeaderRow();
+  void SetupTable(const QJsonObject &record);
+  QJsonObject GetTableRecord();
+  void SetCellWidget(int row, int column, QWidget *widget);
+  void SetEnabled(bool enable);
 
-signals:
-  void rowsChanged(quint16 rows);
-  void sendRowMsg(const QString &msg, TtTextFormat::Type type, uint32_t times);
-  void sendRowsMsg(const std::vector<Data::MsgInfo> &msgs);
+ signals:
+  void OnRowsChanged(quint16 rows);
+  void SendRowMsg(const QString &msg, TtTextFormat::Type type, uint32_t times);
+  void SendRowsMsg(const std::vector<Data::MsgInfo> &msgs);
 
-private slots:
-  void onAddRowButtonClicked();
+ private slots:
+  void OnAddRowButtonClicked();
 
-private:
+ private:
+  void setupVisibleRows();
+
+ private:
   class HeaderWidget : public QWidget {
-  public:
-    HeaderWidget(QWidget *parent = nullptr) : QWidget(parent), paint_(true) {}
+   public:
+    explicit HeaderWidget(QWidget *parent = nullptr)
+        : QWidget(parent), paint_(true) {}
     ~HeaderWidget();
+    void SetPaintRightBorder(bool isPaint) { paint_ = isPaint; }
 
-    void setPaintRightBorder(bool isPaint) { paint_ = isPaint; }
-
-  protected:
+   protected:
     void paintEvent(QPaintEvent *event) override;
 
-  private:
+   private:
     bool paint_;
   };
+  // 数据模型
+  struct RowData {
+    bool enabled = true;
+    QString name;
+    int type = static_cast<int>(TtTextFormat::TEXT);
+    QString content;
+    QString delayMs;
+  };
+
   // 每一行固定的显示控件
   struct TableRow {
-    // TtSwitchButton *enableBtn = nullptr;
     TtSwitchButton *checkBtn{nullptr};
     TtLineEdit *nameEdit{nullptr};
     TtComboBox *typeCombo{nullptr};
@@ -65,21 +77,29 @@ private:
     bool fromPool{false};
   };
 
+  // 模型层：所有行的数据
+  QVector<RowData> model_;
+  // 视图层：当前“已物化”的行 -> 控件集（只存可见行）
+  QHash<int, TableRow> widget_rows_;
+
   // 每个对象池的最大大小
   static const int MAX_POOL_SIZE = 100;
-
   // 对象池
-  // QList<TtComboBox *> comboPool_;
-  // QList<TtSwitchButton *> switchPool_;
-  // QList<QSpinBox *> spinPool_;
-  // QList<TtLineEdit *> lineEditPool_;
-  // QList<QWidget *> widgetPool_;
-
-  QVector<TableRow> rowsData_;
+  QList<TtComboBox *> combo_pool_;
+  QList<TtSwitchButton *> switch_pool_;
+  QList<QSpinBox *> spin_pool_;
+  QList<TtLineEdit *> line_edit_pool_;
+  QList<QWidget *> widget_pool_;
 
   void initHeader();
   void setupRow(int row);
   void recycleRow(TableRow &row);
+
+  // 绑定/解绑当前行的控件到数据
+  void bindRow(int row);    // 创建或复用控件并填充数据
+  void unbindRow(int row);  // 断开信号、回收控件到对象池
+
+  void ensureModelSize(int rows);  // 工具
 
   // 控件管理
   TtSwitchButton *createSwitchButton();
@@ -91,9 +111,7 @@ private:
   /// @param content 包装的内容
   /// @return 包装后的QWidget
   QWidget *createCellWrapper(QWidget *content);
-
   int findRowIndex(QWidget *context, const int &col, bool deep = false) const;
-
   bool isRowVisible(int row);
 
   // UI 创建
@@ -106,28 +124,29 @@ private:
 
   QWidget *createHeaderWidget(const QString &text, bool paintBorder);
 
-  QWidget *createHeaderAddRowWidget();  // 创建添加行按钮
-  QWidget *createHeaderSendMsgWidget(); // 创建发送按钮
+  QWidget *createHeaderAddRowWidget();   // 创建添加行按钮
+  QWidget *createHeaderSendMsgWidget();  // 创建发送按钮
 
-  QWidget *createFirstColumnWidget();   // 仅用于数据行
-  QWidget *createSecondColumnWidget();  // 仅用于数据行
-  QWidget *createThirdColumnWidget();   // 仅用于数据行
-  QWidget *createFourthColumnWidget();  // 仅用于数据行
-  QWidget *createFifthColumnWidget();   // 仅用于数据行
-  QWidget *createSixthColumnWidget();   // 仅用于数据行
-  QWidget *createSeventhColumnWidget(); // 仅用于数据行
+  QWidget *createFirstColumnWidget();    // 仅用于数据行
+  QWidget *createSecondColumnWidget();   // 仅用于数据行
+  QWidget *createThirdColumnWidget();    // 仅用于数据行
+  QWidget *createFourthColumnWidget();   // 仅用于数据行
+  QWidget *createFifthColumnWidget();    // 仅用于数据行
+  QWidget *createSixthColumnWidget();    // 仅用于数据行
+  QWidget *createSeventhColumnWidget();  // 仅用于数据行
+
   // 在类中添加控件缓存
   QMap<QWidget *, QHash<int, QWidget *>> cellWidgetCache_;
 
   QJsonObject record_;
-  int rows_;
-  int cols_;
+  int rows_{0};
+  int cols_{7};
   int visibleRowCount();
 };
 
 class TtModbusTableWidget : public QTableWidget {
   Q_OBJECT
-public:
+ public:
   explicit TtModbusTableWidget(TtModbusRegisterType::Type type,
                                QWidget *parent = nullptr);
   ~TtModbusTableWidget();
@@ -181,7 +200,7 @@ public:
 
   void setEnable(bool enable);
 
-signals:
+ signals:
   ///
   /// @brief valueConfirmed
   /// @param addr
@@ -198,17 +217,17 @@ signals:
   void requestShowGraph(TtModbusRegisterType::Type type, const int &addr,
                         bool enabled);
 
-public slots:
+ public slots:
   ///
   /// @brief addRow
   /// 表格添加一行
   void addRow();
 
-protected:
+ protected:
   void showEvent(QShowEvent *event) override;
   void resizeEvent(QResizeEvent *event) override;
 
-private slots:
+ private slots:
   void onValueChanged();
   void onConfirmClicked();
   void onCancelClicked();
@@ -219,7 +238,7 @@ private slots:
   void onSwitchButtonToggle(bool toggled);
   void adjustRowHeights();
 
-private:
+ private:
   void connectSignals();
 
   ///
@@ -243,13 +262,13 @@ private:
     TtLineEdit *value{nullptr};
     TtSwitchButton *valueButton{nullptr};
     // 编辑当前 lineedit value 时使用
-    QPushButton *editButton{nullptr};    // 新增
-    QPushButton *confirmButton{nullptr}; // 新增
-    QPushButton *cancelButton{nullptr};  // 新增
-    QString originalValue;               // 新增
+    QPushButton *editButton{nullptr};     // 新增
+    QPushButton *confirmButton{nullptr};  // 新增
+    QPushButton *cancelButton{nullptr};   // 新增
+    QString originalValue;                // 新增
     TtLineEdit *description{nullptr};
     bool fromPool{false};
-    int currentAddress = -1; // 存储当前地址值
+    int currentAddress = -1;  // 存储当前地址值
   };
 
   QList<TtComboBox *> comboPool_;
@@ -285,38 +304,38 @@ private:
   QWidget *createRowSendButton();
 
   class HeaderWidget : public QWidget {
-  public:
+   public:
     HeaderWidget(QWidget *parent = nullptr) : QWidget(parent), paint_(true) {}
 
     void setPaintRightBorder(bool isPaint) { paint_ = isPaint; }
 
-  protected:
+   protected:
     void paintEvent(QPaintEvent *event) override;
 
-  private:
+   private:
     bool paint_;
   };
 
   QWidget *createHeaderWidget(const QString &text, bool paintBorder);
 
-  QWidget *createHeaderAddRowWidget();  // 创建添加行按钮
-  QWidget *createHeaderSendMsgWidget(); // 创建发送按钮
+  QWidget *createHeaderAddRowWidget();   // 创建添加行按钮
+  QWidget *createHeaderSendMsgWidget();  // 创建发送按钮
 
-  QWidget *createFirstColumnWidget();   // 仅用于数据行
-  QWidget *createSecondColumnWidget();  // 仅用于数据行
-  QWidget *createThirdColumnWidget();   // 仅用于数据行
-  QWidget *createFourthColumnWidget();  // 仅用于数据行
-  QWidget *createFifthColumnWidget();   // 仅用于数据行
-  QWidget *createSixthColumnWidget();   // 仅用于数据行
-  QWidget *createSeventhColumnWidget(); // 仅用于数据行
+  QWidget *createFirstColumnWidget();    // 仅用于数据行
+  QWidget *createSecondColumnWidget();   // 仅用于数据行
+  QWidget *createThirdColumnWidget();    // 仅用于数据行
+  QWidget *createFourthColumnWidget();   // 仅用于数据行
+  QWidget *createFifthColumnWidget();    // 仅用于数据行
+  QWidget *createSixthColumnWidget();    // 仅用于数据行
+  QWidget *createSeventhColumnWidget();  // 仅用于数据行
 
   int visibleRowCount();
 
   // 在类中添加控件缓存
   QMap<QWidget *, QHash<int, QWidget *>> cellWidgetCache_;
 
-  Ui::TtCheckBox *check_state_{nullptr}; // 控制 check 列
-  Ui::TtComboBox *data_format_{nullptr}; // 控制 address 列
+  Ui::TtCheckBox *check_state_{nullptr};  // 控制 check 列
+  Ui::TtComboBox *data_format_{nullptr};  // 控制 address 列
 
   QJsonObject record_;
   int rows_;
@@ -332,6 +351,6 @@ private:
   QMultiMap<int, int> address_to_row_map_;
 };
 
-} // namespace Ui
+}  // namespace Ui
 
-#endif // UI_CONTROLS_TTTABLEVIEW_H
+#endif  // UI_CONTROLS_TTTABLEVIEW_H

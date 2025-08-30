@@ -344,7 +344,7 @@ void FrameWindow::initUi() {
 
 void FrameWindow::initSignalsConnection() {
   // Ui 界面的信号槽
-  connect(instruction_table_, &Ui::TtTableWidget::rowsChanged, this,
+  connect(instruction_table_, &Ui::TtTableWidget::OnRowsChanged, this,
           // [this]() { saved_ = false; });
           [this]() {
             qDebug() << "table row changed";

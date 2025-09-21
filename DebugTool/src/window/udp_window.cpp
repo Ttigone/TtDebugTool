@@ -209,7 +209,7 @@ void UdpWindow::sendMessageToPort(const QString &data, int time) {
 }
 
 void UdpWindow::init() {
-  initUi();
+  InitUi();
   qDebug() << "测试";
   if (role_ == TtProtocolType::Client) {
     udp_client_ = new Core::UdpClient;
@@ -226,10 +226,7 @@ void UdpWindow::init() {
 }
 
 void UdpWindow::connectSignals() {
-  initSignalsConnection();
-
   connect(save_btn_, &Ui::TtSvgButton::clicked, this, &UdpWindow::saveSetting);
-
   connect(on_off_btn_, &Ui::TtSvgButton::clicked, this, [this]() {
     if (opened_) {
       qDebug() << "关闭";

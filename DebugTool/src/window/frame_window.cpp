@@ -31,7 +31,7 @@ namespace Window {
 
 FrameWindow::FrameWindow(QWidget *parent) : QWidget{parent} {}
 
-FrameWindow::~FrameWindow() {}
+FrameWindow::~FrameWindow() { qDebug() << __func__; }
 
 QString FrameWindow::title() const { return QString("TtFrameWindow"); }
 
@@ -49,7 +49,7 @@ void FrameWindow::addDisplayWidget(Ui::TtSvgButton *btn, QWidget *widget) {
   message_stacked_view_->addWidget(widget);
 }
 
-void FrameWindow::initUi() {
+void FrameWindow::InitUi() {
   main_layout_ = new Ui::TtVerticalLayout(this);
 
   title_ = new Ui::TtNormalLabel(this);
@@ -339,10 +339,10 @@ void FrameWindow::initUi() {
   heartbeat_timer_->setTimerType(Qt::TimerType::PreciseTimer);
   heartbeat_timer_->setInterval(0);
 
-  initSignalsConnection();
+  InitSignalsConnection();
 }
 
-void FrameWindow::initSignalsConnection() {
+void FrameWindow::InitSignalsConnection() {
   // Ui 界面的信号槽
   connect(instruction_table_, &Ui::TtTableWidget::OnRowsChanged, this,
           // [this]() { saved_ = false; });

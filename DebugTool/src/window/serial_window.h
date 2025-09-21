@@ -21,10 +21,9 @@
 // #include <realtimeplot/plotarea.h>
 // #include <realtimeplot/pointstream.h>
 
+#include "Def.h"
 #include "data/communication_metadata.h"
 #include "window/frame_window.h"
-
-#include "Def.h"
 
 class SerialPlot;
 
@@ -51,11 +50,11 @@ class TtTableWidget;
 
 class TtLuaInputBox;
 class TtSerialPortPlot;
-} // namespace Ui
+}  // namespace Ui
 
 namespace Widget {
 class SerialSetting;
-} // namespace Widget
+}  // namespace Widget
 
 namespace Core {
 class SerialPortWorker;
@@ -65,7 +64,7 @@ namespace Window {
 
 class SerialWindow : public FrameWindow {
   Q_OBJECT
-public:
+ public:
   explicit SerialWindow(QWidget *parent = nullptr);
   ~SerialWindow();
 
@@ -82,16 +81,16 @@ public:
 
   void setSaveStatus(bool state);
 
-signals:
+ signals:
   ///
   /// @brief requestSaveConfig
   /// 信号: 请求保存配置
   void requestSaveConfig();
 
-protected:
+ protected:
   bool eventFilter(QObject *watched, QEvent *event) override;
 
-private slots:
+ private slots:
   ///
   /// @brief sendMessageToPort
   /// editor 编辑器发送编辑数据
@@ -141,73 +140,22 @@ private slots:
   /// 构造 MsgInfo
   void sendInstructionTableContent(const Data::MsgInfo &msg);
 
-private:
-  void init();
-  void connectSignals();   // 信号槽链接
-  void setSerialSetting(); // 设置通讯配置
-  void saveSerialLog();
-  ///
-  /// @brief setControlState
-  /// @param state
-  /// 设置主界面控件状态
-  void setControlState(bool state);
+ private:
+  void Init();
+  void ConnectSignals();    // 信号槽链接
+  void SetSerialSetting();  // 设置通讯配置
+  void SaveSerialLog();
 
-  ///
-  /// @brief addChannel
-  /// @param blob
-  /// @param color
-  /// @param uuid
-  /// 添加新的通道信息
+  void SetControlState(bool state);
   void addChannel(const QByteArray &blob, const QColor &color, QString &uuid);
 
-  ///
-  /// @brief handleDialogData
-  /// @param label
-  /// @param channel
-  /// @param blob
-  /// @param colork
-  /// 处理编辑通道按钮信息
-  void handleDialogData(const QString &label, quint16 channel,
+  void HandleDialogData(const QString &label, quint16 channel,
                         const QByteArray &blob, const QColor &colork);
-
-  // // 文本发送 hex 格式 并显示
-  // // 数据接收显示 hex
-  // void showMessage(const QByteArray &data, bool out = true); // 为 hex
-  // 进制提供
-  // // 分开
-  // void showMessage(const QString &data, bool out = true);
-
-  ///
-  /// @brief sendMessage
-  /// @param data
-  /// @param type
-  /// 发送串口消息
-  void sendMessage(const QString &data,
+  void SendMessage(const QString &data,
                    TtTextFormat::Type type = TtTextFormat::TEXT);
-
-  ///
-  /// @brief parseBuffer
-  /// 解析缓存区数组
-  void parseBuffer(); // 解析数据
-
-  ///
-  /// @brief processFrame
-  /// @param type
-  /// @param payload
-  /// 解析帧数据
-  void processFrame(quint8 type, const QByteArray &payload); // 解析帧
-
-  ///
-  /// @brief isEnableHeartbeart
-  /// @return
-  /// 是否使能心跳
+  void parseBuffer();
+  void processFrame(quint8 type, const QByteArray &payload);
   bool isEnableHeartbeart();
-
-  ///
-  /// @brief sendPackagedData
-  /// @param data
-  /// @param isHeartbeat
-  /// 处理分包发送
   void sendPackagedData(const QByteArray &data, bool isHeartbeat = false);
 
   void parseVofaProtocol();
@@ -215,10 +163,9 @@ private:
   void parseJustFloatProtocol();
   void parseFireWaterProtocol();
 
-  // 生成随机测试数据的辅助函数
-  QByteArray generateRandomTestData(TtProtocolSetting::Protocol protocol);
+  QByteArray GenerateRandomTestData(TtProtocolSetting::Protocol protocol);
 
-  void startRandomDataTest(TtProtocolSetting::Protocol protocol);
+  void StartRandomDataTest(TtProtocolSetting::Protocol protocol);
 
   QThread *worker_thread_ = nullptr;
   Core::SerialPortWorker *serial_port_;
@@ -228,16 +175,16 @@ private:
   QListWidget *serialDataList{nullptr};
 
   struct ParserRule {
-    bool enable;       // 是否使能
-    quint16 channel;   // 通道
-    QByteArray header; // 帧头字节序列
-    int header_len;    // header.size()
-    int type_offset;   // 从 buffer[offset] 读类型
-    int len_offset;    // 从 buffer[offset] 读长度
-    int tail_len;      // 帧尾长度（若无尾则 = 0）
+    bool enable;        // 是否使能
+    quint16 channel;    // 通道
+    QByteArray header;  // 帧头字节序列
+    int header_len;     // header.size()
+    int type_offset;    // 从 buffer[offset] 读类型
+    int len_offset;     // 从 buffer[offset] 读长度
+    int tail_len;       // 帧尾长度（若无尾则 = 0）
     bool has_checksum;
     // 怎么存储对应的回调函数内容呢 ???
-    std::function<bool(const QByteArray &)> validate; // 可选：校验函数
+    std::function<bool(const QByteArray &)> validate;  // 可选：校验函数
     std::function<void(quint8, const QByteArray &, const QString &)>
         processFrame;
   };
@@ -260,16 +207,16 @@ private:
 
   // 每个通道, 保存对应的 lua 解析代码
   QMap<quint16, QString> lua_script_codes_;
-  QByteArray receive_buffer_; // 接收缓冲区
+  QByteArray receive_buffer_;  // 接收缓冲区
 
   // static const QRegularExpression hexFilterRegex;
 
   TtProtocolSetting::Protocol protocol_;
-  static constexpr int MAX_CHANNELS = 8; // 或者根据您的需求设置其他值
+  static constexpr int MAX_CHANNELS = 8;  // 或者根据您的需求设置其他值
   quint64 sampleNumber = 0;
   // QList<QSharedPointer<PointStream<point_t>>> dataPoints;
 };
 
-} // namespace Window
+}  // namespace Window
 
-#endif // WINDOW_SERIAL_WINDOW_H
+#endif  // WINDOW_SERIAL_WINDOW_H

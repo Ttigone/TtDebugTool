@@ -1,22 +1,22 @@
 #include "ui/controls/TtTableView.h"
 
-#include <qcombobox.h>
-#include <qheaderview.h>
-#include <qjsonarray.h>
-#include <qlayoutitem.h>
-#include <qlineedit.h>
-#include <qlogging.h>
-#include <qoverload.h>
-#include <qtablewidget.h>
-#include <qwidget.h>
+#include <QComboBox.h>
+#include <QHeaderView.h>
+#include <QJsonArray.h>
+#include <QLayoutItem.h>
+#include <QLogging.h>
+#include <QOverload.h>
+#include <QTableWidget.h>
 #include <ui/control/TtCheckBox.h>
 #include <ui/control/TtComboBox.h>
 #include <ui/control/TtLineEdit.h>
 #include <ui/control/TtSwitchButton.h>
 #include <ui/layout/vertical_layout.h>
 
+#include <QLineEdit>
 #include <QSpinBox>
 #include <QTableWidgetItem>
+#include <QWidget>
 
 #include "Def.h"
 #include "ui/layout/horizontal_layout.h"
@@ -85,176 +85,105 @@ TtTableWidget::TtTableWidget(QWidget *parent) : QTableWidget(1, 7, parent) {
   horizontalHeader()->setSectionResizeMode(3, QHeaderView::Stretch);
   horizontalHeader()->setSectionResizeMode(4, QHeaderView::Stretch);
 
-  initHeader();
+  InitHeader();
 
   // 虚拟化：滚动/尺寸变化时按需创建可见行控件
   connect(verticalScrollBar(), &QScrollBar::valueChanged, this,
-          [this] { setupVisibleRows(); });
+          [this] { SetupVisibleRows(); });
   connect(horizontalScrollBar(), &QScrollBar::valueChanged, this,
-          [this] { setupVisibleRows(); });
+          [this] { SetupVisibleRows(); });
 }
 
+// TtTableWidget::~TtTableWidget() {
+//   // 回收已绑定的可见行
+//   for (auto it = widget_rows_.begin(); it != widget_rows_.end(); ++it) {
+//     // 逐行解绑
+//     UnBindRow(it.key());
+//   }
+//   // 清理池
+//   qDeleteAll(combo_pool_);
+//   qDeleteAll(switch_pool_);
+//   qDeleteAll(spin_pool_);
+//   qDeleteAll(line_edit_pool_);
+//   qDeleteAll(widget_pool_);
+//   combo_pool_.clear();
+//   switch_pool_.clear();
+//   spin_pool_.clear();
+//   line_edit_pool_.clear();
+//   widget_pool_.clear();
+
+//   qDebug() << "TtTableWidge delete";
+// }
 TtTableWidget::~TtTableWidget() {
-  // 回收已绑定的可见行
-  for (auto it = widget_rows_.begin(); it != widget_rows_.end(); ++it) {
-    // 防御：逐行解绑
-    unbindRow(it.key());
+  qDebug() << "TtTableWidget 开始析构";
+
+  // 设置析构状态标记
+  being_destroyed_ = true;
+
+  // 断开所有信号连接
+  disconnect();
+
+  // 停止滚动条相关信号
+  if (verticalScrollBar()) {
+    verticalScrollBar()->disconnect();
   }
-  // 清理池
-  qDeleteAll(combo_pool_);
-  qDeleteAll(switch_pool_);
-  qDeleteAll(spin_pool_);
-  qDeleteAll(line_edit_pool_);
-  qDeleteAll(widget_pool_);
-  combo_pool_.clear();
-  switch_pool_.clear();
-  spin_pool_.clear();
-  line_edit_pool_.clear();
-  widget_pool_.clear();
+  if (horizontalScrollBar()) {
+    horizontalScrollBar()->disconnect();
+  }
+
+  // 直接清理已绑定的行控件，不回收到池
+  for (auto it = widget_rows_.begin(); it != widget_rows_.end(); ++it) {
+    TableRow &tableRow = it.value();
+
+    // 直接断开并删除，不回收
+    auto safeDelete = [](QWidget *widget) {
+      if (widget && widget->parent()) {
+        widget->disconnect();
+        widget->deleteLater();
+      }
+    };
+
+    safeDelete(tableRow.checkBtn);
+    safeDelete(tableRow.nameEdit);
+    safeDelete(tableRow.typeCombo);
+    safeDelete(tableRow.contentEdit);
+    safeDelete(tableRow.delayEdit);
+  }
+  widget_rows_.clear();
+
+  // 清理对象池 - 只删除孤儿控件
+  auto safeDeletePool = [](auto &pool) {
+    for (auto *widget : pool) {
+      if (widget && !widget->parent()) {
+        widget->deleteLater();
+      }
+    }
+    pool.clear();
+  };
+
+  safeDeletePool(combo_pool_);
+  safeDeletePool(switch_pool_);
+  safeDeletePool(spin_pool_);
+  safeDeletePool(line_edit_pool_);
+  safeDeletePool(widget_pool_);
+
+  // 清理数据
+  cellWidgetCache_.clear();
+  model_.clear();
+
+  qDebug() << "TtTableWidget 析构完成";
 }
 
 void TtTableWidget::SetupHeaderRow() {
-  setCellWidget(0, 0, createHeaderWidget(tr("启用"), true));
-  setCellWidget(0, 1, createHeaderWidget(tr("名称"), true));
-  setCellWidget(0, 2, createHeaderWidget(tr("格式"), true));
-  setCellWidget(0, 3, createHeaderWidget(tr("内容"), true));
-  setCellWidget(0, 4, createHeaderWidget(tr("延时"), true));
-  setCellWidget(0, 5, createHeaderAddRowWidget());
-  setCellWidget(0, 6, createHeaderSendMsgWidget());
+  setCellWidget(0, 0, CreateHeaderWidget(tr("启用"), true));
+  setCellWidget(0, 1, CreateHeaderWidget(tr("名称"), true));
+  setCellWidget(0, 2, CreateHeaderWidget(tr("格式"), true));
+  setCellWidget(0, 3, CreateHeaderWidget(tr("内容"), true));
+  setCellWidget(0, 4, CreateHeaderWidget(tr("延时"), true));
+  setCellWidget(0, 5, CreateHeaderAddRowWidget());
+  setCellWidget(0, 6, CreateHeaderSendMsgWidget());
 }
 
-// void TtTableWidget::SetupTable(const QJsonObject &record) {
-//   record_ = record;
-//   while (rowCount() > 1) {
-//     removeRow(1);
-//   }
-
-//   // 获取元数据
-//   QJsonObject metadata = record_.value("__metadata").toObject();
-//   int totalRows = metadata.value("totalRows").toInt(0);
-
-//   // qDebug() << "准备还原" << totalRows << "行数据";
-//   // 创建临时存储，按行号排序
-//   QMap<int, QJsonArray> sortedRows;
-
-//   // 遍历JSON对象中的所有键，每个键应该代表一行(除了__metadata)
-//   for (auto it = record_.begin(); it != record_.end(); ++it) {
-//     QString key = it.key();
-//     if (key == "__metadata") {
-//       continue;
-//     }
-//     bool ok;
-//     int rowIndex = key.toInt(&ok);
-//     if (!ok) {
-//       // qWarning() << "无效的行索引:" << key;
-//       continue;
-//     }
-
-//     QJsonArray rowData = it.value().toArray();
-//     if (rowData.isEmpty()) {
-//       // qWarning() << "行" << rowIndex << "数据为空";
-//       continue;
-//     }
-//     // 将行数据添加到排序映射
-//     sortedRows[rowIndex] = rowData;
-//   }
-
-//   for (auto it = sortedRows.begin(); it != sortedRows.end(); ++it) {
-//     int rowIndex = it.key();
-//     // json 行数据
-//     QJsonArray rowData = it.value();
-//     // 添加新行
-//     int newRow = rowCount();  // 首行为 1, 插入的位置是该处
-//     insertRow(newRow);        // 插入新行到最后的位置
-//     setupRow(newRow);
-//     if (record_.isEmpty()) {
-//       if (!isRowVisible(newRow)) {
-//         scrollToItem(item(newRow, 0));
-//         setupRow(newRow);  // 再次尝试创建
-//       }
-//       if (record_.isEmpty()) {
-//         continue;
-//       }
-//     }
-
-//     // 获取刚添加的行数据引用
-//     TableRow &row = record_.last();
-//     // 获取实际数据索引 (跳过行号)
-//     int dataOffset = 1;  // 因为第一个元素是行索引
-//     // 设置复选框状态
-//     if (rowData.size() > dataOffset && row.checkBtn) {
-//       row.checkBtn->setChecked(rowData.at(dataOffset).toBool());
-//     }
-//     dataOffset++;
-//     // 设置名称
-//     if (rowData.size() > dataOffset && row.nameEdit) {
-//       // row.address->setText(rowData.at(dataOffset).toString());
-//       QString addrText = rowData.at(dataOffset).toString();
-//       row.nameEdit->setText(addrText);
-//     }
-//     dataOffset++;
-
-//     // 设置类型
-//     if (rowData.size() > dataOffset && row.typeCombo) {
-//       int type = rowData.at(dataOffset).toInt();
-//       for (int i = 0; i < row.typeCombo->count(); ++i) {
-//         if (row.typeCombo->itemData(i).toInt() == type) {
-//           row.typeCombo->setCurrentIndex(i);
-//           break;
-//         }
-//       }
-//     }
-//     dataOffset++;
-
-//     // 设置内容
-//     if (rowData.size() > dataOffset && row.contentEdit) {
-//       // qDebug() << "descripition: " << rowData.at(dataOffset).toString();
-//       row.contentEdit->setText(rowData.at(dataOffset).toString());
-//     }
-//     dataOffset++;
-
-//     // 设置描述
-//     // if (rowData.size() > dataOffset && row.delaySpin) {
-//     //   // qDebug() << "descripition: " <<
-//     rowData.at(dataOffset).toString();
-//     //   row.delaySpin->setValue(rowData.at(dataOffset).toInt());
-//     // }
-//     if (rowData.size() > dataOffset && row.delayEdit) {
-//       // qDebug() << "descripition: " << rowData.at(dataOffset).toString();
-//       // row.delayEdit->setValue(rowData.at(dataOffset).toInt());
-//       row.delayEdit->setText(rowData.at(dataOffset).toString());
-//     }
-//     dataOffset++;
-
-//     // // 设置地址并更新映射
-//     // if (rowData.size() > dataOffset && row.address) {
-//     //   QString addrText = rowData.at(dataOffset).toString();
-//     //   row.address->setText(addrText);
-
-//     //   // 添加地址映射
-//     //   bool ok;
-//     //   int addr;
-
-//     //   // 地址没有16进制
-//     //   if (addrText.startsWith("0x", Qt::CaseInsensitive)) {
-//     //     addr = addrText.mid(2).toInt(&ok, 16);
-//     //   } else {
-//     //     addr = addrText.toInt(&ok, 10);
-//     //   }
-
-//     //   if (ok) {
-//     //     rowsData_[newRow - 1].currentAddress = addr;
-//     //     address_to_row_map_.insert(addr, newRow);
-//     //   }
-//     // }
-//   }
-
-//   // 调整行高和列宽以适应内容
-//   QTimer::singleShot(0, this, [this]() {
-//     resizeRowsToContents();
-//     resizeColumnsToContents();
-//   });
-// }
 void TtTableWidget::SetupTable(const QJsonObject &record) {
   record_ = record;
   // 清空表格（保留标题行）
@@ -265,7 +194,7 @@ void TtTableWidget::SetupTable(const QJsonObject &record) {
   for (auto it = widget_rows_.begin(); it != widget_rows_.end();) {
     int row = it.key();
     ++it;
-    unbindRow(row);
+    UnBindRow(row);
   }
   widget_rows_.clear();
   model_.clear();
@@ -312,13 +241,9 @@ void TtTableWidget::SetupTable(const QJsonObject &record) {
     maxRow = std::max(maxRow, rowIndex);
   }
 
-  // 设置表格行数（含表头）
   setRowCount(totalRows + 1);
 
-  // 尝试创建可见行控件
-  setupVisibleRows();
-
-  // 调整布局
+  SetupVisibleRows();
   QTimer::singleShot(0, this, [this]() {
     resizeRowsToContents();
     resizeColumnsToContents();
@@ -404,35 +329,30 @@ void TtTableWidget::SetEnabled(bool enable) {
   if (sent) {
     sent->setEnabled(!enable);
   }
-  // 遍历所有行
+  // 遍历所有行并设置控件状态
   for (int row = 1; row < rowCount(); ++row) {
-    // 仅在 rowsData_ 有效范围内处理
-    // if (row - 1 < rowsData.size()) {
-    //   TableRow &rowData = rowsData_[row - 1];
+    qDebug() << "current row" << row;
+    // 遍历缓存的控件
+    auto it = widget_rows_.find(row);
+    qDebug() << "it valid" << (it != widget_rows_.end());
+    if (it != widget_rows_.end()) {
+      TableRow &rowData = it.value();
 
-    //   // 设置每一列的控件启用状态
-    //   if (rowData.checkBtn) rowData.checkBtn->setEnabled(enable);
-
-    //   if (rowData.nameEdit) rowData.nameEdit->setEnabled(enable);
-
-    //   if (rowData.typeCombo) rowData.typeCombo->setEnabled(enable);
-
-    //   if (rowData.contentEdit) rowData.contentEdit->setEnabled(enable);
-
-    //   // if (rowData.delaySpin)
-    //   //   rowData.delaySpin->setEnabled(enable);
-    //   if (rowData.delayEdit) rowData.delayEdit->setEnabled(enable);
-    // }
+      // 设置每一列的控件启用状态
+      if (rowData.checkBtn) rowData.checkBtn->setEnabled(enable);
+      if (rowData.nameEdit) rowData.nameEdit->setEnabled(enable);
+      if (rowData.typeCombo) rowData.typeCombo->setEnabled(enable);
+      if (rowData.contentEdit) rowData.contentEdit->setEnabled(enable);
+      if (rowData.delayEdit) rowData.delayEdit->setEnabled(enable);
+    }
 
     // 处理第七列（发送按钮列）
-    // 获取第七列的单元格小部件
     QWidget *sendBtnWidget = cellWidget(row, 6);  // 假设第七列索引为6
     if (sendBtnWidget) {
       // 查找发送按钮（通常包装在一个容器内）
       QList<QPushButton *> buttons =
           sendBtnWidget->findChildren<QPushButton *>();
       for (QPushButton *btn : buttons) {
-        // for (auto *btn : qAsConst(buttons)) {
         // 发送按钮在禁用模式下启用，启用模式下禁用
         btn->setEnabled(!enable);
       }
@@ -447,23 +367,8 @@ void TtTableWidget::SetEnabled(bool enable) {
 }
 
 void TtTableWidget::OnAddRowButtonClicked() {
-  // // 逻辑行号：model_.size() + 1
-  // int new_row = rowCount();
-  // insertRow(new_row);
-  // setItem(new_row, 0, new QTableWidgetItem());
-  // scrollToItem(item(new_row, 0));
-  // setupRow(new_row);
-
-  // // 调整大小
-  // resizeRowsToContents();
-  // resizeColumnsToContents();
-
-  // // 发出行数变化信号
-  // emit OnRowsChanged(newRowIndex);
-  // 逻辑行号：model_.size() + 1
-  int new_row = rowCount();  // 物理行：末尾插入
+  int new_row = rowCount();
   insertRow(new_row);
-
   // 模型扩展
   RowData d;
   d.enabled = true;
@@ -472,11 +377,11 @@ void TtTableWidget::OnAddRowButtonClicked() {
   model_.append(d);
 
   // 尝试滚动到新行并物化
-  bool wasVisible = isRowVisible(new_row);
+  bool wasVisible = IsRowVisible(new_row);
   if (!wasVisible) {
     scrollToItem(item(new_row, 0));
   }
-  setupVisibleRows();
+  SetupVisibleRows();
 
   // 调整大小
   QTimer::singleShot(0, this, [this]() {
@@ -487,57 +392,44 @@ void TtTableWidget::OnAddRowButtonClicked() {
   emit OnRowsChanged(static_cast<quint16>(model_.size()));
 }
 
-void TtTableWidget::initHeader() {
+void TtTableWidget::resizeEvent(QResizeEvent *event) {
+  QTableWidget::resizeEvent(event);
+
+  QTimer::singleShot(0, this, [this]() {
+    SetupVisibleRows();
+    resizeRowsToContents();     // 调整行高
+    resizeColumnsToContents();  // 调整列宽
+  });
+}
+
+void TtTableWidget::showEvent(QShowEvent *event) {
+  QTableWidget::showEvent(event);
+
+  QTimer::singleShot(0, this, [this]() {
+    SetupVisibleRows();
+    resizeRowsToContents();     // 调整行高
+    resizeColumnsToContents();  // 调整列宽
+  });
+}
+
+void TtTableWidget::InitHeader() {
   QStringList headers = {tr("启用"), tr("名称"), tr("格式"), tr("内容"),
                          tr("延时"), "",         ""};
 
   for (int col = 0; col < 7; ++col) {
     QWidget *header = nullptr;
     if (col == 5) {
-      header = createAddButton();
+      header = CreateAddButton();
     } else if (col == 6) {
-      header = createSendButton();
+      header = CreateSendButton();
     } else if (col < 5) {
-      header = createHeaderCell(headers[col], col != 4);
+      header = CreateHeaderCell(headers[col], col != 4);
     }
     setCellWidget(0, col, header);
   }
 }
 
-// void TtTableWidget::setupVisibleRows() {
-//   // 计算可见行范围（1-based）
-//   int first = 1;
-//   int last = rowCount() - 1;
-//   if (last < 1) return;
-
-//   QModelIndex topIdx = indexAt(QPoint(0, 0));
-//   QModelIndex bottomIdx = indexAt(QPoint(0, viewport()->height() - 1));
-//   if (topIdx.isValid()) first = std::max(1, topIdx.row());
-//   if (bottomIdx.isValid()) last = std::min(rowCount() - 1, bottomIdx.row());
-
-//   // 预取缓冲行
-//   int buffer = std::max(2, (last - first + 1) / 5);
-//   first = std::max(1, first - buffer);
-//   last = std::min(rowCount() - 1, last + buffer);
-
-//   // 绑定可见区
-//   for (int r = first; r <= last; ++r) {
-//     if (!widget_rows_.contains(r)) {
-//       bindRow(r);
-//     }
-//   }
-
-//   // 解绑不可见区
-//   QList<int> keys = widget_rows_.keys();
-//   for (int key : keys) {
-//     if (key < first || key > last) {
-//       unbindRow(key);
-//     }
-//   }
-// }
-
-void TtTableWidget::setupVisibleRows() {
-  // 计算可见行范围（1-based）
+void TtTableWidget::SetupVisibleRows() {
   int first = 1;
   int last = rowCount() - 1;
   if (last < 1) return;
@@ -555,7 +447,7 @@ void TtTableWidget::setupVisibleRows() {
   // 绑定可见区
   for (int r = first; r <= last; ++r) {
     if (!widget_rows_.contains(r)) {
-      bindRow(r);
+      BindRow(r);
     }
   }
 
@@ -563,33 +455,44 @@ void TtTableWidget::setupVisibleRows() {
   QList<int> keys = widget_rows_.keys();
   for (int key : keys) {
     if (key < first || key > last) {
-      unbindRow(key);
+      UnBindRow(key);
     }
   }
 }
 
-void TtTableWidget::bindRow(int row) {
-  if (row <= 0 || row > rowCount() - 1) return;
-  if (widget_rows_.contains(row)) return;
-  if (row - 1 >= model_.size()) return;  // 模型防御
+void TtTableWidget::BindRow(int row) {
+  if (row <= 0 || row >= rowCount()) {
+    qWarning() << "BindRow: Invalid row index" << row
+               << "rowCount:" << rowCount();
+    return;
+  }
+  if (widget_rows_.contains(row)) {
+    qWarning() << "BindRow: Row" << row << "already bound";
+    return;
+  }
+  if (row - 1 >= model_.size()) {
+    qWarning() << "BindRow: Model size" << model_.size()
+               << "insufficient for row" << row;
+    return;
+  }
 
   TableRow w;
   // 从池中取控件或新建
-  w.checkBtn = createSwitchButton();
-  w.nameEdit = createLineEdit(tr("名称"));
-  w.typeCombo = createTypeComboBox();
-  w.contentEdit = createLineEdit(tr("内容"));
-  w.delayEdit = createLineEdit(tr("延时(ms)"));
+  w.checkBtn = CreateSwitchButton();
+  w.nameEdit = CreateLineEdit(tr("名称"));
+  w.typeCombo = CreateTypeComboBox();
+  w.contentEdit = CreateLineEdit(tr("内容"));
+  w.delayEdit = CreateLineEdit(tr("延时(ms)"));
 
-  auto wrap = [this](QWidget *c) { return createCellWrapper(c); };
+  auto wrap = [this](QWidget *c) { return CreateCellWrapper(c); };
 
   SetCellWidget(row, 0, wrap(w.checkBtn));
   SetCellWidget(row, 1, wrap(w.nameEdit));
   SetCellWidget(row, 2, wrap(w.typeCombo));
   SetCellWidget(row, 3, wrap(w.contentEdit));
   SetCellWidget(row, 4, wrap(w.delayEdit));
-  SetCellWidget(row, 5, createDeleteButton());
-  SetCellWidget(row, 6, createRowSendButton());
+  SetCellWidget(row, 5, CreateDeleteButton());
+  SetCellWidget(row, 6, CreateRowSendButton());
 
   // 灌入模型到控件
   const RowData &d = model_[row - 1];
@@ -607,25 +510,26 @@ void TtTableWidget::bindRow(int row) {
   if (w.contentEdit) w.contentEdit->setText(d.content);
   if (w.delayEdit) w.delayEdit->setText(d.delayMs);
 
-  // 双向绑定：使用 findRowIndex 动态获取当前行，避免行删除后索引失效
+  // 使用 findRowIndex 动态获取当前行，避免行删除后索引失效
   if (w.checkBtn) {
     connect(w.checkBtn, &TtSwitchButton::toggled, this,
             [this, btn = w.checkBtn](bool on) {
-              int r = findRowIndex(btn, 0, true);
+              int r = FindRowIndex(btn, 0, true);
+              qDebug() << "check changed row" << r << " to " << on;
               if (r > 0 && r - 1 < model_.size()) model_[r - 1].enabled = on;
             });
   }
   if (w.nameEdit) {
     connect(w.nameEdit, &TtLineEdit::textChanged, this,
             [this, edit = w.nameEdit](const QString &t) {
-              int r = findRowIndex(edit, 1, true);
+              int r = FindRowIndex(edit, 1, true);
               if (r > 0 && r - 1 < model_.size()) model_[r - 1].name = t;
             });
   }
   if (w.typeCombo) {
     connect(w.typeCombo, qOverload<int>(&QComboBox::currentIndexChanged), this,
             [this, cb = w.typeCombo](int) {
-              int r = findRowIndex(cb, 2, true);
+              int r = FindRowIndex(cb, 2, true);
               if (r > 0 && r - 1 < model_.size())
                 model_[r - 1].type = cb->currentData().toInt();
             });
@@ -633,14 +537,14 @@ void TtTableWidget::bindRow(int row) {
   if (w.contentEdit) {
     connect(w.contentEdit, &TtLineEdit::textChanged, this,
             [this, edit = w.contentEdit](const QString &t) {
-              int r = findRowIndex(edit, 3, true);
+              int r = FindRowIndex(edit, 3, true);
               if (r > 0 && r - 1 < model_.size()) model_[r - 1].content = t;
             });
   }
   if (w.delayEdit) {
     connect(w.delayEdit, &TtLineEdit::textChanged, this,
             [this, edit = w.delayEdit](const QString &t) {
-              int r = findRowIndex(edit, 4, true);
+              int r = FindRowIndex(edit, 4, true);
               if (r > 0 && r - 1 < model_.size()) model_[r - 1].delayMs = t;
             });
   }
@@ -656,50 +560,192 @@ void TtTableWidget::bindRow(int row) {
   widget_rows_.insert(row, w);
 }
 
-// ...existing code...
-void TtTableWidget::unbindRow(int row) {
-  auto it = widget_rows_.find(row);
-  if (it == widget_rows_.end()) return;
+// void TtTableWidget::UnBindRow(int row) {
+//   auto it = widget_rows_.find(row);
+//   if (it == widget_rows_.end()) {
+//     return;
+//   }
+//   TableRow w = it.value();
 
+//   // 断开所有信号连接，避免悬空指针
+//   auto disconnectWidget = [](QWidget *widget) {
+//     if (widget) {
+//       widget->disconnect();  // 断开所有信号
+//       widget->hide();
+//       widget->setParent(nullptr);
+//     }
+//   };
+//   // 先从单元格 wrapper 中摘除控件并移除 cellWidget
+//   auto recycleWrapper = [this, row, disconnectWidget](int col, QWidget *ctrl)
+//   {
+//     if (!ctrl) return;
+
+//     disconnectWidget(ctrl);  // 先断开信号
+
+//     if (QWidget *wrapper = cellWidget(row, col)) {
+//       if (wrapper->layout()) {
+//         wrapper->layout()->removeWidget(ctrl);
+//       }
+//       ctrl->setParent(this);  // 避免随 wrapper 一起销毁
+//       QTableWidget::removeCellWidget(row, col);
+//       wrapper->deleteLater();
+//     }
+//   };
+
+//   // 分类型回收到各自对象池，避免模板依赖类型问题
+//   auto recycleSwitch = [this, &recycleWrapper](int col, TtSwitchButton *btn)
+//   {
+//     if (!btn) return;
+//     recycleWrapper(col, btn);
+//     if (switch_pool_.size() < MAX_POOL_SIZE) {
+//       switch_pool_.append(btn);
+//     } else {
+//       btn->deleteLater();
+//     }
+//   };
+
+//   auto recycleCombo = [this, &recycleWrapper](int col, TtComboBox *cb) {
+//     if (!cb) return;
+//     recycleWrapper(col, cb);
+//     cb->clear();              // 清空内容
+//     cb->setCurrentIndex(-1);  // 重置选择
+//     if (combo_pool_.size() < MAX_POOL_SIZE) {
+//       combo_pool_.append(cb);
+//     } else {
+//       cb->deleteLater();
+//     }
+//   };
+
+//   auto recycleLineEdit = [this, &recycleWrapper](int col, TtLineEdit *ed) {
+//     if (!ed) return;
+//     recycleWrapper(col, ed);
+//     ed->clear();                 // 清空文本
+//     ed->setPlaceholderText("");  // 清空占位符
+//     if (line_edit_pool_.size() < MAX_POOL_SIZE) {
+//       line_edit_pool_.append(ed);
+//     } else {
+//       ed->deleteLater();
+//     }
+//   };
+
+//   recycleSwitch(0, w.checkBtn);
+//   recycleLineEdit(1, w.nameEdit);
+//   recycleCombo(2, w.typeCombo);
+//   recycleLineEdit(3, w.contentEdit);
+//   recycleLineEdit(4, w.delayEdit);
+
+//   // 清理操作列的 wrapper
+//   for (int c = 5; c <= 6; ++c) {
+//     if (QWidget *wrapper = cellWidget(row, c)) {
+//       QTableWidget::removeCellWidget(row, c);
+//       wrapper->deleteLater();
+//     }
+//   }
+
+//   widget_rows_.erase(it);
+// }
+
+void TtTableWidget::UnBindRow(int row) {
+  auto it = widget_rows_.find(row);
+  if (it == widget_rows_.end()) {
+    return;
+  }
   TableRow w = it.value();
 
-  // 通用：先从单元格 wrapper 中摘除控件并移除 cellWidget
-  auto recycleWrapper = [this, row](int col, QWidget *ctrl) {
+  // 断开所有信号连接，避免悬空指针
+  auto disconnectWidget = [](QWidget *widget) {
+    if (widget) {
+      widget->disconnect();  // 断开所有信号
+      widget->hide();
+      // 不要设置 parent 为 nullptr，这可能导致过早删除
+      // widget->setParent(nullptr);
+    }
+  };
+
+  // 安全的控件回收函数
+  auto recycleWrapper = [this, row, disconnectWidget](int col, QWidget *ctrl) {
     if (!ctrl) return;
+
+    disconnectWidget(ctrl);  // 先断开信号
+
     if (QWidget *wrapper = cellWidget(row, col)) {
-      if (wrapper->layout()) wrapper->layout()->removeWidget(ctrl);
-      ctrl->setParent(this);  // 避免随 wrapper 一起销毁
+      if (wrapper->layout()) {
+        wrapper->layout()->removeWidget(ctrl);
+      }
+
+      // 安全检查：确保 this 仍然有效
+      if (this && !this->isBeingDestroyed()) {
+        ctrl->setParent(this);  // 只在安全时设置父对象
+      } else {
+        // 析构过程中，直接标记为删除
+        ctrl->deleteLater();
+        return;  // 直接返回，不加入池中
+      }
+
       QTableWidget::removeCellWidget(row, col);
       wrapper->deleteLater();
     }
-    ctrl->disconnect();
-    ctrl->hide();
   };
 
-  // 分类型回收到各自对象池，避免模板依赖类型问题
-  auto recycleSwitch = [this, &recycleWrapper](int col, TtSwitchButton *btn) {
+  // 分类型回收到各自对象池
+  auto recycleSwitch = [this, &recycleWrapper, disconnectWidget](
+                           int col, TtSwitchButton *btn) {
     if (!btn) return;
-    recycleWrapper(col, btn);
-    if (switch_pool_.size() < MAX_POOL_SIZE)
-      switch_pool_.append(btn);
-    else
+
+    // 析构过程中直接删除，不回收
+    if (this->isBeingDestroyed()) {
+      disconnectWidget(btn);
       btn->deleteLater();
+      return;
+    }
+
+    recycleWrapper(col, btn);
+    btn->setChecked(false);  // 重置状态
+    if (switch_pool_.size() < MAX_POOL_SIZE) {
+      switch_pool_.append(btn);
+    } else {
+      btn->deleteLater();
+    }
   };
-  auto recycleCombo = [this, &recycleWrapper](int col, TtComboBox *cb) {
+
+  auto recycleCombo = [this, &recycleWrapper, disconnectWidget](
+                          int col, TtComboBox *cb) {
     if (!cb) return;
-    recycleWrapper(col, cb);
-    if (combo_pool_.size() < MAX_POOL_SIZE)
-      combo_pool_.append(cb);
-    else
+
+    if (this->isBeingDestroyed()) {
+      disconnectWidget(cb);
       cb->deleteLater();
+      return;
+    }
+
+    recycleWrapper(col, cb);
+    cb->clear();
+    cb->setCurrentIndex(-1);
+    if (combo_pool_.size() < MAX_POOL_SIZE) {
+      combo_pool_.append(cb);
+    } else {
+      cb->deleteLater();
+    }
   };
-  auto recycleLineEdit = [this, &recycleWrapper](int col, TtLineEdit *ed) {
+
+  auto recycleLineEdit = [this, &recycleWrapper, disconnectWidget](
+                             int col, TtLineEdit *ed) {
     if (!ed) return;
-    recycleWrapper(col, ed);
-    if (line_edit_pool_.size() < MAX_POOL_SIZE)
-      line_edit_pool_.append(ed);
-    else
+
+    if (this->isBeingDestroyed()) {
+      disconnectWidget(ed);
       ed->deleteLater();
+      return;
+    }
+
+    recycleWrapper(col, ed);
+    ed->clear();
+    ed->setPlaceholderText("");
+    if (line_edit_pool_.size() < MAX_POOL_SIZE) {
+      line_edit_pool_.append(ed);
+    } else {
+      ed->deleteLater();
+    }
   };
 
   recycleSwitch(0, w.checkBtn);
@@ -719,27 +765,27 @@ void TtTableWidget::unbindRow(int row) {
   widget_rows_.erase(it);
 }
 
-void TtTableWidget::ensureModelSize(int rows) {
+void TtTableWidget::EnsureModelSize(int rows) {
   if (rows < 0) return;
   if (model_.size() < rows) model_.resize(rows);
 }
 
-void TtTableWidget::setupRow(int row) {
-  if (!isRowVisible(row)) {
+void TtTableWidget::SetupRow(int row) {
+  if (!IsRowVisible(row)) {
     qDebug() << "不可视";
     return;
   }
   TableRow data;
-  data.checkBtn = createSwitchButton();
+  data.checkBtn = CreateSwitchButton();
   data.checkBtn->setChecked(true);
-  data.nameEdit = createLineEdit(tr("名称"));
-  data.typeCombo = createTypeComboBox();
-  data.contentEdit = createLineEdit(tr("内容"));
+  data.nameEdit = CreateLineEdit(tr("名称"));
+  data.typeCombo = CreateTypeComboBox();
+  data.contentEdit = CreateLineEdit(tr("内容"));
   // data.delaySpin = createDelaySpin();
-  data.delayEdit = createLineEdit(tr("延时(ms)"));
+  data.delayEdit = CreateLineEdit(tr("延时(ms)"));
 
   auto makeCell = [this](QWidget *content) {
-    return createCellWrapper(content);
+    return CreateCellWrapper(content);
   };
 
   setCellWidget(row, 0, makeCell(data.checkBtn));
@@ -748,8 +794,8 @@ void TtTableWidget::setupRow(int row) {
   setCellWidget(row, 3, makeCell(data.contentEdit));
   // setCellWidget(row, 4, makeCell(data.delaySpin));
   setCellWidget(row, 4, makeCell(data.delayEdit));
-  setCellWidget(row, 5, createDeleteButton());
-  setCellWidget(row, 6, createRowSendButton());
+  setCellWidget(row, 5, CreateDeleteButton());
+  setCellWidget(row, 6, CreateRowSendButton());
 
   // rowsData_.append(data);
 
@@ -764,12 +810,12 @@ void TtTableWidget::setupRow(int row) {
   if (data.delayEdit) data.delayEdit->setEnabled(isEnabled);
 }
 
-TtSwitchButton *TtTableWidget::createSwitchButton() {
-  // TtSwitchButton *btn = new TtSwitchButton(this);
-  // btn->setChecked(true);
-  // return btn;
+TtSwitchButton *TtTableWidget::CreateSwitchButton() {
   if (!switch_pool_.isEmpty()) {
     auto *btn = switch_pool_.takeLast();
+    // 重置状态
+    btn->setChecked(true);  // 默认选中
+    btn->setEnabled(true);
     btn->show();
     btn->setParent(this);
     return btn;
@@ -779,14 +825,16 @@ TtSwitchButton *TtTableWidget::createSwitchButton() {
   return btn;
 }
 
-TtComboBox *TtTableWidget::createTypeComboBox() {
+TtComboBox *TtTableWidget::CreateTypeComboBox() {
   if (!combo_pool_.isEmpty()) {
     auto *cb = combo_pool_.takeLast();
-    cb->show();
-    cb->setParent(this);
     cb->clear();
     cb->addItem(tr("TEXT"), TtTextFormat::TEXT);
     cb->addItem(tr("HEX"), TtTextFormat::HEX);
+    cb->setCurrentIndex(0);  // 默认选择第一项
+    cb->setEnabled(true);
+    cb->show();
+    cb->setParent(this);
     return cb;
   }
   auto *combo = new TtComboBox(this);
@@ -795,7 +843,7 @@ TtComboBox *TtTableWidget::createTypeComboBox() {
   return combo;
 }
 
-QSpinBox *TtTableWidget::createDelaySpin() {
+QSpinBox *TtTableWidget::CreateDelaySpin() {
   if (!spin_pool_.isEmpty()) {
     auto *sp = spin_pool_.takeLast();
     sp->show();
@@ -807,21 +855,23 @@ QSpinBox *TtTableWidget::createDelaySpin() {
   return spin;
 }
 
-TtLineEdit *TtTableWidget::createLineEdit(const QString &placeholderText) {
+TtLineEdit *TtTableWidget::CreateLineEdit(const QString &placeholderText) {
   if (!line_edit_pool_.isEmpty()) {
-    auto *ed = line_edit_pool_.takeLast();
-    ed->show();
-    ed->setParent(this);
-    ed->clear();
-    ed->setPlaceholderText(placeholderText);
-    return ed;
+    auto *edit = line_edit_pool_.takeLast();
+    edit->clear();
+    edit->setPlaceholderText(placeholderText);
+    edit->setEnabled(true);
+    edit->setReadOnly(false);
+    edit->show();
+    edit->setParent(this);
+    return edit;
   }
   auto *lineEdit = new TtLineEdit(this);
   lineEdit->setPlaceholderText(placeholderText);
   return lineEdit;
 }
 
-QWidget *TtTableWidget::createCellWrapper(QWidget *content) {
+QWidget *TtTableWidget::CreateCellWrapper(QWidget *content) {
   QWidget *wrapper = new QWidget(this);
   Ui::TtVerticalLayout *layout = new Ui::TtVerticalLayout(wrapper);
   layout->setContentsMargins(2, 2, 2, 2);
@@ -830,36 +880,88 @@ QWidget *TtTableWidget::createCellWrapper(QWidget *content) {
   return wrapper;
 }
 
-int TtTableWidget::findRowIndex(QWidget *context, const int &col,
+// int TtTableWidget::findRowIndex(QWidget *context, const int &col,
+//                                 bool deep) const {
+//   if (!context) {
+//     return -1;
+//   }
+//   QWidget *parent = context->parentWidget();
+//   if (!parent) {
+//     return -1;
+//   }
+//   if (!deep) {
+//     for (int row = 1; row < rowCount(); ++row) {
+//       if (cellWidget(row, col) == parent) {
+//         return row;
+//       }
+//     }
+//   } else {
+//     QWidget *grandparent = parent->parentWidget();
+//     if (!grandparent) {
+//       return -1;
+//     }
+//     for (int row = 1; row < rowCount(); ++row) {
+//       if (cellWidget(row, col) == grandparent) {
+//         return row;
+//       }
+//     }
+//   }
+//   return -1;
+// }
+
+// int TtTableWidget::findRowIndex(QWidget *context, const int &col,
+//                                 bool deep) const {
+//   if (!context) {
+//     return -1;
+//   }
+
+//   QWidget *parent = context->parentWidget();
+//   if (!parent) {
+//     return -1;
+//   }
+
+//   if (!deep) {
+//     for (int row = 0; row < rowCount(); ++row) {
+//       if (cellWidget(row, col) == parent) {
+//         return row;
+//       }
+//     }
+//   } else {
+//     QWidget *grandparent = parent->parentWidget();
+//     if (!grandparent) {
+//       return -1;
+//     }
+//     for (int row = 0; row < rowCount(); ++row) {
+//       if (cellWidget(row, col) == grandparent) {
+//         return row;
+//       }
+//     }
+//   }
+//   qDebug() << "not found";
+//   return -1;
+// }
+
+int TtTableWidget::FindRowIndex(QWidget *context, const int &col,
                                 bool deep) const {
   if (!context) {
     return -1;
   }
+
   QWidget *parent = context->parentWidget();
-  if (!parent) {
-    return -1;
-  }
-  if (!deep) {
-    for (int row = 1; row < rowCount(); ++row) {
+  while (parent && parent != this) {
+    for (int row = 0; row < rowCount(); ++row) {
       if (cellWidget(row, col) == parent) {
         return row;
       }
     }
-  } else {
-    QWidget *grandparent = parent->parentWidget();
-    if (!grandparent) {
-      return -1;
-    }
-    for (int row = 1; row < rowCount(); ++row) {
-      if (cellWidget(row, col) == grandparent) {
-        return row;
-      }
-    }
+    parent = parent->parentWidget();  // 继续向上查找父级
   }
+
+  qDebug() << "not found";
   return -1;
 }
 
-bool TtTableWidget::isRowVisible(int row) {
+bool TtTableWidget::IsRowVisible(int row) {
   if (row < 0 || row > rowCount()) {
     // 这里退出了
     qDebug() << "this exit";
@@ -887,7 +989,27 @@ bool TtTableWidget::isRowVisible(int row) {
   return vp.intersects(rect);
 }
 
-QWidget *TtTableWidget::createHeaderCell(const QString &text, bool border) {
+void TtTableWidget::UpdateRowIndicesAfterDeletion(int deletedRow) {
+  QHash<int, TableRow> updatedRows;
+
+  for (auto it = widget_rows_.begin(); it != widget_rows_.end(); ++it) {
+    int oldRow = it.key();
+    TableRow rowData = it.value();
+
+    if (oldRow > deletedRow) {
+      // 大于删除行的索引减1
+      updatedRows.insert(oldRow - 1, rowData);
+    } else if (oldRow < deletedRow) {
+      // 小于删除行的索引保持不变
+      updatedRows.insert(oldRow, rowData);
+    }
+    // 等于deletedRow的行已经被删除，不需要处理
+  }
+
+  widget_rows_ = updatedRows;
+}
+
+QWidget *TtTableWidget::CreateHeaderCell(const QString &text, bool border) {
   HeaderWidget *container = new HeaderWidget(this);
   QHBoxLayout *layout = new QHBoxLayout(container);
   layout->setContentsMargins(QMargins());
@@ -901,15 +1023,15 @@ QWidget *TtTableWidget::createHeaderCell(const QString &text, bool border) {
   return container;
 }
 
-QWidget *TtTableWidget::createAddButton() {
+QWidget *TtTableWidget::CreateAddButton() {
   auto *btn = new QPushButton(QIcon(":/sys/plus-circle.svg"), "");
   btn->setFlat(true);
   connect(btn, &QPushButton::clicked, this,
           [this] { OnAddRowButtonClicked(); });
-  return createCellWrapper(btn);
+  return CreateCellWrapper(btn);
 }
 
-QWidget *TtTableWidget::createSendButton() {
+QWidget *TtTableWidget::CreateSendButton() {
   auto *btn = new QPushButton(QIcon(":/sys/send.svg"), "");
   btn->setFlat(true);
   // 群发
@@ -937,76 +1059,39 @@ QWidget *TtTableWidget::createSendButton() {
     // BUG 修复延时问题, 转化成整数
     emit SendRowsMsg(msgs);
   });
-  return createCellWrapper(btn);
+  return CreateCellWrapper(btn);
 }
 
-QWidget *TtTableWidget::createDeleteButton() {
-  auto *deleteBtn = new QPushButton(QIcon(":/sys/trash.svg"), "");
-  deleteBtn->setFlat(true);
-  // connect(deleteBtn, &QPushButton::clicked, this, [this] {
-  //   if (auto *btn = qobject_cast<QPushButton *>(sender())) {
-  //     int row = findRowIndex(btn, 5);
-  //     if (row > 0) {
-  //       qDebug() << "删除行 " << row;
-  //       // 直接处理 rowsData_ 数组
-  //       if (row - 1 < rowsData_.size()) {
-  //         // 从 rowsData_ 中移除该行数据
-  //         rowsData_.remove(row - 1);
-  //       }
-  //       // 最后删除行
-  //       removeRow(row);
-
-  //       // 发出信号
-  //       emit OnRowsChanged(row - 1);
-  //     }
-  //   }
-  // });
-  connect(deleteBtn, &QPushButton::clicked, this, [this] {
-    if (auto *btn = qobject_cast<QPushButton *>(sender())) {
-      int row = findRowIndex(btn, 5, true);
-      if (row > 0 && row < rowCount()) {
-        // 先解绑该行控件并回收
-        unbindRow(row);
-        // 删除表格行
-        removeRow(row);
-        // 删除模型数据
-        if (row - 1 < model_.size()) model_.remove(row - 1);
-
-        // 调整 widget_rows_ 的键（行号整体上移）
-        QHash<int, TableRow> newMap;
-        for (auto it = widget_rows_.begin(); it != widget_rows_.end(); ++it) {
-          int key = it.key();
-          TableRow val = it.value();
-          if (key < row) {
-            newMap.insert(key, val);
-          } else if (key > row) {
-            newMap.insert(key - 1, val);
-          }
-        }
-        widget_rows_.swap(newMap);
-
-        emit OnRowsChanged(static_cast<quint16>(model_.size()));
-
-        // 重新布局
-        QTimer::singleShot(0, this, [this]() {
-          setupVisibleRows();
-          resizeRowsToContents();
-          resizeColumnsToContents();
-        });
+QWidget *TtTableWidget::CreateDeleteButton() {
+  auto *delete_button = new QPushButton(QIcon(":/sys/trash.svg"), "");
+  delete_button->setFlat(true);
+  connect(delete_button, &QPushButton::clicked, this, [this, delete_button] {
+    int row = FindRowIndex(delete_button, 5, true);
+    if (row > 0 && row < rowCount()) {
+      delete_button->setEnabled(false);
+      UnBindRow(row);
+      if (row - 1 < model_.size()) {
+        model_.remove(row - 1);
       }
+      // 删除表格行
+      removeRow(row);
+      // 更新所有受影响行的索引
+      UpdateRowIndicesAfterDeletion(row);
+
+      emit OnRowsChanged(static_cast<quint16>(model_.size()));
     }
   });
-  return createCellWrapper(deleteBtn);
+  return CreateCellWrapper(delete_button);
 }
 
-QWidget *TtTableWidget::createRowSendButton() {
+QWidget *TtTableWidget::CreateRowSendButton() {
   auto *btn = new QPushButton(QIcon(":/sys/send.svg"), "");
   btn->setFlat(true);
   connect(btn, &QPushButton::clicked, this, [this] {
     if (auto *btn = qobject_cast<QPushButton *>(sender())) {
       // 发送了, 但是那边没有接受到
       qDebug() << "发送信息";
-      int row = findRowIndex(btn, 6, true);
+      int row = FindRowIndex(btn, 6, true);
       if (row > 0 && row - 1 < model_.size()) {
         const auto &d = model_[row - 1];
         emit SendRowMsg(d.content, static_cast<TtTextFormat::Type>(d.type),
@@ -1019,10 +1104,10 @@ QWidget *TtTableWidget::createRowSendButton() {
       }
     }
   });
-  return createCellWrapper(btn);
+  return CreateCellWrapper(btn);
 }
 
-QWidget *TtTableWidget::createHeaderWidget(const QString &text,
+QWidget *TtTableWidget::CreateHeaderWidget(const QString &text,
                                            bool paintBorder) {
   HeaderWidget *container = new HeaderWidget(this);
   QHBoxLayout *layout = new QHBoxLayout(container);
@@ -1037,7 +1122,7 @@ QWidget *TtTableWidget::createHeaderWidget(const QString &text,
   return container;
 }
 
-QWidget *TtTableWidget::createHeaderAddRowWidget() {
+QWidget *TtTableWidget::CreateHeaderAddRowWidget() {
   HeaderWidget *container = new HeaderWidget(this);
   QHBoxLayout *layout = new QHBoxLayout(container);
   layout->setContentsMargins(QMargins());
@@ -1057,7 +1142,7 @@ QWidget *TtTableWidget::createHeaderAddRowWidget() {
   return container;
 }
 
-QWidget *TtTableWidget::createHeaderSendMsgWidget() {
+QWidget *TtTableWidget::CreateHeaderSendMsgWidget() {
   HeaderWidget *container = new HeaderWidget(this);
   QHBoxLayout *layout = new QHBoxLayout(container);
   layout->setContentsMargins(QMargins());
@@ -1073,7 +1158,7 @@ QWidget *TtTableWidget::createHeaderSendMsgWidget() {
   return container;
 }
 
-QWidget *TtTableWidget::createFirstColumnWidget() {
+QWidget *TtTableWidget::CreateFirstColumnWidget() {
   QWidget *container = new QWidget(this);
   QHBoxLayout *layout = new QHBoxLayout(container);
   layout->setContentsMargins(5, 2, 5, 2);
@@ -1085,7 +1170,7 @@ QWidget *TtTableWidget::createFirstColumnWidget() {
   return container;
 }
 
-QWidget *TtTableWidget::createSecondColumnWidget() {
+QWidget *TtTableWidget::CreateSecondColumnWidget() {
   QWidget *container = new QWidget(this);
   QHBoxLayout *layout = new QHBoxLayout(container);
   layout->setContentsMargins(QMargins());
@@ -1099,7 +1184,7 @@ QWidget *TtTableWidget::createSecondColumnWidget() {
   return container;
 }
 
-QWidget *TtTableWidget::createThirdColumnWidget() {
+QWidget *TtTableWidget::CreateThirdColumnWidget() {
   // QWidget* container = new QWidget(this);
   // QHBoxLayout* layout = new QHBoxLayout(container);
   // layout->setContentsMargins(5, 2, 5, 2);
@@ -1133,7 +1218,7 @@ QWidget *TtTableWidget::createThirdColumnWidget() {
   return container;
 }
 
-QWidget *TtTableWidget::createFourthColumnWidget() {
+QWidget *TtTableWidget::CreateFourthColumnWidget() {
   QWidget *container = new QWidget(this);
   QHBoxLayout *layout = new QHBoxLayout(container);
   // layout->setContentsMargins(5, 2, 5, 2);
@@ -1148,7 +1233,7 @@ QWidget *TtTableWidget::createFourthColumnWidget() {
   return container;
 }
 
-QWidget *TtTableWidget::createFifthColumnWidget() {
+QWidget *TtTableWidget::CreateFifthColumnWidget() {
   QWidget *container = new QWidget(this);
   container->setMinimumHeight(32);
   QHBoxLayout *layout = new QHBoxLayout(container);
@@ -1165,7 +1250,7 @@ QWidget *TtTableWidget::createFifthColumnWidget() {
   return container;
 }
 
-QWidget *TtTableWidget::createSixthColumnWidget() {
+QWidget *TtTableWidget::CreateSixthColumnWidget() {
   QWidget *container = new QWidget(this);
   QHBoxLayout *layout = new QHBoxLayout(container);
   layout->setContentsMargins(QMargins());
@@ -1185,7 +1270,7 @@ QWidget *TtTableWidget::createSixthColumnWidget() {
   return container;
 }
 
-QWidget *TtTableWidget::createSeventhColumnWidget() {
+QWidget *TtTableWidget::CreateSeventhColumnWidget() {
   QWidget *container = new QWidget(this);
   QHBoxLayout *layout = new QHBoxLayout(container);
   layout->setContentsMargins(QMargins());

@@ -248,7 +248,7 @@ void TcpWindow::dataReceived(const QByteArray &data) {
 }
 
 void TcpWindow::init() {
-  initUi();
+  InitUi();
   if (role_ == TtProtocolType::Client) {
     tcp_client_ = new Core::TcpClient;
     title_->setText(tr("未命名的 TCP 连接"));
@@ -263,8 +263,6 @@ void TcpWindow::init() {
 }
 
 void TcpWindow::connectSignals() {
-  initSignalsConnection();
-
   connect(save_btn_, &Ui::TtSvgButton::clicked, this, &TcpWindow::saveSetting);
 
   connect(on_off_btn_, &Ui::TtSvgButton::clicked, this, [this] {

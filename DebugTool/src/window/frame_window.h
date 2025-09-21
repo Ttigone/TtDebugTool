@@ -69,14 +69,14 @@ class FrameWindow : public QWidget {
   void addDisplayWidget(Ui::TtSvgButton *btn, QWidget *widget);
 
   ///
-  /// @brief initUi
+  /// @brief InitUi
   /// 初始化 Ui 框架
-  virtual void initUi();
+  virtual void InitUi();
 
   ///
-  /// @brief initSignalsConnection
+  /// @brief InitSignalsConnection
   /// 初始化信号槽链接
-  void initSignalsConnection();
+  void InitSignalsConnection();
 
   ///
   /// @brief isValidHexString
@@ -185,7 +185,7 @@ class FrameWindow : public QWidget {
   QPointer<Ui::TtTableWidget> instruction_table_;  // 片段指令表格
   QPointer<Ui::TtTableWidget> auto_replay_table_;  // 自动应答表格
 
-  TtTextFormat::Type send_type_ = TtTextFormat::TEXT;     // 底部选择发送类型
+  TtTextFormat::Type send_type_ = TtTextFormat::TEXT;  // 底部选择发送类型
   TtTextFormat::Type display_type_ = TtTextFormat::TEXT;  // 顶部显示接收类型
 
   uint16_t package_size_ = 0;   // 包大小

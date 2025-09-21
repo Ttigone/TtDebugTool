@@ -1,9 +1,9 @@
 #include "ui/control/TtLineEdit.h"
-#include "ui/control/TtLineEdit_p.h"
-
-#include "ui/style/TtLineEditStyle.h"
 
 #include <QFocusEvent>
+
+#include "ui/control/TtLineEdit_p.h"
+#include "ui/style/TtLineEditStyle.h"
 
 namespace Ui {
 
@@ -47,7 +47,7 @@ TtLineEdit::TtLineEdit(const QString &text, QWidget *parent)
   setText(text);
 }
 
-TtLineEdit::~TtLineEdit() { qDebug() << "delete line edit"; }
+TtLineEdit::~TtLineEdit() {}
 
 void TtLineEdit::setReadOnlyNoClearButton(bool enable) {
   Q_D(TtLineEdit);
@@ -262,25 +262,25 @@ TtLabelLineEdit::TtLabelLineEdit(Qt::AlignmentFlag flag, const QString &text,
   layout->setSpacing(5);
 
   switch (flag) {
-  case Qt::AlignLeft:
-    layout->addWidget(label_, 1);
-    layout->addWidget(line_edit_, 2);
-    break;
-  case Qt::AlignRight:
-    layout->addStretch();
-    layout->addWidget(label_, 1);
-    layout->addWidget(line_edit_, 2);
-    break;
-  case Qt::AlignHCenter:
-    layout->addStretch();
-    layout->addWidget(label_, 1);
-    layout->addWidget(line_edit_, 2);
-    layout->addStretch();
-    break;
-  default:
-    layout->addWidget(label_, 1);
-    layout->addWidget(line_edit_, 2);
-    break;
+    case Qt::AlignLeft:
+      layout->addWidget(label_, 1);
+      layout->addWidget(line_edit_, 2);
+      break;
+    case Qt::AlignRight:
+      layout->addStretch();
+      layout->addWidget(label_, 1);
+      layout->addWidget(line_edit_, 2);
+      break;
+    case Qt::AlignHCenter:
+      layout->addStretch();
+      layout->addWidget(label_, 1);
+      layout->addWidget(line_edit_, 2);
+      layout->addStretch();
+      break;
+    default:
+      layout->addWidget(label_, 1);
+      layout->addWidget(line_edit_, 2);
+      break;
   }
   connect(line_edit_, &TtLineEdit::textChanged, this,
           &TtLabelLineEdit::currentTextChanged);
@@ -293,7 +293,6 @@ TtLabelLineEdit::TtLabelLineEdit(Qt::AlignmentFlag flag, const QString &text,
             bool ok;
             quint64 value = text.toULongLong(&ok);
             if (ok) {
-              qDebug() << "转换成功";
             } else {
               value = 0;
             }
@@ -304,7 +303,7 @@ TtLabelLineEdit::TtLabelLineEdit(Qt::AlignmentFlag flag, const QString &text,
 TtLabelLineEdit::TtLabelLineEdit(const QString &text, QWidget *parent)
     : TtLabelLineEdit(Qt::AlignLeft, text, parent) {}
 
-TtLabelLineEdit::~TtLabelLineEdit() { qDebug() << "delete" << __FUNCTION__; }
+TtLabelLineEdit::~TtLabelLineEdit() {}
 
 // 有问题
 TtLineEdit *TtLabelLineEdit::body() { return line_edit_; }
@@ -319,4 +318,4 @@ void TtLabelLineEdit::setPlaceholderText(const QString &text) {
 
 QString TtLabelLineEdit::currentText() { return line_edit_->text(); }
 
-} // namespace Ui
+}  // namespace Ui

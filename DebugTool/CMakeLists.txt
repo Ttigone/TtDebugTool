@@ -39,7 +39,6 @@ file(GLOB_RECURSE PROJECT_SOURCES
     "${src_loc}/*.h"
 )
 
-
 #FILE(GLOB PROJECT_HEADER_FILES
 #    ${third_party}/qcustomplot/*.h
 #)

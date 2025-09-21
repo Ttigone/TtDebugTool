@@ -138,9 +138,7 @@ PRIVATE
 
 )
 
-
 # add_library(desktop-app::lib_ui ALIAS ${TARGET_NAME}) # 别名
-
 
 if (MINGW)
     set_target_properties(${TARGET_NAME} PROPERTIES PREFIX "")
@@ -150,16 +148,23 @@ if (MSVC)
     set_target_properties(${TARGET_NAME} PROPERTIES DEBUG_POSTFIX "d")
 endif ()
 
+
+set(glog_DIR "G:/0_self_develop_project/3rdparty_lib_install/glog/lib/cmake/glog")
+find_package(glog REQUIRED)
+
 # 省略相对路径的麻烦
 target_include_directories(${TARGET_NAME}
 PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}
-)
+  ${glog_SOURCE_DIR}/src # glog 头文件
+  )
+
 
 target_link_libraries(${TARGET_NAME}
 PUBLIC
     desktop-app::lib_base
     external_qt
+    glog::glog
 )
 
 if(NOT CMAKE_BUILD_TYPE)

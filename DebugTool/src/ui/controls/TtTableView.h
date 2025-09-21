@@ -20,6 +20,9 @@ class TtLineEdit;
 class TtCheckBox;
 class TtSvgButton;
 
+struct RowData;
+struct TableRow;
+
 class TtTableWidget : public QTableWidget {
   Q_OBJECT
  public:
@@ -31,6 +34,7 @@ class TtTableWidget : public QTableWidget {
   QJsonObject GetTableRecord();
   void SetCellWidget(int row, int column, QWidget *widget);
   void SetEnabled(bool enable);
+  bool isBeingDestroyed() const { return being_destroyed_; }
 
  signals:
   void OnRowsChanged(quint16 rows);
@@ -40,8 +44,54 @@ class TtTableWidget : public QTableWidget {
  private slots:
   void OnAddRowButtonClicked();
 
+ protected:
+  void resizeEvent(QResizeEvent *event);
+  void showEvent(QShowEvent *event);
+
  private:
-  void setupVisibleRows();
+  void SetupVisibleRows();
+  void InitHeader();
+  void SetupRow(int row);
+  void RecycleRow(TableRow &row);
+
+  // 绑定/解绑当前行的控件到数据
+  void BindRow(int row);           // 创建或复用控件并填充数据
+  void UnBindRow(int row);         // 断开信号、回收控件到对象池
+  void EnsureModelSize(int rows);  // 工具
+
+  // 控件管理
+  TtSwitchButton *CreateSwitchButton();
+  TtComboBox *CreateTypeComboBox();
+  QSpinBox *CreateDelaySpin();
+  TtLineEdit *CreateLineEdit(const QString &placeholderText = "");
+
+  /// @brief 创建一个单元格的包装器
+  /// @param content 包装的内容
+  /// @return 包装后的QWidget
+  QWidget *CreateCellWrapper(QWidget *content);
+  int FindRowIndex(QWidget *context, const int &col, bool deep = false) const;
+  bool IsRowVisible(int row);
+
+  void UpdateRowIndicesAfterDeletion(int deletedRow);
+
+  // UI 创建
+  QWidget *CreateHeaderCell(const QString &text, bool border = true);
+
+  QWidget *CreateAddButton();
+  QWidget *CreateSendButton();
+  QWidget *CreateDeleteButton();
+  QWidget *CreateRowSendButton();
+  QWidget *CreateHeaderWidget(const QString &text, bool paintBorder);
+  QWidget *CreateHeaderAddRowWidget();   // 创建添加行按钮
+  QWidget *CreateHeaderSendMsgWidget();  // 创建发送按钮
+  QWidget *CreateFirstColumnWidget();    // 仅用于数据行
+  QWidget *CreateSecondColumnWidget();   // 仅用于数据行
+  QWidget *CreateThirdColumnWidget();    // 仅用于数据行
+  QWidget *CreateFourthColumnWidget();   // 仅用于数据行
+  QWidget *CreateFifthColumnWidget();    // 仅用于数据行
+  QWidget *CreateSixthColumnWidget();    // 仅用于数据行
+  QWidget *CreateSeventhColumnWidget();  // 仅用于数据行
+  int visibleRowCount();
 
  private:
   class HeaderWidget : public QWidget {
@@ -91,57 +141,13 @@ class TtTableWidget : public QTableWidget {
   QList<TtLineEdit *> line_edit_pool_;
   QList<QWidget *> widget_pool_;
 
-  void initHeader();
-  void setupRow(int row);
-  void recycleRow(TableRow &row);
-
-  // 绑定/解绑当前行的控件到数据
-  void bindRow(int row);    // 创建或复用控件并填充数据
-  void unbindRow(int row);  // 断开信号、回收控件到对象池
-
-  void ensureModelSize(int rows);  // 工具
-
-  // 控件管理
-  TtSwitchButton *createSwitchButton();
-  TtComboBox *createTypeComboBox();
-  QSpinBox *createDelaySpin();
-  TtLineEdit *createLineEdit(const QString &placeholderText = "");
-
-  /// @brief 创建一个单元格的包装器
-  /// @param content 包装的内容
-  /// @return 包装后的QWidget
-  QWidget *createCellWrapper(QWidget *content);
-  int findRowIndex(QWidget *context, const int &col, bool deep = false) const;
-  bool isRowVisible(int row);
-
-  // UI 创建
-  QWidget *createHeaderCell(const QString &text, bool border = true);
-
-  QWidget *createAddButton();
-  QWidget *createSendButton();
-  QWidget *createDeleteButton();
-  QWidget *createRowSendButton();
-
-  QWidget *createHeaderWidget(const QString &text, bool paintBorder);
-
-  QWidget *createHeaderAddRowWidget();   // 创建添加行按钮
-  QWidget *createHeaderSendMsgWidget();  // 创建发送按钮
-
-  QWidget *createFirstColumnWidget();    // 仅用于数据行
-  QWidget *createSecondColumnWidget();   // 仅用于数据行
-  QWidget *createThirdColumnWidget();    // 仅用于数据行
-  QWidget *createFourthColumnWidget();   // 仅用于数据行
-  QWidget *createFifthColumnWidget();    // 仅用于数据行
-  QWidget *createSixthColumnWidget();    // 仅用于数据行
-  QWidget *createSeventhColumnWidget();  // 仅用于数据行
-
   // 在类中添加控件缓存
   QMap<QWidget *, QHash<int, QWidget *>> cellWidgetCache_;
 
   QJsonObject record_;
   int rows_{0};
   int cols_{7};
-  int visibleRowCount();
+  bool being_destroyed_ = false;  // 析构状态标记
 };
 
 class TtModbusTableWidget : public QTableWidget {

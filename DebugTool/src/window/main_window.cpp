@@ -40,7 +40,6 @@
 #include "ui/widgets/setting_widget.h"
 #include "ui/widgets/tabwindow.h"
 #include "window/function_selection_window.h"
-#include "window/instruction_window.h"
 #include "window/modbus_window.h"
 #include "window/mqtt_window.h"
 #include "window/popup_window.h"
@@ -275,12 +274,16 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
               }
             });
     connect(addLinkBtn, &QPushButton::clicked, this, [this, controller]() {
-      Window::InstructionWindow *instruction = new Window::InstructionWindow;
+      // Window::InstructionWindow *instruction = new Window::InstructionWindow;
+      QWidget *instruction = new QWidget;
       tabWidget_->addNewTab(instruction, tr("未命名的指令"));
       tabWidget_->setCurrentWidget(instruction);
     });
     connect(addBtn, &Ui::TtSvgButton::clicked, this, [this, controller]() {
-      Window::InstructionWindow *instruction = new Window::InstructionWindow;
+      // Window::InstructionWindow *instruction = new Window::InstructionWindow;
+      // tabWidget_->addNewTab(instruction, tr("未命名的指令"));
+      // tabWidget_->setCurrentWidget(instruction);
+      QWidget *instruction = new QWidget;
       tabWidget_->addNewTab(instruction, tr("未命名的指令"));
       tabWidget_->setCurrentWidget(instruction);
     });

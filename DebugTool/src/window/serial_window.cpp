@@ -41,10 +41,12 @@ SerialWindow::SerialWindow(QWidget *parent)
     : FrameWindow(parent),
       worker_thread_(new QThread(this)),
       serial_port_(new Core::SerialPortWorker) {
-  init();
-  connectSignals();
+  qDebug() << "SerialWindow::Init() 开始";
+  Init();
+  qDebug() << "测试1";
+  ConnectSignals();
+  qDebug() << "测试2";
 
-  // 放在线程中执行
   serial_port_->moveToThread(worker_thread_);
 
   // 成功 析构函数在工作线程中执行, 否则 serial_port_ 无法执行析构
@@ -60,53 +62,89 @@ SerialWindow::SerialWindow(QWidget *parent)
           &SerialWindow::showErrorMessage);
 
   worker_thread_->start();
-
-  // 初始化完成
-  // 下面有执行到这里, 没有问题
   qDebug() << "SerialWindow 初始化完成: " << this;
 }
 
+// SerialWindow::~SerialWindow() {
+//   // message_model_->clearModelData();
+//   terminal_->clear();
+//   if (worker_thread_) {
+//     worker_thread_->quit();
+//     // 3. 等待线程完成(设置超时，避免无限等待)
+//     if (!worker_thread_->wait(200)) {
+//       qWarning()
+//           << "Worker thread did not exit gracefully, forcing termination";
+//       worker_thread_->terminate();
+//       worker_thread_->wait();
+//     }
+//   }
+// }
 SerialWindow::~SerialWindow() {
-  // message_model_->clearModelData();
-  terminal_->clear();
+  qDebug() << "SerialWindow 开始析构: " << this;
 
-  qDebug() << "delete SerialWindow";
-  // worker_thread_->quit();
-  // // worker_thread_->exit();
-  // worker_thread_->wait();
-  // // 手动触发 SerialPortWorker 的析构（在工作线程中）
-  // // 修改为这样调试
-  // qDebug() << "准备调用deleteLater";
-  // bool success = QMetaObject::invokeMethod(serial_port_, "deleteLater",
-  //                                          Qt::QueuedConnection);
-  // qDebug() << "调用结果:" << success;
-  // // 确保事件得到处理
-  // // if (serial_port_) {
-  // //   qDebug() << "delete SerialWindow";
-  // //   serial_port_->deleteLater();
-  // //   // QMetaObject::invokeMethod(serial_port_.get(), "deleteLater",
-  // //   // QMetaObject::invokeMethod(serial_port_, "deleteLater",
-  // //   //                           Qt::QueuedConnection);
-  // // }
-  // delete worker_thread_;  // 删除线程对象
-  // QMetaObject::invokeMethod(serial_port_, "deleteLater",
-  // Qt::QueuedConnection);
+  // 1. 断开所有信号连接
+  disconnect();
 
-  if (worker_thread_) {
-    worker_thread_->quit();
-    // 3. 等待线程完成(设置超时，避免无限等待)
-    if (!worker_thread_->wait(200)) {
-      qWarning()
-          << "Worker thread did not exit gracefully, forcing termination";
-      worker_thread_->terminate();  // 强制终止(不推荐，但作为最后手段)
-      worker_thread_->wait();       // 等待强制终止完成
-    }
-    // 无效
-    // delete serial_port_;
-    // QMetaObject::invokeMethod(serial_port_, "deleteLater",
-    //                           Qt::QueuedConnection);
+  // 2. 停止所有定时器
+  if (send_package_timer_) {
+    send_package_timer_->stop();
+    send_package_timer_->disconnect();
   }
-  qDebug() << "delete serialwindow exit";
+  if (heartbeat_timer_) {
+    heartbeat_timer_->stop();
+    heartbeat_timer_->disconnect();
+  }
+
+  // 3. 优先清理表格控件
+  if (instruction_table_) {
+    instruction_table_->disconnect();
+    // 让表格进入析构状态，避免控件回收
+    instruction_table_->deleteLater();
+    instruction_table_ = nullptr;
+  }
+  if (auto_replay_table_) {
+    auto_replay_table_->disconnect();
+    auto_replay_table_->deleteLater();
+    auto_replay_table_ = nullptr;
+  }
+
+  // 4. 清理其他UI组件
+  if (terminal_) {
+    terminal_->clear();
+    terminal_->disconnect();
+  }
+
+  // 5. 清理串口绘图
+  if (serial_plot_) {
+    serial_plot_->disconnect();
+  }
+
+  // 6. 关闭工作线程
+  if (worker_thread_ && worker_thread_->isRunning()) {
+    qDebug() << "正在关闭工作线程...";
+
+    if (serial_port_) {
+      QMetaObject::invokeMethod(serial_port_, "closeSerialPort",
+                                Qt::BlockingQueuedConnection);
+    }
+
+    worker_thread_->quit();
+    if (!worker_thread_->wait(3000)) {
+      qWarning() << "工作线程未正常退出，强制终止";
+      worker_thread_->terminate();
+      worker_thread_->wait(1000);
+    }
+    qDebug() << "工作线程已关闭";
+  }
+
+  // 7. 清理数据结构
+  rules_.clear();
+  channel_info_.clear();
+  lua_script_codes_.clear();
+  receive_buffer_.clear();
+  msg_queue_.clear();
+
+  qDebug() << "SerialWindow 析构完成: " << this;
 }
 
 QString SerialWindow::getTitle() { return title_->text(); }
@@ -119,14 +157,10 @@ bool SerialWindow::saveWaveFormData(const QString &fileName) {
                               tr("没有可用的波形数据"), 1500, this);
     return false;
   }
-  qDebug() << "test";
   QString actualFileName;
-  // 获取实例, 是否会造成
-  // 获取保存目录
   QString saveDir = Storage::SettingsManager::instance()
                         .getSetting("SaveDirectory")
                         .toString();
-  qDebug() << "saveDir" << saveDir;
   if (saveDir.isEmpty()) {
     // 默认使用程序安装目录下的 Data 文件夹
     saveDir = QCoreApplication::applicationDirPath() + "/Data";
@@ -386,7 +420,7 @@ void SerialWindow::sendInstructionTableContent(const Data::MsgInfo &msg) {
   sendInstructionTableContent(msg.text, msg.type, msg.time);
 }
 
-void SerialWindow::saveSerialLog() {
+void SerialWindow::SaveSerialLog() {
   // 保存串口日志
   // saveBtn->connect(saveBtn, &QPushButton::clicked, [this]() {
   //   QString fileName = QFileDialog::getSaveFileName(this, tr("保存日志"),
@@ -404,16 +438,16 @@ void SerialWindow::saveSerialLog() {
   // });
 }
 
-void SerialWindow::setControlState(bool state) {
+void SerialWindow::SetControlState(bool state) {
   if (state) {
     // 启用控件
     serial_setting_->setControlState(true);
-    instruction_table_->setEnabled(true);
+    instruction_table_->SetEnabled(true);
     send_btn_->setEnabled(false);
   } else {
     // 禁用控件
     serial_setting_->setControlState(false);
-    instruction_table_->setEnabled(false);
+    instruction_table_->SetEnabled(false);
     send_btn_->setEnabled(true);
   }
 }
@@ -543,10 +577,10 @@ void SerialWindow::addChannel(const QByteArray &blob, const QColor &color,
                      channel_nums_,                         // 通道
                      QByteArray::fromHex(header.toUtf8()),  // 头部
                      headerLength.toInt(),                  // 帧头长度
-                     typeOffset.toInt(),                    // 类型字段偏移
-                     lengthOffset.toInt(),                  // 长度字段偏移
-                     0,                                     // 帧尾长度
-                     false,                                 // 无校验
+                     typeOffset.toInt(),    // 类型字段偏移
+                     lengthOffset.toInt(),  // 长度字段偏移
+                     0,                     // 帧尾长度
+                     false,                 // 无校验
                      {},
                      [this, channel](uint8_t type, const QByteArray &payload,
                                      const QString &luaCode) {
@@ -742,7 +776,7 @@ void SerialWindow::addChannel(const QByteArray &blob, const QColor &color,
           });
 }  // namespace Window
 
-void SerialWindow::handleDialogData(const QString &uuid, quint16 channel,
+void SerialWindow::HandleDialogData(const QString &uuid, quint16 channel,
                                     const QByteArray &blob,
                                     const QColor &color) {
   QDataStream in(blob);
@@ -788,7 +822,7 @@ void SerialWindow::handleDialogData(const QString &uuid, quint16 channel,
   }
 }
 
-void SerialWindow::sendMessage(const QString &data, TtTextFormat::Type type) {
+void SerialWindow::SendMessage(const QString &data, TtTextFormat::Type type) {
   QByteArray dataUtf8;
   // 预处理的数据
   QString processedText = data;
@@ -1337,7 +1371,7 @@ void SerialWindow::parseFireWaterProtocol() {
 
 //   return testData;
 // }
-QByteArray SerialWindow::generateRandomTestData(
+QByteArray SerialWindow::GenerateRandomTestData(
     TtProtocolSetting::Protocol protocol) {
   QByteArray testData;
   static QRandomGenerator random = QRandomGenerator::securelySeeded();
@@ -1387,7 +1421,7 @@ QByteArray SerialWindow::generateRandomTestData(
   return testData;
 }
 
-void SerialWindow::startRandomDataTest(TtProtocolSetting::Protocol protocol) {
+void SerialWindow::StartRandomDataTest(TtProtocolSetting::Protocol protocol) {
   // protocol_ = protocol;
   //// 创建定时器，定期发送随机数据
   // QTimer *testTimer = new QTimer(this);
@@ -1425,7 +1459,7 @@ void SerialWindow::showErrorMessage(const QString &text) {
   Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""), text, 1500, this);
   on_off_btn_->setChecked(false);
   opened_ = false;
-  setControlState(!opened_);
+  SetControlState(!opened_);
   send_package_timer_->stop();
   heartbeat_timer_->stop();
   msg_queue_.clear();
@@ -1464,10 +1498,10 @@ void SerialWindow::sendMessageToPort() {
   // 十六进制出现问题, 如果心跳是 HEX 模式, 使
   // radio button 切换发送类型
   // 适用于 分包机制
-  sendMessage(editorText, send_type_);
+  SendMessage(editorText, send_type_);
 }
 
-void SerialWindow::sendMessageToPort(const QString &data) { sendMessage(data); }
+void SerialWindow::sendMessageToPort(const QString &data) { SendMessage(data); }
 
 void SerialWindow::sendMessageToPort(const QString &data, const int &times) {
   // 定时发送
@@ -1484,356 +1518,362 @@ void SerialWindow::sendMessageToPort(const QString &data, const int &times) {
   });
 }
 
-void SerialWindow::init() {
-  // initUi();
-  main_layout_ = new Ui::TtVerticalLayout(this);
+void SerialWindow::Init() {
+  InitUi();
+  // main_layout_ = new Ui::TtVerticalLayout(this);
 
-  title_ = new Ui::TtNormalLabel(this);
+  // title_ = new Ui::TtNormalLabel(this);
 
-  modify_title_btn_ = new Ui::TtSvgButton(":/sys/edit.svg", this);
-  modify_title_btn_->setSvgSize(18, 18);
+  // modify_title_btn_ = new Ui::TtSvgButton(":/sys/edit.svg", this);
+  // modify_title_btn_->setSvgSize(18, 18);
 
-  original_widget_ = new QWidget(this);
-  Ui::TtHorizontalLayout *originalWidgetLayout =
-      new Ui::TtHorizontalLayout(original_widget_);
-  originalWidgetLayout->addSpacerItem(new QSpacerItem(10, 10));
-  originalWidgetLayout->addWidget(title_, 0, Qt::AlignLeft);
-  originalWidgetLayout->addSpacerItem(new QSpacerItem(10, 10));
-  originalWidgetLayout->addWidget(modify_title_btn_);
-  originalWidgetLayout->addStretch();
+  // original_widget_ = new QWidget(this);
+  // Ui::TtHorizontalLayout *originalWidgetLayout =
+  //     new Ui::TtHorizontalLayout(original_widget_);
+  // originalWidgetLayout->addSpacerItem(new QSpacerItem(10, 10));
+  // originalWidgetLayout->addWidget(title_, 0, Qt::AlignLeft);
+  // originalWidgetLayout->addSpacerItem(new QSpacerItem(10, 10));
+  // originalWidgetLayout->addWidget(modify_title_btn_);
+  // originalWidgetLayout->addStretch();
 
-  edit_widget_ = new QWidget(this);
-  title_edit_ = new Ui::TtLineEdit(this);
+  // edit_widget_ = new QWidget(this);
+  // title_edit_ = new Ui::TtLineEdit(this);
 
-  Ui::TtHorizontalLayout *edit_layout =
-      new Ui::TtHorizontalLayout(edit_widget_);
-  edit_layout->addSpacerItem(new QSpacerItem(10, 10));
-  edit_layout->addWidget(title_edit_);
-  edit_layout->addStretch();
+  // Ui::TtHorizontalLayout *edit_layout =
+  //     new Ui::TtHorizontalLayout(edit_widget_);
+  // edit_layout->addSpacerItem(new QSpacerItem(10, 10));
+  // edit_layout->addWidget(title_edit_);
+  // edit_layout->addStretch();
 
-  stack_ = new QStackedWidget(this);
-  stack_->setMaximumHeight(40);
-  stack_->addWidget(original_widget_);
-  stack_->addWidget(edit_widget_);
+  // stack_ = new QStackedWidget(this);
+  // stack_->setMaximumHeight(40);
+  // stack_->addWidget(original_widget_);
+  // stack_->addWidget(edit_widget_);
 
-  connect(modify_title_btn_, &Ui::TtSvgButton::clicked, this,
-          &SerialWindow::switchToEditMode);
+  // connect(modify_title_btn_, &Ui::TtSvgButton::clicked, this,
+  //         &SerialWindow::switchToEditMode);
 
-  Ui::TtHorizontalLayout *stackLayout = new Ui::TtHorizontalLayout;
-  stackLayout->addWidget(stack_);
+  // Ui::TtHorizontalLayout *stackLayout = new Ui::TtHorizontalLayout;
+  // stackLayout->addWidget(stack_);
 
-  Ui::TtHorizontalLayout *topLayout = new Ui::TtHorizontalLayout;
+  // Ui::TtHorizontalLayout *topLayout = new Ui::TtHorizontalLayout;
 
-  auto handleSave = [this]() {
-    if (!title_edit_->text().isEmpty()) {
-      switchToDisplayMode();
-    } else {
-      title_edit_->setPlaceholderText(tr("名称不能为空！"));
-    }
-  };
+  // auto handleSave = [this]() {
+  //   if (!title_edit_->text().isEmpty()) {
+  //     switchToDisplayMode();
+  //   } else {
+  //     title_edit_->setPlaceholderText(tr("名称不能为空！"));
+  //   }
+  // };
 
-  connect(title_edit_, &QLineEdit::editingFinished, this, handleSave);
+  // connect(title_edit_, &QLineEdit::editingFinished, this, handleSave);
 
-  Ui::TtHorizontalLayout *operationButtonLayout = new Ui::TtHorizontalLayout;
+  // Ui::TtHorizontalLayout *operationButtonLayout = new Ui::TtHorizontalLayout;
 
-  save_btn_ = new Ui::TtSvgButton(":/sys/save_cfg.svg", this);
-  save_btn_->setSvgSize(18, 18);
-  // 默认显示蓝色
-  save_btn_->setColors(QColor("#2196F3"), QColor("#2196F3"));
+  // save_btn_ = new Ui::TtSvgButton(":/sys/save_cfg.svg", this);
+  // save_btn_->setSvgSize(18, 18);
+  // // 默认显示蓝色
+  // save_btn_->setColors(QColor("#2196F3"), QColor("#2196F3"));
 
-  on_off_btn_ = new Ui::TtSvgButton(":/sys/start_up.svg", this);
-  on_off_btn_->setColors(Qt::black, Qt::red);
-  on_off_btn_->setSvgSize(18, 18);
+  // on_off_btn_ = new Ui::TtSvgButton(":/sys/start_up.svg", this);
+  // on_off_btn_->setColors(Qt::black, Qt::red);
+  // on_off_btn_->setSvgSize(18, 18);
 
-  operationButtonLayout->addWidget(save_btn_);
-  operationButtonLayout->addWidget(on_off_btn_, 0, Qt::AlignRight);
-  operationButtonLayout->addSpacerItem(new QSpacerItem(10, 10));
+  // operationButtonLayout->addWidget(save_btn_);
+  // operationButtonLayout->addWidget(on_off_btn_, 0, Qt::AlignRight);
+  // operationButtonLayout->addSpacerItem(new QSpacerItem(10, 10));
 
-  topLayout->addLayout(stackLayout);
-  topLayout->addLayout(operationButtonLayout);
+  // topLayout->addLayout(stackLayout);
+  // topLayout->addLayout(operationButtonLayout);
 
-  main_layout_->addLayout(topLayout);
+  // main_layout_->addLayout(topLayout);
 
-  main_splitter_ = new QSplitter;
-  main_splitter_->setOrientation(Qt::Horizontal);
+  // main_splitter_ = new QSplitter;
+  // main_splitter_->setOrientation(Qt::Horizontal);
 
-  QWidget *chose_function = new QWidget;
-  Ui::TtHorizontalLayout *chose_function_layout = new Ui::TtHorizontalLayout;
-  chose_function_layout->setSpacing(5);
-  chose_function->setLayout(chose_function_layout);
+  // QWidget *chose_function = new QWidget;
+  // Ui::TtHorizontalLayout *chose_function_layout = new Ui::TtHorizontalLayout;
+  // chose_function_layout->setSpacing(5);
+  // chose_function->setLayout(chose_function_layout);
 
-  // 存在 2 层
-  page_btn_widget_ = new QWidget(chose_function);
-  page_btn_layout_ = new Ui::TtHorizontalLayout(page_btn_widget_);
-  Ui::TtSvgButton *terminalButton =
-      new Ui::TtSvgButton(":/sys/terminal.svg", page_btn_widget_);
-  terminalButton->setSvgSize(18, 18);
-  terminalButton->setColors(Qt::black, Qt::blue);
+  // // 存在 2 层
+  // page_btn_widget_ = new QWidget(chose_function);
+  // page_btn_layout_ = new Ui::TtHorizontalLayout(page_btn_widget_);
+  // Ui::TtSvgButton *terminalButton =
+  //     new Ui::TtSvgButton(":/sys/terminal.svg", page_btn_widget_);
+  // terminalButton->setSvgSize(18, 18);
+  // terminalButton->setColors(Qt::black, Qt::blue);
 
-  // Ui::TtSvgButton *chatButton =
-  //     new Ui::TtSvgButton(":/sys/chat.svg", page_btn_widget_);
-  // chatButton->setSvgSize(18, 18);
-  // chatButton->setColors(Qt::black, Qt::blue);
-  // rightBtn->setEnableHoldToCheck(true);
+  // // Ui::TtSvgButton *chatButton =
+  // //     new Ui::TtSvgButton(":/sys/chat.svg", page_btn_widget_);
+  // // chatButton->setSvgSize(18, 18);
+  // // chatButton->setColors(Qt::black, Qt::blue);
+  // // rightBtn->setEnableHoldToCheck(true);
 
-  page_btn_layout_->addWidget(terminalButton);
-  // page_btn_layout_->addWidget(chatButton);
+  // page_btn_layout_->addWidget(terminalButton);
+  // // page_btn_layout_->addWidget(chatButton);
 
-  // 左侧切换逻辑
-  page_btn_logical_ = new Ui::TtWidgetGroup(this);
-  // showStyle->setHoldingChecked(true);
-  page_btn_logical_->setHoldingChecked(true);
-  page_btn_logical_->addWidget(terminalButton);
-  // page_btn_logical_->addWidget(chatButton);
-  page_btn_logical_->setExclusive(true);
-  page_btn_logical_->setCheckedIndex(0);
-  chose_function_layout->addWidget(page_btn_widget_);
-  chose_function_layout->addStretch();
+  // // 左侧切换逻辑
+  // page_btn_logical_ = new Ui::TtWidgetGroup(this);
+  // // showStyle->setHoldingChecked(true);
+  // page_btn_logical_->setHoldingChecked(true);
+  // page_btn_logical_->addWidget(terminalButton);
+  // // page_btn_logical_->addWidget(chatButton);
+  // page_btn_logical_->setExclusive(true);
+  // page_btn_logical_->setCheckedIndex(0);
+  // chose_function_layout->addWidget(page_btn_widget_);
+  // chose_function_layout->addStretch();
 
-  clear_history_ = new Ui::TtSvgButton(":/sys/trash.svg", chose_function);
-  clear_history_->setSvgSize(18, 18);
+  // clear_history_ = new Ui::TtSvgButton(":/sys/trash.svg", chose_function);
+  // clear_history_->setSvgSize(18, 18);
 
-  // 切换显示 text/hex
-  Ui::TtWidgetGroup *displayLogic = new Ui::TtWidgetGroup(this);
-  displayLogic->setHoldingChecked(true);
-  display_text_btn_ = new Ui::TtTextButton(QColor(Qt::blue), "TEXT");
-  display_text_btn_->setCheckedColor(QColor(0, 102, 180));
-  display_hex_btn_ = new Ui::TtTextButton(QColor(Qt::blue), "HEX");
-  display_hex_btn_->setCheckedColor(QColor(0, 102, 180));
-  display_text_btn_->setLightTextColor(Qt::white);  // 临时白色文字
+  // // 切换显示 text/hex
+  // Ui::TtWidgetGroup *displayLogic = new Ui::TtWidgetGroup(this);
+  // displayLogic->setHoldingChecked(true);
+  // display_text_btn_ = new Ui::TtTextButton(QColor(Qt::blue), "TEXT");
+  // display_text_btn_->setCheckedColor(QColor(0, 102, 180));
+  // display_text_btn_->setLightDefaultColor(Qt::white);  // 临时白色文字
+  // display_hex_btn_ = new Ui::TtTextButton(QColor(Qt::blue), "HEX");
+  // display_hex_btn_->setCheckedColor(QColor(0, 102, 180));
+  // display_text_btn_->setLightTextColor(Qt::white);  // 临时白色文字
 
-  displayLogic->addWidget(display_text_btn_);
-  displayLogic->addWidget(display_hex_btn_);
+  // displayLogic->addWidget(display_text_btn_);
+  // displayLogic->addWidget(display_hex_btn_);
 
-  displayLogic->setCheckedIndex(0);
-  displayLogic->setExclusive(true);  // 开启了互斥
+  // displayLogic->setCheckedIndex(0);
+  // displayLogic->setExclusive(true);  // 开启了互斥
 
-  chose_function_layout->addWidget(display_text_btn_);
-  chose_function_layout->addWidget(display_hex_btn_);
-  display_text_btn_->setChecked(true);
+  // chose_function_layout->addWidget(display_text_btn_);
+  // chose_function_layout->addWidget(display_hex_btn_);
+  // display_text_btn_->setChecked(true);
 
-  connect(displayLogic, &Ui::TtWidgetGroup::widgetClicked, this,
-          [this](int idx) {
-            setDisplayType(idx == 1 ? TtTextFormat::HEX : TtTextFormat::TEXT);
-          });
-  // 清除历史按钮
-  chose_function_layout->addWidget(clear_history_);
+  // connect(displayLogic, &Ui::TtWidgetGroup::widgetClicked, this,
+  //         [this](int idx) {
+  //           setDisplayType(idx == 1 ? TtTextFormat::HEX :
+  //           TtTextFormat::TEXT);
+  //         });
+  // // 清除历史按钮
+  // chose_function_layout->addWidget(clear_history_);
 
-  QSplitter *VSplitter = new QSplitter;
-  VSplitter->setOrientation(Qt::Vertical);
-  VSplitter->setContentsMargins(QMargins());
+  // QSplitter *VSplitter = new QSplitter;
+  // VSplitter->setOrientation(Qt::Vertical);
+  // VSplitter->setContentsMargins(QMargins());
 
-  // 上方选择功能以及信息框
-  QWidget *contentWidget = new QWidget(this);
-  Ui::TtVerticalLayout *contentWidgetLayout =
-      new Ui::TtVerticalLayout(contentWidget);
+  // // 上方选择功能以及信息框
+  // QWidget *contentWidget = new QWidget(this);
+  // Ui::TtVerticalLayout *contentWidgetLayout =
+  //     new Ui::TtVerticalLayout(contentWidget);
 
-  // 不同类型展示数据栈窗口
-  message_stacked_view_ = new QStackedWidget(contentWidget);
+  // // 不同类型展示数据栈窗口
+  // message_stacked_view_ = new QStackedWidget(contentWidget);
 
-  terminal_ = new QPlainTextEdit(this);
-  terminal_->setReadOnly(true);
-  terminal_->setFrameStyle(QFrame::NoFrame);
-  lexer_ = std::make_unique<Ui::TtTerminalHighlighter>(terminal_->document());
+  // terminal_ = new QPlainTextEdit(this);
+  // terminal_->setReadOnly(true);
+  // terminal_->setFrameStyle(QFrame::NoFrame);
+  // lexer_ =
+  // std::make_unique<Ui::TtTerminalHighlighter>(terminal_->document());
 
-  message_stacked_view_->addWidget(terminal_);
+  // message_stacked_view_->addWidget(terminal_);
 
-  // message_view_ = new Ui::TtChatView(message_stacked_view_);
-  // message_view_->setResizeMode(QListView::Adjust);
-  // message_view_->setUniformItemSizes(false); // 允许每个项具有不同的大小
-  // message_view_->setMouseTracking(true);
-  // message_view_->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
-  // message_stacked_view_->addWidget(message_view_);
+  // // message_view_ = new Ui::TtChatView(message_stacked_view_);
+  // // message_view_->setResizeMode(QListView::Adjust);
+  // // message_view_->setUniformItemSizes(false); // 允许每个项具有不同的大小
+  // // message_view_->setMouseTracking(true);
+  // // message_view_->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+  // // message_stacked_view_->addWidget(message_view_);
 
-  contentWidgetLayout->addWidget(chose_function);
-  contentWidgetLayout->addWidget(message_stacked_view_);
+  // contentWidgetLayout->addWidget(chose_function);
+  // contentWidgetLayout->addWidget(message_stacked_view_);
 
-  // 显示的图标
-  connect(page_btn_logical_, &Ui::TtWidgetGroup::widgetClicked, this,
-          [this](const int &idx) {
-            message_stacked_view_->setCurrentIndex(idx);
-            if (idx != 0) {
-              // 图表
-              display_hex_btn_->setVisible(false);
-              display_text_btn_->setVisible(false);
-            } else {
-              display_hex_btn_->setVisible(true);
-              display_text_btn_->setVisible(true);
-            }
-          });
+  // // 显示的图标
+  // connect(page_btn_logical_, &Ui::TtWidgetGroup::widgetClicked, this,
+  //         [this](const int &idx) {
+  //           message_stacked_view_->setCurrentIndex(idx);
+  //           if (idx != 0) {
+  //             // 图表
+  //             display_hex_btn_->setVisible(false);
+  //             display_text_btn_->setVisible(false);
+  //           } else {
+  //             display_hex_btn_->setVisible(true);
+  //             display_text_btn_->setVisible(true);
+  //           }
+  //         });
 
-  // message_model_ = new Ui::TtChatMessageModel;
-  // message_view_->setModel(message_model_);
-  // message_view_->scrollToBottom();
-  QWidget *bottomAll = new QWidget(this);
-  Ui::TtVerticalLayout *bottomAllLayout = new Ui::TtVerticalLayout(bottomAll);
-  bottomAll->setLayout(bottomAllLayout);
+  // // message_model_ = new Ui::TtChatMessageModel;
+  // // message_view_->setModel(message_model_);
+  // // message_view_->scrollToBottom();
+  // QWidget *bottomAll = new QWidget(this);
+  // Ui::TtVerticalLayout *bottomAllLayout = new
+  // Ui::TtVerticalLayout(bottomAll); bottomAll->setLayout(bottomAllLayout);
 
-  // 图表格设置
-  QWidget *graphSetting = new QWidget(bottomAll);
-  Ui::TtHorizontalLayout *graphSettingLayout =
-      new Ui::TtHorizontalLayout(graphSetting);
-  QLabel *setDetaT = new QLabel("设置数据点间隔: ", graphSetting);
-  QSpinBox *setDetaTSpin = new QSpinBox(graphSetting);
-  setDetaTSpin->setSuffix("ms");
-  graphSettingLayout->addWidget(setDetaT);
-  graphSettingLayout->addWidget(setDetaTSpin);
+  // // 图表格设置
+  // QWidget *graphSetting = new QWidget(bottomAll);
+  // Ui::TtHorizontalLayout *graphSettingLayout =
+  //     new Ui::TtHorizontalLayout(graphSetting);
+  // QLabel *setDetaT = new QLabel("设置数据点间隔: ", graphSetting);
+  // QSpinBox *setDetaTSpin = new QSpinBox(graphSetting);
+  // setDetaTSpin->setSuffix("ms");
+  // graphSettingLayout->addWidget(setDetaT);
+  // graphSettingLayout->addWidget(setDetaTSpin);
 
-  //   connect(useFixedDeltaCheckBox, &QCheckBox::toggled, this, [this,
-  //   deltaSpinBox](bool checked) {
-  //     serial_plot_->setTimeDeltaMode(checked);
-  //     deltaSpinBox->setEnabled(checked);
+  // //   connect(useFixedDeltaCheckBox, &QCheckBox::toggled, this, [this,
+  // //   deltaSpinBox](bool checked) {
+  // //     serial_plot_->setTimeDeltaMode(checked);
+  // //     deltaSpinBox->setEnabled(checked);
+  // // });
+  // connect(setDetaTSpin, &QSpinBox::valueChanged, this,
+  //         [this](int value) { serial_plot_->setFixedTimeDelta(value); });
+
+  // Ui::TtLabelLineEdit *maxPoint =
+  //     new Ui::TtLabelLineEdit("最大数据点数: ", graphSetting);
+  // maxPoint->setText("50000");
+  // QLabel *maxPointLabel = new QLabel("/ch", graphSetting);
+  // graphSettingLayout->addWidget(maxPoint);
+  // graphSettingLayout->addWidget(maxPointLabel);
+
+  // connect(maxPoint->body(), &Ui::TtLineEdit::textChanged, this,
+  //         [this](const QString &text) {
+  //           bool ok = false;
+  //           int maxPoint = text.toInt(&ok);
+  //           if (ok) {
+  //             qDebug() << "this set maxPoint";
+  //             // BUG 缺少
+  //             // serial_plot_->setMaxPoint(maxPoint);
+  //           } else {
+  //             Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""),
+  //                                     tr("最大数据点数输入错误"), 1500,
+  //                                     this);
+  //           }
+  //         });
+
+  // Ui::TtTextButton *autoScaleBtn =
+  //     new Ui::TtTextButton(QColor(Qt::blue), "自动缩放", graphSetting);
+  // // connect(autoScaleBtn, &Ui::TtTextButton::clicked, serial_plot_,
+  // //         &Ui::TtSerialPortPlot::autoScale);
+  // connect(autoScaleBtn, &Ui::TtTextButton::clicked, this, [this] {
+  //   // qDebug() << "自动缩放";
+  //   serial_plot_->autoScale();
   // });
-  connect(setDetaTSpin, &QSpinBox::valueChanged, this,
-          [this](int value) { serial_plot_->setFixedTimeDelta(value); });
+  // autoScaleBtn->setToolTip(tr("自动缩放"));
+  // graphSettingLayout->addStretch();
+  // graphSettingLayout->addWidget(autoScaleBtn);
 
-  Ui::TtLabelLineEdit *maxPoint =
-      new Ui::TtLabelLineEdit("最大数据点数: ", graphSetting);
-  maxPoint->setText("50000");
-  QLabel *maxPointLabel = new QLabel("/ch", graphSetting);
-  graphSettingLayout->addWidget(maxPoint);
-  graphSettingLayout->addWidget(maxPointLabel);
+  // bottomAllLayout->addWidget(graphSetting);
 
-  connect(maxPoint->body(), &Ui::TtLineEdit::textChanged, this,
-          [this](const QString &text) {
-            bool ok = false;
-            int maxPoint = text.toInt(&ok);
-            if (ok) {
-              qDebug() << "this set maxPoint";
-              // BUG 缺少
-              // serial_plot_->setMaxPoint(maxPoint);
-            } else {
-              Ui::TtMessageBar::error(TtMessageBarType::Top, tr(""),
-                                      tr("最大数据点数输入错误"), 1500, this);
-            }
-          });
+  // // 下方自定义指令
+  // tabs_widget_ = new QWidget(this);
+  // Ui::TtHorizontalLayout *tacLayout = new
+  // Ui::TtHorizontalLayout(tabs_widget_); tabs_widget_->setLayout(tacLayout);
 
-  Ui::TtTextButton *autoScaleBtn =
-      new Ui::TtTextButton(QColor(Qt::blue), "自动缩放", graphSetting);
-  // connect(autoScaleBtn, &Ui::TtTextButton::clicked, serial_plot_,
-  //         &Ui::TtSerialPortPlot::autoScale);
-  connect(autoScaleBtn, &Ui::TtTextButton::clicked, this, [this] {
-    // qDebug() << "自动缩放";
-    serial_plot_->autoScale();
-  });
-  autoScaleBtn->setToolTip(tr("自动缩放"));
-  graphSettingLayout->addStretch();
-  graphSettingLayout->addWidget(autoScaleBtn);
+  // tabs_ = new QtMaterialTabs(tabs_widget_);
+  // tabs_->addTab(tr("手动"));
+  // tabs_->addTab(tr("片段"));
+  // tabs_->addTab(tr("自动应答"));
+  // // tabs_->setFixedHeight(30);
+  // // tabs_->setMinimumWidth(80);
+  // tabs_->setBackgroundColor(QColor(192, 120, 196));
 
-  bottomAllLayout->addWidget(graphSetting);
+  // tacLayout->addWidget(tabs_);
+  // // tacLayout->addStretch();
 
-  // 下方自定义指令
-  tabs_widget_ = new QWidget(this);
-  Ui::TtHorizontalLayout *tacLayout = new Ui::TtHorizontalLayout(tabs_widget_);
-  tabs_widget_->setLayout(tacLayout);
+  // // 显示发送字节和接收字节数
+  // send_byte_ = new Ui::TtElidedLabel(tr("发送字节数: 0 B"), tabs_widget_);
+  // send_byte_->setFixedHeight(30);
+  // recv_byte_ = new Ui::TtNormalLabel(tr("接收字节数: 0 B"), tabs_widget_);
+  // recv_byte_->setFixedHeight(30);
 
-  tabs_ = new QtMaterialTabs(tabs_widget_);
-  tabs_->addTab(tr("手动"));
-  tabs_->addTab(tr("片段"));
-  tabs_->addTab(tr("自动应答"));
-  // tabs_->setFixedHeight(30);
-  // tabs_->setMinimumWidth(80);
-  tabs_->setBackgroundColor(QColor(192, 120, 196));
+  // tacLayout->addWidget(send_byte_);
+  // tacLayout->addWidget(recv_byte_);
 
-  tacLayout->addWidget(tabs_);
-  tacLayout->addStretch();
+  // display_widget_ = new QStackedWidget(this);
 
-  // 显示发送字节和接收字节数
-  send_byte_ = new Ui::TtElidedLabel(tr("发送字节数: 0 B"), tabs_widget_);
-  send_byte_->setFixedHeight(30);
-  recv_byte_ = new Ui::TtNormalLabel(tr("接收字节数: 0 B"), tabs_widget_);
-  recv_byte_->setFixedHeight(30);
+  // QWidget *messageEdit = new QWidget(display_widget_);
+  // QVBoxLayout *messageEditLayout = new QVBoxLayout;
+  // messageEdit->setLayout(messageEditLayout);
+  // messageEditLayout->setContentsMargins(3, 0, 3, 0);
+  // messageEditLayout->setSpacing(0);
 
-  tacLayout->addWidget(send_byte_);
-  tacLayout->addWidget(recv_byte_);
+  // editor_ = new QsciScintilla(messageEdit);
+  // editor_->setWrapMode(QsciScintilla::WrapWord);
+  // editor_->setWrapVisualFlags(QsciScintilla::WrapFlagInMargin,
+  //                             QsciScintilla::WrapFlagInMargin, 0);
+  // editor_->setCaretWidth(10);
+  // editor_->setMarginType(1, QsciScintilla::NumberMargin);
+  // editor_->setFrameStyle(QFrame::NoFrame);
 
-  display_widget_ = new QStackedWidget(this);
+  // messageEditLayout->addWidget(editor_);
 
-  QWidget *messageEdit = new QWidget(display_widget_);
-  QVBoxLayout *messageEditLayout = new QVBoxLayout;
-  messageEdit->setLayout(messageEditLayout);
-  messageEditLayout->setContentsMargins(3, 0, 3, 0);
-  messageEditLayout->setSpacing(0);
+  // QWidget *bottomBtnWidget = new QWidget(messageEdit);
+  // bottomBtnWidget->setMinimumHeight(40);
+  // Ui::TtHorizontalLayout *bottomBtnWidgetLayout =
+  //     new Ui::TtHorizontalLayout(bottomBtnWidget);
 
-  editor_ = new QsciScintilla(messageEdit);
-  editor_->setWrapMode(QsciScintilla::WrapWord);
-  editor_->setWrapVisualFlags(QsciScintilla::WrapFlagInMargin,
-                              QsciScintilla::WrapFlagInMargin, 0);
-  editor_->setCaretWidth(10);
-  editor_->setMarginType(1, QsciScintilla::NumberMargin);
-  editor_->setFrameStyle(QFrame::NoFrame);
+  // chose_text_btn_ = new Ui::TtRadioButton("TEXT", bottomBtnWidget);
+  // chose_hex_btn_ = new Ui::TtRadioButton("HEX", bottomBtnWidget);
+  // chose_text_btn_->setChecked(true);
 
-  messageEditLayout->addWidget(editor_);
+  // send_btn_ = new QtMaterialFlatButton(bottomBtnWidget);
+  // send_btn_->setIcon(QIcon(":/sys/send.svg"));
+  // bottomBtnWidgetLayout->addWidget(chose_text_btn_);
+  // bottomBtnWidgetLayout->addWidget(chose_hex_btn_);
+  // bottomBtnWidgetLayout->addStretch();
+  // bottomBtnWidgetLayout->addWidget(send_btn_);
 
-  QWidget *bottomBtnWidget = new QWidget(messageEdit);
-  bottomBtnWidget->setMinimumHeight(40);
-  Ui::TtHorizontalLayout *bottomBtnWidgetLayout =
-      new Ui::TtHorizontalLayout(bottomBtnWidget);
+  // messageEditLayout->addWidget(bottomBtnWidget);
 
-  chose_text_btn_ = new Ui::TtRadioButton("TEXT", bottomBtnWidget);
-  chose_hex_btn_ = new Ui::TtRadioButton("HEX", bottomBtnWidget);
-  chose_text_btn_->setChecked(true);
+  // instruction_table_ = new Ui::TtTableWidget(display_widget_);
+  // auto_replay_table_ = new Ui::TtTableWidget(display_widget_);
 
-  send_btn_ = new QtMaterialFlatButton(bottomBtnWidget);
-  send_btn_->setIcon(QIcon(":/sys/send.svg"));
-  bottomBtnWidgetLayout->addWidget(chose_text_btn_);
-  bottomBtnWidgetLayout->addWidget(chose_hex_btn_);
-  bottomBtnWidgetLayout->addStretch();
-  bottomBtnWidgetLayout->addWidget(send_btn_);
+  // display_widget_->addWidget(messageEdit);
+  // display_widget_->addWidget(instruction_table_);
+  // display_widget_->addWidget(auto_replay_table_);
 
-  messageEditLayout->addWidget(bottomBtnWidget);
+  // display_widget_->setCurrentIndex(0);
 
-  instruction_table_ = new Ui::TtTableWidget(display_widget_);
-  auto_replay_table_ = new Ui::TtTableWidget(display_widget_);
+  // // 显示, 并输入 lua 脚本
+  // // lua_code_ = new Ui::TtLuaInputBox(this);
+  // // lua_actuator_ = new Core::LuaKernel;
 
-  display_widget_->addWidget(messageEdit);
-  display_widget_->addWidget(instruction_table_);
-  display_widget_->addWidget(auto_replay_table_);
+  // bottomAllLayout->addWidget(tabs_widget_);
+  // bottomAllLayout->addWidget(display_widget_);
 
-  display_widget_->setCurrentIndex(0);
+  // VSplitter->addWidget(contentWidget);
+  // VSplitter->addWidget(bottomAll);
+  // VSplitter->setStretchFactor(0, 3);
+  // VSplitter->setStretchFactor(1, 2);
+  // VSplitter->setCollapsible(0, false);
+  // VSplitter->setSizes(QList<int>() << 450 << 200);
 
-  // 显示, 并输入 lua 脚本
-  // lua_code_ = new Ui::TtLuaInputBox(this);
-  // lua_actuator_ = new Core::LuaKernel;
+  // main_splitter_->addWidget(VSplitter);
 
-  bottomAllLayout->addWidget(tabs_widget_);
-  bottomAllLayout->addWidget(display_widget_);
+  // // 设置右侧展示窗口, 放一个置位窗口, 因为后面要设置属性
+  // QWidget *rightWidget = new QWidget(this);
+  // main_splitter_->addWidget(rightWidget);
 
-  VSplitter->addWidget(contentWidget);
-  VSplitter->addWidget(bottomAll);
-  VSplitter->setStretchFactor(0, 3);
-  VSplitter->setStretchFactor(1, 2);
-  VSplitter->setCollapsible(0, false);
-  VSplitter->setSizes(QList<int>() << 450 << 200);
+  // main_splitter_->setSizes(QList<int>() << 500 << 220);
+  // main_splitter_->setCollapsible(0, false);
+  // main_splitter_->setCollapsible(1, true);
 
-  main_splitter_->addWidget(VSplitter);
+  // main_splitter_->setStretchFactor(0, 3);
+  // main_splitter_->setStretchFactor(1, 2);
 
-  // 设置右侧展示窗口, 放一个置位窗口, 因为后面要设置属性
-  QWidget *rightWidget = new QWidget(this);
-  main_splitter_->addWidget(rightWidget);
+  // main_layout_->addWidget(main_splitter_);
 
-  main_splitter_->setSizes(QList<int>() << 500 << 220);
-  main_splitter_->setCollapsible(0, false);
-  main_splitter_->setCollapsible(1, true);
+  // send_package_timer_ = new QTimer(this);
+  // send_package_timer_->setTimerType(Qt::TimerType::PreciseTimer);
+  // send_package_timer_->setInterval(0);
+  // heartbeat_timer_ = new QTimer(this);
+  // heartbeat_timer_->setTimerType(Qt::TimerType::PreciseTimer);
+  // heartbeat_timer_->setInterval(0);
+  // // initSignalsConnection();
 
-  main_splitter_->setStretchFactor(0, 3);
-  main_splitter_->setStretchFactor(1, 2);
-
-  main_layout_->addWidget(main_splitter_);
-
-  send_package_timer_ = new QTimer(this);
-  send_package_timer_->setTimerType(Qt::TimerType::PreciseTimer);
-  send_package_timer_->setInterval(0);
-  heartbeat_timer_ = new QTimer(this);
-  heartbeat_timer_->setTimerType(Qt::TimerType::PreciseTimer);
-  heartbeat_timer_->setInterval(0);
-  // initSignalsConnection();
-
-  title_->setText(tr("未命名的串口链接"));
+  // title_->setText(tr("未命名的串口链接"));
 
   serial_setting_ = new Widget::SerialSetting;
   serRightWidget(serial_setting_);
 
+  qDebug() << "测试6";
+  qDebug() << "测试5";
   QSplitter *graphSpiltter = new QSplitter;
   serial_plot_ = new Ui::TtSerialPortPlot;
   graphSpiltter->addWidget(serial_plot_);
@@ -1841,6 +1881,7 @@ void SerialWindow::init() {
   serialDataList = new QListWidget(graphSpiltter);
   serialDataList->setContextMenuPolicy(
       Qt::CustomContextMenu);  // 启用自定义右键菜单
+
   connect(serialDataList, &QListWidget::customContextMenuRequested, this,
           [=](const QPoint &pos) {
             // 获取当前右键点击的项
@@ -1924,7 +1965,7 @@ void SerialWindow::init() {
                     // << btn->getUuid()
                     // << channel_info_.value(btn->getUuid()).channel_num_;
 
-                    handleDialogData(
+                    HandleDialogData(
                         btn->getUuid(),
                         channel_info_.value(btn->getUuid()).channel_num_,
                         editorDialog.metaInfo(),
@@ -1965,16 +2006,21 @@ void SerialWindow::init() {
   graphSpiltter->setStretchFactor(1, 0);
 
   // messageStackedView->addWidget(graphSpiltter);
+  qDebug() << "测试3";
 
   Ui::TtSvgButton *graphBtn = new Ui::TtSvgButton(":/sys/graph-up.svg", this);
   graphBtn->setSvgSize(18, 18);
   graphBtn->setColors(Qt::black, Qt::blue);
+  qDebug() << "测试8";
   addDisplayWidget(graphBtn, graphSpiltter);
 
-  setControlState(true);
+  qDebug() << "测试8";
+  SetControlState(true);
+
+  qDebug() << "测试8";
 }
 
-void SerialWindow::setSerialSetting() {
+void SerialWindow::SetSerialSetting() {
   serial_setting_->setSerialPortsName();
   serial_setting_->setSerialPortsBaudRate();
   serial_setting_->setSerialPortsDataBit();
@@ -1984,9 +2030,7 @@ void SerialWindow::setSerialSetting() {
   serial_setting_->displayDefaultSetting();
 }
 
-void SerialWindow::connectSignals() {
-  initSignalsConnection();
-
+void SerialWindow::ConnectSignals() {
   connect(save_btn_, &Ui::TtSvgButton::clicked, this,
           &SerialWindow::saveSetting);
 
@@ -2024,9 +2068,9 @@ void SerialWindow::connectSignals() {
       }
       // 处于工作信号
       emit workStateChanged(true);
-      startRandomDataTest(TtProtocolSetting::FireWater);
+      StartRandomDataTest(TtProtocolSetting::FireWater);
     }
-    setControlState(!opened_);
+    SetControlState(!opened_);
   });
 
   connect(send_btn_, &QtMaterialFlatButton::clicked, this,
@@ -2164,20 +2208,19 @@ void SerialWindow::connectSignals() {
             }
           });
 
-  // connect(instruction_table_, &Ui::TtTableWidget::sendRowMsg, this,
-  //         qOverload<const QString &, TtTextFormat::Type, uint32_t>(
-  //             &SerialWindow::sendInstructionTableContent));
-  // connect(instruction_table_, &Ui::TtTableWidget::sendRowsMsg, this,
-  //         [this](const std::vector<Data::MsgInfo> &msgs) {
-  //           // 群发消息
-  //           // 没有延时的能够立马发送
-  //           if (msgs.size() == 0) {
-  //             return;
-  //           }
-  //           foreach (const auto &msg, msgs) {
-  //             sendInstructionTableContent(msg);
-  //           }
-  //         });
+  connect(instruction_table_, &Ui::TtTableWidget::SendRowMsg, this,
+          qOverload<const QString &, TtTextFormat::Type, uint32_t>(
+              &SerialWindow::sendInstructionTableContent));
+  connect(instruction_table_, &Ui::TtTableWidget::SendRowsMsg, this,
+          [this](const std::vector<Data::MsgInfo> &msgs) {
+            // 群发消息,没有延时的能够立马发送
+            if (msgs.size() == 0) {
+              return;
+            }
+            foreach (const auto &msg, msgs) {
+              sendInstructionTableContent(msg);
+            }
+          });
 }
 
 }  // namespace Window

@@ -138,7 +138,8 @@ class MainWindow : public QMainWindow {
   // 弹出的 widget
   // 要赋值父对象, 这个父对象也就是 canves
   // 弹出的 widget 的左侧应该在 left_bar_ 的右侧对齐
-  Ui::PopWidget *communication_connection_widget;
+  // Ui::PopWidget *communication_connection_widget;
+
   Ui::WidgetGroup *buttonGroup;
   QString saved_language_;
 };

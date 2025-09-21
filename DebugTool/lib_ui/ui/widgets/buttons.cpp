@@ -1,14 +1,14 @@
 ﻿#include "ui/widgets/buttons.h"
 
-#include "ui/abstract_button.h"
-#include "ui/layout/horizontal_layout.h"
-#include "ui/layout/vertical_layout.h"
-
 #include <QIcon>
 #include <QMouseEvent>
 #include <QParallelAnimationGroup>
 #include <QPixmap>
 #include <QPropertyAnimation>
+
+#include "ui/abstract_button.h"
+#include "ui/layout/horizontal_layout.h"
+#include "ui/layout/vertical_layout.h"
 
 namespace Ui {
 CommonButton::CommonButton(QWidget* parent) : AbstractButton(parent) {}
@@ -88,9 +88,7 @@ ConnerButton::ConnerButton(const QImage& normal_image,
   setImage(normal_image, entry_image);
 }
 
-QString ConnerButton::connerText() const {
-  return text_;
-}
+QString ConnerButton::connerText() const { return text_; }
 
 void ConnerButton::setConnerText(const QString& new_text) {
   if (text_ != new_text) {
@@ -99,18 +97,14 @@ void ConnerButton::setConnerText(const QString& new_text) {
   }
 }
 
-QRectF ConnerButton::rect() const {
-  return conner_rect_;
-}
+QRectF ConnerButton::rect() const { return conner_rect_; }
 
 void ConnerButton::setRect(const QRectF& rect) {
   conner_rect_ = rect;
   update();
 }
 
-qint16 ConnerButton::fontSize() const {
-  return font_size_;
-}
+qint16 ConnerButton::fontSize() const { return font_size_; }
 
 void ConnerButton::setFontSize(const qint16& font_size) {
   font_size_ = font_size;
@@ -241,25 +235,17 @@ TtWordsButton::TtWordsButton(const QString& normal_image_path,
 
 TtWordsButton::~TtWordsButton() {}
 
-QString TtWordsButton::bottomText() const {
-  return bottom_words_;
-}
+QString TtWordsButton::bottomText() const { return bottom_words_; }
 
-void TtWordsButton::setBottomText(const QString& text) {
-  bottom_words_ = text;
-}
+void TtWordsButton::setBottomText(const QString& text) { bottom_words_ = text; }
 
-QSize TtWordsButton::imageSize() const {
-  return image_size_;
-}
+QSize TtWordsButton::imageSize() const { return image_size_; }
 
 void TtWordsButton::setImageSize(qreal w, qreal h) {
   image_size_ = QSize(w, h);
 }
 
-bool TtWordsButton::isConnerEnable() const {
-  return is_conner_enable_;
-}
+bool TtWordsButton::isConnerEnable() const { return is_conner_enable_; }
 
 void TtWordsButton::setConnerEnable(bool enable) {
   is_conner_enable_ = enable;
@@ -497,10 +483,7 @@ TtSvgButton::TtSvgButton(const QString& svgPath, QWidget* parent)
   updateSvgContent();
 }
 
-TtSvgButton::~TtSvgButton() {
-  qDebug() << "delete TtSvgButton";
-  // qDebug() << "delte" << svgPath();
-}
+TtSvgButton::~TtSvgButton() {}
 
 void TtSvgButton::setColors(const QColor& firstColor,
                             const QColor& secondColor) {
@@ -522,9 +505,7 @@ void TtSvgButton::setText(const QString& text) {
   }
 }
 
-QSize TtSvgButton::svgSize() const {
-  return svg_size_;
-}
+QSize TtSvgButton::svgSize() const { return svg_size_; }
 
 void TtSvgButton::setSvgSize(const int& w, const int& h) {
   setSvgSize(QSize(w, h));
@@ -537,9 +518,7 @@ void TtSvgButton::setSvgSize(const QSize& size) {
   }
 }
 
-QString TtSvgButton::svgPath() const {
-  return svg_path_;
-}
+QString TtSvgButton::svgPath() const { return svg_path_; }
 
 void TtSvgButton::setSvgPath(const QString& path) {
   if (svg_path_ != path) {
@@ -549,9 +528,7 @@ void TtSvgButton::setSvgPath(const QString& path) {
   }
 }
 
-bool TtSvgButton::isChecked() const {
-  return is_checked_;
-}
+bool TtSvgButton::isChecked() const { return is_checked_; }
 
 void TtSvgButton::setChecked(bool checked) {
   if (is_checked_ != checked) {
@@ -812,56 +789,62 @@ TtSpecialDeleteButton::TtSpecialDeleteButton(const QString& name,
     update();
   });
 
-  // 初始化颜色过渡动画
   color_animation_ = new QPropertyAnimation(this, "workStateColorAlpha");
-  color_animation_->setDuration(300);  // 300毫秒过渡
+  color_animation_->setDuration(260);
   color_animation_->setEasingCurve(QEasingCurve::InOutQuad);
+
+  // 左侧指示条动画(0 -> 4px)
+  indicator_anim_ = new QPropertyAnimation(this, "indicatorWidth", this);
+  indicator_anim_->setDuration(220);
+  indicator_anim_->setEasingCurve(QEasingCurve::OutCubic);
 }
 
-TtSpecialDeleteButton::~TtSpecialDeleteButton() {
-  // qDebug() << "TtSpecialDeleteButton delete";
-}
+TtSpecialDeleteButton::~TtSpecialDeleteButton() {}
 
 void TtSpecialDeleteButton::setChecked(bool checked) {
   old_state_ = checked;
   update();  // 触发重绘
 }
 
-bool TtSpecialDeleteButton::workState() const {
-  return work_state_;
-}
+bool TtSpecialDeleteButton::workState() const { return work_state_; }
 
 void TtSpecialDeleteButton::setWorkState(bool state) {
   if (state != work_state_) {
-    // 状态改变
     work_state_ = state;
     if (work_state_) {
-      // 工作状态为真，启动脉冲动画
+      // 工作状态为真：启动呼吸与指示条动画
       pulse_timer_->start(50);
-
-      // 字体加粗
       QFont boldFont = name_->font();
       boldFont.setBold(true);
       name_->setFont(boldFont);
 
-      // 启动颜色过渡动画
-      color_animation_->setStartValue(0);
-      color_animation_->setEndValue(40);  // 40%的工作状态颜色
+      color_animation_->stop();
+      color_animation_->setStartValue(work_state_color_alpha_);
+      color_animation_->setEndValue(40);
       color_animation_->start();
+
+      indicator_anim_->stop();
+      indicator_anim_->setStartValue(indicator_width_);
+      indicator_anim_->setEndValue(4.0);  // 指示条目标宽度
+      indicator_anim_->start();
     } else {
-      // 工作状态为假，停止脉冲动画
+      // 工作状态为假：停止呼吸与收起指示条
       pulse_timer_->stop();
       pulse_animation_opacity_ = 0;
 
-      // 字体恢复正常
       QFont normalFont = name_->font();
       normalFont.setBold(false);
       name_->setFont(normalFont);
 
-      // 启动颜色过渡动画（恢复正常）
-      color_animation_->setStartValue(40);
+      color_animation_->stop();
+      color_animation_->setStartValue(work_state_color_alpha_);
       color_animation_->setEndValue(0);
       color_animation_->start();
+
+      indicator_anim_->stop();
+      indicator_anim_->setStartValue(indicator_width_);
+      indicator_anim_->setEndValue(0.0);
+      indicator_anim_->start();
     }
     update();
   }
@@ -869,58 +852,75 @@ void TtSpecialDeleteButton::setWorkState(bool state) {
 
 void TtSpecialDeleteButton::paintEvent(QPaintEvent* event) {
   QPainter painter(this);
-  // QColor backgroundColor;
-  // // // 优先级：悬停 > 点击状态
-  // if (old_state_) {
-  //   backgroundColor = QColor(186, 231, 255);  // 点击
-  // } else {
-  //   backgroundColor = is_hovered_ ? QColor(229, 229, 229) : Qt::white;
-  // }
-  // painter.fillRect(rect(), backgroundColor);
-  // QWidget::paintEvent(event);
   painter.setRenderHint(QPainter::Antialiasing);
 
-  // 基础背景色
-  QColor backgroundColor;
-  if (old_state_) {
-    backgroundColor = QColor(186, 231, 255);  // 选中状态
-  } else {
-    backgroundColor =
-        is_hovered_ ? QColor(229, 229, 229) : Qt::white;  // 悬停或正常状态
+  // 基础背景
+  QColor baseBg = old_state_
+                      ? QColor(186, 231, 255)
+                      : (is_hovered_ ? QColor(245, 245, 245) : Qt::white);
+  painter.fillRect(rect(), baseBg);
+
+  // 右侧呼吸状态点
+  if (work_state_) {
+    const qreal t = pulse_animation_opacity_ / 100.0;
+    const qreal radius = 4.0 + 4.0 * t;
+
+    const qreal pad = 4.0;
+    qreal cx = width() - 12.0;
+    QRect delRect;
+    if (delete_button_) {
+      delRect = delete_button_->geometry();
+      cx = qMin(cx, static_cast<qreal>(delRect.left()) - (2.0 * radius + pad));
+    }
+    cx = qMax(cx, 12.0);
+    const QPointF c(cx, height() / 2.0);
+
+    if (delete_button_) {
+      painter.save();
+      QRegion clip = QRegion(rect()).subtracted(QRegion(delRect));
+      painter.setClipRegion(clip);
+    }
+
+    // 修复：创建新的颜色而不是修改现有颜色的alpha
+    QRadialGradient rg(c, radius * 2.0);
+    QColor glow(work_state_color_.red(), work_state_color_.green(),
+                work_state_color_.blue(), 80);
+    rg.setColorAt(0.0, glow);
+
+    QColor transparent(work_state_color_.red(), work_state_color_.green(),
+                       work_state_color_.blue(), 0);
+    rg.setColorAt(1.0, transparent);
+
+    painter.setBrush(rg);
+    painter.setPen(Qt::NoPen);
+    painter.drawEllipse(c, radius * 2.0, radius * 2.0);
+
+    // 实心点 - 确保使用不透明颜色
+    QColor solidColor(work_state_color_.red(), work_state_color_.green(),
+                      work_state_color_.blue(), 255);
+    painter.setBrush(solidColor);
+    painter.setPen(Qt::NoPen);
+    painter.drawEllipse(c, radius * 0.6, radius * 0.6);
+
+    if (delete_button_) {
+      painter.restore();
+    }
   }
 
-  // 如果处于工作状态，添加特殊视觉效果
-  if (work_state_) {
-    // 创建工作状态的背景色（基础背景与工作状态颜色的混合）
-    QColor workingColor = backgroundColor;
+  // 左侧渐变指示条
+  if (indicator_width_ > 0.5) {
+    QRectF barRect(0, 0, indicator_width_, height());
+    QLinearGradient g(barRect.topLeft(), barRect.bottomLeft());
 
-    // 混合基础颜色和工作状态颜色
-    int r = backgroundColor.red() * (100 - work_state_color_alpha_) / 100 +
-            work_state_color_.red() * work_state_color_alpha_ / 100;
-    int g = backgroundColor.green() * (100 - work_state_color_alpha_) / 100 +
-            work_state_color_.green() * work_state_color_alpha_ / 100;
-    int b = backgroundColor.blue() * (100 - work_state_color_alpha_) / 100 +
-            work_state_color_.blue() * work_state_color_alpha_ / 100;
+    // 修复：确保颜色创建正确
+    QColor lightColor(work_state_color_.red(), work_state_color_.green(),
+                      work_state_color_.blue());
+    QColor darkColor(work_state_color_.red(), work_state_color_.green(),
+                     work_state_color_.blue());
 
-    workingColor.setRgb(r, g, b);
-    painter.fillRect(rect(), workingColor);
-
-    // 绘制左侧指示条
-    QRect indicatorRect(0, 0, 3, height());
-    painter.fillRect(indicatorRect, work_state_color_);
-
-    // 添加脉冲效果 - 在边框周围绘制呼吸光晕
-    int pulseWidth = 2;
-    QColor pulseColor = work_state_color_;
-    pulseColor.setAlpha(pulse_animation_opacity_);
-    QPen pulsePen(pulseColor);
-    pulsePen.setWidth(pulseWidth);
-    painter.setPen(pulsePen);
-    painter.drawRect(pulseWidth / 2, pulseWidth / 2, width() - pulseWidth,
-                     height() - pulseWidth);
-  } else {
-    // 正常状态下的绘制
-    painter.fillRect(rect(), backgroundColor);
+    g.setColorAt(0.0, lightColor.lighter(110));
+    g.setColorAt(1.0, darkColor.darker(110));
+    painter.fillRect(barRect, g);
   }
 
   QWidget::paintEvent(event);

@@ -15,11 +15,11 @@
 #ifndef UI_WIDGETS_BUTTONS_H
 #define UI_WIDGETS_BUTTONS_H
 
-#include "ui/abstract_button.h"
-#include "ui/widgets/labels.h"
-
 #include <QWidget>
 #include <QtSvgWidgets/QtSvgWidgets>
+
+#include "ui/abstract_button.h"
+#include "ui/widgets/labels.h"
 
 QT_BEGIN_NAMESPACE
 class QPropertyAnimation;
@@ -31,7 +31,7 @@ namespace Ui {
 class TtHorizontalLayout;
 
 class Tt_EXPORT CommonButton : public AbstractButton {
-public:
+ public:
   CommonButton(QWidget *parent = nullptr);
   CommonButton(const QImage &image, QWidget *parent = nullptr);
   CommonButton(const QString &image_path, QWidget *parent = nullptr);
@@ -45,7 +45,7 @@ public:
                const QString &entry_image_path, QWidget *parent = nullptr);
   ~CommonButton();
 
-protected:
+ protected:
   void paintEvent(QPaintEvent *event) override;
 };
 
@@ -54,7 +54,7 @@ class Tt_EXPORT ConnerButton : public AbstractButton {
   Q_PROPERTY(QRectF rect READ rect WRITE setRect)
   Q_PROPERTY(qint16 font READ fontSize WRITE setFontSize)
 
-public:
+ public:
   explicit ConnerButton(QWidget *parent = nullptr);
   explicit ConnerButton(const QString &normal_image_path,
                         const QString &entry_image_path,
@@ -72,13 +72,13 @@ public:
   qint16 fontSize() const;
   void setFontSize(const qint16 &font_size);
 
-protected:
+ protected:
   void paintEvent(QPaintEvent *event) override;
   void enterEvent(QEnterEvent *event) override;
   void leaveEvent(QEvent *event) override;
   void mouseMoveEvent(QMouseEvent *event) override;
 
-private:
+ private:
   // QRectF icon_Rect_ = QRectF(2, 6, 30, 30);
   // 图标框
   QRectF icon_rect_ = QRectF(2, 6, 30, 30);
@@ -105,7 +105,7 @@ private:
 
 class Tt_EXPORT TtWordsButton : public AbstractButton {
   // class WordsButton : public CommonButton {
-public:
+ public:
   TtWordsButton(const QString &text, QWidget *parent = nullptr);
   TtWordsButton(const QImage &image, const QString &text,
                 QWidget *parent = nullptr);
@@ -125,12 +125,12 @@ public:
   [[nodiscard]] bool isConnerEnable() const;
   void setConnerEnable(bool enable = false);
 
-protected:
+ protected:
   void paintEvent(QPaintEvent *event) override;
   void enterEvent(QEnterEvent *event) override;
   void leaveEvent(QEvent *event) override;
 
-private:
+ private:
   QSize image_size_;
   QSize words_size_;
 
@@ -142,15 +142,15 @@ private:
 
 class Tt_EXPORT TtImageButton : public QWidget {
   Q_OBJECT
-public:
+ public:
   TtImageButton(const QString &svgPath, QWidget *parent = nullptr);
 
   void setSvg(const QString &path);
 
-signals:
+ signals:
   void clicked();
 
-protected:
+ protected:
   void paintEvent(QPaintEvent *event) override {
     QPainter painter(this);
 
@@ -161,7 +161,7 @@ protected:
     // 设置背景颜色，当按钮按下时为深色，否则为透明
     QColor backgroundColor =
         // is_pressed_ ? QColor("#e9e9ea") : QColor(0, 0, 0, 0);  // 透明背景
-        is_pressed_ ? QColor("#424242") : QColor(0, 0, 0, 0); // 透明背景
+        is_pressed_ ? QColor("#424242") : QColor(0, 0, 0, 0);  // 透明背景
 
     painter.fillRect(rect(), backgroundColor);
 
@@ -174,7 +174,7 @@ protected:
 
   void resizeEvent(QResizeEvent *event) override {
     QWidget::resizeEvent(event);
-    update(); // 重新绘制按钮
+    update();  // 重新绘制按钮
   }
 
   void mousePressEvent(QMouseEvent *event) override {
@@ -194,7 +194,7 @@ protected:
     QWidget::mouseReleaseEvent(event);
   }
 
-private:
+ private:
   QString svg_path_;
   bool is_pressed_;
 };
@@ -213,9 +213,9 @@ class Tt_EXPORT RichTextButton : public QWidget {
   Q_PROPERTY(QString description READ description WRITE setDescription NOTIFY
                  descriptionChanged)
   Q_PROPERTY(QColor color READ color WRITE setColor NOTIFY
-                 colorChanged) // 新增 color 属性
+                 colorChanged)  // 新增 color 属性
 
-public:
+ public:
   RichTextButton(const QImage &image, const QString &title,
                  const QString &description, QWidget *parent = nullptr);
   ~RichTextButton();
@@ -227,7 +227,7 @@ public:
   QSize iconSize() const { return icon_size_; }
   QString title() const { return title_->text(); }
   QString description() const { return description_->text(); }
-  QColor color() const { return current_color_; } // 新增 color 的 getter
+  QColor color() const { return current_color_; }  // 新增 color 的 getter
 
   // 属性 setter
   void setNormalColor(const QColor &color);
@@ -236,12 +236,12 @@ public:
   void setIconSize(const QSize &size);
   void setTitle(const QString &title);
   void setDescription(const QString &description);
-  void setColor(const QColor &color); // 新增 color 的 setter
+  void setColor(const QColor &color);  // 新增 color 的 setter
 
   // 设置图标
   void setIcon(const QImage &image);
 
-signals:
+ signals:
   void clicked();
   void normalColorChanged(const QColor &color);
   void hoverColorChanged(const QColor &color);
@@ -249,16 +249,16 @@ signals:
   void iconSizeChanged(const QSize &size);
   void titleChanged(const QString &title);
   void descriptionChanged(const QString &description);
-  void colorChanged(const QColor &color); // 新增 color 的 signal
+  void colorChanged(const QColor &color);  // 新增 color 的 signal
 
-protected:
+ protected:
   void paintEvent(QPaintEvent *event) override;
   void mouseReleaseEvent(QMouseEvent *event) override;
   void mousePressEvent(QMouseEvent *event) override;
   void enterEvent(QEnterEvent *event) override;
   void leaveEvent(QEvent *event) override;
 
-private:
+ private:
   void init();
   void updateButtonColor();
   void startHoverAnimation(const QColor &startColor, const QColor &endColor);
@@ -270,7 +270,7 @@ private:
   QColor normal_color_;
   QColor hover_color_;
   QColor pressed_color_;
-  QColor current_color_; // 当前颜色（用于动画）
+  QColor current_color_;  // 当前颜色（用于动画）
 
   bool is_pressed_;
   QPropertyAnimation *color_animation_;
@@ -280,7 +280,7 @@ class Tt_EXPORT TtSvgButton : public QWidget {
   Q_OBJECT
   Q_PROPERTY(QSize svgSize READ svgSize WRITE setSvgSize)
   Q_PROPERTY(bool checked READ isChecked WRITE setChecked)
-public:
+ public:
   explicit TtSvgButton(QWidget *parent = nullptr);
   TtSvgButton(const QString &svgPath, QWidget *parent = nullptr);
   ~TtSvgButton();
@@ -303,11 +303,11 @@ public:
 
   void setEnable(bool enabled);
 
-signals:
+ signals:
   void clicked();
   void toggled(bool checked);
 
-protected:
+ protected:
   void paintEvent(QPaintEvent *event) override;
   void enterEvent(QEnterEvent *event) override;
   void leaveEvent(QEvent *event) override;
@@ -316,7 +316,7 @@ protected:
   void mouseDoubleClickEvent(QMouseEvent *event) override;
   QSize sizeHint() const override;
 
-private:
+ private:
   void updateSvgContent();
 
   bool is_pressed_;
@@ -333,7 +333,7 @@ private:
   QColor normal_color_;
   QColor hover_color_;
   QColor hover_bg_color_;
-  QByteArray disabled_svg_content_; // 缓存禁用状态的 SVG 内容
+  QByteArray disabled_svg_content_;  // 缓存禁用状态的 SVG 内容
 
   bool is_hovered_;
 };
@@ -342,7 +342,8 @@ class Tt_EXPORT TtSpecialDeleteButton : public QWidget {
   Q_OBJECT
   Q_PROPERTY(int workStateColorAlpha READ workStateColorAlpha WRITE
                  setWorkStateColorAlpha)
-public:
+  Q_PROPERTY(qreal indicatorWidth READ indicatorWidth WRITE setIndicatorWidth)
+ public:
   explicit TtSpecialDeleteButton(QWidget *parent = nullptr);
   explicit TtSpecialDeleteButton(const QString &name, const QString &icon_path,
                                  const QString &delete_path,
@@ -356,7 +357,6 @@ public:
   bool workState() const;
   void setWorkState(bool state);
 
-  // 添加工作状态颜色Alpha属性访问器
   int workStateColorAlpha() const { return work_state_color_alpha_; }
   void setWorkStateColorAlpha(int alpha) {
     if (work_state_color_alpha_ != alpha) {
@@ -364,13 +364,20 @@ public:
       update();
     }
   }
+  qreal indicatorWidth() const { return indicator_width_; }
+  void setIndicatorWidth(qreal w) {
+    if (!qFuzzyCompare(indicator_width_, w)) {
+      indicator_width_ = w;
+      update();
+    }
+  }
 
-signals:
+ signals:
   void clicked();
   void deleteRequest();
   void workStateChanged(bool state);
 
-protected:
+ protected:
   void paintEvent(QPaintEvent *event) override;
   void enterEvent(QEnterEvent *event) override;
   void leaveEvent(QEvent *event) override;
@@ -378,7 +385,7 @@ protected:
   void mousePressEvent(QMouseEvent *event) override;
   void mouseReleaseEvent(QMouseEvent *event) override;
 
-private:
+ private:
   Ui::TtHorizontalLayout *layout_;
   bool is_hovered_;
   bool is_pressed_;
@@ -389,25 +396,27 @@ private:
   bool work_state_;
 
   // 工作状态的视觉属性
-  QColor work_state_color_ = QColor(76, 175, 80); // 工作状态为真时的绿色
-  QColor normal_color_ = Qt::white;               // 正常背景色
-  int pulse_animation_opacity_ = 0;               // 脉冲动画透明度
-  QTimer *pulse_timer_ = nullptr;                 // 脉冲动画定时器
-  QPropertyAnimation *color_animation_ = nullptr; // 颜色过渡动画
+  QColor work_state_color_ = QColor(33, 150, 243);  // 工作状态为真时的颜色
+  QColor normal_color_ = Qt::white;                 // 正常背景色
+  int pulse_animation_opacity_ = 0;                 // 脉冲动画透明度
+  QTimer *pulse_timer_ = nullptr;                   // 脉冲动画定时器
+  QPropertyAnimation *color_animation_ = nullptr;   // 颜色过渡动画
   int work_state_color_alpha_ = 0;
+  qreal indicator_width_ = 0.0;                   // 左侧指示条的动画宽度
+  QPropertyAnimation *indicator_anim_ = nullptr;  // 指示条动画
 };
 
 class Tt_EXPORT TtCodeButton : public QWidget {
   Q_OBJECT
-public:
+ public:
   explicit TtCodeButton(const QString &text, const QString &path,
                         QWidget *parent);
   ~TtCodeButton();
 
-signals:
+ signals:
   void clicked();
 
-protected:
+ protected:
   void paintEvent(QPaintEvent *event) override;
   void enterEvent(QEnterEvent *event) override;
   void leaveEvent(QEvent *event) override;
@@ -415,7 +424,7 @@ protected:
   void mousePressEvent(QMouseEvent *event) override;
   void mouseReleaseEvent(QMouseEvent *event) override;
 
-private:
+ private:
   Ui::TtHorizontalLayout *layout_;
   QPixmap icon_;
   TtElidedLabel *name_;
@@ -426,7 +435,7 @@ private:
 
 class Tt_EXPORT TtFancyButton : public QWidget {
   Q_OBJECT
-public:
+ public:
   explicit TtFancyButton(const QColor &color, const QString &text,
                          QWidget *parent = nullptr)
       : QWidget(parent), background_color_(color), text_(text) {
@@ -445,8 +454,8 @@ public:
 
   void setText(const QString &text) {
     text_ = text;
-    updateGeometry(); // 更新布局
-    update();         // 触发重绘
+    updateGeometry();  // 更新布局
+    update();          // 触发重绘
   }
 
   QString text() const { return text_; }
@@ -454,15 +463,15 @@ public:
   // 实现类似 QPushButton 的尺寸计算逻辑
   QSize sizeHint() const override {
     QFontMetrics fm(font());
-    int textWidth = fm.horizontalAdvance(text_) + 20; // 左右边距各 10
-    int textHeight = fm.height() + 10;                // 上下边距各 5
+    int textWidth = fm.horizontalAdvance(text_) + 20;  // 左右边距各 10
+    int textHeight = fm.height() + 10;                 // 上下边距各 5
     return QSize(qMax(textWidth, 80), qMax(textHeight, 30));
   }
 
-signals:
+ signals:
   void clicked();
 
-protected:
+ protected:
   void paintEvent(QPaintEvent *event) override {
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
@@ -493,7 +502,7 @@ protected:
   void mousePressEvent(QMouseEvent *event) override {
     if (event->button() == Qt::LeftButton && isEnabled()) {
       mouse_pressed_ = true;
-      update(); // 触发重绘显示按下状态
+      update();  // 触发重绘显示按下状态
     }
     QWidget::mousePressEvent(event);
   }
@@ -501,7 +510,7 @@ protected:
     if (mouse_pressed_ && isEnabled()) {
       mouse_pressed_ = false;
       if (rect().contains(event->pos())) {
-        emit clicked(); // 触发点击信号
+        emit clicked();  // 触发点击信号
       }
       update();
     }
@@ -518,7 +527,7 @@ protected:
     QWidget::leaveEvent(event);
   }
 
-private:
+ private:
   // 自动计算对比色（深色背景用白色，浅色用黑色）
   QColor getContrastColor(const QColor &bg) const {
     return (bg.lightness() > 128) ? Qt::black : Qt::white;
@@ -529,6 +538,6 @@ private:
   bool mouse_pressed_ = false;
 };
 
-} // namespace Ui
+}  // namespace Ui
 
-#endif // UI_WIDGETS_BUTTONS_H
+#endif  // UI_WIDGETS_BUTTONS_H
